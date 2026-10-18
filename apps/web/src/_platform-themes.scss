@@ -1,0 +1,767 @@
+// ─── TiagoTV streaming platform themes for title pages ───────────────────────
+// A movie or series of a platform's catalog opens dressed as that platform's
+// own title page: Netflix's black with the huge title and 4px buttons, Prime
+// Video's navy with the artwork on the right and the round blue play button,
+// HBO Max's black and indigo with white pills, Apple TV's black with the
+// system font and the white pill. `PlatformThemeService` (dashboard feature)
+// sets `data-platform-theme="<platform id>"` on <html> on the platform's page
+// and on its titles' pages; other platforms keep the app's own look.
+//
+// The shared detail pieces (libs/ui/components: portal-detail-shell,
+// content-hero, detail-ui, season-container) read the app's `--app-*` tokens,
+// so most of a theme re-tokens the shell's host; the rest restyles their
+// elements. Those carry Angular's `[_ngcontent-…]` attribute (0,2,0 for a
+// class); every rule here starts with `html[data-platform-theme] <host>`, one
+// attribute and two elements more, so it wins without `!important`.
+
+// Prime Video's "Included with Prime", translated, set by the service.
+:root {
+    --platform-included: '';
+}
+
+$apple-font:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Helvetica Neue', 'DM Sans', sans-serif;
+
+@mixin title-page($platform) {
+    html[data-platform-theme='#{$platform}'] app-portal-detail-shell {
+        @content;
+    }
+}
+
+// The pieces every theme restyles the same way: no poster card (none of the
+// four shows one beside the title), plain-text facts instead of pills, and a
+// quality badge after them.
+@mixin plain-facts($color, $size: 15px) {
+    .poster {
+        display: none;
+    }
+
+    .details__tags {
+        align-items: center;
+        gap: 4px 14px;
+    }
+
+    app-meta-chip {
+        padding: 0;
+        border-radius: 0;
+        background: none;
+        color: $color;
+        font-size: $size;
+        font-weight: 500;
+    }
+
+    .details__tags::after {
+        content: 'HD' / '';
+        padding: 0 5px;
+        border: 1px solid currentColor;
+        border-radius: 3px;
+        color: $color;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 16px;
+        letter-spacing: 0.04em;
+    }
+}
+
+// A round icon button: favourite, watched, download, the "…" menu.
+@mixin round-icon-buttons($size, $background, $border: 0) {
+    .icon-btn,
+    .more-trigger {
+        width: $size;
+        height: $size;
+        border: $border;
+        border-radius: 50%;
+        background: $background;
+        color: #fff;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+// The primary "Play" button, leaving its launching and stop tints alone.
+$primary: '.play-btn:not(.play-btn--secondary):not(.play-btn--launching):not(.play-btn--stop)';
+
+// ─── Netflix ────────────────────────────────────────────────────────────────
+@include title-page('netflix') {
+    --app-content-bg: #181818;
+    --app-heading-color: #fff;
+    --app-body-color: #bcbcbc;
+    --app-muted-color: #777;
+    --app-eyebrow-color: #a3a3a3;
+    --app-on-surface: #fff;
+    --app-cta-bg: #fff;
+    --app-cta-fg: #000;
+    --app-cta-hover-bg: rgba(255, 255, 255, 0.75);
+    --app-cta-meta-fg: #4d4d4d;
+    --app-rating-color: #46d369;
+    --app-progress-color: #e50914;
+    --app-widget-bg: #333;
+    --app-card-hover-bg: rgba(255, 255, 255, 0.1);
+    --app-selection-surface: rgba(255, 255, 255, 0.12);
+    --app-selection-color: #fff;
+    --app-line-strong: #4d4d4d;
+
+    @include plain-facts(#bcbcbc, 16px);
+
+    .hero__vignette {
+        background:
+            linear-gradient(
+                77deg,
+                color-mix(in srgb, var(--surface-bg) 96%, transparent) 0%,
+                color-mix(in srgb, var(--surface-bg) 82%, transparent) 36%,
+                color-mix(in srgb, var(--surface-bg) 45%, transparent) 62%,
+                transparent 86%
+            ),
+            linear-gradient(
+                180deg,
+                transparent 45%,
+                color-mix(in srgb, var(--surface-bg) 70%, transparent) 72%,
+                var(--surface-bg) 100%
+            );
+    }
+
+    // The red N before "SERIES".
+    .details__kind {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #e5e5e5;
+        font-size: 13px;
+        letter-spacing: 0.3em;
+
+        &::before {
+            content: 'N' / '';
+            color: #e50914;
+            font-family: var(--app-display-font);
+            font-size: 36px;
+            font-weight: 400;
+            letter-spacing: 0;
+            line-height: 0.74;
+        }
+    }
+
+    .details__title {
+        font-family: var(--app-display-font);
+        font-size: clamp(50px, 5.8vw, 96px);
+        font-weight: 400;
+        line-height: 0.88;
+        letter-spacing: 0.005em;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+        text-transform: uppercase;
+    }
+
+    app-meta-chip.meta-chip--rating {
+        color: #46d369;
+        font-weight: 700;
+    }
+
+    app-meta-chip.meta-chip--status {
+        padding: 0 6px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 3px;
+        color: #fff;
+        font-size: 13px;
+    }
+
+    .details__description {
+        color: #fff;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    .play-btn {
+        height: 46px;
+        padding: 0 24px 0 16px;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .play-btn .play-btn__icon {
+        width: 32px;
+        height: 32px;
+        font-size: 32px;
+        line-height: 32px;
+    }
+
+    .play-btn--secondary {
+        border: 0;
+        background: rgba(109, 109, 109, 0.7);
+        color: #fff;
+
+        &:hover:not(:disabled) {
+            background: rgba(109, 109, 109, 0.4);
+        }
+    }
+
+    @include round-icon-buttons(
+        42px,
+        rgba(42, 42, 42, 0.6),
+        2px solid rgba(255, 255, 255, 0.5)
+    );
+
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        border-color: #fff;
+        background: rgba(42, 42, 42, 0.6);
+    }
+
+    .credits__label {
+        color: #777;
+    }
+
+    .credits__names {
+        color: #ddd;
+    }
+
+    .section-header__title {
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    .season-tabs__track {
+        border-color: #4d4d4d;
+        border-radius: 4px;
+        background: #242424;
+    }
+
+    .season-tabs__pill {
+        border-radius: 3px;
+        font-size: 14px;
+    }
+
+    app-episode-item.episode-list-item {
+        border-radius: 4px;
+    }
+
+    .episode-item__number {
+        color: #d2d2d2;
+        font-size: 24px;
+        font-weight: 400;
+    }
+
+    .episode-item__thumb {
+        border: 0;
+        border-radius: 4px;
+    }
+
+    .episode-item__title {
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .episode-item__description {
+        color: #d2d2d2;
+        font-size: 14px;
+    }
+
+    .similar-card__poster {
+        border-radius: 4px;
+    }
+}
+
+// ─── Prime Video ────────────────────────────────────────────────────────────
+@include title-page('prime-video') {
+    --app-content-bg: #0f171e;
+    --app-heading-color: #fff;
+    --app-body-color: #8197a4;
+    --app-muted-color: #8197a4;
+    --app-eyebrow-color: #8197a4;
+    --app-on-surface: #f2f4f6;
+    --app-cta-bg: #fff;
+    --app-cta-fg: #0f171e;
+    --app-cta-hover-bg: #e6ecf0;
+    --app-cta-meta-fg: #8197a4;
+    --app-rating-color: #fff;
+    --app-progress-color: #00a8e1;
+    --app-widget-bg: #1a242f;
+    --app-card-hover-bg: rgba(255, 255, 255, 0.08);
+    --app-selection-surface: rgba(0, 168, 225, 0.18);
+    --app-selection-color: #79d4f5;
+    --app-line-strong: #33424f;
+
+    @include plain-facts(#8197a4);
+
+    // The artwork on the right two thirds, fading into navy at its left.
+    .hero__backdrop {
+        left: 34%;
+    }
+
+    .hero__vignette {
+        background:
+            linear-gradient(
+                90deg,
+                var(--surface-bg) 0%,
+                var(--surface-bg) 34%,
+                color-mix(in srgb, var(--surface-bg) 70%, transparent) 46%,
+                transparent 72%
+            ),
+            linear-gradient(
+                180deg,
+                transparent 55%,
+                color-mix(in srgb, var(--surface-bg) 70%, transparent) 80%,
+                var(--surface-bg) 100%
+            );
+    }
+
+    .details {
+        max-width: 560px;
+    }
+
+    .details__title {
+        font-size: clamp(32px, 3.4vw, 50px);
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.015em;
+    }
+
+    // "Included with Prime" with the blue check, above the facts.
+    .details__tags::before {
+        content: var(--platform-included);
+        flex: 0 0 100%;
+        padding-left: 28px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='10' fill='%2300a8e1'/%3E%3Cpath d='M5.6 10.3l2.9 2.9 5.9-6.2' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
+            left center / 20px 20px no-repeat;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 22px;
+    }
+
+    app-meta-chip {
+        font-weight: 600;
+    }
+
+    app-meta-chip.meta-chip--status {
+        padding: 0 6px;
+        border: 1px solid #8197a4;
+        border-radius: 3px;
+        font-size: 13px;
+    }
+
+    .details__description {
+        color: #fff;
+        font-size: 16px;
+    }
+
+    // Prime's play: a round blue disc with the label beside it.
+    #{$primary} {
+        gap: 14px;
+        height: 60px;
+        padding: 0 8px 0 0;
+        border-radius: 999px;
+        background: none;
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+
+        &:hover:not(:disabled) {
+            background: none;
+
+            .play-btn__icon {
+                background: #33bbe9;
+                transform: scale(1.06);
+            }
+        }
+    }
+
+    #{$primary} .play-btn__icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #00a8e1;
+        color: #fff;
+        font-size: 34px;
+        line-height: 56px;
+        text-align: center;
+        transition:
+            background-color 150ms ease,
+            transform 150ms ease;
+    }
+
+    .play-btn--secondary {
+        height: 48px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(66, 82, 101, 0.85);
+        color: #fff;
+    }
+
+    @include round-icon-buttons(48px, rgba(66, 82, 101, 0.85));
+
+    .play-btn--secondary:hover:not(:disabled),
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        background: #fff;
+        color: #0f171e;
+    }
+
+    .section-header__title {
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .season-tabs__track {
+        border: 0;
+        border-radius: 999px;
+        background: #1a242f;
+    }
+
+    .season-tabs__pill {
+        border-radius: 999px;
+        color: #8197a4;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .season-tabs__pill--active,
+    .season-tabs__pill--active:hover {
+        background: #33424f;
+        color: #fff;
+    }
+
+    .episode-item__thumb {
+        border: 0;
+        border-radius: 8px;
+    }
+
+    .episode-item__title {
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .similar-card__poster {
+        border-radius: 8px;
+    }
+}
+
+// ─── HBO Max ────────────────────────────────────────────────────────────────
+@include title-page('hbo-max') {
+    --app-content-bg: #05050f;
+    --app-heading-color: #fff;
+    --app-body-color: #a9a9bc;
+    --app-muted-color: #6f6f86;
+    --app-eyebrow-color: #a9a9bc;
+    --app-on-surface: #fff;
+    --app-cta-bg: #fff;
+    --app-cta-fg: #000;
+    --app-cta-hover-bg: rgba(255, 255, 255, 0.82);
+    --app-cta-meta-fg: #4b4b5c;
+    --app-rating-color: #fff;
+    --app-progress-color: #4f6bff;
+    --app-widget-bg: #11112a;
+    --app-card-hover-bg: rgba(255, 255, 255, 0.1);
+    --app-selection-surface: rgba(0, 43, 231, 0.3);
+    --app-selection-color: #c9d2ff;
+    --app-line-strong: #2a2a44;
+
+    @include plain-facts(#a9a9bc);
+
+    .hero__vignette {
+        background:
+            linear-gradient(
+                90deg,
+                color-mix(in srgb, var(--surface-bg) 94%, transparent) 0%,
+                color-mix(in srgb, var(--surface-bg) 60%, transparent) 36%,
+                transparent 66%
+            ),
+            linear-gradient(
+                180deg,
+                transparent 50%,
+                color-mix(in srgb, var(--surface-bg) 70%, transparent) 76%,
+                var(--surface-bg) 100%
+            );
+    }
+
+    .details__kind {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: 0.2em;
+
+        &::before {
+            content: '';
+            width: 74px;
+            height: 22px;
+            background: url('./assets/platforms/hbo-max.svg') left center /
+                contain no-repeat;
+            filter: brightness(0) invert(1);
+        }
+    }
+
+    .details__title {
+        font-size: clamp(36px, 4vw, 60px);
+        font-weight: 700;
+        line-height: 1.04;
+        letter-spacing: -0.025em;
+    }
+
+    app-meta-chip + app-meta-chip::before {
+        content: '•';
+        margin-right: 10px;
+        opacity: 0.6;
+    }
+
+    app-meta-chip.meta-chip--rating {
+        font-weight: 700;
+    }
+
+    app-meta-chip.meta-chip--status {
+        padding: 1px 10px;
+        border-radius: 999px;
+        background: #002be7;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .details__description {
+        color: #d4d4e2;
+    }
+
+    .play-btn,
+    .play-btn--secondary {
+        height: 48px;
+        border-radius: 999px;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    #{$primary} {
+        padding: 0 28px 0 20px;
+    }
+
+    .play-btn--secondary {
+        border: 0;
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+    }
+
+    @include round-icon-buttons(
+        48px,
+        transparent,
+        2px solid rgba(255, 255, 255, 0.7)
+    );
+
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        border-color: #fff;
+        background: rgba(255, 255, 255, 0.14);
+    }
+
+    .section-header__title {
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    // Underlined season tabs.
+    .season-tabs__track {
+        gap: 18px;
+        padding: 0;
+        border: 0;
+        background: none;
+    }
+
+    .season-tabs__pill {
+        height: 34px;
+        padding: 0 2px;
+        border-radius: 0;
+        background: none;
+        color: #a9a9bc;
+        font-size: 15px;
+        font-weight: 600;
+
+        &:hover {
+            background: none;
+            color: #fff;
+        }
+    }
+
+    .season-tabs__pill--active,
+    .season-tabs__pill--active:hover {
+        box-shadow: inset 0 -2px 0 #fff;
+        background: none;
+        color: #fff;
+    }
+
+    .episode-item__thumb {
+        border: 0;
+        border-radius: 6px;
+    }
+
+    .similar-card__poster {
+        border-radius: 6px;
+    }
+}
+
+// ─── Apple TV ───────────────────────────────────────────────────────────────
+@include title-page('apple-tv') {
+    --app-content-bg: #000;
+    --app-heading-color: #f5f5f7;
+    --app-body-color: #a1a1a6;
+    --app-muted-color: #6e6e73;
+    --app-eyebrow-color: #a1a1a6;
+    --app-on-surface: #f5f5f7;
+    --app-cta-bg: #fff;
+    --app-cta-fg: #000;
+    --app-cta-hover-bg: rgba(255, 255, 255, 0.85);
+    --app-cta-meta-fg: #6e6e73;
+    --app-rating-color: #f5f5f7;
+    --app-progress-color: #f5f5f7;
+    --app-widget-bg: #1c1c1e;
+    --app-card-hover-bg: rgba(255, 255, 255, 0.1);
+    --app-selection-surface: rgba(255, 255, 255, 0.14);
+    --app-selection-color: #fff;
+    --app-line-strong: #3a3a3c;
+    font-family: $apple-font;
+
+    @include plain-facts(#a1a1a6);
+
+    .hero {
+        min-height: calc(min(600px, 68vh) + var(--hero-tail, 0px));
+    }
+
+    .hero__vignette {
+        background:
+            linear-gradient(
+                90deg,
+                color-mix(in srgb, var(--surface-bg) 70%, transparent) 0%,
+                transparent 58%
+            ),
+            linear-gradient(
+                180deg,
+                transparent 40%,
+                color-mix(in srgb, var(--surface-bg) 80%, transparent) 76%,
+                var(--surface-bg) 100%
+            );
+    }
+
+    .details__kind {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: 0.08em;
+
+        &::before {
+            content: '';
+            width: 52px;
+            height: 20px;
+            background: url('./assets/platforms/apple-tv.svg') left center /
+                contain no-repeat;
+            filter: brightness(0) invert(1);
+        }
+    }
+
+    .details__title {
+        font-size: clamp(38px, 4.2vw, 64px);
+        font-weight: 700;
+        line-height: 1.04;
+        letter-spacing: -0.03em;
+    }
+
+    app-meta-chip + app-meta-chip::before {
+        content: '·';
+        margin-right: 10px;
+    }
+
+    app-meta-chip.meta-chip--status {
+        padding: 0 6px;
+        border: 1px solid #a1a1a6;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .details__description {
+        color: rgba(245, 245, 247, 0.86);
+    }
+
+    .play-btn,
+    .play-btn--secondary {
+        height: 50px;
+        border-radius: 999px;
+        font-size: 17px;
+        font-weight: 600;
+    }
+
+    #{$primary} {
+        padding: 0 34px 0 24px;
+    }
+
+    .play-btn--secondary {
+        border: 0;
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+    }
+
+    @include round-icon-buttons(50px, rgba(255, 255, 255, 0.16));
+
+    .play-btn--secondary:hover:not(:disabled),
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.28);
+    }
+
+    .section-header__title {
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    // iOS's segmented control.
+    .season-tabs__track {
+        border: 0;
+        border-radius: 999px;
+        background: rgba(118, 118, 128, 0.24);
+    }
+
+    .season-tabs__pill {
+        border-radius: 999px;
+        color: #f5f5f7;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .season-tabs__pill--active,
+    .season-tabs__pill--active:hover {
+        background: #636366;
+    }
+
+    .episode-item__thumb {
+        border: 0;
+        border-radius: 12px;
+    }
+
+    app-episode-item.episode-card .episode-item__thumb {
+        border-radius: 12px;
+        box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.8);
+    }
+
+    .episode-item__number {
+        color: #6e6e73;
+    }
+
+    .similar-card__poster {
+        border-radius: 12px;
+    }
+}
+
+// A narrow pane has no room beside the artwork: Prime's fills it again.
+@container detail (max-width: 760px) {
+    html[data-platform-theme='prime-video']
+        app-portal-detail-shell
+        .hero__backdrop {
+        left: 0;
+    }
+}
+
+// The larger 16:9 stills of the platforms' episode lists, where the pane is
+// wide enough (the shared rows shrink their own below 480px).
+@container detail (min-width: 900px) {
+    @each $platform in ('netflix', 'prime-video', 'apple-tv') {
+        html[data-platform-theme='#{$platform}']
+            app-portal-detail-shell
+            app-episode-item.episode-list-item:not(.episode-item--bare) {
+            grid-template-columns: 40px 210px minmax(0, 1fr) 112px;
+        }
+    }
+}

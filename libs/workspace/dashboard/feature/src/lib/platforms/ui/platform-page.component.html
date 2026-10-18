@@ -1,11 +1,37 @@
 @if (platform(); as platform) {
+    @let look = design()?.look ?? 'default';
     <article class="page">
         @if (titles(); as titles) {
-            <lib-platform-hero [platform]="platform" [titles]="titles" />
+            @switch (design()?.hero) {
+                @case ('billboard') {
+                    <lib-platform-billboard
+                        class="page__billboard"
+                        [platform]="platform"
+                        [look]="look"
+                        [titles]="titles"
+                    />
+                }
+                @case ('carousel') {
+                    <lib-platform-carousel
+                        [platform]="platform"
+                        [titles]="titles"
+                    />
+                }
+                @default {
+                    <lib-platform-hero
+                        [platform]="platform"
+                        [titles]="titles"
+                    />
+                }
+            }
         } @else {
             <!-- While the catalog loads, the platform's logo holds the
                  hero's place. -->
-            <header class="banner" [style.background]="platform.background">
+            <header
+                class="banner"
+                [class.banner--bleed]="design()?.hero === 'billboard'"
+                [style.background]="platform.background"
+            >
                 <lib-platform-logo class="banner__logo" [platform]="platform" />
             </header>
         }
@@ -25,13 +51,17 @@
                             ‹
                         </button>
                         <h2 class="all__title">
-                            {{ row.labelKey | translate }}
+                            {{ row.labelKey | translate: row.labelParams }}
                         </h2>
                         <span class="all__count">{{ row.titles.length }}</span>
                     </header>
                     <div class="all__grid">
                         @for (title of visible(); track title.kind + title.id) {
-                            <lib-platform-title-card [title]="title" />
+                            <lib-platform-title-card
+                                [title]="title"
+                                [look]="look"
+                                [tile]="design()?.tiles ?? 'poster'"
+                            />
                         }
                     </div>
                     @if (hasMore()) {
@@ -41,8 +71,14 @@
                     }
                 </section>
             } @else if (rows.length > 0) {
-                @for (row of rows; track row.id) {
-                    <lib-platform-row [row]="row" (seeAll)="openAll(row.id)" />
+                @if (design(); as design) {
+                    @for (row of rows; track row.id) {
+                        <lib-platform-row
+                            [row]="row"
+                            [design]="design"
+                            (seeAll)="openAll(row.id)"
+                        />
+                    }
                 }
             } @else {
                 <p class="note">

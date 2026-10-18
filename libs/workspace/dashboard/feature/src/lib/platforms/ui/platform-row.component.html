@@ -1,9 +1,10 @@
+@let look = design().look;
 <section class="row">
     <button type="button" class="row__heading" (click)="seeAll.emit()">
-        <h2 class="row__title">{{ row().labelKey | translate }}</h2>
-        <span class="row__see-all"
-            >{{ 'WORKSPACE.PLATFORMS.SEE_ALL' | translate }} ›</span
-        >
+        <h2 class="row__title">
+            {{ row().labelKey | translate: row().labelParams }}
+        </h2>
+        <span class="row__see-all">{{ design().seeAllKey | translate }} ›</span>
     </button>
     <div class="row__viewport">
         <button
@@ -17,7 +18,30 @@
         </button>
         <div class="row__track" #track>
             @for (title of titles(); track title.kind + title.id) {
-                <lib-platform-title-card class="row__item" [title]="title" />
+                @if (row().ranked) {
+                    <div class="row__item row__ranked">
+                        <span
+                            class="row__rank"
+                            [class.row__rank--wide]="$index >= 9"
+                            aria-hidden="true"
+                            >{{ $index + 1 }}</span
+                        >
+                        <lib-platform-title-card
+                            class="row__ranked-card"
+                            [title]="title"
+                            [look]="look"
+                            tile="poster"
+                            [rank]="$index + 1"
+                        />
+                    </div>
+                } @else {
+                    <lib-platform-title-card
+                        class="row__item"
+                        [title]="title"
+                        [look]="look"
+                        [tile]="design().tiles"
+                    />
+                }
             }
         </div>
         <button

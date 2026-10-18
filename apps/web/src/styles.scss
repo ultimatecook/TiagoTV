@@ -4,6 +4,7 @@
 @use '../../../libs/ui/styles/app-controls' as controls;
 @use './settings-theme';
 @use './cover-size';
+@use './platform-themes';
 
 // ─── Tailwind CSS ─────────────────────────────────────────────────────────────
 // Preflight is disabled in tailwind.config.js to avoid conflicts with

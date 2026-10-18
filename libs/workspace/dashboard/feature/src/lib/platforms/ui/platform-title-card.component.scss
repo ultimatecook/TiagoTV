@@ -1,8 +1,23 @@
 @use '../../../../../../../ui/styles/focus-ring';
 
+// The tile as each platform draws it. The default is TiagoTV's poster
+// with its name below; the looks change the artwork's shape and corners,
+// the hover and what sits on and under the artwork.
 :host {
+    --card-radius: 12px;
+    --card-aspect: 2 / 3;
+    --card-hover: translateY(-3px) scale(1.03);
+    --card-shadow: 0 14px 26px -20px rgba(0, 0, 0, 0.85);
+    --card-hover-shadow:
+        inset 0 0 0 3px rgba(255, 255, 255, 0.92),
+        0 22px 34px -20px rgba(0, 0, 0, 0.9);
+    --card-name-color: var(--app-heading-color);
     display: block;
     min-width: 0;
+}
+
+:host([data-tile='landscape']) {
+    --card-aspect: 16 / 9;
 }
 
 .card {
@@ -14,39 +29,41 @@
     padding: 0;
     border: 0;
     background: none;
-    color: var(--app-heading-color);
+    color: var(--card-name-color);
     font: inherit;
     text-align: left;
     cursor: pointer;
 
-    &:hover .card__poster,
-    &:focus-visible .card__poster {
-        transform: translateY(-3px) scale(1.03);
-        box-shadow:
-            inset 0 0 0 3px rgba(255, 255, 255, 0.92),
-            0 22px 34px -20px rgba(0, 0, 0, 0.9);
+    &:hover .card__art,
+    &:focus-visible .card__art {
+        transform: var(--card-hover);
+    }
+
+    // The pointer's lift and edge; the keyboard gets the app's ring.
+    &:hover .card__art {
+        box-shadow: var(--card-hover-shadow);
     }
 
     &:focus-visible {
         outline: none;
 
-        .card__poster {
+        .card__art {
             @include focus-ring.focus-ring-declarations($offset: 3px);
         }
     }
 }
 
-.card__poster {
+.card__art {
     position: relative;
     display: grid;
     place-items: center;
-    aspect-ratio: 2 / 3;
+    aspect-ratio: var(--card-aspect);
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: var(--card-radius);
     background: linear-gradient(160deg, #2c2c2b 0%, #161615 100%);
     box-shadow:
         inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-        0 14px 26px -20px rgba(0, 0, 0, 0.85);
+        var(--card-shadow);
     transition:
         transform 200ms ease,
         box-shadow 200ms ease;
@@ -59,6 +76,11 @@
         object-fit: cover;
         -webkit-user-drag: none;
     }
+}
+
+// A poster in a 16:9 frame shows its upper middle: faces and the title.
+.card__img--cropped {
+    object-position: center 22%;
 }
 
 .card__fallback {
@@ -93,8 +115,179 @@
     -webkit-line-clamp: 2;
 }
 
+.card__sub {
+    margin-top: -5px;
+    overflow: hidden;
+    color: #8e8e93;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// ─── Netflix: 4px corners, the red N, the title on the artwork ──────────
+:host([data-look='netflix']) {
+    --card-radius: 4px;
+    --card-hover: scale(1.08);
+    --card-shadow: none;
+    --card-hover-shadow: 0 14px 28px rgba(0, 0, 0, 0.75);
+
+    .card__art {
+        z-index: 0;
+        background: #2f2f2f;
+        box-shadow: none;
+        transition-duration: 300ms;
+    }
+
+    .card:hover .card__art,
+    .card:focus-visible .card__art {
+        z-index: 1;
+    }
+
+    .card__language {
+        top: 6px;
+        right: 6px;
+        left: auto;
+        padding: 1px 5px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 2px;
+        background: rgba(20, 20, 20, 0.6);
+        font-size: 9.5px;
+    }
+}
+
+.card__n {
+    position: absolute;
+    top: 4px;
+    left: 7px;
+    color: #e50914;
+    font-family: var(--app-display-font);
+    font-size: 24px;
+    line-height: 1;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.card__caption {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 28px 10px 8px;
+    overflow: hidden;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.82) 100%
+    );
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    white-space: nowrap;
+}
+
+// ─── Prime Video: 8px corners, the blue "included" check ───────────────
+:host([data-look='prime']) {
+    --card-radius: 8px;
+    --card-hover: scale(1.05);
+    --card-hover-shadow:
+        inset 0 0 0 2px #fff, 0 18px 30px -12px rgba(0, 0, 0, 0.8);
+    --card-name-color: #fff;
+
+    .card__art {
+        background: #1a242f;
+    }
+
+    .card__language {
+        right: 8px;
+        left: auto;
+        border-radius: 4px;
+        background: rgba(15, 23, 30, 0.75);
+    }
+
+    .card__name {
+        font-size: 14px;
+        -webkit-line-clamp: 1;
+    }
+}
+
+.card__check {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #00a8e1;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 4px;
+        left: 7px;
+        width: 5px;
+        height: 9px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+}
+
+// ─── HBO Max: 6px posters on black ──────────────────────────────────────
+:host([data-look='hbo']) {
+    --card-radius: 6px;
+    --card-hover: translateY(-4px) scale(1.04);
+    --card-hover-shadow:
+        inset 0 0 0 2px rgba(255, 255, 255, 0.9),
+        0 20px 32px -16px rgba(0, 43, 231, 0.55);
+    --card-name-color: #c9c9d6;
+
+    .card__name {
+        font-size: 13px;
+        font-weight: 500;
+        -webkit-line-clamp: 1;
+    }
+}
+
+// ─── Apple TV: large rounded cards, soft shadow, text below ─────────────
+:host([data-look='apple']) {
+    --card-radius: 16px;
+    --card-hover: scale(1.04);
+    --card-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.7);
+    --card-hover-shadow: 0 24px 44px -14px rgba(0, 0, 0, 0.85);
+    --card-name-color: #f5f5f7;
+
+    .card {
+        gap: 10px;
+        font-family:
+            -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue',
+            'DM Sans', sans-serif;
+    }
+
+    .card__art {
+        background: #1c1c1e;
+        box-shadow: var(--card-shadow);
+    }
+
+    .card__language {
+        top: 10px;
+        left: 10px;
+        border-radius: 6px;
+        background: rgba(28, 28, 30, 0.7);
+    }
+
+    .card__name {
+        font-size: 15px;
+        font-weight: 600;
+        -webkit-line-clamp: 1;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .card__poster {
+    .card__art {
         transition: none;
     }
 }

@@ -1966,7 +1966,9 @@
             "WATCH_LATER": "Watch Later",
             "DOWNLOADS": "Downloads",
             "MY_ACCOUNT": "My Account",
-            "SETTINGS": "Settings"
+            "SETTINGS": "Settings",
+            "HIDE": "Hide menu",
+            "SHOW": "Show menu"
         },
         "SOURCES": {
             "TITLE": "Sources",
@@ -2110,6 +2112,11 @@
             "TITLE": "Platforms",
             "RECOMMENDED": "Recommended",
             "MORE_INFO": "More info",
+            "WATCH": "Watch now",
+            "TOP10": "Top 10 on {{platform}}",
+            "INCLUDED": "Included with {{platform}}",
+            "EXPLORE_ALL": "Explore all",
+            "SEE_MORE": "See more",
             "NEWEST": "New on the platform",
             "MOVIES": "Movies",
             "SERIES": "Series",
@@ -2148,6 +2155,9 @@
             "LIVE_COUNT": "{{count}} live",
             "MATCHES": "Live and later today",
             "CHANNELS": "Channels",
+            "LIVE_CHANNELS": "Live channels",
+            "FEEDS_ONE": "1 feed",
+            "FEEDS": "{{count}} feeds",
             "NO_MATCHES": "No matches on your channels right now. They appear here once the provider names them.",
             "LOADING": "Looking for today's matches…",
             "FAILED": "The channel list could not be loaded. Check the source's connection."
@@ -2303,6 +2313,8 @@
         "UNMUTE": "Unmute",
         "LIVE": "Live",
         "SEEK": "Playback position",
-        "FAILED": "Can't continue here — open it to play"
+        "FAILED": "Can't continue here — open it to play",
+        "EXPAND": "Open full player",
+        "MINIMIZE": "Minimize player"
     }
 }

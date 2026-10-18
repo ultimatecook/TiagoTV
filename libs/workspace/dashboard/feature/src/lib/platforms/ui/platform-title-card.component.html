@@ -1,23 +1,40 @@
-<button
-    type="button"
-    class="card"
-    [attr.aria-label]="title().title"
-    (click)="open()"
->
-    <span class="card__poster">
-        @if (poster(); as url) {
+@let netflixTile = look() === 'netflix' && tile() === 'landscape';
+<button type="button" class="card" [attr.aria-label]="label()" (click)="open()">
+    <span class="card__art">
+        @if (art(); as art) {
             <img
-                [src]="url"
+                [src]="art.url"
+                [class.card__img--cropped]="art.cropped"
                 alt=""
                 loading="lazy"
                 referrerpolicy="no-referrer"
                 draggable="false"
-                (error)="posterFailed(url)"
+                (error)="artFailed(art.url)"
             />
         } @else {
             <span class="card__fallback">{{ title().title }}</span>
         }
+        @if (look() === 'netflix') {
+            <span class="card__n" aria-hidden="true">N</span>
+        } @else if (look() === 'prime') {
+            <span class="card__check" aria-hidden="true"></span>
+        }
         <span class="card__language">{{ title().language }}</span>
+        @if (netflixTile) {
+            <span class="card__caption" aria-hidden="true">{{
+                title().title
+            }}</span>
+        }
     </span>
-    <span class="card__name">{{ title().title }}</span>
+    @if (!netflixTile && !rank()) {
+        <span class="card__name">{{ title().title }}</span>
+    }
+    @if (look() === 'apple') {
+        <span class="card__sub"
+            >{{ typeKey() | translate }}
+            @if (genreKey(); as genre) {
+                · {{ genre | translate }}
+            }
+        </span>
+    }
 </button>

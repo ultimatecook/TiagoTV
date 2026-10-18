@@ -1,0 +1,122 @@
+<section
+    class="carousel"
+    aria-roledescription="carousel"
+    [attr.aria-label]="platform().name"
+    (mouseenter)="hero.setPaused(true)"
+    (mouseleave)="hero.setPaused(false)"
+    (focusin)="hero.setPaused(true)"
+    (focusout)="hero.setPaused(false)"
+>
+    <div class="carousel__frame">
+        <!-- Every slide's artwork stays mounted so a turn crossfades. -->
+        @for (slide of hero.slides(); track slide.key) {
+            <div
+                class="carousel__art"
+                [class.carousel__art--active]="$index === hero.activeIndex()"
+                aria-hidden="true"
+            >
+                @if (slide.backdrop; as backdrop) {
+                    <img
+                        class="carousel__image"
+                        [src]="backdrop"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                    />
+                } @else if (slide.title.poster; as poster) {
+                    <img
+                        class="carousel__keyart"
+                        [src]="poster"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                    />
+                }
+            </div>
+        }
+        <span class="carousel__scrim" aria-hidden="true"></span>
+
+        @for (slide of hero.current(); track slide.key) {
+            <div class="carousel__content">
+                <h2 class="carousel__title">{{ slide.title.title }}</h2>
+                <p class="carousel__included">
+                    <span class="carousel__check" aria-hidden="true"></span>
+                    {{
+                        'WORKSPACE.PLATFORMS.INCLUDED'
+                            | translate: { platform: 'Prime' }
+                    }}
+                </p>
+                <p class="carousel__meta">
+                    <span>{{ typeKey(slide.title) | translate }}</span>
+                    @for (genre of slide.genres; track genre) {
+                        <span>{{ genre }}</span>
+                    }
+                    <span class="carousel__language">{{
+                        slide.title.language
+                    }}</span>
+                </p>
+                @if (slide.plot) {
+                    <p class="carousel__plot">{{ slide.plot }}</p>
+                }
+                <div class="carousel__actions">
+                    <button
+                        type="button"
+                        class="carousel__play"
+                        (click)="hero.open(slide.title)"
+                    >
+                        <span class="carousel__disc" aria-hidden="true">
+                            <mat-icon>play_arrow</mat-icon>
+                        </span>
+                        <span>{{
+                            'WORKSPACE.PLATFORMS.WATCH' | translate
+                        }}</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="carousel__round"
+                        [attr.aria-label]="
+                            'WORKSPACE.PLATFORMS.MORE_INFO' | translate
+                        "
+                        (click)="hero.open(slide.title)"
+                    >
+                        <mat-icon aria-hidden="true">info_outline</mat-icon>
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (hero.slides().length > 1) {
+            <button
+                type="button"
+                class="carousel__arrow carousel__arrow--back"
+                [attr.aria-label]="'PORTALS.DETAIL.SCROLL_PREVIOUS' | translate"
+                (click)="hero.step(-1)"
+            >
+                <mat-icon aria-hidden="true">chevron_left</mat-icon>
+            </button>
+            <button
+                type="button"
+                class="carousel__arrow carousel__arrow--forward"
+                [attr.aria-label]="'PORTALS.DETAIL.SCROLL_NEXT' | translate"
+                (click)="hero.step(1)"
+            >
+                <mat-icon aria-hidden="true">chevron_right</mat-icon>
+            </button>
+        }
+    </div>
+
+    @if (hero.slides().length > 1) {
+        <div class="carousel__dots">
+            @for (slide of hero.slides(); track slide.key) {
+                <button
+                    type="button"
+                    class="carousel__dot"
+                    [class.carousel__dot--active]="
+                        $index === hero.activeIndex()
+                    "
+                    [attr.aria-label]="slide.title.title"
+                    [attr.aria-current]="$index === hero.activeIndex()"
+                    (click)="hero.show($index)"
+                ></button>
+            }
+        </div>
+    }
+</section>

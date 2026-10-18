@@ -101,8 +101,16 @@ export function mergePlatformTitles(
 export interface PlatformRow {
     readonly id: string;
     readonly labelKey: string;
-    /** Newest first. */
+    readonly labelParams?: Readonly<Record<string, string>>;
+    /** Newest first, or by rank in a ranked row. */
     readonly titles: readonly PlatformTitle[];
+    /** A "Top 10": each title carries its place, the best first. */
+    readonly ranked?: boolean;
+}
+
+export interface PlatformRowOptions {
+    /** Adds Netflix's "Top 10 on Netflix" row after what is new. */
+    readonly top10Of?: string;
 }
 
 /** The newest-titles row shows the latest additions only. */
@@ -110,13 +118,17 @@ const NEWEST_LIMIT = 30;
 /** A genre needs this many titles for a row of its own. */
 const GENRE_MIN_TITLES = 6;
 const GENRE_ROW_LIMIT = 10;
+/** The Top 10 ranks the best rated of the platform's recent titles. */
+const TOP_POOL = 150;
+const TOP_COUNT = 10;
 
 /**
  * The platform page's rows, as the platforms lay out their own: what is
  * new, its movies, its series, then its genres, the largest first.
  */
 export function buildPlatformRows(
-    titles: readonly PlatformTitle[]
+    titles: readonly PlatformTitle[],
+    options: PlatformRowOptions = {}
 ): PlatformRow[] {
     const rows: PlatformRow[] = [];
     const push = (id: string, labelKey: string, list: PlatformTitle[]) => {
@@ -125,6 +137,16 @@ export function buildPlatformRows(
         }
     };
     push('newest', 'WORKSPACE.PLATFORMS.NEWEST', titles.slice(0, NEWEST_LIMIT));
+    const top = options.top10Of ? topRated(titles) : [];
+    if (options.top10Of && top.length >= 3) {
+        rows.push({
+            id: 'top10',
+            labelKey: 'WORKSPACE.PLATFORMS.TOP10',
+            labelParams: { platform: options.top10Of },
+            titles: top,
+            ranked: true,
+        });
+    }
     push(
         'movies',
         'WORKSPACE.PLATFORMS.MOVIES',
@@ -152,6 +174,21 @@ export function buildPlatformRows(
             push(`genre-${genre}`, genreLabelKey(genre), list)
         );
     return rows;
+}
+
+/** The best rated of the recent titles with a poster, newest on a tie. */
+export function topRated(titles: readonly PlatformTitle[]): PlatformTitle[] {
+    return titles
+        .slice(0, TOP_POOL)
+        .filter((title) => title.poster && (title.rating ?? 0) > 0)
+        .map((title, index) => ({ title, index }))
+        .sort(
+            (a, b) =>
+                (b.title.rating ?? 0) - (a.title.rating ?? 0) ||
+                a.index - b.index
+        )
+        .slice(0, TOP_COUNT)
+        .map(({ title }) => title);
 }
 
 function readRating(value: number | string | null | undefined): number | null {

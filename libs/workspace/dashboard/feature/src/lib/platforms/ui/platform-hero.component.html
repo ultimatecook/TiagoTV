@@ -1,17 +1,17 @@
 <section
     class="hero"
     [attr.aria-label]="platform().name"
-    (mouseenter)="setPaused(true)"
-    (mouseleave)="setPaused(false)"
-    (focusin)="setPaused(true)"
-    (focusout)="setPaused(false)"
+    (mouseenter)="hero.setPaused(true)"
+    (mouseleave)="hero.setPaused(false)"
+    (focusin)="hero.setPaused(true)"
+    (focusout)="hero.setPaused(false)"
 >
     <!-- Every slide's artwork stays mounted so a turn crossfades. -->
     <div class="hero__stage" aria-hidden="true">
-        @for (slide of slides(); track slide.key) {
+        @for (slide of hero.slides(); track slide.key) {
             <div
                 class="hero__backdrop"
-                [class.hero__backdrop--active]="$index === activeIndex()"
+                [class.hero__backdrop--active]="$index === hero.activeIndex()"
             >
                 @if (slide.backdrop; as backdrop) {
                     <img
@@ -39,7 +39,7 @@
         <span class="hero__scrim"></span>
     </div>
 
-    @for (slide of current(); track slide.key) {
+    @for (slide of hero.current(); track slide.key) {
         <div class="hero__content">
             <p class="hero__eyebrow">
                 <lib-platform-logo class="hero__mark" [platform]="platform()" />
@@ -66,7 +66,7 @@
             <button
                 type="button"
                 class="hero__button"
-                (click)="open(slide.title)"
+                (click)="hero.open(slide.title)"
             >
                 <mat-icon aria-hidden="true">info</mat-icon>
                 <span>{{ 'WORKSPACE.PLATFORMS.MORE_INFO' | translate }}</span>
@@ -74,16 +74,16 @@
         </div>
     }
 
-    @if (slides().length > 1) {
+    @if (hero.slides().length > 1) {
         <div class="hero__dots">
-            @for (slide of slides(); track slide.key) {
+            @for (slide of hero.slides(); track slide.key) {
                 <button
                     type="button"
                     class="hero__dot"
-                    [class.hero__dot--active]="$index === activeIndex()"
+                    [class.hero__dot--active]="$index === hero.activeIndex()"
                     [attr.aria-label]="slide.title.title"
-                    [attr.aria-current]="$index === activeIndex()"
-                    (click)="show($index)"
+                    [attr.aria-current]="$index === hero.activeIndex()"
+                    (click)="hero.show($index)"
                 ></button>
             }
         </div>

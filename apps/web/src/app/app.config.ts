@@ -45,6 +45,7 @@ import { providePortalPlaybackPositions } from './services/portal-playback-posit
 import { PwaService } from './services/pwa.service';
 import { shouldEnableServiceWorker } from './services/runtime-config';
 import { LazyStalkerPlaylistConnectionEditor } from './services/lazy-stalker-playlist-connection-editor';
+import { providePlatformTheme } from './services/platform-theme';
 import { provideWorkspaceShellActions } from './services/workspace-shell-actions.service';
 
 // AoT requires an exported function for factories
@@ -169,5 +170,6 @@ export const appConfig: ApplicationConfig = {
         ...provideParentalLockPrompt(),
         provideParentalLockPlaylistCleanup(),
         ...provideXtreamDataSource(),
+        providePlatformTheme(),
     ],
 };

@@ -36,9 +36,23 @@ El avatar arriba a la derecha cambia la fuente activa (⌘/Ctrl + P).
 Si salís de una película, serie o canal mientras se reproduce, sigue
 sonando en la barra de abajo: miniatura con el video, título, cerrar,
 −10 s / +10 s, play/pausa, repetir, tiempo, volumen y una línea de progreso
-para saltar. Tocar la miniatura o el título vuelve a la página de origen; si
-le das Play ahí, la barra se cierra (se reproduce una sola cosa a la vez).
-La posición se guarda, así que "Continue Watching" retoma donde quedó.
+para saltar. Tocar la miniatura abre el reproductor en toda la ventana sin
+cortar el stream (Esc o minimizar lo devuelve a la barra); el título vuelve
+a la página de origen, y si le das Play ahí, la barra se cierra (se
+reproduce una sola cosa a la vez). La posición se guarda, así que
+"Continue Watching" retoma donde quedó.
+
+## Menú lateral
+
+El botón al lado del saludo (o ⌃⌘S, Ctrl+Alt+S fuera de macOS) esconde el
+menú para usar toda la ventana; el botón ☰ arriba a la izquierda lo vuelve
+a mostrar. La app recuerda cómo lo dejaste.
+
+## Plataformas
+
+Las tarjetas de plataformas del Home abren sus películas y series en
+español e inglés. Netflix, Prime Video, HBO Max y Apple TV toman el aspecto
+de cada plataforma, también en la ficha de un título abierto desde ahí.
 
 ## Servidor propio en tu red
 

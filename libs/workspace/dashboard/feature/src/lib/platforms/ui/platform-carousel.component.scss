@@ -1,0 +1,374 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+// Prime Video's rounded hero carousel on navy (#0f171e), in Prime's blue
+// (#00a8e1). Each artwork layer rounds its own corners, so the frame clips
+// nothing while the slides crossfade.
+:host {
+    --prime-navy: #0f171e;
+    --prime-blue: #00a8e1;
+    --carousel-radius: 8px;
+    display: block;
+    min-width: 0;
+}
+
+.carousel {
+    color: #fff;
+}
+
+.carousel__frame {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: clamp(330px, 33vw, 480px);
+    border-radius: var(--carousel-radius);
+    background: #1a242f;
+    box-shadow: 0 24px 50px -30px rgba(0, 0, 0, 0.9);
+}
+
+.carousel__art {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: var(--carousel-radius);
+    opacity: 0;
+    transition: opacity 800ms ease;
+}
+
+.carousel__art--active {
+    opacity: 1;
+}
+
+.carousel__image {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 72%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 22%;
+}
+
+// Only a poster: navy, and the poster standing on the right.
+.carousel__keyart {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(46%, 560px);
+    height: 100%;
+    object-fit: cover;
+    object-position: center 22%;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 40%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 40%);
+}
+
+.carousel__scrim {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--carousel-radius);
+    background:
+        linear-gradient(
+            90deg,
+            #1a242f 0%,
+            #1a242f 28%,
+            rgba(26, 36, 47, 0.7) 44%,
+            transparent 70%
+        ),
+        linear-gradient(180deg, transparent 60%, rgba(15, 23, 30, 0.6) 100%);
+    pointer-events: none;
+}
+
+.carousel__content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: min(520px, 46%);
+    margin-left: clamp(28px, 4.4vw, 64px);
+    animation: carousel-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes carousel-in {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+}
+
+.carousel__title {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    font-size: clamp(30px, 3.2vw, 48px);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.015em;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.carousel__included {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.carousel__check {
+    position: relative;
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--prime-blue);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 4px;
+        left: 7px;
+        width: 5px;
+        height: 9px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+    }
+}
+
+.carousel__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    margin: 0;
+    color: #8197a4;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.carousel__language {
+    padding: 0 5px;
+    border: 1px solid #8197a4;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.carousel__plot {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: #d6dee4;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.carousel__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 6px;
+}
+
+// The round blue disc with the label beside it, Prime's "Play".
+.carousel__play {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 8px 0 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: #fff;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover .carousel__disc {
+        background: #33bbe9;
+        transform: scale(1.06);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+.carousel__disc {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--prime-blue);
+    transition:
+        background-color 150ms ease,
+        transform 150ms ease;
+
+    mat-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 34px;
+        line-height: 34px;
+    }
+}
+
+.carousel__round {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(66, 82, 101, 0.85);
+    color: #fff;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        color 150ms ease;
+
+    &:hover {
+        background: #fff;
+        color: var(--prime-navy);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+.carousel__arrow {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 160ms ease,
+        background-color 160ms ease;
+
+    mat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 40px;
+        line-height: 40px;
+    }
+
+    &:hover {
+        background: rgba(15, 23, 30, 0.45);
+    }
+
+    &:focus-visible {
+        opacity: 1;
+        @include focus-ring.focus-ring-declarations($offset: -3px);
+    }
+}
+
+.carousel__frame:hover .carousel__arrow {
+    opacity: 1;
+}
+
+.carousel__arrow--back {
+    left: 0;
+    border-radius: var(--carousel-radius) 0 0 var(--carousel-radius);
+}
+
+.carousel__arrow--forward {
+    right: 0;
+    border-radius: 0 var(--carousel-radius) var(--carousel-radius) 0;
+}
+
+.carousel__dots {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin-top: 10px;
+}
+
+.carousel__dot {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+
+    &::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #425265;
+        transition: background-color 200ms ease;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.carousel__dot--active::before {
+    background: #fff;
+}
+
+@media (max-width: 720px) {
+    .carousel__frame {
+        align-items: flex-end;
+        height: auto;
+        min-height: 400px;
+    }
+
+    .carousel__image,
+    .carousel__keyart {
+        width: 100%;
+    }
+
+    .carousel__scrim {
+        background: linear-gradient(
+            180deg,
+            transparent 20%,
+            rgba(26, 36, 47, 0.85) 60%,
+            #1a242f 100%
+        );
+    }
+
+    .carousel__content {
+        max-width: none;
+        margin: 0 20px 24px;
+    }
+}
+
+@media (hover: none) {
+    .carousel__arrow {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .carousel__art,
+    .carousel__disc,
+    .carousel__dot::before {
+        transition: none;
+    }
+
+    .carousel__content {
+        animation: none;
+    }
+}

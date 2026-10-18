@@ -1966,7 +1966,9 @@
             "WATCH_LATER": "Ver más tarde",
             "DOWNLOADS": "Descargas",
             "MY_ACCOUNT": "Mi cuenta",
-            "SETTINGS": "Ajustes"
+            "SETTINGS": "Ajustes",
+            "HIDE": "Ocultar menú",
+            "SHOW": "Mostrar menú"
         },
         "SOURCES": {
             "TITLE": "Fuentes",
@@ -2109,7 +2111,12 @@
         "PLATFORMS": {
             "TITLE": "Plataformas",
             "RECOMMENDED": "Recomendada",
-            "MORE_INFO": "Más info",
+            "MORE_INFO": "Más información",
+            "WATCH": "Ver ahora",
+            "TOP10": "Top 10 en {{platform}}",
+            "INCLUDED": "Incluido con {{platform}}",
+            "EXPLORE_ALL": "Explorar todo",
+            "SEE_MORE": "Ver más",
             "NEWEST": "Lo más nuevo",
             "MOVIES": "Películas",
             "SERIES": "Series",
@@ -2148,6 +2155,9 @@
             "LIVE_COUNT": "{{count}} en vivo",
             "MATCHES": "En vivo y más tarde",
             "CHANNELS": "Canales",
+            "LIVE_CHANNELS": "Canales en vivo",
+            "FEEDS_ONE": "1 señal",
+            "FEEDS": "{{count}} señales",
             "NO_MATCHES": "Ahora no hay partidos en tus canales. Aparecen acá cuando el proveedor los anuncia.",
             "LOADING": "Buscando los partidos de hoy…",
             "FAILED": "No se pudo cargar la lista de canales. Revisá la conexión de la fuente."
@@ -2303,6 +2313,8 @@
         "UNMUTE": "Activar sonido",
         "LIVE": "En vivo",
         "SEEK": "Posición de reproducción",
-        "FAILED": "No se puede seguir acá: abrilo para reproducir"
+        "FAILED": "No se puede seguir acá: abrilo para reproducir",
+        "EXPAND": "Abrir reproductor completo",
+        "MINIMIZE": "Minimizar reproductor"
     }
 }

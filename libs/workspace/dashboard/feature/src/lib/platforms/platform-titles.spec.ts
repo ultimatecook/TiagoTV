@@ -2,6 +2,7 @@ import {
     buildPlatformRows,
     mergePlatformTitles,
     toPlatformTitles,
+    topRated,
     type PlatformTitle,
 } from './platform-titles';
 import type { PlatformCategory } from './streaming-platforms';
@@ -108,5 +109,77 @@ describe('platform titles', () => {
             ['genre-comedy', 6],
         ]);
         expect(rows[3].labelKey).toBe('WORKSPACE.PLATFORMS.GENRES.HORROR');
+    });
+
+    describe('Top 10', () => {
+        const rated = (
+            id: number,
+            rating: number | null,
+            poster: string | null = `http://img/${id}.jpg`
+        ): PlatformTitle => ({
+            id,
+            kind: id % 2 ? 'movie' : 'series',
+            categoryId: '1',
+            title: `T${id}`,
+            poster,
+            language: 'ES',
+            added: 1000 - id,
+            genres: [],
+            rating,
+            plot: null,
+            backdrop: null,
+        });
+
+        it('ranks the best rated with a poster, the newest on a tie', () => {
+            const titles = [
+                rated(1, 6),
+                rated(2, 9.1),
+                rated(3, null),
+                rated(4, 9.5, null),
+                rated(5, 7.2),
+                rated(6, 9.1),
+                ...Array.from({ length: 12 }, (_, i) => rated(10 + i, 5)),
+            ];
+
+            const top = topRated(titles);
+
+            expect(top).toHaveLength(10);
+            expect(top.slice(0, 4).map((title) => title.id)).toEqual([
+                2, 6, 5, 1,
+            ]);
+            expect(top.map((title) => title.id)).not.toContain(3);
+            expect(top.map((title) => title.id)).not.toContain(4);
+        });
+
+        it('adds a ranked row after the newest only when asked', () => {
+            const titles = Array.from({ length: 12 }, (_, i) =>
+                rated(i + 1, 5 + i / 4)
+            );
+
+            expect(buildPlatformRows(titles).some((row) => row.ranked)).toBe(
+                false
+            );
+
+            const rows = buildPlatformRows(titles, { top10Of: 'Netflix' });
+
+            expect(rows.map((row) => row.id).slice(0, 2)).toEqual([
+                'newest',
+                'top10',
+            ]);
+            expect(rows[1]).toMatchObject({
+                labelKey: 'WORKSPACE.PLATFORMS.TOP10',
+                labelParams: { platform: 'Netflix' },
+                ranked: true,
+            });
+            expect(rows[1].titles[0].id).toBe(12);
+        });
+
+        it('leaves the row out when too few titles are rated', () => {
+            const rows = buildPlatformRows([rated(1, 8), rated(2, null)], {
+                top10Of: 'Netflix',
+            });
+
+            expect(rows.map((row) => row.id)).not.toContain('top10');
+        });
     });
 });

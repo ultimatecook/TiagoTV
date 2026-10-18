@@ -1,0 +1,132 @@
+@let netflix = look() === 'netflix';
+<section
+    class="billboard"
+    [attr.aria-label]="platform().name"
+    (mouseenter)="hero.setPaused(true)"
+    (mouseleave)="hero.setPaused(false)"
+    (focusin)="hero.setPaused(true)"
+    (focusout)="hero.setPaused(false)"
+>
+    <!-- Every slide's artwork stays mounted so a turn crossfades. -->
+    <div class="billboard__stage" aria-hidden="true">
+        @for (slide of hero.slides(); track slide.key) {
+            <div
+                class="billboard__art"
+                [class.billboard__art--active]="$index === hero.activeIndex()"
+            >
+                @if (slide.backdrop; as backdrop) {
+                    <img
+                        class="billboard__image"
+                        [src]="backdrop"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                    />
+                } @else if (slide.title.poster; as poster) {
+                    <img
+                        class="billboard__image billboard__image--wash"
+                        [src]="poster"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                    />
+                    <img
+                        class="billboard__keyart"
+                        [src]="poster"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                    />
+                }
+            </div>
+        }
+        <span class="billboard__scrim"></span>
+    </div>
+
+    @for (slide of hero.current(); track slide.key) {
+        <div class="billboard__content">
+            <p class="billboard__eyebrow">
+                @if (netflix) {
+                    <span class="billboard__n" aria-hidden="true">N</span>
+                } @else {
+                    <lib-platform-logo
+                        class="billboard__mark"
+                        [platform]="platform()"
+                    />
+                }
+                <span>{{ typeKey(slide.title) | translate }}</span>
+            </p>
+            <h2 class="billboard__title">{{ slide.title.title }}</h2>
+            <p class="billboard__meta">
+                @if (netflix && slide.match) {
+                    <span class="billboard__match">{{
+                        'WORKSPACE.DASHBOARD.MATCH'
+                            | translate: { value: slide.match }
+                    }}</span>
+                }
+                @for (genre of slide.genres; track genre) {
+                    <span class="billboard__genre">{{ genre }}</span>
+                }
+                @if (!netflix) {
+                    <span class="billboard__language">{{
+                        slide.title.language
+                    }}</span>
+                }
+            </p>
+            @if (slide.plot) {
+                <p class="billboard__plot">{{ slide.plot }}</p>
+            }
+            <div class="billboard__actions">
+                <button
+                    type="button"
+                    class="billboard__play"
+                    (click)="hero.open(slide.title)"
+                >
+                    <mat-icon aria-hidden="true">play_arrow</mat-icon>
+                    <span>{{ 'WORKSPACE.PLATFORMS.WATCH' | translate }}</span>
+                </button>
+                @if (netflix) {
+                    <button
+                        type="button"
+                        class="billboard__info"
+                        (click)="hero.open(slide.title)"
+                    >
+                        <mat-icon aria-hidden="true">info_outline</mat-icon>
+                        <span>{{
+                            'WORKSPACE.PLATFORMS.MORE_INFO' | translate
+                        }}</span>
+                    </button>
+                } @else {
+                    <button
+                        type="button"
+                        class="billboard__round"
+                        [attr.aria-label]="
+                            'WORKSPACE.PLATFORMS.MORE_INFO' | translate
+                        "
+                        (click)="hero.open(slide.title)"
+                    >
+                        <mat-icon aria-hidden="true">info_outline</mat-icon>
+                    </button>
+                }
+            </div>
+        </div>
+        @if (netflix) {
+            <!-- Netflix's maturity band, carrying the title's language. -->
+            <span class="billboard__band">{{ slide.title.language }}</span>
+        }
+    }
+
+    @if (hero.slides().length > 1) {
+        <div class="billboard__dots">
+            @for (slide of hero.slides(); track slide.key) {
+                <button
+                    type="button"
+                    class="billboard__dot"
+                    [class.billboard__dot--active]="
+                        $index === hero.activeIndex()
+                    "
+                    [attr.aria-label]="slide.title.title"
+                    [attr.aria-current]="$index === hero.activeIndex()"
+                    (click)="hero.show($index)"
+                ></button>
+            }
+        </div>
+    }
+</section>

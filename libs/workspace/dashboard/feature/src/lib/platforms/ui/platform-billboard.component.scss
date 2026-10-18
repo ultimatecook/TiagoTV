@@ -1,0 +1,505 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+// The full-bleed billboard of Netflix, HBO Max and Apple TV. The artwork
+// fills the page's width and fades into the page's colour (`--bb-bg`);
+// the title block sits at the lower left, `--bb-lift` of the height up.
+:host {
+    --bb-bg: #141414;
+    --bb-height: clamp(420px, 46vw, 640px);
+    --bb-lift: 0.14;
+    --bb-content: min(540px, 44%);
+    --bb-font: inherit;
+    // The fade into the page comes first, over the side's shade, so the
+    // foot is exactly the page's colour.
+    --bb-scrim:
+        linear-gradient(180deg, transparent 50%, var(--bb-bg) 100%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, transparent 62%);
+    display: block;
+    min-width: 0;
+}
+
+.billboard {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    height: var(--bb-height);
+    overflow: hidden;
+    background: var(--bb-bg);
+    color: #fff;
+    font-family: var(--bb-font);
+}
+
+.billboard__stage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.billboard__art {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 900ms ease;
+}
+
+.billboard__art--active {
+    opacity: 1;
+}
+
+.billboard__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+}
+
+// A poster washes the stage blurred and stands sharp on the right.
+.billboard__image--wash {
+    filter: blur(40px) saturate(1.3) brightness(0.6);
+    transform: scale(1.15);
+}
+
+.billboard__keyart {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(58%, 780px);
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
+}
+
+.billboard__scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--bb-scrim);
+}
+
+.billboard__content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    width: var(--bb-content);
+    margin: 0 0 calc(var(--bb-height) * var(--bb-lift)) var(--page-gutter);
+    animation: billboard-in 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes billboard-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}
+
+.billboard__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.billboard__mark {
+    width: 76px;
+    height: 24px;
+    justify-items: start;
+    --platform-wordmark-size: 18px;
+}
+
+.billboard__title {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    font-size: clamp(40px, 4.4vw, 70px);
+    font-weight: 700;
+    line-height: 1.03;
+    letter-spacing: -0.025em;
+    text-shadow: 0 2px 22px rgba(0, 0, 0, 0.4);
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.billboard__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.billboard__genre + .billboard__genre::before {
+    content: '·';
+    margin-right: 10px;
+    opacity: 0.6;
+}
+
+.billboard__match {
+    color: #46d369;
+    font-weight: 700;
+}
+
+.billboard__language {
+    padding: 1px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.billboard__plot {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 15px;
+    line-height: 1.5;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.billboard__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.billboard__play,
+.billboard__info,
+.billboard__round {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    border: 0;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease;
+
+    mat-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 28px;
+        line-height: 28px;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+// White pill, then a round outlined button (HBO Max, Apple TV).
+.billboard__play {
+    padding: 0 28px 0 20px;
+    border-radius: 999px;
+    background: #fff;
+    color: #000;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.8);
+    }
+}
+
+.billboard__round {
+    width: 48px;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.72);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.25);
+    color: #fff;
+
+    &:hover {
+        border-color: #fff;
+        background: rgba(255, 255, 255, 0.16);
+    }
+}
+
+.billboard__dots {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    z-index: 2;
+    display: flex;
+    gap: 2px;
+    transform: translateX(-50%);
+}
+
+.billboard__dot {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+
+    &::before {
+        content: '';
+        width: 18px;
+        height: 3px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.32);
+        transition: background-color 200ms ease;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.billboard__dot--active::before {
+    background: #fff;
+}
+
+// ─── Netflix ────────────────────────────────────────────────────────────
+// Black #141414, a huge title, the white "Play" and the grey "More info"
+// with 4px corners, the green match and the maturity band at the right.
+// The first row rides up over the artwork's faded foot.
+:host([data-look='netflix']) {
+    --bb-height: clamp(440px, 50vw, 680px);
+    --bb-lift: 0.27;
+    --bb-content: min(560px, 40%);
+    --bb-scrim:
+        linear-gradient(
+            180deg,
+            rgba(20, 20, 20, 0.6) 0%,
+            transparent 14%,
+            transparent 50%,
+            rgba(20, 20, 20, 0.55) 74%,
+            #141414 100%
+        ),
+        linear-gradient(
+            77deg,
+            rgba(0, 0, 0, 0.72) 0%,
+            rgba(0, 0, 0, 0.32) 40%,
+            transparent 72%
+        );
+
+    .billboard__eyebrow {
+        gap: 8px;
+        color: #e5e5e5;
+        font-size: 14px;
+        letter-spacing: 0.34em;
+    }
+
+    .billboard__title {
+        font-family: var(--app-display-font);
+        font-size: clamp(54px, 6.4vw, 108px);
+        font-weight: 400;
+        line-height: 0.86;
+        letter-spacing: 0.005em;
+        text-transform: uppercase;
+    }
+
+    .billboard__meta {
+        color: #fff;
+        font-size: 16px;
+    }
+
+    .billboard__plot {
+        color: #fff;
+        font-size: clamp(14px, 1.2vw, 18px);
+        line-height: 1.42;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.45);
+    }
+
+    .billboard__play,
+    .billboard__info {
+        height: clamp(40px, 3.2vw, 48px);
+        padding: 0 26px 0 18px;
+        border-radius: 4px;
+        font-size: clamp(15px, 1.25vw, 18px);
+    }
+
+    .billboard__play mat-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 34px;
+        line-height: 34px;
+    }
+
+    .billboard__play:hover {
+        background: rgba(255, 255, 255, 0.75);
+    }
+
+    .billboard__dots {
+        right: var(--page-gutter);
+        bottom: calc(var(--bb-height) * var(--bb-lift) + 54px);
+        left: auto;
+        transform: none;
+    }
+
+    .billboard__dot::before {
+        width: 12px;
+        height: 2px;
+    }
+}
+
+.billboard__n {
+    color: #e50914;
+    font-family: var(--app-display-font);
+    font-size: 42px;
+    letter-spacing: 0;
+    line-height: 0.74;
+}
+
+.billboard__info {
+    background: rgba(109, 109, 109, 0.7);
+    color: #fff;
+
+    &:hover {
+        background: rgba(109, 109, 109, 0.4);
+    }
+}
+
+.billboard__band {
+    position: absolute;
+    right: 0;
+    bottom: calc(var(--bb-height) * var(--bb-lift) + 6px);
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 clamp(36px, 5vw, 72px) 0 12px;
+    border-left: 3px solid #dcdcdc;
+    background: rgba(51, 51, 51, 0.6);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 500;
+}
+
+// ─── HBO Max ────────────────────────────────────────────────────────────
+// Black into deep indigo, a clean bold title, white pills.
+:host([data-look='hbo']) {
+    --bb-bg: #05050f;
+    --bb-lift: 0.16;
+    --bb-scrim:
+        linear-gradient(180deg, rgba(5, 5, 15, 0.55) 0%, transparent 18%),
+        linear-gradient(
+            90deg,
+            rgba(5, 5, 15, 0.92) 0%,
+            rgba(5, 5, 15, 0.6) 34%,
+            transparent 66%
+        ),
+        linear-gradient(180deg, transparent 55%, var(--bb-bg) 100%);
+
+    .billboard__plot {
+        color: #d4d4e2;
+    }
+}
+
+// ─── Apple TV ───────────────────────────────────────────────────────────
+// Black, the system font, a white pill and a frosted round button.
+:host([data-look='apple']) {
+    --bb-bg: #000;
+    --bb-height: clamp(440px, 48vw, 660px);
+    --bb-lift: 0.12;
+    --bb-font:
+        -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue',
+        'DM Sans', sans-serif;
+    --bb-scrim:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, transparent 18%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.66) 0%, transparent 58%),
+        linear-gradient(
+            180deg,
+            transparent 42%,
+            rgba(0, 0, 0, 0.78) 82%,
+            #000 100%
+        );
+
+    .billboard__eyebrow {
+        color: #a1a1a6;
+        letter-spacing: 0.08em;
+    }
+
+    .billboard__mark {
+        width: 58px;
+        height: 22px;
+    }
+
+    .billboard__title {
+        letter-spacing: -0.03em;
+    }
+
+    .billboard__play {
+        padding: 0 32px 0 22px;
+        font-size: 17px;
+        font-weight: 600;
+    }
+
+    .billboard__round {
+        border: 0;
+        background: rgba(255, 255, 255, 0.18);
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    }
+
+    .billboard__dot::before {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+    }
+}
+
+// Narrow: the title block takes the width, the artwork fades under it.
+@media (max-width: 720px) {
+    :host {
+        --bb-content: calc(100% - 2 * var(--page-gutter));
+        --bb-lift: 0.1;
+    }
+
+    :host([data-look='netflix']) {
+        --bb-content: calc(100% - 2 * var(--page-gutter));
+        --bb-lift: 0.2;
+    }
+
+    .billboard__keyart {
+        width: 100%;
+        -webkit-mask-image: linear-gradient(180deg, #000 35%, transparent 85%);
+        mask-image: linear-gradient(180deg, #000 35%, transparent 85%);
+    }
+
+    .billboard__band,
+    :host([data-look='netflix']) .billboard__dots {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .billboard__art,
+    .billboard__dot::before {
+        transition: none;
+    }
+
+    .billboard__content {
+        animation: none;
+    }
+}
