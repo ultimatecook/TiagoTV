@@ -12,7 +12,11 @@ import {
 import { RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ExternalPlaybackDockComponent } from '@iptvnator/ui/components';
-import { EmbeddedMpvOverlayVisibilityService } from '@iptvnator/ui/playback';
+import {
+    EmbeddedMpvOverlayVisibilityService,
+    NowPlayingBarComponent,
+    NowPlayingDockService,
+} from '@iptvnator/ui/playback';
 import {
     PlaylistDropOverlayComponent,
     PlaylistDropZoneDirective,
@@ -43,6 +47,7 @@ import { LIVE_CATEGORIES_POPOVER } from '@iptvnator/portal/shared/util';
         CdkTrapFocus,
         ExternalPlaybackDockComponent,
         LayoutSlideDirective,
+        NowPlayingBarComponent,
         TranslatePipe,
         PlaylistDropOverlayComponent,
         PlaylistDropZoneDirective,
@@ -81,6 +86,8 @@ export class WorkspaceShellComponent {
     readonly facade = inject(WorkspaceShellFacade);
     readonly keyboardShortcuts = inject(WorkspaceKeyboardShortcutsService);
     readonly contextDrawer = inject(WorkspaceShellContextDrawerService);
+    /** The bottom mini-player's session, when a page handed a stream over. */
+    readonly nowPlaying = inject(NowPlayingDockService);
     private readonly mpvOverlayVisibility = inject(
         EmbeddedMpvOverlayVisibilityService
     );

@@ -104,6 +104,12 @@ app-workspace-shell-header {
             ::ng-deep .workspace-header > * {
                 pointer-events: auto;
             }
+
+            // Home is the top of the app: the history Back would sit on
+            // "Continue Watching"; the sidebar is the way around.
+            ::ng-deep .header-back {
+                display: none;
+            }
         }
     }
 }
@@ -217,6 +223,12 @@ app-workspace-shell-context-sidebar {
     &.layout-slide-active::after {
         content: none;
     }
+}
+
+// The now-playing pill overlaps the window's lower edge: the last row can
+// still scroll up clear of it.
+.has-now-playing .workspace-content {
+    padding-bottom: 56px;
 }
 
 .workspace-content {

@@ -31,6 +31,30 @@ _Home / Library_, tarjeta destacada "Continue Watching", filas de pósters
 
 El avatar arriba a la derecha cambia la fuente activa (⌘/Ctrl + P).
 
+## Mini-reproductor
+
+Si salís de una película, serie o canal mientras se reproduce, sigue
+sonando en la barra de abajo: miniatura con el video, título, cerrar,
+−10 s / +10 s, play/pausa, repetir, tiempo, volumen y una línea de progreso
+para saltar. Tocar la miniatura o el título vuelve a la página de origen; si
+le das Play ahí, la barra se cierra (se reproduce una sola cosa a la vez).
+La posición se guarda, así que "Continue Watching" retoma donde quedó.
+
+## Servidor propio en tu red
+
+La app de escritorio acepta IPs locales (`192.168.x.x`, `10.x.x.x`,
+`localhost`) en las tres formas de conexión:
+
+- **Lista M3U por URL**, por ejemplo `http://192.168.1.50:8080/videos.m3u`
+  con una entrada `#EXTINF` + URL por video (o un archivo `.m3u` local).
+- **Xtream Codes**: servidor `http://IP:puerto`, usuario y contraseña.
+- **Stalker / Ministra**: URL del portal y MAC.
+
+Para los formatos: MP4 (H.264/AAC), WebM, HLS y MPEG-TS se reproducen con el
+reproductor integrado; MKV o HEVC/AC3 conviene abrirlos con MPV o VLC
+(Settings → Playback). La guía EPG desde una IP local requiere arrancar la
+app con `IPTVNATOR_ALLOW_PRIVATE_NETWORK_URLS=1`.
+
 ## Desarrollo
 
 Requiere Node 22.22+ y pnpm 10 (`corepack enable`).

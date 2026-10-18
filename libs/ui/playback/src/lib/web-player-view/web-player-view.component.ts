@@ -3,6 +3,7 @@ import {
     ElementRef,
     Injector,
     OnDestroy,
+    OnInit,
     ViewEncapsulation,
     computed,
     effect,
@@ -71,6 +72,7 @@ import {
     toVideoPlayer,
 } from './web-player-recovery-policy';
 import { resolveWebPlayerSharedControls } from './web-player-shared-controls';
+import { NowPlayingPageHandoff } from '../now-playing/now-playing-page-handoff';
 
 @Component({
     selector: 'app-web-player-view',
@@ -94,7 +96,7 @@ import { resolveWebPlayerSharedControls } from './web-player-shared-controls';
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })
-export class WebPlayerViewComponent implements OnDestroy {
+export class WebPlayerViewComponent implements OnInit, OnDestroy {
     /**
      * DOM fullscreen owner handed to every rendered player. Applications are
      * remounted per token (`@for ... track application.token` below), and
@@ -170,6 +172,13 @@ export class WebPlayerViewComponent implements OnDestroy {
     readonly nextEpisodeRequested = output<void>();
     /** Re-emitted embedded-MPV clean recording stop (stop enrichment). */
     readonly recordingStopped = output<RecordingStoppedEvent>();
+    /**
+     * A page's player hands its stream to the bottom mini-player when the
+     * user navigates away mid-playback; the mini-player's own view is not.
+     */
+    readonly dockable = input(true);
+
+    private readonly nowPlaying = new NowPlayingPageHandoff(this.dockable);
 
     readonly showCaptions = computed(
         () => this.settingsStore.showCaptions?.() ?? false
@@ -357,7 +366,24 @@ export class WebPlayerViewComponent implements OnDestroy {
         });
     }
 
+    ngOnInit(): void {
+        this.nowPlaying.pageStarted();
+    }
+
     ngOnDestroy(): void {
+        const playback = this.playback();
+        const mediaTitle = this.resolvedMediaTitle();
+        this.nowPlaying.release({
+            streamUrl: this.streamUrl(),
+            sessionKey: this.playbackSessionKey(),
+            playback,
+            title: mediaTitle?.primary || this.title() || playback?.title || '',
+            subtitle: mediaTitle?.secondary ?? null,
+            isLive: this.resolvedIsLive(),
+            // The engines render their media element inside this host.
+            video: this.fullscreenSurface.querySelector('video'),
+            fallbackVolume: this.volume(),
+        });
         this.liveAutoFormat.destroy();
         this.externalRecovery.destroy();
         this.applicationHandoff.destroy();
@@ -404,6 +430,11 @@ export class WebPlayerViewComponent implements OnDestroy {
             return;
         }
 
+        this.nowPlaying.record({
+            currentTime: event.currentTime,
+            duration: event.duration,
+            playing: event.playing ?? true,
+        });
         this.recoverySession.recordTimeUpdate(event, ownership.isLive);
         this.historyConfirmation.record(event.currentTime, event.playing);
         this.timeUpdate.emit(event);

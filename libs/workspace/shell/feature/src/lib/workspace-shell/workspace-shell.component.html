@@ -1,7 +1,8 @@
 <div
     class="workspace-shell"
     [class.has-now-playing]="
-        facade.showExternalPlaybackBar() && !!facade.externalPlaybackSession()
+        !!nowPlaying.session() ||
+        (facade.showExternalPlaybackBar() && !!facade.externalPlaybackSession())
     "
     appPlaylistDropZone
     #dropZone="playlistDropZone"
@@ -144,7 +145,18 @@
         </div>
     </div>
 
-    @if (facade.showExternalPlaybackBar()) {
+    <!-- The mini-player continues a stream its page handed over; the
+         external-player dock shows when MPV/VLC plays instead. -->
+    @if (nowPlaying.session(); as session) {
+        <footer
+            class="workspace-now-playing"
+            [attr.inert]="contextDrawer.isOpen() ? '' : null"
+        >
+            @for (current of [session]; track current.id) {
+                <app-now-playing-bar [session]="current" />
+            }
+        </footer>
+    } @else if (facade.showExternalPlaybackBar()) {
         @if (facade.externalPlaybackSession(); as session) {
             <footer
                 class="workspace-now-playing"

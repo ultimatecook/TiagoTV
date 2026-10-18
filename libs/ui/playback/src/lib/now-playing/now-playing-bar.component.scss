@@ -1,0 +1,369 @@
+@use '../../../../styles/focus-ring';
+
+:host {
+    display: block;
+}
+
+.now-playing {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 18px;
+    min-height: 76px;
+    padding: 10px 26px 10px 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--app-glass-border, rgba(255, 255, 255, 0.12));
+    border-radius: 999px;
+    background: linear-gradient(
+        180deg,
+        rgba(64, 66, 52, 0.97) 0%,
+        rgba(38, 39, 31, 0.98) 100%
+    );
+    box-shadow:
+        inset 0 1px 0 var(--app-glass-highlight, rgba(255, 255, 255, 0.07)),
+        0 26px 60px rgba(0, 0, 0, 0.55);
+    color: #f4f1ea;
+}
+
+// ── Artwork / live video ───────────────────────────────────────────────────
+.now-playing__media {
+    position: relative;
+    width: 84px;
+    height: 56px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #0d0d0b;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.now-playing__artwork,
+.now-playing__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.now-playing__artwork {
+    object-fit: cover;
+}
+
+// The player stays mounted from the first frame (it is what plays); it is
+// only shown once its media element is in, so the artwork bridges the load.
+.now-playing__video {
+    opacity: 0;
+    transition: opacity 240ms ease;
+    pointer-events: none;
+
+    &--visible {
+        opacity: 1;
+    }
+
+    // Everything but the picture: the bar draws the controls. The player's
+    // views are its own components, hence ::ng-deep under this box.
+    ::ng-deep {
+        app-player-controls,
+        app-playback-diagnostic-panel,
+        app-fullscreen-channel-panel {
+            display: none !important;
+        }
+
+        app-web-player-view,
+        app-html-video-player,
+        div {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 0 !important;
+        }
+
+        video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+            background: transparent;
+
+            &::-webkit-media-controls {
+                display: none !important;
+            }
+        }
+    }
+}
+
+.now-playing__open {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: -2px);
+    }
+}
+
+// ── Title ──────────────────────────────────────────────────────────────────
+.now-playing__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 0;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+
+    &:hover .now-playing__title {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.now-playing__title,
+.now-playing__subtitle {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.now-playing__title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.now-playing__subtitle {
+    color: rgba(244, 241, 234, 0.62);
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+.now-playing__subtitle--failed {
+    color: var(--app-expiry-warn-text, #f5c451);
+}
+
+// ── Controls ───────────────────────────────────────────────────────────────
+.now-playing__controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.now-playing__button {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: rgba(244, 241, 234, 0.86);
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease;
+
+    mat-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 24px;
+        line-height: 24px;
+    }
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.94);
+    }
+
+    &:disabled {
+        opacity: 0.32;
+        cursor: default;
+    }
+
+    &.is-active {
+        color: var(--app-brand-red, #e8262b);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+
+    &--primary {
+        width: 52px;
+        height: 52px;
+        background: #fff;
+        color: #0b0b09;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+
+        mat-icon {
+            width: 30px;
+            height: 30px;
+            font-size: 30px;
+            line-height: 30px;
+        }
+
+        &:hover:not(:disabled) {
+            background: #ece9e2;
+            color: #0b0b09;
+        }
+    }
+}
+
+// ── Time and volume ────────────────────────────────────────────────────────
+.now-playing__end {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    min-width: 0;
+}
+
+.now-playing__time {
+    color: rgba(244, 241, 234, 0.72);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.now-playing__live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--app-live-color, #ff5a5f);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+
+    &::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 8px currentColor;
+    }
+}
+
+.now-playing__volume {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+
+    // The slider opens beside the speaker on hover or keyboard focus.
+    &:hover .now-playing__volume-slider,
+    &:focus-within .now-playing__volume-slider {
+        width: 84px;
+        opacity: 1;
+    }
+}
+
+.now-playing__volume-slider {
+    width: 0;
+    margin: 0;
+    opacity: 0;
+    accent-color: #f4f1ea;
+    cursor: pointer;
+    transition:
+        width 0.2s ease,
+        opacity 0.2s ease;
+}
+
+// ── Progress ───────────────────────────────────────────────────────────────
+// A hairline along the pill's lower edge, inside its rounded ends; it
+// thickens under the pointer and seeks on click or drag.
+.now-playing__seek {
+    --now-playing-progress: 0%;
+    position: absolute;
+    left: 112px;
+    right: 40px;
+    bottom: 5px;
+    height: 10px;
+    margin: 0;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+
+    &::-webkit-slider-runnable-track {
+        height: 2px;
+        border-radius: 2px;
+        background: linear-gradient(
+            90deg,
+            var(--app-brand-red, #e8262b) var(--now-playing-progress),
+            rgba(255, 255, 255, 0.16) var(--now-playing-progress)
+        );
+        transition: height 0.15s ease;
+    }
+
+    &::-webkit-slider-thumb {
+        appearance: none;
+        width: 0;
+        height: 0;
+    }
+
+    &:hover::-webkit-slider-runnable-track,
+    &:focus-visible::-webkit-slider-runnable-track {
+        height: 4px;
+    }
+
+    &:focus-visible {
+        outline: none;
+    }
+}
+
+// ── Narrow ─────────────────────────────────────────────────────────────────
+@media (max-width: 900px) {
+    .now-playing {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 12px;
+        padding-right: 14px;
+    }
+
+    .now-playing__end {
+        display: none;
+    }
+
+    .now-playing__controls {
+        gap: 4px;
+    }
+
+    .now-playing__seek {
+        right: 24px;
+    }
+}
+
+@media (max-width: 560px) {
+    .now-playing__controls
+        .now-playing__button:not(.now-playing__button--primary):not(
+            [data-test-id='now-playing-close']
+        ) {
+        display: none;
+    }
+
+    .now-playing__media {
+        width: 64px;
+        height: 44px;
+    }
+}

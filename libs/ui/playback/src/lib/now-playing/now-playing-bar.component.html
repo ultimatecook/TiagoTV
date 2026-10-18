@@ -1,0 +1,176 @@
+@let current = session();
+<section
+    class="now-playing"
+    [class.now-playing--live]="current.isLive"
+    [class.now-playing--failed]="failed()"
+    [attr.aria-label]="'NOW_PLAYING.LABEL' | translate"
+    data-test-id="now-playing-bar"
+>
+    <!-- The stream keeps playing here, where the artwork sits. Its player's
+         own chrome and shortcuts are off: the bar owns the controls, and the
+         keyboard belongs to the page being browsed. -->
+    <div class="now-playing__media">
+        @if (current.artworkUrl) {
+            <img
+                class="now-playing__artwork"
+                [src]="current.artworkUrl"
+                alt=""
+                aria-hidden="true"
+            />
+        }
+        <div
+            #videoHost
+            class="now-playing__video"
+            [class.now-playing__video--visible]="showVideo()"
+            data-player-shortcuts-suspended
+            inert
+        >
+            <app-web-player-view
+                [streamUrl]="current.streamUrl"
+                [playbackSessionKey]="current.sessionKey"
+                [title]="current.title"
+                [playback]="current.playback"
+                [startTime]="current.startTime"
+                [volume]="current.muted ? 0 : current.volume"
+                [playerOverride]="html5Player"
+                [dockable]="false"
+                (playbackFailed)="onPlaybackFailed()"
+            />
+        </div>
+        <button
+            type="button"
+            class="now-playing__open"
+            [attr.aria-label]="
+                'NOW_PLAYING.OPEN' | translate: { title: current.title }
+            "
+            (click)="openSource()"
+        ></button>
+    </div>
+
+    <button
+        type="button"
+        class="now-playing__meta"
+        [matTooltip]="'NOW_PLAYING.OPEN' | translate: { title: current.title }"
+        (click)="openSource()"
+    >
+        <span class="now-playing__title">{{ current.title }}</span>
+        @if (failed()) {
+            <span class="now-playing__subtitle now-playing__subtitle--failed">{{
+                'NOW_PLAYING.FAILED' | translate
+            }}</span>
+        } @else if (current.subtitle) {
+            <span class="now-playing__subtitle">{{ current.subtitle }}</span>
+        } @else if (current.isLive) {
+            <span class="now-playing__subtitle">{{
+                'NOW_PLAYING.LIVE' | translate
+            }}</span>
+        }
+    </button>
+
+    <div class="now-playing__controls">
+        <button
+            type="button"
+            class="now-playing__button"
+            data-test-id="now-playing-close"
+            [matTooltip]="'NOW_PLAYING.CLOSE' | translate"
+            [attr.aria-label]="'NOW_PLAYING.CLOSE' | translate"
+            (click)="close()"
+        >
+            <mat-icon>close</mat-icon>
+        </button>
+        <button
+            type="button"
+            class="now-playing__button"
+            [disabled]="current.isLive"
+            [matTooltip]="'NOW_PLAYING.BACK' | translate"
+            [attr.aria-label]="'NOW_PLAYING.BACK' | translate"
+            (click)="skipBack()"
+        >
+            <mat-icon>skip_previous</mat-icon>
+        </button>
+        <button
+            type="button"
+            class="now-playing__button now-playing__button--primary"
+            data-test-id="now-playing-toggle"
+            [attr.aria-label]="
+                (video.paused() ? 'NOW_PLAYING.PLAY' : 'NOW_PLAYING.PAUSE')
+                    | translate
+            "
+            (click)="togglePaused()"
+        >
+            <mat-icon>{{ video.paused() ? 'play_arrow' : 'pause' }}</mat-icon>
+        </button>
+        <button
+            type="button"
+            class="now-playing__button"
+            [disabled]="current.isLive"
+            [matTooltip]="'NOW_PLAYING.FORWARD' | translate"
+            [attr.aria-label]="'NOW_PLAYING.FORWARD' | translate"
+            (click)="skipForward()"
+        >
+            <mat-icon>skip_next</mat-icon>
+        </button>
+        <button
+            type="button"
+            class="now-playing__button"
+            [class.is-active]="video.loop()"
+            [disabled]="current.isLive"
+            [matTooltip]="'NOW_PLAYING.REPEAT' | translate"
+            [attr.aria-label]="'NOW_PLAYING.REPEAT' | translate"
+            [attr.aria-pressed]="video.loop()"
+            (click)="toggleRepeat()"
+        >
+            <mat-icon>repeat</mat-icon>
+        </button>
+    </div>
+
+    <div class="now-playing__end">
+        @if (current.isLive) {
+            <span class="now-playing__live">{{
+                'NOW_PLAYING.LIVE' | translate
+            }}</span>
+        } @else {
+            <span class="now-playing__time" data-test-id="now-playing-time">{{
+                timeLabel()
+            }}</span>
+        }
+        <div class="now-playing__volume">
+            <input
+                class="now-playing__volume-slider"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                [value]="video.muted() ? 0 : video.volume() * 100"
+                [attr.aria-label]="'NOW_PLAYING.VOLUME' | translate"
+                (input)="onVolumeInput($event)"
+            />
+            <button
+                type="button"
+                class="now-playing__button"
+                [attr.aria-label]="
+                    (video.muted() ? 'NOW_PLAYING.UNMUTE' : 'NOW_PLAYING.MUTE')
+                        | translate
+                "
+                (click)="toggleMuted()"
+            >
+                <mat-icon>{{ volumeIcon() }}</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    @if (!current.isLive) {
+        <input
+            class="now-playing__seek"
+            type="range"
+            min="0"
+            max="1000"
+            step="1"
+            [value]="progressPercent() * 10"
+            [style.--now-playing-progress]="progressPercent() + '%'"
+            [attr.aria-label]="'NOW_PLAYING.SEEK' | translate"
+            [attr.aria-valuetext]="timeLabel()"
+            (input)="onSeekInput($event)"
+        />
+    }
+</section>

@@ -2240,5 +2240,21 @@
             "INSTALL_INSTRUCTIONS": "Installation instructions",
             "DONT_SHOW_AGAIN": "Don't show again"
         }
+    },
+    "NOW_PLAYING": {
+        "LABEL": "Now playing",
+        "OPEN": "Open {{title}}",
+        "CLOSE": "Close",
+        "BACK": "Back 10 seconds",
+        "FORWARD": "Forward 10 seconds",
+        "PLAY": "Play",
+        "PAUSE": "Pause",
+        "REPEAT": "Repeat",
+        "VOLUME": "Volume",
+        "MUTE": "Mute",
+        "UNMUTE": "Unmute",
+        "LIVE": "Live",
+        "SEEK": "Playback position",
+        "FAILED": "Can't continue here — open it to play"
     }
 }
