@@ -9,7 +9,9 @@
  *
  * Status first, the kick-off (GMT) for upcoming ones, then the title, the
  * competition and the feed's country. Extra segments ("El Post | Jornada 9")
- * belong to the title.
+ * belong to the title. Some feeds give a broadcast window instead of a
+ * date ("Next | 20:45 - 23 (GMT) | Real Madrid - FC Séville [und] | …", in
+ * Paris time whatever it says): no kick-off is read from it.
  */
 export type SportEventStatus = 'live' | 'next' | 'end';
 
@@ -34,6 +36,9 @@ const STATUS: Record<string, SportEventStatus> = {
 
 const KICK_OFF_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const KICK_OFF_TIME = /^(\d{1,2}):(\d{2})\s*\(GMT\)$/i;
+const BROADCAST_WINDOW = /^\d{1,2}:\d{2}\s*-\s*\d{1,2}(:\d{2})?\s*\(GMT\)$/i;
+/** A feed's language tag ("[und]") and its channel ("OM sur Ligue 1+"). */
+const TITLE_NOISE = /\s*\[[a-z]{2,3}\]\s*$|\s+sur\s+\S.*$/i;
 const COUNTRY = /^[A-Z]{2}$/;
 /** "A - B", "A vs B", "A vs. B", "A v B". */
 const TEAMS = /^(.+?)\s+(?:-|vs\.?|v)\s+(.+)$/i;
@@ -53,6 +58,8 @@ export function parseSportEvent(name: string): SportEvent | null {
             `${rest[0]}T${time ? `${time[1].padStart(2, '0')}:${time[2]}` : '00:00'}:00Z`
         );
         rest = rest.slice(time ? 2 : 1);
+    } else if (status === 'next' && BROADCAST_WINDOW.test(rest[0] ?? '')) {
+        rest = rest.slice(1);
     }
 
     const country = COUNTRY.test(rest[rest.length - 1] ?? '')
@@ -62,8 +69,9 @@ export function parseSportEvent(name: string): SportEvent | null {
         return null;
     }
     const competition = rest.pop() as string;
-    const title = rest.join(' · ');
-    const teams = rest.length === 1 ? TEAMS.exec(rest[0]) : null;
+    const pieces = rest.map((part) => part.replace(TITLE_NOISE, '').trim());
+    const title = pieces.join(' · ');
+    const teams = pieces.length === 1 ? TEAMS.exec(pieces[0]) : null;
 
     return {
         status,

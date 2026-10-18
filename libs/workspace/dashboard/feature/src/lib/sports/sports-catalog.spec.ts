@@ -25,6 +25,9 @@ function sportMatch(
         categoryId: '1',
         title,
         icon: null,
+        key: `${sectionId}|${title}`,
+        keys: [`${sectionId}|${title}`],
+        via: [],
         sectionId,
         event: {
             status,
@@ -130,6 +133,66 @@ describe('todaysMatches', () => {
         });
 
         expect(ids(todaysMatches(catalog, NOW))).toEqual([1]);
+    });
+
+    it('shows a match whose kick-off passed as on now, among the live ones', () => {
+        const catalog = catalogOf({
+            hypermotion: [
+                sportMatch(
+                    'next',
+                    'Burgos CF - CE Sabadell',
+                    1,
+                    at(1),
+                    'hypermotion'
+                ),
+            ],
+            laliga: [sportMatch('next', 'Real Madrid - Sevilla', 2, at(-0.25))],
+        });
+
+        expect(ids(todaysMatches(catalog, NOW))).toEqual([2, 1]);
+    });
+
+    it('puts the big competitions first among the live ones, kick-offs in order after', () => {
+        const catalog = catalogOf({
+            hypermotion: [
+                sportMatch(
+                    'live',
+                    'AD Ceuta FC - Real Oviedo',
+                    1,
+                    null,
+                    'hypermotion'
+                ),
+                sportMatch(
+                    'next',
+                    'Burgos CF - CE Sabadell',
+                    2,
+                    at(2),
+                    'hypermotion'
+                ),
+            ],
+            'serie-a': [
+                sportMatch('next', 'Juventus - Lazio', 3, at(2), 'serie-a'),
+            ],
+            laliga: [
+                sportMatch('live', 'Osasuna - Racing de Santander', 4),
+                sportMatch('next', 'Real Madrid - Sevilla', 5, at(2)),
+            ],
+        });
+
+        expect(ids(todaysMatches(catalog, NOW))).toEqual([4, 1, 5, 3, 2]);
+    });
+
+    it('never shows an upcoming match of an earlier day, nor of tomorrow', () => {
+        const catalog = catalogOf({
+            laliga: [
+                // Announced for last night: its "Next" was never renamed.
+                sportMatch('next', 'Valencia CF - Getafe CF', 1, at(-17)),
+                sportMatch('next', 'Elche CF - Levante UD', 2, at(10)),
+                sportMatch('next', 'Girona FC - Rayo Vallecano', 3, at(2)),
+            ],
+        });
+
+        expect(ids(todaysMatches(catalog, NOW))).toEqual([3]);
     });
 });
 

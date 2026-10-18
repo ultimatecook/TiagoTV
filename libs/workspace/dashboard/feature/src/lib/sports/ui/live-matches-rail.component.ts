@@ -10,7 +10,8 @@ import { SportMatchCardComponent } from './sport-match-card.component';
 
 /**
  * The Home's "today" row: the matches on now, then today's kick-offs, of
- * the competitions the sports cards follow. Hidden while there are none.
+ * the competitions the sports cards follow (see todaysMatches). Hidden
+ * while there are none.
  */
 @Component({
     selector: 'lib-live-matches-rail',
@@ -24,7 +25,7 @@ import { SportMatchCardComponent } from './sport-match-card.component';
                     </h2>
                 </header>
                 <div class="matches__row">
-                    @for (match of sports.today(); track match.streamId) {
+                    @for (match of sports.today(); track match.key) {
                         <lib-sport-match-card [match]="match" />
                     }
                 </div>

@@ -60,6 +60,31 @@ describe('parseSportEvent', () => {
         ).toMatchObject({ title: 'El Post · Jornada 9', home: null });
     });
 
+    it("reads a broadcast window's match without taking a kick-off from it", () => {
+        // Disney+'s French feed: Paris time, whatever it says.
+        expect(
+            parseSportEvent(
+                'Next | 20:45 - 23 (GMT) | Real Madrid - FC Séville [und] | Spanish LALIGA | FR'
+            )
+        ).toEqual({
+            status: 'next',
+            title: 'Real Madrid - FC Séville',
+            home: 'Real Madrid',
+            away: 'FC Séville',
+            competition: 'Spanish LALIGA',
+            start: null,
+            country: 'FR',
+        });
+    });
+
+    it("drops a feed's channel from the title", () => {
+        expect(
+            parseSportEvent(
+                'Live | Angers SCO vs. OM sur Ligue 1+ | Ligue 1+ | FR'
+            )
+        ).toMatchObject({ home: 'Angers SCO', away: 'OM' });
+    });
+
     it('ignores channels that are not event slots', () => {
         expect(parseSportEvent('|ES| M LA LIGA TV ᴴᴰ')).toBeNull();
         expect(parseSportEvent('ES | No Event')).toBeNull();

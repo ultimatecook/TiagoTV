@@ -1,10 +1,42 @@
-<button
-    type="button"
-    class="match"
-    [style.--match-tint]="section()?.tint"
-    [attr.aria-label]="match().title"
-    (click)="play()"
->
+@if (offers()) {
+    <button
+        type="button"
+        class="match"
+        [style.--match-tint]="section()?.tint"
+        [attr.aria-label]="
+            match().title +
+            ' · ' +
+            ('WORKSPACE.SPORTS.WATCH_ON' | translate: { channels: watchOn() })
+        "
+        [matMenuTriggerFor]="channels"
+    >
+        <ng-container [ngTemplateOutlet]="face" />
+    </button>
+    <mat-menu #channels="matMenu">
+        @for (option of match().via; track option.channel.streamId) {
+            <button
+                type="button"
+                mat-menu-item
+                (click)="playChannel(option.channel)"
+            >
+                <mat-icon>live_tv</mat-icon>
+                <span>{{ option.name }}</span>
+            </button>
+        }
+    </mat-menu>
+} @else {
+    <button
+        type="button"
+        class="match"
+        [style.--match-tint]="section()?.tint"
+        [attr.aria-label]="match().title"
+        (click)="play()"
+    >
+        <ng-container [ngTemplateOutlet]="face" />
+    </button>
+}
+
+<ng-template #face>
     <span class="match__top">
         <span class="match__competition">{{ competition() }}</span>
         @if (live()) {
@@ -51,4 +83,10 @@
             }}</span>
         </span>
     }
-</button>
+
+    @if (watchOn()) {
+        <span class="match__via">{{
+            'WORKSPACE.SPORTS.WATCH_ON' | translate: { channels: watchOn() }
+        }}</span>
+    }
+</ng-template>

@@ -2,6 +2,12 @@ import type { XtreamCategory } from '@iptvnator/shared/interfaces';
 import { isSpanishOrEnglishCategory } from '@iptvnator/shared/interfaces';
 import type { XtreamCategoryFromDb } from '@iptvnator/portal/xtream/data-access';
 import { isIdleEventChannel, parseSportEvent } from './sport-events';
+import {
+    channelInSection,
+    sectionForCompetition,
+    SPORT_SECTIONS,
+    type SportSectionId,
+} from './sport-sections';
 import type {
     SportsCatalogCategory,
     SportsCatalogStream,
@@ -124,10 +130,64 @@ export function streamsByCategory(
 }
 
 /**
+ * The other languages' event categories that name the matches of
+ * `sections` — by their name ("FR| ✪ DAZN LALIGA ES") or by the matches
+ * they listed (the stored copy's, or `fresh`) — where a match no kept feed
+ * names is found. Read for their fixtures only, never played.
+ */
+export function fixtureCategoryIds(
+    live: LiveCatalog,
+    sections: ReadonlySet<SportSectionId>,
+    fresh: CategoryStreams = new Map()
+): string[] {
+    const followed = SPORT_SECTIONS.filter((section) =>
+        sections.has(section.id)
+    );
+    if (followed.length === 0) {
+        return [];
+    }
+    const foreign = new Map<string, string>();
+    for (const category of live.categories) {
+        if (!isSpanishOrEnglishCategory(category.category_name, 'live')) {
+            foreign.set(String(category.category_id), category.category_name);
+        }
+    }
+    const withEvents = new Set<string>();
+    const named = new Set<string>();
+    const consider = (stream: SportsCatalogStream) => {
+        const id = String(stream.category_id ?? '');
+        if (!foreign.has(id) || !isEventSlot(stream.name)) {
+            return;
+        }
+        withEvents.add(id);
+        const event = parseSportEvent(stream.name);
+        const section =
+            event?.home && event.away
+                ? sectionForCompetition(event.competition, event.title)
+                : null;
+        if (section && sections.has(section.id)) {
+            named.add(id);
+        }
+    };
+    live.streams.forEach(consider);
+    fresh.forEach((list) => list.forEach(consider));
+    return [...foreign.entries()]
+        .filter(
+            ([id, name]) =>
+                withEvents.has(id) &&
+                (named.has(id) ||
+                    followed.some((section) =>
+                        channelInSection(section, name, name)
+                    ))
+        )
+        .map(([id]) => id);
+}
+
+/**
  * The stored catalog with today's event channels: each event category
  * reloaded from the panel takes its fresh list (where its stored list
- * stood); the others drop their event channels, whose names belong to the
- * day the catalog was stored.
+ * stood); every other event channel, in any category, is left out, its
+ * name belonging to the day the catalog was stored.
  */
 export function withFreshEvents(
     stored: LiveCatalog,
@@ -150,7 +210,7 @@ export function withFreshEvents(
             if (!placed.has(id)) {
                 place(id, list);
             }
-        } else if (!events.has(id) || !isEventSlot(stream.name)) {
+        } else if (!isEventSlot(stream.name)) {
             streams.push(stream);
         }
     }
@@ -160,6 +220,17 @@ export function withFreshEvents(
         }
     });
     return { categories: stored.categories, streams };
+}
+
+/** Whether a round reloaded every one of `ids` (none kept its old list). */
+export function reloadedAll(
+    ids: readonly string[],
+    fresh: CategoryStreams,
+    previous: CategoryStreams
+): boolean {
+    return ids.every(
+        (id) => fresh.has(id) && fresh.get(id) !== previous.get(id)
+    );
 }
 
 /**

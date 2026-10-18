@@ -45,7 +45,7 @@
                 </h2>
                 @if (matches().length > 0) {
                     <div class="block__matches">
-                        @for (match of matches(); track match.streamId) {
+                        @for (match of matches(); track match.key) {
                             <lib-sport-match-card [match]="match" />
                         }
                     </div>

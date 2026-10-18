@@ -1,5 +1,7 @@
 import { isSpanishOrEnglishCategory } from '@iptvnator/shared/interfaces';
-import { isMatchOver } from './match-clock';
+import type { MatchChannel } from './match-channels';
+import { isMatchOn, isMatchOver } from './match-clock';
+import { buildMatches, type EventSlot } from './match-fixtures';
 import {
     isIdleEventChannel,
     isStaleSlot,
@@ -16,7 +18,9 @@ import {
 /**
  * TiagoTV sports: the active source's live channels sorted into the Home's
  * sections, from a fresh catalog (event channels rename themselves after
- * their match, so a cached catalog names yesterday's games).
+ * their match, so a cached catalog names yesterday's games). Channels come
+ * from the kept (Spanish and English) categories only; matches are read
+ * from every language's event channels (see match-fixtures).
  */
 export interface SportsCatalogCategory {
     readonly category_id: string | number;
@@ -38,9 +42,22 @@ export interface SportChannel {
     readonly icon: string | null;
 }
 
+/**
+ * One match, from all the event channels that name it. Its channel fields
+ * are the kept feed that plays it, or, without one, its first `via`.
+ */
 export interface SportMatch extends SportChannel {
+    /** The match: its section and both sides, however a feed spells them. */
+    readonly key: string;
+    /** Every key its feeds' spellings give, `key` first. */
+    readonly keys: readonly string[];
     readonly event: SportEvent;
     readonly sectionId: SportSectionId;
+    /**
+     * No kept feed names it: the competition's channels that may show it
+     * ("M+ LaLiga TV", "DAZN LaLiga"). Empty when it has a feed of its own.
+     */
+    readonly via: readonly MatchChannel[];
 }
 
 export interface SportSectionContent {
@@ -69,23 +86,26 @@ export function buildSportsCatalog(
     streams: readonly SportsCatalogStream[],
     now = new Date()
 ): SportsCatalog {
-    const kept = new Map<string, string>();
+    const names = new Map<string, string>();
+    const kept = new Set<string>();
     for (const category of categories) {
+        const id = String(category.category_id);
+        names.set(id, category.category_name);
         if (isSpanishOrEnglishCategory(category.category_name, 'live')) {
-            kept.set(String(category.category_id), category.category_name);
+            kept.add(id);
         }
     }
 
-    const matches = new Map<SportSectionId, Map<string, SportMatch>>();
+    const slots = new Map<SportSectionId, EventSlot[]>();
     const channels = new Map<SportSectionId, Map<string, SportChannel>>();
     for (const section of SPORT_SECTIONS) {
-        matches.set(section.id, new Map());
+        slots.set(section.id, []);
         channels.set(section.id, new Map());
     }
 
     for (const stream of streams) {
         const categoryId = String(stream.category_id ?? '');
-        const categoryName = kept.get(categoryId);
+        const categoryName = names.get(categoryId);
         const streamId = Number(stream.stream_id);
         if (categoryName === undefined || !Number.isFinite(streamId)) {
             continue;
@@ -99,29 +119,20 @@ export function buildSportsCatalog(
 
         const event = parseSportEvent(stream.name);
         if (event) {
-            const section =
-                event.status === 'end'
-                    ? null
-                    : sectionForCompetition(event.competition, event.title);
-            // Football sections show matches; their studio shows ("El Post
-            // · Jornada 9") have no two sides.
-            if (section && !INDIVIDUAL_SPORTS.has(section.id) && !event.home) {
-                continue;
-            }
-            const key = `${event.title}|${event.competition}`.toLowerCase();
-            const sectionMatches = section ? matches.get(section.id) : null;
-            // The same match airs on the ES and GB feeds: one card each.
-            if (sectionMatches && !sectionMatches.has(key)) {
-                sectionMatches.set(key, {
-                    ...channel,
-                    title: event.title,
-                    event,
-                    sectionId: section!.id,
-                });
+            const slot = {
+                channel,
+                event,
+                kept: kept.has(categoryId),
+                categoryName,
+            };
+            const sectionId = slotSection(slot);
+            if (sectionId) {
+                slots.get(sectionId)!.push(slot);
             }
             continue;
         }
         if (
+            !kept.has(categoryId) ||
             isIdleEventChannel(stream.name) ||
             isStaleSlot(channel.title, now)
         ) {
@@ -147,12 +158,37 @@ export function buildSportsCatalog(
 
     const catalog = {} as Record<SportSectionId, SportSectionContent>;
     for (const section of SPORT_SECTIONS) {
+        const sectionChannels = [...channels.get(section.id)!.values()];
         catalog[section.id] = {
-            matches: [...matches.get(section.id)!.values()].sort(byKickOff),
-            channels: [...channels.get(section.id)!.values()],
+            matches: buildMatches(
+                section,
+                slots.get(section.id)!,
+                sectionChannels,
+                now
+            ).sort(byKickOff),
+            channels: sectionChannels,
         };
     }
     return catalog;
+}
+
+/**
+ * The section of an event channel's match, if it shows on one: football
+ * sections show matches, not their studio shows ("El Post · Jornada 9");
+ * another language's feed counts only for a match with two sides.
+ */
+function slotSection(slot: EventSlot): SportSectionId | null {
+    const { event } = slot;
+    const section = sectionForCompetition(event.competition, event.title);
+    const individual = section !== null && INDIVIDUAL_SPORTS.has(section.id);
+    if (
+        !section ||
+        (!individual && !event.home) ||
+        (!slot.kept && (individual || !event.home || !event.away))
+    ) {
+        return null;
+    }
+    return section.id;
 }
 
 /**
@@ -170,16 +206,33 @@ function keepChannel(
     }
 }
 
+/** The competitions the "today" row puts first, by tier. */
+const TIERS: Partial<Record<SportSectionId, number>> = {
+    'champions-league': 0,
+    laliga: 0,
+    'premier-league': 0,
+    'liga-argentina': 0,
+    libertadores: 0,
+    'serie-a': 1,
+    bundesliga: 1,
+    'ligue-1': 1,
+    'europa-league': 1,
+};
+const tierOf = (match: SportMatch) => TIERS[match.sectionId] ?? 2;
+
 /**
- * The Home's "today" row: matches on now, then today's (local) upcoming
- * kick-offs, across every section but "Resto del mundo"; none that is over
- * (see match-clock).
+ * The Home's "today" row: the matches on now, the big competitions first,
+ * then today's (local) kick-offs in order, across every section but
+ * "Resto del mundo"; none that is over (see match-clock) and none from an
+ * earlier day.
  */
 export function todaysMatches(
     catalog: SportsCatalog,
     now = new Date(),
     kickOffOf: (match: SportMatch) => Date | null = () => null
 ): SportMatch[] {
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
     const matches: SportMatch[] = [];
@@ -190,19 +243,49 @@ export function todaysMatches(
             continue;
         }
         for (const match of catalog[section.id]?.matches ?? []) {
-            const start = match.event.start;
-            if (isMatchOver(match, kickOffOf(match), now)) {
+            const kickOff = match.event.start ?? kickOffOf(match);
+            if (isMatchOver(match, kickOff, now)) {
                 continue;
             }
             if (
-                match.event.status === 'live' ||
-                (start !== null && start <= endOfDay)
+                isMatchOn(match, kickOff, now) ||
+                (kickOff !== null &&
+                    kickOff >= startOfDay &&
+                    kickOff <= endOfDay)
             ) {
                 matches.push(match);
             }
         }
     }
-    return matches.sort(byKickOff);
+    return orderMatches(matches, now, kickOffOf);
+}
+
+/**
+ * The matches on now first (the big competitions' before the others'),
+ * then the rest by kick-off.
+ */
+export function orderMatches(
+    matches: readonly SportMatch[],
+    now = new Date(),
+    kickOffOf: (match: SportMatch) => Date | null = () => null
+): SportMatch[] {
+    const kickOff = (match: SportMatch) =>
+        (match.event.start ?? kickOffOf(match))?.getTime() ?? 0;
+    const on = new Map(
+        matches.map((match) => [
+            match,
+            isMatchOn(match, match.event.start ?? kickOffOf(match), now),
+        ])
+    );
+    return [...matches].sort((a, b) => {
+        const onA = on.get(a) ?? false;
+        if (onA !== (on.get(b) ?? false)) {
+            return onA ? -1 : 1;
+        }
+        return onA
+            ? tierOf(a) - tierOf(b) || kickOff(a) - kickOff(b)
+            : kickOff(a) - kickOff(b) || tierOf(a) - tierOf(b);
+    });
 }
 
 function byKickOff(a: SportMatch, b: SportMatch): number {

@@ -177,12 +177,12 @@ describe('SportsCatalogService', () => {
             'Girona FC - FC Andorra',
             'Valencia CF - Getafe CF',
         ]);
-        // The fresh lists take the stored ones' place; the rest stays.
+        // The fresh lists take the stored ones' place; the rest stays,
+        // but for the stored copy's other event names (a day old or more).
         expect(service.liveCatalog()?.streams.map((s) => s.name)).toEqual([
             'Live | Girona FC - FC Andorra | LaLiga | ES',
             '|ES| DAZN 1 ᴴᴰ',
             'Next | 2026-10-18 | 20:00 (GMT) | Valencia CF - Getafe CF | LaLiga | ES',
-            'Live | PSG - OM | Ligue 1 | FR',
             '|ES| CINE 1',
         ]);
     });
@@ -298,7 +298,7 @@ describe('SportsCatalogService', () => {
         await jest.advanceTimersByTimeAsync(10 * MINUTE + 5_000);
         expect(read).toHaveBeenCalledTimes(3);
         expect(download).toHaveBeenCalledTimes(1);
-        expect(service.liveCatalog()?.streams).toHaveLength(5);
+        expect(service.liveCatalog()?.streams).toHaveLength(4);
     });
 
     it('fails only when nothing could be loaded', async () => {
@@ -325,6 +325,98 @@ describe('SportsCatalogService', () => {
         expect(service.isOver(match)).toBe(true);
     });
 
+    it("reads other languages' fixtures hourly, for matches no kept feed names", async () => {
+        read.mockResolvedValue({
+            categories: [
+                { category_id: '5', category_name: '|ES| ✪ LALIGA' },
+                { category_id: '6', category_name: '|ES| ✪ LALIGA PPV' },
+                { category_id: '7', category_name: 'FR| ✪ DAZN LALIGA ES' },
+                { category_id: '8', category_name: '|IT|✪  DAZN EVENT' },
+            ],
+            streams: [
+                {
+                    stream_id: 50,
+                    name: '|ES| M LA LIGA TV ᴴᴰ',
+                    category_id: '5',
+                },
+                { stream_id: 60, name: 'ES | No Event', category_id: '6' },
+                { stream_id: 70, name: 'FR | No Event', category_id: '7' },
+                { stream_id: 80, name: 'IT | No Event', category_id: '8' },
+            ],
+        });
+        const lists: Record<string, object[]> = {
+            '6': [{ stream_id: 60, name: 'ES | No Event', category_id: '6' }],
+            '7': [
+                {
+                    stream_id: 70,
+                    name: 'Next | 2026-10-18 | 19:00 (GMT) | Real Madrid vs. FC Séville | LALIGA EA Sports | FR',
+                    category_id: '7',
+                },
+            ],
+        };
+        getLiveStreams.mockImplementation(
+            async (_credentials: unknown, options?: { categoryId?: string }) =>
+                lists[options?.categoryId ?? ''] ?? []
+        );
+        service.keepFresh(fakeDestroyRef().ref);
+        await jest.advanceTimersByTimeAsync(5_000);
+
+        // The kept event category first, then the French LaLiga one.
+        expect(requests()).toEqual(['6', '7']);
+        const [match] = service.today();
+        expect(match.title).toBe('Real Madrid - Sevilla');
+        expect(match.via.map((option) => option.name)).toEqual([
+            'M+ LaLiga TV',
+        ]);
+        expect(match.via[0].channel.streamId).toBe(50);
+        expect(service.liveCatalog()?.streams.map((s) => s.stream_id)).toEqual([
+            50, 60, 70,
+        ]);
+
+        await jest.advanceTimersByTimeAsync(11 * MINUTE);
+        expect(requests()).toEqual(['6', '7', '6']);
+        // Between its hourly reloads the French list stays in use.
+        expect(todayTitles()).toEqual(['Real Madrid - Sevilla']);
+
+        await jest.advanceTimersByTimeAsync(50 * MINUTE);
+        expect(requests().filter((id) => id === '7')).toHaveLength(2);
+        expect(requests()).not.toContain('8');
+
+        // Once it kicks off, the French list is read every round: its
+        // "End" ends the card before the clock would.
+        await jest.advanceTimersByTimeAsync(10 * MINUTE);
+        expect(service.isLive(service.today()[0])).toBe(true);
+        lists['7'] = [
+            {
+                stream_id: 70,
+                name: 'End | Real Madrid vs. FC Séville | LALIGA EA Sports | FR',
+                category_id: '7',
+            },
+        ];
+        await jest.advanceTimersByTimeAsync(10 * MINUTE);
+        expect(requests().filter((id) => id === '7')).toHaveLength(3);
+        expect(todayTitles()).toEqual([]);
+    });
+
+    it('ends a match first seen live by the kick-off the stored copy announced', async () => {
+        read.mockResolvedValue({
+            categories: STORED.categories,
+            streams: STORED.streams.concat({
+                stream_id: 9,
+                name: 'Next | 2026-10-18 | 16:30 (GMT) | Girona FC - FC Andorra | LaLiga | ES',
+                category_id: '1',
+            }),
+        });
+        service.keepFresh(fakeDestroyRef().ref);
+        await jest.advanceTimersByTimeAsync(5_000);
+        // 18:00: the panel says "Live", 90 minutes after that kick-off.
+        expect(todayTitles()).toContain('Girona FC - FC Andorra');
+
+        await jest.advanceTimersByTimeAsync(50 * MINUTE);
+
+        expect(todayTitles()).not.toContain('Girona FC - FC Andorra');
+    });
+
     it('shares the live catalog it loaded with the other views', async () => {
         expect(service.liveCatalog()).toBeNull();
 
@@ -335,6 +427,6 @@ describe('SportsCatalogService', () => {
         expect(
             service.liveCatalog()?.categories.map((c) => c.category_name)
         ).toContain('|ES| ✪ DEPORTES');
-        expect(service.liveCatalog()?.streams).toHaveLength(5);
+        expect(service.liveCatalog()?.streams).toHaveLength(4);
     });
 });

@@ -15,20 +15,17 @@ import {
     xtreamSourceCredentials,
     type XtreamSourceCredentials,
 } from '../xtream-source';
-import {
-    eventCategoryIds,
-    reloadEventCategories,
-    streamsByCategory,
-    withFreshEvents,
-    type CategoryStreams,
-    type LiveCatalog,
-} from './live-catalog';
+import { EventRefresh, FRESH_MS } from './event-refresh';
+import { eventCategoryIds, type LiveCatalog } from './live-catalog';
 import { buildLiveChannels, type LiveChannelTile } from './live-channels';
-import { isMatchOver, KickoffMemory } from './match-clock';
+import { sectionsWithChannels } from './match-channels';
+import { isMatchOn, isMatchOver, KickoffMemory } from './match-clock';
+import { announcedKickOffs } from './match-fixtures';
 import { StoredLiveCatalog } from './stored-live-catalog';
 import { TeamCrestResolver } from './team-crests';
 import {
     buildSportsCatalog,
+    orderMatches,
     todaysMatches,
     type SportChannel,
     type SportMatch,
@@ -37,16 +34,8 @@ import {
 
 export type { LiveCatalog } from './live-catalog';
 
-/**
- * Event channels rename themselves through the day; their categories are
- * reloaded at most this often (finished matches leave "today" by the
- * clock, see match-clock, not by a reload).
- */
-const FRESH_MS = 10 * 60 * 1000;
 /** How often an open sports view checks the clock (and the cache's age). */
 const TICK_MS = 60 * 1000;
-/** The pause between two category requests: the provider is load-sensitive. */
-const GAP_MS = 500;
 
 interface LoadedCatalog {
     readonly playlistId: string;
@@ -57,13 +46,6 @@ interface LoadedCatalog {
     readonly at: number;
     /** The stored copy's read version (parental lock), see StoredLiveCatalog. */
     readonly version: number;
-}
-
-/** A playlist's event categories as last reloaded from the panel. */
-interface FreshEvents {
-    readonly playlistId: string;
-    readonly streams: CategoryStreams;
-    readonly at: number;
 }
 
 /**
@@ -86,7 +68,7 @@ export class SportsCatalogService {
     private inFlight: Promise<void> | null = null;
     /** The first-run download, kept while nothing is stored yet. */
     private downloaded: { playlistId: string; live: LiveCatalog } | null = null;
-    private freshEvents: FreshEvents | null = null;
+    private readonly events = new EventRefresh();
     /** The open sports views; the catalog is kept fresh while any is. */
     private holders = 0;
     private ticker: ReturnType<typeof setInterval> | null = null;
@@ -117,7 +99,7 @@ export class SportsCatalogService {
         const catalog = this.catalog();
         return catalog
             ? todaysMatches(catalog, this.now(), (match) =>
-                  this.kickOffs.kickOffOf(match)
+                  this.kickOffOf(match)
               )
             : [];
     });
@@ -137,7 +119,26 @@ export class SportsCatalogService {
 
     /** Whether a match listed as live or upcoming is in fact over. */
     isOver(match: SportMatch): boolean {
-        return isMatchOver(match, this.kickOffs.kickOffOf(match), this.now());
+        return isMatchOver(match, this.kickOffOf(match), this.now());
+    }
+
+    /** Whether a match is on now (by its feeds' names or by the clock). */
+    isLive(match: SportMatch): boolean {
+        return isMatchOn(match, this.kickOffOf(match), this.now());
+    }
+
+    /** A section's matches not over yet, the ones on now first. */
+    upcoming(matches: readonly SportMatch[]): SportMatch[] {
+        const kickOffOf = (match: SportMatch) => this.kickOffOf(match);
+        return orderMatches(
+            matches.filter((match) => !this.isOver(match)),
+            this.now(),
+            kickOffOf
+        );
+    }
+
+    private kickOffOf(match: SportMatch): Date | null {
+        return match.event.start ?? this.kickOffs.kickOffOf(match);
     }
 
     /**
@@ -246,18 +247,20 @@ export class SportsCatalogService {
         const live = await this.stored.download(playlistId, credentials);
         const at = Date.now();
         this.downloaded = { playlistId, live };
-        this.freshEvents = {
-            playlistId,
-            streams: streamsByCategory(live.streams, eventCategoryIds(live)),
-            at,
-        };
         this.publish(playlistId, live, version, at);
+        const catalog = this.loaded()?.catalog;
+        this.events.keepDownload(
+            playlistId,
+            live,
+            catalog ? sectionsWithChannels(catalog) : new Set(),
+            at
+        );
     }
 
     /**
-     * The stored copy with its event categories reloaded from the panel,
-     * unless they were within FRESH_MS (then only the stored copy, e.g. a
-     * parental-lock change, is read again).
+     * The stored copy with its event categories reloaded from the panel
+     * (see EventRefresh), unless they were within FRESH_MS: then only the
+     * stored copy (e.g. after a parental-lock change) is read again.
      */
     private async refreshEvents(
         playlistId: string,
@@ -265,40 +268,41 @@ export class SportsCatalogService {
         stored: LiveCatalog,
         version: number
     ): Promise<void> {
-        const ids = eventCategoryIds(stored);
-        const held =
-            this.freshEvents?.playlistId === playlistId
-                ? this.freshEvents
-                : null;
-        if (held && Date.now() - held.at < FRESH_MS) {
-            const live = withFreshEvents(stored, ids, held.streams);
-            this.publish(playlistId, live, version, held.at);
+        // The stored names are a day old or more, but a kick-off they
+        // announce is one, for a match first seen once it is on.
+        this.kickOffs.fill(announcedKickOffs(stored.streams));
+        const fresh = this.events.fresh(playlistId, stored);
+        if (fresh) {
+            this.publish(playlistId, fresh.live, version, fresh.at);
             return;
         }
-        const previous = held?.streams ?? new Map();
-        if (ids.length > 0 && this.loaded()?.playlistId !== playlistId) {
+        if (
+            eventCategoryIds(stored).length > 0 &&
+            this.loaded()?.playlistId !== playlistId
+        ) {
             // Everything else shows at once; today's events follow.
-            const live = withFreshEvents(stored, ids, previous);
+            const { live } = this.events.current(playlistId, stored);
             this.publish(playlistId, live, version, 0);
         }
-        const streams = await reloadEventCategories(
-            ids,
-            (categoryId) =>
+        const round = await this.events.reload(playlistId, stored, {
+            sections: () => {
+                const loaded = this.loaded();
+                return sectionsWithChannels(
+                    loaded?.playlistId === playlistId
+                        ? loaded.catalog
+                        : buildSportsCatalog(stored.categories, stored.streams)
+                );
+            },
+            foreignMatchOn: this.today().some(
+                (match) => match.via.length > 0 && this.isLive(match)
+            ),
+            fetchCategory: (categoryId) =>
                 this.api.getLiveStreams(credentials, {
                     categoryId,
                     suppressErrorLog: true,
                 }),
-            previous,
-            GAP_MS
-        );
-        const at = Date.now();
-        this.freshEvents = { playlistId, streams, at };
-        this.publish(
-            playlistId,
-            withFreshEvents(stored, ids, streams),
-            version,
-            at
-        );
+        });
+        this.publish(playlistId, round.live, version, round.at);
     }
 
     private publish(

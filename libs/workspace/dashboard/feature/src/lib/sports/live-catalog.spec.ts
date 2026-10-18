@@ -1,5 +1,7 @@
 import {
     eventCategoryIds,
+    fixtureCategoryIds,
+    reloadedAll,
     reloadEventCategories,
     toLiveCatalog,
     withFreshEvents,
@@ -139,8 +141,9 @@ describe('withFreshEvents', () => {
 
         expect(live.categories).toBe(LIVE.categories);
         expect(live.streams.map((stream) => stream.stream_id)).toEqual([
-            // 10 is not reloaded yet: its "No Event" slot is left out.
-            2, 3, 5, 4,
+            // 10 is not reloaded yet: its "No Event" slot is left out, and
+            // so is 12's stored German event, a day old or more.
+            2, 5, 4,
         ]);
     });
 
@@ -155,6 +158,82 @@ describe('withFreshEvents', () => {
         );
 
         expect(live.streams.map((stream) => stream.stream_id)).toEqual([1]);
+    });
+});
+
+describe('fixtureCategoryIds', () => {
+    const STORED: LiveCatalog = {
+        categories: [
+            { category_id: '1', category_name: '|ES| ✪ LALIGA PPV' },
+            { category_id: '2', category_name: 'FR| ✪ DAZN LALIGA ES' },
+            { category_id: '3', category_name: '|FR| ✪  DISNEY + PPV' },
+            { category_id: '4', category_name: '|IT|✪  DAZN EVENT' },
+            { category_id: '5', category_name: '|DE| ✪ SKY BUNDESLIGA' },
+            { category_id: '6', category_name: '|DE| ✪ BUNDESLIGA  PPV' },
+        ],
+        streams: [
+            { stream_id: 1, name: 'ES | No Event', category_id: '1' },
+            { stream_id: 2, name: 'FR | No Event', category_id: '2' },
+            {
+                stream_id: 3,
+                name: 'Live | CA Osasuna - Racing de Santander [und] | Spanish LALIGA | FR',
+                category_id: '3',
+            },
+            {
+                stream_id: 4,
+                name: 'End | Buongiorno Serie A | Radio TV Serie A | IT',
+                category_id: '4',
+            },
+            { stream_id: 5, name: '|DE| SKY BUNDESLIGA 1', category_id: '5' },
+            { stream_id: 6, name: 'DE | No Event', category_id: '6' },
+        ],
+    };
+
+    it("lists other languages' event categories naming a followed competition's matches", () => {
+        expect(fixtureCategoryIds(STORED, new Set(['laliga']))).toEqual([
+            // By its name, and by the matches it listed.
+            '2',
+            '3',
+        ]);
+        expect(
+            fixtureCategoryIds(STORED, new Set(['laliga', 'bundesliga']))
+        ).toEqual(['2', '3', '6']);
+        expect(fixtureCategoryIds(STORED, new Set())).toEqual([]);
+    });
+
+    it('reads the matches of the last reload too', () => {
+        const fresh = new Map([
+            [
+                '4',
+                [
+                    {
+                        stream_id: 7,
+                        name: 'Next | 2026-10-18 | 19:00 (GMT) | Real Madrid vs. FC Séville | LALIGA EA Sports | IT',
+                        category_id: '4',
+                    },
+                ],
+            ],
+        ]);
+
+        expect(fixtureCategoryIds(STORED, new Set(['laliga']), fresh)).toEqual([
+            '2',
+            '3',
+            '4',
+        ]);
+    });
+});
+
+describe('reloadedAll', () => {
+    it('tells whether every category got a new list', () => {
+        const old = [{ stream_id: 1, name: 'x', category_id: '1' }];
+        const previous = new Map([['1', old]]);
+
+        expect(reloadedAll(['1'], new Map([['1', [...old]]]), previous)).toBe(
+            true
+        );
+        expect(reloadedAll(['1'], previous, previous)).toBe(false);
+        expect(reloadedAll(['2'], previous, previous)).toBe(false);
+        expect(reloadedAll([], previous, previous)).toBe(true);
     });
 });
 

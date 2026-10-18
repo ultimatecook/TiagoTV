@@ -42,14 +42,10 @@ export class SportSectionPageComponent {
         return section && catalog ? catalog[section.id] : null;
     });
     readonly matches = computed(() =>
-        (this.content()?.matches ?? []).filter(
-            (match) => !this.sports.isOver(match)
-        )
+        this.sports.upcoming(this.content()?.matches ?? [])
     );
     readonly liveCount = computed(
-        () =>
-            this.matches().filter((match) => match.event.status === 'live')
-                .length
+        () => this.matches().filter((match) => this.sports.isLive(match)).length
     );
     readonly families = computed(() =>
         groupChannelFamilies(this.content()?.channels ?? [])
