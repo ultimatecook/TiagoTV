@@ -83,4 +83,22 @@ describe('NowPlayingPageHandoff', () => {
         create().pageStarted();
         expect(dock.session()).toBeNull();
     });
+
+    it("holds a page's stream until the bar's player has let go of its own", () => {
+        const dock = TestBed.inject(NowPlayingDockService);
+        const page = create();
+        const releaseBarPlayer = dock.registerPlayer();
+
+        // The session ends at once, but the bar unmounts a render later:
+        // until its player closed the connection, the page must not open one.
+        page.pageStarted();
+        expect(dock.session()).toBeNull();
+        expect(page.waits()).toBe(true);
+        expect(create(false).waits()).toBe(false);
+
+        releaseBarPlayer();
+        releaseBarPlayer();
+        expect(page.waits()).toBe(false);
+        expect(dock.playerMounted()).toBe(false);
+    });
 });

@@ -608,6 +608,7 @@ function createVodContentInfo() {
     };
 }
 
+/** A missing stream (404): live starts show it at once, without reopening. */
 function createNetworkDiagnostic(): PlaybackDiagnostic {
     return {
         code: PlaybackDiagnosticCode.NetworkError,
@@ -618,6 +619,7 @@ function createNetworkDiagnostic(): PlaybackDiagnostic {
         player: 'html5',
         audioCodecs: [],
         videoCodecs: [],
+        httpStatus: 404,
     };
 }
 

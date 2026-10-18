@@ -1792,6 +1792,7 @@ The neutral web-video source support shared by HTML5 and ArtPlayer lives in:
 
 ```text
 libs/ui/playback/src/lib/web-video-support/
+├── mpegts-stream-loader.ts
 ├── quality-level-labels.ts
 ├── web-video-hls-controls.ts
 ├── web-video-native-text-tracks.ts
@@ -1806,7 +1807,10 @@ caption preference and explicit subtitle-off state, and exact track-list
 listener cleanup. It has no controls dependency, so the preference-off players
 use it directly. `WebVideoSourceControlsBridge` wraps it for shared controls
 and adds adapter attach/detach, adapter refresh, and MPEG-TS VOD duration
-correction.
+correction. `MpegTsStreamLoader` is the fetch loader every mpegts.js engine
+(Video.js included) uses for http(s) sources, so teardown aborts the stream
+request at once; see
+[Live Start Recovery And Stream Connections](./embedded-inline-playback.md#live-start-recovery-and-stream-connections).
 
 The guarded HTML5 integration lives in:
 

@@ -8,6 +8,7 @@ import {
     createPlaybackSourceMetadata,
     getPlaybackMediaExtensionFromUrl,
 } from '@iptvnator/playback/util';
+import { createMpegTsLoaderConfig } from '../web-video-support/mpegts-stream-loader';
 
 interface VjsDurationPlayer {
     duration(value?: number): unknown;
@@ -46,11 +47,10 @@ export class VjsMpegTsSession {
     start(url: string, video: HTMLVideoElement): void {
         this.destroy();
         const isLive = this.config.isLive();
-        const engine = mpegts.createPlayer({
-            type: 'mpegts',
-            isLive,
-            url,
-        });
+        const engine = mpegts.createPlayer(
+            { type: 'mpegts', isLive, url },
+            createMpegTsLoaderConfig(url)
+        );
         this.engine = engine;
         this.video = video;
         this.errorListener = (

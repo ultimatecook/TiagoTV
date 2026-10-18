@@ -15,6 +15,7 @@ import {
     collectPlaybackCodecs,
 } from '@iptvnator/playback/util';
 import { isBrowserMediaTypeSupported } from '../web-video-support/browser-media-type-support';
+import { createMpegTsLoaderConfig } from '../web-video-support/mpegts-stream-loader';
 import type { WebVideoControlsAdapter } from '../player-controls';
 import type { ShakaModuleLoader } from '../shaka-engine/shaka-module.types';
 import { ShakaVideoSession } from '../shaka-engine/shaka-video-session';
@@ -183,11 +184,16 @@ export class ArtPlayerSourceSession {
         if (!mpegts.isSupported()) {
             return;
         }
-        const engine = mpegts.createPlayer({
-            type: 'mpegts',
-            isLive: this.config.sharedControls ? this.config.isLive() : true,
-            url,
-        });
+        const engine = mpegts.createPlayer(
+            {
+                type: 'mpegts',
+                isLive: this.config.sharedControls
+                    ? this.config.isLive()
+                    : true,
+                url,
+            },
+            createMpegTsLoaderConfig(url)
+        );
         this.mpegTsPlayer = engine;
         this.mpegTsErrorListener = (type, details, info) => {
             if (this.destroyed || this.mpegTsPlayer !== engine) {

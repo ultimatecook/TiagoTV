@@ -1,6 +1,7 @@
 const createPlayerMock = jest.fn();
 const isSupportedMock = jest.fn(() => true);
 let VjsMpegTsSession: typeof import('./vjs-mpegts-session').VjsMpegTsSession;
+let MpegTsStreamLoader: typeof import('../web-video-support/mpegts-stream-loader').MpegTsStreamLoader;
 
 jest.unstable_mockModule('mpegts.js', () => ({
     default: {
@@ -13,6 +14,8 @@ jest.unstable_mockModule('mpegts.js', () => ({
 describe('VjsMpegTsSession', () => {
     beforeAll(async () => {
         ({ VjsMpegTsSession } = await import('./vjs-mpegts-session'));
+        ({ MpegTsStreamLoader } =
+            await import('../web-video-support/mpegts-stream-loader'));
     });
 
     beforeEach(() => {
@@ -54,14 +57,37 @@ describe('VjsMpegTsSession', () => {
 
         session.start('https://example.test/archive/movie.ts', video);
 
-        expect(createPlayerMock).toHaveBeenCalledWith({
-            type: 'mpegts',
-            isLive: false,
-            url: 'https://example.test/archive/movie.ts',
-        });
+        expect(createPlayerMock).toHaveBeenCalledWith(
+            {
+                type: 'mpegts',
+                isLive: false,
+                url: 'https://example.test/archive/movie.ts',
+            },
+            expect.any(Object)
+        );
         expect(mpegTsPlayer.attachMediaElement).toHaveBeenCalledWith(video);
         expect(mpegTsPlayer.load).toHaveBeenCalledTimes(1);
         expect(mpegTsPlayer.play).toHaveBeenCalledTimes(1);
+    });
+
+    it('streams through the loader that closes the connection on teardown', () => {
+        const restore = stubStreamingFetch();
+        try {
+            createPlayerMock.mockReturnValue(createMpegTsPlayer());
+            const { session } = createSession();
+
+            session.start(
+                'https://example.test/live/stream.ts',
+                document.createElement('video')
+            );
+
+            expect(createPlayerMock).toHaveBeenCalledWith(
+                expect.objectContaining({ isLive: true }),
+                { customLoader: MpegTsStreamLoader }
+            );
+        } finally {
+            restore();
+        }
     });
 
     it('handles an asynchronous autoplay rejection', () => {
@@ -293,4 +319,18 @@ function createTimeRanges(ranges: Array<[number, number]>): TimeRanges {
         start: (index: number) => ranges[index][0],
         end: (index: number) => ranges[index][1],
     } as TimeRanges;
+}
+
+/** jsdom has no streaming fetch; the loader is chosen only where it exists. */
+function stubStreamingFetch(): () => void {
+    const globals = globalThis as Record<string, unknown>;
+    const saved = ['fetch', 'Headers', 'ReadableStream'].map(
+        (key) => [key, globals[key]] as const
+    );
+    globals['fetch'] ??= jest.fn();
+    globals['Headers'] ??= class {};
+    globals['ReadableStream'] ??= class {};
+    return () => {
+        for (const [key, value] of saved) globals[key] = value;
+    };
 }

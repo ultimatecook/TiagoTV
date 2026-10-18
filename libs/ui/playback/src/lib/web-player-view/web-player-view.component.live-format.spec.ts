@@ -176,7 +176,11 @@ describe('WebPlayerViewComponent live format integration', () => {
         });
         expect(component.selectedPlayer()).toBe(VideoPlayer.VideoJs);
         const tsBinding = currentBinding();
-        component.handlePlaybackIssue(networkIssue('videojs'), tsBinding);
+        // 404 is no busy-slot refusal: the live-start guard leaves it shown.
+        component.handlePlaybackIssue(
+            { ...networkIssue('videojs'), httpStatus: 404 },
+            tsBinding
+        );
         await render();
         expect(component.activeBinding()).toBe(tsBinding);
         expect(component.visiblePlaybackDiagnostic()).not.toBeNull();

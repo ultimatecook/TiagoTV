@@ -199,11 +199,14 @@ describe('ArtPlayerSourceSession', () => {
         );
         await rejectedPlay.catch(() => undefined);
 
-        expect(createMpegTsPlayer).toHaveBeenCalledWith({
-            type: 'mpegts',
-            isLive: false,
-            url: 'https://example.test/movie.ts',
-        });
+        expect(createMpegTsPlayer).toHaveBeenCalledWith(
+            {
+                type: 'mpegts',
+                isLive: false,
+                url: 'https://example.test/movie.ts',
+            },
+            expect.any(Object)
+        );
         expect(adapter.state()).toEqual(
             expect.objectContaining({
                 isLive: false,
@@ -230,11 +233,14 @@ describe('ArtPlayerSourceSession', () => {
             player
         );
 
-        expect(createMpegTsPlayer).toHaveBeenCalledWith({
-            type: 'mpegts',
-            isLive: true,
-            url: 'https://example.test/movie.ts',
-        });
+        expect(createMpegTsPlayer).toHaveBeenCalledWith(
+            {
+                type: 'mpegts',
+                isLive: true,
+                url: 'https://example.test/movie.ts',
+            },
+            expect.any(Object)
+        );
     });
 
     it('reports HLS and MPEG-TS diagnostics from the session-local source', () => {

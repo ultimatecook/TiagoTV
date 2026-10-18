@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import type { ResolvedPortalPlayback } from '@iptvnator/shared/interfaces';
 
 /** A playback the mini-player continues once the page that ran it is gone. */
@@ -40,6 +40,7 @@ export interface NowPlayingSession extends NowPlayingHandoff {
 export class NowPlayingDockService {
     private readonly sessionState = signal<NowPlayingSession | null>(null);
     private readonly expandedState = signal(false);
+    private readonly mountedPlayers = signal(0);
     private nextId = 1;
 
     readonly session = this.sessionState.asReadonly();
@@ -48,6 +49,24 @@ export class NowPlayingDockService {
      * so the stream keeps playing; the shell makes the rest inert.
      */
     readonly expanded = this.expandedState.asReadonly();
+    /**
+     * The bar's player is still mounted, so its stream may still be open.
+     * It outlives `session` by a render: the bar unmounts after the session
+     * ends, and its player closes the connection as it does.
+     */
+    readonly playerMounted = computed(() => this.mountedPlayers() > 0);
+
+    /** The bar mounted its player; the returned call reports it gone. */
+    registerPlayer(): () => void {
+        this.mountedPlayers.update((count) => count + 1);
+        let registered = true;
+        return () => {
+            if (registered) {
+                registered = false;
+                this.mountedPlayers.update((count) => count - 1);
+            }
+        };
+    }
 
     handOff(handoff: NowPlayingHandoff): void {
         this.expandedState.set(false);

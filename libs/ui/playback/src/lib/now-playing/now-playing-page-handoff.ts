@@ -39,6 +39,15 @@ export class NowPlayingPageHandoff {
         }
     }
 
+    /**
+     * The page's player must not open its stream yet: the bar's player is
+     * still mounted and may hold the connection a one-connection account
+     * allows. It unmounts right after `pageStarted()` ended its session.
+     */
+    waits(): boolean {
+        return this.dockable() && this.dock.playerMounted();
+    }
+
     record(progress: NowPlayingProgress): void {
         this.progress = progress;
     }

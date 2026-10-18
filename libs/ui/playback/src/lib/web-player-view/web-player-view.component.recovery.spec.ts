@@ -562,6 +562,8 @@ describe('WebPlayerViewComponent recovery integration', () => {
         component.playbackFailed.subscribe((code) => failures.push(code));
         await render();
         const staleVjs = vjs();
+        // Mid-playback: a live start failure would be reopened first.
+        staleVjs.playbackStarted.emit();
         staleVjs.playbackIssue.emit(networkIssue('videojs'));
         fixture.detectChanges();
 

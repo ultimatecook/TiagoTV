@@ -234,6 +234,26 @@ describe('HtmlVideoPlayerComponent', () => {
         );
     });
 
+    it('drops a native source on destroy so its connection closes', () => {
+        const video = component.videoPlayer.nativeElement;
+        const loadSpy = jest
+            .spyOn(video, 'load')
+            .mockImplementation(() => undefined);
+        jest.spyOn(video, 'play').mockResolvedValue(undefined);
+        component.playChannel({
+            ...TEST_CHANNEL,
+            url: 'https://stream.example/movie.mp4',
+        });
+        loadSpy.mockClear();
+
+        fixture.destroy();
+
+        // A detached element would keep fetching until it is collected.
+        expect(video.querySelector('source')).toBeNull();
+        expect(video.hasAttribute('src')).toBe(false);
+        expect(loadSpy).toHaveBeenCalledTimes(1);
+    });
+
     it('emits a playback issue when the native video element reports an unsupported source', () => {
         const issues: unknown[] = [];
         component.channel = TEST_CHANNEL;

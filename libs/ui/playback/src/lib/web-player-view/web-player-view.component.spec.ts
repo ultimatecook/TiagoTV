@@ -869,6 +869,7 @@ describe('WebPlayerViewComponent', () => {
 
     it('uses an inline recovery headline when external fallback actions are unavailable', () => {
         fixture.detectChanges();
+        markPlaybackStarted();
         emitPlaybackIssue(createNetworkDiagnostic());
         fixture.detectChanges();
 
@@ -942,6 +943,7 @@ describe('WebPlayerViewComponent', () => {
             expect.objectContaining({ reloadToken: 0 })
         );
 
+        markPlaybackStarted();
         emitPlaybackIssue(createNetworkDiagnostic());
         fixture.detectChanges();
 
@@ -1095,6 +1097,19 @@ describe('WebPlayerViewComponent', () => {
             throw new Error('Expected an active inline playback binding');
         }
         component.handlePlaybackIssue(issue, binding);
+    }
+
+    /**
+     * The live stream already played: a later network failure shows at once
+     * (failures before the first frame are reopened by the live-start guard).
+     */
+    function markPlaybackStarted(): void {
+        fixture.detectChanges();
+        const binding = component.activeBinding();
+        if (!binding) {
+            throw new Error('Expected an active inline playback binding');
+        }
+        component.handlePlaybackStarted(binding);
     }
 
     function getDiagnosticDescriptionKey(issue: PlaybackDiagnostic): string {

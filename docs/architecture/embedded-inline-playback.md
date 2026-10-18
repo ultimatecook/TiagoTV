@@ -1157,6 +1157,64 @@ external launch API. It sends the resolved playback payload to MPV or VLC
 regardless of the current saved player setting, so a recommendation never
 mutates preferences.
 
+## Live Start Recovery And Stream Connections
+
+Many IPTV accounts allow one simultaneous stream, and providers keep counting
+a closed connection for a moment. A request made while the app still holds —
+or the provider still counts — the previous stream is refused (HTTP 403, 429,
+5xx), closed early or left hanging; the web player used to wait on it forever.
+The web players therefore hold at most one stream connection, and recover a
+refused or hanging live start:
+
+- **Close before open.** A channel, source, player, Retry or recovery change
+  unmounts the previous engine before the next one renders, and engine
+  teardown aborts its request synchronously: Video.js/VHS and hls.js abort
+  their XHRs, and the mpegts.js engines of Video.js, HTML5 and ArtPlayer load
+  http(s) sources through `MpegTsStreamLoader`
+  (`web-video-support/mpegts-stream-loader.ts`). mpegts.js 1.8's own fetch
+  loader skips `AbortController.abort()` on Chromium (so Electron) once the
+  body streams and cancels only when the next chunk arrives: a destroyed
+  player's connection closed after the next request had opened, and a stalled
+  stream's never closed. The custom loader is that fetch loader with an
+  unconditional abort; WebSocket URLs keep mpegts.js's own loader.
+- **Mini-player handoff.** A page player hands its stream to the bottom
+  mini-player from `WebPlayerViewComponent.ngOnDestroy`, which runs after its
+  engine (a child) was destroyed, so the mini-player opens only after the
+  page's request was aborted. The other way, a page player that starts ends
+  the mini-player session and renders no engine while
+  `NowPlayingDockService.playerMounted()` still reports the bar's player; the
+  bar reports it gone from its own `ngOnDestroy`, after that engine aborted.
+  Opening the mini-player full-window keeps the same player and connection.
+- **Live start guard.** `WebPlayerLiveStartGuard`, owned by
+  `WebPlayerRecoveryController`, watches each live web application until the
+  engine reports `playing`. A terminal issue before that — `network-error`
+  with HTTP 403, 408, 429, 5xx or no status, an mpegts.js
+  `UnrecoverableEarlyEof`, or Video.js/VHS MediaError 4 without an engine
+  type (VHS ends the MediaSource with `'network'` when its first playlist
+  request fails, so the element reports code 4 and the status is lost) — or
+  12 s without playback unmounts the engine,
+  which closes its connection, waits 4 s for the provider to free the slot and
+  starts the same playback again as a new application (a reload in the same
+  player and source, like Retry). One start is reopened at most twice; then
+  the normal diagnostic shows: the engine's own, or a sanitized
+  `network-error` with `details: 'start-timeout'` for a start that never
+  played. A paused element that already has media data (autoplay held back)
+  counts as progress. HTTP 401/404/410, other evidence, failures after
+  playback started, VOD, Embedded MPV and external players are never
+  reopened. A new channel, source, player or a user Retry starts a fresh
+  count. The mini-player's own view runs the same guard, so its failed state
+  shows only after the reopenings. The Xtream Auto format TS attempt
+  ([Initial Auto HLS failure](./xtream-portal-compatibility.md#initial-auto-hls-failure))
+  runs first and ends the watch of the failed HLS application; the TS
+  application gets its own.
+
+Not covered: a stream that stops after it played (the provider dropping a
+running connection) is not reopened, and a provider that keeps counting the
+previous connection or HLS session longer than the two 4 s pauses (refusals)
+or the 44 s worst case (hanging starts) still ends in the diagnostic. The
+guard reopens the same source in the same player; it is not a recovery
+recommendation and changes no setting.
+
 ## External Player Arguments
 
 Electron settings expose optional MPV and VLC command-line argument fields only

@@ -121,11 +121,14 @@ function runResetLifecycleSuite(sharedControls: boolean): void {
         playerHarness.emit('playerreset');
 
         expect(playerHarness.mpegTsPlayers).toHaveLength(2);
-        expect(mpegTsCreatePlayerMock).toHaveBeenLastCalledWith({
-            type: 'mpegts',
-            isLive: true,
-            url: 'https://example.test/live/three.ts',
-        });
+        expect(mpegTsCreatePlayerMock).toHaveBeenLastCalledWith(
+            {
+                type: 'mpegts',
+                isLive: true,
+                url: 'https://example.test/live/three.ts',
+            },
+            expect.any(Object)
+        );
         expect(
             playerHarness.mpegTsPlayers[1].attachMediaElement
         ).toHaveBeenCalledWith(latestVideo);
@@ -331,11 +334,14 @@ function runResetLifecycleSuite(sharedControls: boolean): void {
         playerHarness.ready();
 
         expect(playerHarness.mpegTsPlayers).toHaveLength(1);
-        expect(mpegTsCreatePlayerMock).toHaveBeenLastCalledWith({
-            type: 'mpegts',
-            isLive: true,
-            url: 'https://example.test/live/two.ts',
-        });
+        expect(mpegTsCreatePlayerMock).toHaveBeenLastCalledWith(
+            {
+                type: 'mpegts',
+                isLive: true,
+                url: 'https://example.test/live/two.ts',
+            },
+            expect.any(Object)
+        );
     });
 
     it('restarts active MPEG-TS when authoritative live metadata changes', () => {
@@ -362,11 +368,14 @@ function runResetLifecycleSuite(sharedControls: boolean): void {
         playerHarness.currentVideo = document.createElement('video');
         playerHarness.emit('playerreset');
 
-        expect(mpegTsCreatePlayerMock).toHaveBeenLastCalledWith({
-            type: 'mpegts',
-            isLive: false,
-            url: source.src,
-        });
+        expect(mpegTsCreatePlayerMock).toHaveBeenLastCalledWith(
+            {
+                type: 'mpegts',
+                isLive: false,
+                url: source.src,
+            },
+            expect.any(Object)
+        );
         expect(playerHarness.mpegTsPlayers).toHaveLength(2);
     });
 }

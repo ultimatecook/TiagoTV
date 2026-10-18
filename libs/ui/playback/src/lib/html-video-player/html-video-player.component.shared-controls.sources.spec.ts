@@ -106,11 +106,14 @@ describe('HtmlVideoPlayerComponent shared controls sources', () => {
                 isLive,
             });
 
-            expect(mpegTsCreatePlayer).toHaveBeenCalledWith({
-                type: 'mpegts',
-                isLive,
-                url: 'https://example.test/raw.ts',
-            });
+            expect(mpegTsCreatePlayer).toHaveBeenCalledWith(
+                {
+                    type: 'mpegts',
+                    isLive,
+                    url: 'https://example.test/raw.ts',
+                },
+                expect.any(Object)
+            );
         }
     );
 

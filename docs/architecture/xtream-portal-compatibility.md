@@ -522,8 +522,10 @@ through its existing scoped header handoff. HTTP-media requests retain the
 existing transport/trust rules and do not feed new evidence or admission into
 the separate portal-API host-connectivity guard. Recovery recommendations still
 require a user action and never auto-switch engines. No settings or playlist
-cache is changed. A TS failure displays normal recovery actions; Retry repeats
-TS without rearming the automatic attempt. Changing the actual logical channel
+cache is changed. A TS failure displays normal recovery actions — a busy-slot
+refusal only after the bounded reopenings of the
+[live start guard](./embedded-inline-playback.md#live-start-recovery-and-stream-connections);
+Retry repeats TS without rearming the automatic attempt. Changing the actual logical channel
 or playlist, or mounting a new host, creates a new session; same-session metadata
 or provider-source refresh does not rearm it. Same-channel replay and metadata
 refresh preserve the chosen TS while the candidate URLs, headers and mode stay
@@ -533,7 +535,7 @@ playlist preference and reevaluates advertised formats on the next channel.
 | Player/path                              | Initial Auto failure support                                                                                                                                                                               |
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | HTML5 / ArtPlayer, hls.js                | One advertised TS attempt after terminal HLS manifest/level/segment HTTP failure; waits for the engine's own bounded retries                                                                               |
-| Video.js / VHS                           | Only an observable terminal HTTP diagnostic can trigger an attempt. A sole HLS rendition's failing segment can remain in VHS retry/exclusion cycles without such a diagnostic; use manual TS for that case |
+| Video.js / VHS                           | Only an observable terminal HTTP diagnostic can trigger an attempt; a refused first playlist reaches the element as MediaError 4 without its status, so the live start guard reopens it instead. A sole HLS rendition's failing segment can remain in VHS retry/exclusion cycles without such a diagnostic; the live start guard then reopens a start that never plays and reports it, and manual TS avoids it |
 | External MPV / VLC                       | Manual TS only. Process launch/exit and best-effort playing telemetry do not reliably identify the initial HLS media HTTP failure                                                                          |
 | Embedded MPV                             | Manual TS only; no equivalent structured HTTP diagnostic                                                                                                                                                   |
 | Unified Favorites/Recent live resolution | Manual TS; it does not own fresh session account-format evidence                                                                                                                                           |

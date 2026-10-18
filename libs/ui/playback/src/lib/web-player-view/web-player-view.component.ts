@@ -274,7 +274,8 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
         alternativeSourceCount: () => this.alternativeSources().length,
         managedExternalPlayersAvailable: () =>
             this.runtime.supportsManagedExternalPlayers,
-        tryAutoLiveFormat: (issue) => this.liveAutoFormat.tryFallback(issue),
+        liveAutoFormat: this.liveAutoFormat,
+        mediaElement: () => this.fullscreenSurface.querySelector('video'),
         emitPlaybackFailed: (code) => this.playbackFailed.emit(code),
         emitExternalFallbackRequested: (request) =>
             this.externalFallbackRequested.emit(request),
@@ -304,7 +305,7 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
     readonly renderedApplications = computed<
         readonly PlaybackApplicationOwnership[]
     >(() => {
-        if (this.liveAutoFormat.pending()) return [];
+        if (this.liveAutoFormat.pending() || this.nowPlaying.waits()) return [];
         const binding = this.activeBinding();
         const embeddedMpv =
             this.selectedPlayer() === VideoPlayer.EmbeddedMpv && !binding;
@@ -344,6 +345,7 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
             const selectedPlayer = untracked(this.selectedPlayer);
             const reloadToken = untracked(this.reloadToken);
             const target = toInlinePlaybackPlayer(selectedPlayer);
+            this.recovery.watchApplication(token, isLive && target !== null);
             this.channel.set(undefined);
             this.vjsOptions.set(undefined);
             this.recovery.clearDiagnostic();
@@ -389,6 +391,7 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
             fallbackVolume: this.volume(),
         });
         this.liveAutoFormat.destroy();
+        this.recovery.destroy();
         this.externalRecovery.destroy();
         this.applicationHandoff.destroy();
     }
@@ -401,15 +404,7 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
     }
 
     handlePlaybackStarted(binding: PlaybackBinding): void {
-        this.recovery.syncSession();
-        if (
-            this.applicationHandoff.owns(
-                binding,
-                this.playbackApplicationToken()
-            ) &&
-            !this.liveAutoFormat.pending()
-        )
-            this.liveAutoFormat.started();
+        this.recovery.handlePlaybackStarted(binding);
     }
 
     handleTimeUpdate(

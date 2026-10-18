@@ -5,11 +5,14 @@ import {
     type Signal,
     type WritableSignal,
 } from '@angular/core';
-import type {
-    PlaybackDiagnostic,
+import {
+    createPlaybackDiagnostic,
+    createPlaybackSourceMetadata,
     PlaybackDiagnosticCode,
-    PlaybackFallbackRequest,
-    PlaybackRecommendationTarget,
+    PlaybackDiagnosticSource,
+    type PlaybackDiagnostic,
+    type PlaybackFallbackRequest,
+    type PlaybackRecommendationTarget,
 } from '@iptvnator/playback/util';
 import {
     VideoPlayer,
@@ -22,6 +25,8 @@ import type {
 } from './playback-recovery-session';
 import type { WebPlayerApplicationHandoffCoordinator } from './web-player-application-handoff';
 import type { WebPlayerApplicationToken } from './web-player-application-state';
+import type { WebPlayerLiveAutoFormat } from './web-player-live-auto-format';
+import { WebPlayerLiveStartGuard } from './web-player-live-start-guard';
 import { createWebPlayerRecommendations } from './web-player-recovery-policy';
 
 export interface WebPlayerRecoveryControllerDeps {
@@ -40,7 +45,12 @@ export interface WebPlayerRecoveryControllerDeps {
     readonly playbackExternallyTransferable: Signal<boolean>;
     readonly alternativeSourceCount: () => number;
     readonly managedExternalPlayersAvailable: () => boolean;
-    readonly tryAutoLiveFormat?: (issue: PlaybackDiagnostic) => boolean;
+    readonly liveAutoFormat?: Pick<
+        WebPlayerLiveAutoFormat,
+        'tryFallback' | 'started' | 'pending'
+    >;
+    /** The rendered engine's media element, for live-start progress. */
+    readonly mediaElement?: () => HTMLMediaElement | null;
     readonly emitPlaybackFailed: (code: PlaybackDiagnosticCode) => void;
     readonly emitExternalFallbackRequested: (
         request: PlaybackFallbackRequest
@@ -94,7 +104,35 @@ export class WebPlayerRecoveryController {
         });
     });
 
+    private readonly liveStart = new WebPlayerLiveStartGuard({
+        release: () => this.releaseApplication(),
+        reopen: () => this.deps.reloadToken.update((value) => value + 1),
+        giveUp: () => this.reportStalledStart(),
+        media: () => this.deps.mediaElement?.() ?? null,
+    });
+
     constructor(private readonly deps: WebPlayerRecoveryControllerDeps) {}
+
+    /** A new application started; live ones are watched until they play. */
+    watchApplication(token: WebPlayerApplicationToken, isLive: boolean): void {
+        this.liveStart.watch(token, isLive);
+    }
+
+    handlePlaybackStarted(binding: PlaybackBinding): void {
+        this.syncSession();
+        const liveAutoFormat = this.deps.liveAutoFormat;
+        if (
+            !this.deps.applicationHandoff.owns(
+                binding,
+                this.deps.playbackApplicationToken()
+            ) ||
+            liveAutoFormat?.pending()
+        ) {
+            return;
+        }
+        liveAutoFormat?.started();
+        this.liveStart.started();
+    }
 
     handlePlaybackIssue(
         issue: PlaybackDiagnostic | null,
@@ -121,10 +159,12 @@ export class WebPlayerRecoveryController {
             this.clearDiagnostic();
             return;
         }
-        if (this.deps.tryAutoLiveFormat?.(issue)) {
-            applicationHandoff.invalidate();
-            recoverySession.clearPlaybackBinding();
-            this.clearDiagnostic();
+        if (this.deps.liveAutoFormat?.tryFallback(issue)) {
+            this.liveStart.stop();
+            this.releaseApplication();
+            return;
+        }
+        if (this.liveStart.retry(issue, this.deps.playbackApplicationToken())) {
             return;
         }
         if (!recoverySession.recordFailure(binding)) {
@@ -192,5 +232,36 @@ export class WebPlayerRecoveryController {
     clearDiagnostic(): void {
         this.diagnosticOwnerToken.set(null);
         this.playbackDiagnostic.set(null);
+    }
+
+    destroy(): void {
+        this.liveStart.stop();
+    }
+
+    /** Unmounts the engine: its connection closes before anything reopens. */
+    private releaseApplication(): void {
+        this.deps.applicationHandoff.invalidate();
+        this.deps.recoverySession.clearPlaybackBinding();
+        this.clearDiagnostic();
+    }
+
+    /** A live start that never played, retries spent: the usual diagnostic. */
+    private reportStalledStart(): void {
+        const binding = this.deps.recoverySession.activeBinding();
+        if (!binding) {
+            return;
+        }
+        this.handlePlaybackIssue(
+            createPlaybackDiagnostic({
+                code: PlaybackDiagnosticCode.NetworkError,
+                source: PlaybackDiagnosticSource.Source,
+                metadata: createPlaybackSourceMetadata({
+                    url: this.deps.resolvedPlayback().streamUrl,
+                    player: binding.target,
+                }),
+                details: 'start-timeout',
+            }),
+            binding
+        );
     }
 }

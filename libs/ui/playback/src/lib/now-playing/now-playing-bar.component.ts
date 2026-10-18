@@ -73,6 +73,8 @@ export class NowPlayingBarComponent
     private readonly minimizeButton =
         viewChild<ElementRef<HTMLElement>>('minimizeButton');
     private lastSavedPosition = 0;
+    /** Reports the player gone once its stream connection is closed. */
+    private readonly releasePlayer = this.dock.registerPlayer();
 
     readonly session = input.required<NowPlayingSession>();
     readonly expanded = this.dock.expanded;
@@ -162,6 +164,9 @@ export class NowPlayingBarComponent
     ngOnDestroy(): void {
         this.saveResumePosition(true);
         this.video.destroy();
+        // Children are destroyed first: the player's engine has already
+        // aborted its request, so a page may open its own stream now.
+        this.releasePlayer();
     }
 
     togglePaused(): void {

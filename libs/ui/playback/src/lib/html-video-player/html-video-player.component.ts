@@ -44,6 +44,7 @@ import {
     setNativeVideoSource,
 } from '../web-video-support/web-video-native-source.util';
 import { WebVideoSourceTracks } from '../web-video-support/web-video-source-tracks';
+import { createMpegTsLoaderConfig } from '../web-video-support/mpegts-stream-loader';
 import { attachHtmlVideoLegacyShortcuts } from './html-video-legacy-shortcuts';
 import { HtmlVideoElementSession } from './html-video-element-session';
 import {
@@ -242,11 +243,10 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
                     channel.name,
                     url
                 );
-                this.mpegtsPlayer = mpegts.createPlayer({
-                    type: 'mpegts',
-                    isLive: this.isLive(),
-                    url: url,
-                });
+                this.mpegtsPlayer = mpegts.createPlayer(
+                    { type: 'mpegts', isLive: this.isLive(), url: url },
+                    createMpegTsLoaderConfig(url)
+                );
                 this.mpegtsPlayer.attachMediaElement(
                     this.videoPlayer.nativeElement
                 );
@@ -388,6 +388,21 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
         this.destroyHls();
         this.shakaSession?.destroy();
         this.shakaSession = null;
+        this.releaseNativeSource();
+    }
+
+    /**
+     * A removed `<video>` keeps fetching a native source until it is
+     * collected, holding the stream connection the next player needs (the
+     * mini-player always plays here). Video.js and ArtPlayer reset theirs on
+     * dispose; the MSE engines above already detached.
+     */
+    private releaseNativeSource(): void {
+        const video = this.videoPlayer?.nativeElement;
+        if (video && (video.hasAttribute('src') || video.firstElementChild)) {
+            clearNativeVideoSources(video);
+            video.load();
+        }
     }
 
     private getVideoSession(): HtmlVideoElementSession {
