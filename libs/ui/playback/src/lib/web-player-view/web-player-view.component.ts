@@ -72,6 +72,7 @@ import {
     toVideoPlayer,
 } from './web-player-recovery-policy';
 import { resolveWebPlayerSharedControls } from './web-player-shared-controls';
+import { injectConfiguredWebPlayer } from './vod-embedded-mpv';
 import { NowPlayingPageHandoff } from '../now-playing/now-playing-page-handoff';
 
 @Component({
@@ -178,7 +179,12 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
      */
     readonly dockable = input(true);
 
-    private readonly nowPlaying = new NowPlayingPageHandoff(this.dockable);
+    // The mini-player plays on a web engine: an MPV-played movie (its audio
+    // is beyond those engines) stays on its page.
+    private readonly nowPlaying = new NowPlayingPageHandoff(
+        () =>
+            this.dockable() && this.selectedPlayer() !== VideoPlayer.EmbeddedMpv
+    );
 
     readonly showCaptions = computed(
         () => this.settingsStore.showCaptions?.() ?? false
@@ -209,11 +215,9 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
     // reach an already-mounted player without a remount. A saved managed
     // MPV/VLC retains the mounted engine (resolveRenderableWebPlayer),
     // because this view can neither render nor launch external players.
+    // Movies move to Embedded MPV where it exists (vod-embedded-mpv).
     private readonly renderablePlayer = linkedSignal({
-        source: () =>
-            this.playerOverride() ??
-            this.settingsStore.player?.() ??
-            VideoPlayer.VideoJs,
+        source: injectConfiguredWebPlayer(this.playerOverride, this.playback),
         computation: resolveRenderableWebPlayer,
     });
     readonly selectedPlayer = computed<VideoPlayer>(() => {

@@ -1964,7 +1964,8 @@
             "RECENTLY_ADDED": "Recently Added",
             "WATCH_LATER": "Watch Later",
             "DOWNLOADS": "Downloads",
-            "MY_ACCOUNT": "My Account"
+            "MY_ACCOUNT": "My Account",
+            "SETTINGS": "Settings"
         },
         "SOURCES": {
             "TITLE": "Sources",

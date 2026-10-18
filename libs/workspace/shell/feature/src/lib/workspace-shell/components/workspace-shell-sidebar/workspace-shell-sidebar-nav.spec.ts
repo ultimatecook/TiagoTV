@@ -28,6 +28,7 @@ describe('buildWorkspaceSidebarGroups', () => {
             'watch-later',
             'downloads',
             'account',
+            'settings',
         ]);
     });
 
@@ -97,6 +98,7 @@ describe('buildWorkspaceSidebarGroups', () => {
             'watch-later',
             'downloads',
             'account',
+            'settings',
         ]);
         expect(
             highlighting(
@@ -105,7 +107,7 @@ describe('buildWorkspaceSidebarGroups', () => {
                     playlistId: 'p1',
                 })
             )
-        ).toHaveLength(10);
+        ).toHaveLength(11);
     });
 
     it('marks only Home as an exact match', () => {

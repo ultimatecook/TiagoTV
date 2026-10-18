@@ -61,7 +61,7 @@ const GLOBAL_RECENT_PATH = ['/workspace', 'global-recent'];
 /**
  * The TiagoTV sidebar: the "Home" group browses the active source's
  * catalog, the "Library" group holds what belongs to the viewer (history,
- * downloads, accounts). Without an active source every catalog entry opens
+ * downloads, accounts, settings). Without an active source every catalog entry opens
  * the sources page, where the first playlist is added.
  */
 export function buildWorkspaceSidebarGroups(
@@ -133,6 +133,10 @@ export function buildWorkspaceSidebarGroups(
                     'downloads',
                 ]),
                 item('account', 'MY_ACCOUNT', 'user', SOURCES_PATH),
+                item('settings', 'SETTINGS', 'settings', [
+                    '/workspace',
+                    'settings',
+                ]),
             ],
         },
     ];

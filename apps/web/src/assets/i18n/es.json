@@ -1964,7 +1964,8 @@
             "RECENTLY_ADDED": "Agregados recientemente",
             "WATCH_LATER": "Ver más tarde",
             "DOWNLOADS": "Descargas",
-            "MY_ACCOUNT": "Mi cuenta"
+            "MY_ACCOUNT": "Mi cuenta",
+            "SETTINGS": "Ajustes"
         },
         "SOURCES": {
             "TITLE": "Fuentes",
