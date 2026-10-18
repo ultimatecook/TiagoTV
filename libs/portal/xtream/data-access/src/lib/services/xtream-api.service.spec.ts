@@ -152,6 +152,41 @@ describe('XtreamApiService', () => {
         );
     });
 
+    it('loads one live category, or the whole line-up without one', async () => {
+        dataService.sendIpcEvent.mockResolvedValue({
+            payload: [
+                { stream_id: 5, category_id: '9', name: 'ES | No Event' },
+            ],
+        });
+
+        await service.getLiveStreams(credentials, { categoryId: '9' });
+        await service.getLiveStreams(credentials);
+
+        expect(dataService.sendIpcEvent).toHaveBeenNthCalledWith(
+            1,
+            XTREAM_REQUEST,
+            expect.objectContaining({
+                params: {
+                    action: 'get_live_streams',
+                    category_id: '9',
+                    password: 'secret',
+                    username: 'demo',
+                },
+            })
+        );
+        expect(dataService.sendIpcEvent).toHaveBeenNthCalledWith(
+            2,
+            XTREAM_REQUEST,
+            expect.objectContaining({
+                params: {
+                    action: 'get_live_streams',
+                    password: 'secret',
+                    username: 'demo',
+                },
+            })
+        );
+    });
+
     it('falls back to the legacy full-epg action and normalizes the response', async () => {
         dataService.sendIpcEvent.mockImplementation(
             async (_type: string, payload: unknown) => {

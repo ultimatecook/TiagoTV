@@ -49,6 +49,7 @@ export interface XtreamRequestOptions {
     suppressErrorLog?: boolean;
 }
 
+/** A catalog list (live, VOD or series) narrowed to one category. */
 export interface XtreamVodCatalogRequestOptions extends XtreamRequestOptions {
     categoryId?: string | number;
 }
@@ -179,11 +180,12 @@ export class XtreamApiService {
     }
 
     /**
-     * Get live streams
+     * Get live streams: the whole line-up, or one category's with
+     * `categoryId`.
      */
     async getLiveStreams(
         credentials: XtreamCredentials,
-        options?: XtreamRequestOptions
+        options?: XtreamVodCatalogRequestOptions
     ): Promise<XtreamLiveStream[]> {
         const response = await this.sendRequest(
             credentials.serverUrl,
@@ -191,6 +193,9 @@ export class XtreamApiService {
                 action: XtreamCodeActions.GetLiveStreams,
                 username: credentials.username,
                 password: credentials.password,
+                ...(options?.categoryId !== undefined
+                    ? { category_id: options.categoryId }
+                    : {}),
             },
             options
         );
