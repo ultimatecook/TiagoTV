@@ -84,7 +84,7 @@ describe('team crests', () => {
         expect(requests[0]).toContain('lookupteam.php?id=133720');
     });
 
-    it('retries a refused request once', async () => {
+    it('retries a refused request', async () => {
         let calls = 0;
         const resolver = new TeamCrestResolver({
             fetchJson: async () => {

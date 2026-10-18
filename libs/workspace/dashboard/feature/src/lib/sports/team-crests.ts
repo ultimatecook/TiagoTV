@@ -11,10 +11,11 @@ import type { SportSectionId } from './sport-sections';
 const API = 'https://www.thesportsdb.com/api/v1/json/123/';
 // v2: v1 kept failed lookups (the API's rate limit) as "no crest".
 const CACHE_KEY = 'tiagotv:team-crests:v2';
-/** The free API answers about 30 requests a minute: one every 2.2s. */
-const REQUEST_GAP_MS = 2200;
-/** A refused request is tried once more after this pause. */
-const RETRY_AFTER_MS = 20_000;
+/** The free API refuses bursts: one request every 3s stays under it. */
+const REQUEST_GAP_MS = 3000;
+/** A refused request is tried twice more, after this pause each time. */
+const RETRY_AFTER_MS = 25_000;
+const RETRIES = 2;
 const HIT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MISS_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -28,19 +29,50 @@ const LEAGUE_HINTS: Partial<Record<SportSectionId, RegExp>> = {
 };
 
 /**
- * Names the search cannot answer: "Brighton" finds only the women's side,
- * and the football Nottingham Forest only by its id (the search returns a
- * netball club).
+ * Names the search cannot answer, looked up by the API's id: names it
+ * files otherwise ("Bayern Munich", "Athletic Bilbao"), answers it gives
+ * for another sport or side ("Brighton" finds the women's team, the
+ * football Nottingham Forest only a netball club) and clubs it misses by
+ * the provider's name ("Paris Saint-Germain").
  */
-const ALIASES: Record<string, { name?: string; id?: string }> = {
-    brighton: { name: 'Brighton and Hove Albion' },
-    'brighton & hove albion': { name: 'Brighton and Hove Albion' },
-    'nottingham forest': { id: '133720' },
-    "nott'm forest": { id: '133720' },
-    'bayern múnich': { name: 'Bayern Munich' },
-    'inter de milán': { name: 'Inter Milan' },
-    'atlético de madrid': { name: 'Atlético Madrid' },
-};
+type Alias = { name?: string; id?: string };
+const ids = (id: string, ...names: string[]) =>
+    names.map((name) => [name, { id }] as const);
+
+const ALIASES: Record<string, Alias> = Object.fromEntries([
+    ...ids('133619', 'brighton', 'brighton & hove albion'),
+    ...ids('133720', 'nottingham forest', "nott'm forest"),
+    ...ids('133601', 'aston villa'),
+    ...ids('133664', 'bayern münchen', 'fc bayern münchen', 'bayern múnich'),
+    ...ids('133651', 'hamburger sv', 'hsv'),
+    ...ids('133727', 'athletic club', 'athletic bilbao'),
+    ...ids('133729', 'atlético de madrid', 'atletico de madrid'),
+    ...ids('133681', 'inter', 'inter de milán', 'inter milan'),
+    ...ids('134784', 'hellas verona', 'verona'),
+    ...ids('133859', 'pisa', 'pisa sc'),
+    ...ids('134224', 'cremonese', 'us cremonese'),
+    ...ids('133714', 'paris saint-germain', 'paris sg', 'psg'),
+    ...ids('133707', 'olympique de marseille', 'marseille'),
+    ...ids('133713', 'olympique lyonnais', 'lyon'),
+    ...ids('133711', 'losc lille', 'lille osc', 'lille'),
+    ...ids('134709', 'angers sco'),
+    ['mainz 05', { name: 'Mainz' }],
+    ['1. fsv mainz 05', { name: 'Mainz' }],
+]);
+
+/** Basketball sides go by their sponsors' names, and share clubs' names. */
+const BASKETBALL_ALIASES: Record<string, Alias> = Object.fromEntries([
+    ...ids('135092', 'real madrid'),
+    ...ids('135095', 'ucam murcia'),
+    ...ids('135086', 'la laguna tenerife', 'tenerife'),
+    ...ids('135088', 'kosner baskonia', 'baskonia'),
+    ...ids('135081', 'casademont zaragoza', 'zaragoza'),
+    ...ids('143918', 'fiatc girona', 'girona'),
+    ...ids('144621', 'leyma basquet coruña', 'coruña'),
+    ...ids('135080', 'bilbao', 'surne bilbao'),
+    ...ids('135096', 'unicaja', 'unicaja málaga'),
+    ...ids('135090', 'morabanc andorra', 'andorra'),
+]);
 
 const CLUB_AFFIXES =
     /\b(fc|cf|rc|ad|sd|cd|ud|sc|ac|as|ss|ssc|us|afc|fk|sk|1\.)\b\.?/gi;
@@ -149,7 +181,7 @@ export class TeamCrestResolver {
         return request;
     }
 
-    /** One API request, spaced from the last; a refusal is retried once. */
+    /** One API request, spaced from the last; a refusal is retried. */
     private async get(url: string): Promise<unknown> {
         const wait =
             this.deps.wait ??
@@ -158,13 +190,16 @@ export class TeamCrestResolver {
         if (gap > 0) {
             await wait(gap);
         }
-        this.lastRequestAt = Date.now();
-        try {
-            return await this.deps.fetchJson(url);
-        } catch {
-            await wait(RETRY_AFTER_MS);
+        for (let attempt = 0; ; attempt++) {
             this.lastRequestAt = Date.now();
-            return this.deps.fetchJson(url);
+            try {
+                return await this.deps.fetchJson(url);
+            } catch (error) {
+                if (attempt >= RETRIES) {
+                    throw error;
+                }
+                await wait(RETRY_AFTER_MS);
+            }
         }
     }
 
@@ -174,7 +209,9 @@ export class TeamCrestResolver {
     ): Promise<string | null> {
         // A side from the competition's league wins over the first name's
         // answer from elsewhere.
-        const alias = ALIASES[team.trim().toLowerCase()];
+        const alias = (section === 'basketball' ? BASKETBALL_ALIASES : ALIASES)[
+            team.trim().toLowerCase()
+        ];
         if (alias?.id) {
             const body = (await this.get(
                 `${API}lookupteam.php?id=${alias.id}`
