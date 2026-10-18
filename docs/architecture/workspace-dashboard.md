@@ -221,6 +221,14 @@ all, and none inside the hero.
    `--rail-bleed` past the viewport on every side so card focus rings and
    hover lift are not clipped; the fades are offset by the same variable so
    they reach the track's clipping edge and no card strip shows beyond them.
+   The TiagoTV Home and the platform pages set `--rail-bleed` to their
+   gutter, so every sideways row (these rails, the platforms, sports,
+   matches and live channels rows, a platform page's rows) runs on through
+   both gutters to the content's edges: scrolled cards slide out at the
+   window's edge with the sidebar hidden and at the sidebar's edge
+   otherwise, while the first card rests on the gutter under the title. The
+   custom rows take their start bleed as `--rail-bleed-start` (the page's
+   `--rail-bleed`, at least 12px) and snap to it (`row-edges.spec.ts`).
 4. Cards are keyboard-focusable router links; `scroll-snap-align: start`
    means arrow-key nav lands on card boundaries. A card that receives
    keyboard or script focus scrolls fully into the viewport: Chromium skips

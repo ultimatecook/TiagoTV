@@ -90,7 +90,7 @@ The shell is intentionally split into four persistent regions:
 1. Sidebar (`components/workspace-shell-sidebar/`, TiagoTV):
     1. Greeting and the hide control (⌃⌘S / Ctrl+Alt+S; remembered under
        `tiagotv:nav-sidebar-hidden`), then the search field with the command
-       palette's `⌘K` chip.
+       palette's `⌘K` chip. The pull tab (below) hides and shows it too.
     2. Main links: Home, Movies, Series, New & Popular and By country
        (`/workspace/countries`), built by `buildWorkspaceSidebarNav()` for the
        active source.
@@ -114,7 +114,7 @@ The shell is intentionally split into four persistent regions:
        above the content.
 2. Floating page controls (`components/workspace-shell-page-controls/`):
    round glass buttons over the body's top edge, each only while the page
-   offers it. Top-left: "show menu" while the sidebar is hidden, the page's
+   offers it. Top-left: the page's
    Back (see [Header Back](#header-back)) and, at phone width, the context
    drawer's toggle. Top-right: the live channel list toggle and the page's
    header shortcut (`WorkspaceHeaderContextService`). With a leading control
@@ -122,6 +122,17 @@ The shell is intentionally split into four persistent regions:
    (`--workspace-leading-clearance`) and scrolls under it; a streaming
    platform's pages keep their billboard at the top. At phone width the
    body keeps a 54 px row for the controls when the page has any.
+   The sidebar's pull tab (`components/workspace-shell-nav-tab/`) is a
+   half-round glass handle on the content's left edge, half-way down: on
+   the window's edge while the sidebar is hidden (test id
+   `nav-sidebar-show`; it shows the sidebar), on the sidebar's edge
+   otherwise (`nav-sidebar-tab`; it hides it). It is one button with `aria-expanded`
+   and `aria-controls`, so focus stays on it across its own toggles; hiding
+   the sidebar from inside it moves focus to the tab. Faint at rest (thin
+   glass, muted chevron) and solid under the pointer or the keyboard; not
+   at phone width, where the sidebar is the top strip. Nothing floats at the
+   top-left for the hidden sidebar, so a page without Back (the Home, a
+   sports page) starts at the top.
 3. Main body:
     1. Optional left context panel.
     2. Main router outlet content. In server storage mode an offline banner
@@ -280,7 +291,7 @@ render an arrow of their own: they register a `WorkspaceBackTarget`
 lifetime while its optional `available` predicate holds. The newest
 registration wins, and each release removes only its own target. The button
 (`data-test-id="workspace-header-back"`) floats at the body's top-left (after
-"show menu" while the sidebar is hidden), never scrolls, and has Electron
+the macOS traffic lights while the sidebar is hidden), never scrolls, and has Electron
 `no-drag` hit testing. Home hides it: its hero is the top of the app. A target supplies its
 label (else the translated "Back"), whether Escape on the page runs it, and
 `run()`.
@@ -636,9 +647,17 @@ The Electron window hides the native title bar on all desktop platforms
    (`app-region: drag`). In the native glass window (`native-glass`) an
    18 px transparent strip along the content's top edge
    (`.workspace-drag-strip`) moves it too; the floating page controls stay
-   `no-drag`. With the sidebar hidden, the content starts below the lights
-   (`--traffic-lights-clear-y`) and that band, holding "show menu" and Back
-   after the lights (`--traffic-lights-clear-x`), is the drag region.
+   `no-drag`. With the sidebar hidden, a page starts below the lights
+   (`--workspace-lights-band`, from `--traffic-lights-clear-y`) and that
+   band, holding Back after the lights (`--traffic-lights-clear-x`), is the
+   drag region. The Home and a streaming platform's pages run on to the
+   top under that transparent band: the Home's first row (its heading)
+   starts after the lights (`--workspace-corner-inset`) and its link is
+   `no-drag` (Chromium reports drag regions in document order and Electron
+   subtracts a later `no-drag` box from an earlier drag one, so the strip,
+   which precedes the content, leaves it clickable); a billboard runs under
+   them. A fullscreen window has no lights, strip or corners: the content
+   runs to all four edges (the glass window drops its bottom inset too).
 
    App zoom (see "Zoom level") scales CSS pixels but not the lights. On
    macOS, `TrafficLightsClearanceDirective` on `.workspace-shell` reads the

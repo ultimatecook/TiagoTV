@@ -19,6 +19,7 @@ import {
     WorkspaceShellContextPanel,
 } from '@iptvnator/workspace/shell/util';
 import { LayoutSlideDirective } from './layout-slide.directive';
+import { WorkspaceShellNavTabComponent } from './components/workspace-shell-nav-tab/workspace-shell-nav-tab.component';
 import { WorkspaceShellPageControlsComponent } from './components/workspace-shell-page-controls/workspace-shell-page-controls.component';
 import { TrafficLightsClearanceDirective } from './traffic-lights-clearance.directive';
 import { WorkspaceShellComponent } from './workspace-shell.component';
@@ -83,7 +84,17 @@ class MockWorkspaceShellPageControlsComponent {
     readonly headerSidebarToggleRequested = output<void>();
 
     focusContextDrawerToggle = jest.fn(() => true);
-    focusShowNavigation = jest.fn();
+}
+
+@Component({
+    selector: 'app-workspace-shell-nav-tab',
+    template: '',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: true,
+})
+class MockWorkspaceShellNavTabComponent {
+    readonly controls = input<string | null>(null);
+    focus = jest.fn();
 }
 
 @Component({
@@ -259,6 +270,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellPageControlsComponent,
+                        MockWorkspaceShellNavTabComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
@@ -365,6 +377,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellPageControlsComponent,
+                        MockWorkspaceShellNavTabComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
@@ -445,6 +458,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellPageControlsComponent,
+                        MockWorkspaceShellNavTabComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
@@ -525,6 +539,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellPageControlsComponent,
+                        MockWorkspaceShellNavTabComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
@@ -644,7 +659,8 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropOverlayComponent,
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
-                        // The real controls: "show menu" lives there.
+                        // The real pull tab shows the sidebar again.
+                        WorkspaceShellNavTabComponent,
                         WorkspaceShellPageControlsComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
@@ -698,6 +714,16 @@ describe('WorkspaceShellComponent', () => {
         expect(shell.classList).toContain('nav-hidden');
         expect(sidebar.hasAttribute('inert')).toBe(true);
         expect(localStorage.getItem(NAV_SIDEBAR_HIDDEN_STORAGE_KEY)).toBe('1');
+        // The way back is the pull tab on the window's edge: nothing floats
+        // at the top-left, so the page keeps its first row at the top.
+        expect(
+            host
+                .querySelector('[data-test-id="nav-sidebar-show"]')
+                ?.getAttribute('aria-expanded')
+        ).toBe('false');
+        expect(host.querySelector('.workspace-body')?.classList).not.toContain(
+            'has-leading-controls'
+        );
 
         // In a text field the chord stays the field's.
         const field = document.createElement('input');
@@ -719,6 +745,11 @@ describe('WorkspaceShellComponent', () => {
         expect(
             host.querySelector('[data-test-id="nav-sidebar-show"]')
         ).toBeNull();
+        expect(
+            host
+                .querySelector('[data-test-id="nav-sidebar-tab"]')
+                ?.getAttribute('aria-expanded')
+        ).toBe('true');
         localStorage.removeItem(NAV_SIDEBAR_HIDDEN_STORAGE_KEY);
     });
 
@@ -756,6 +787,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellPageControlsComponent,
+                        MockWorkspaceShellNavTabComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,

@@ -12,6 +12,10 @@
     // No header bar: the content starts at the window's top. A rounded
     // window keeps a sliver so nothing scrolls into its top corner.
     --workspace-body-top: 12px;
+    // The macOS traffic lights' band over the content while the sidebar is
+    // hidden: pages start below it, the Home and a platform's pages run on
+    // under it (they set it back to 0 on the body).
+    --workspace-lights-band: 0px;
     // The macOS window's drag strip along the top edge (none elsewhere: the
     // ambient margin moves a frameless window).
     --workspace-drag-strip: 0px;
@@ -20,6 +24,10 @@
     --page-controls-start: 16px;
     // How far a context panel's content moves down under them.
     --workspace-leading-clearance: 48px;
+    // How far the window's own controls reach over the content's top row
+    // from its left edge: the macOS traffic lights while the sidebar is
+    // hidden. The Home starts its heading after them.
+    --workspace-corner-inset: 0px;
     // Room around the glass window: the ambient room shows through it.
     --workspace-window-inset: 22px;
     --workspace-window-radius: 34px;
@@ -132,6 +140,18 @@ app-workspace-shell-sidebar {
         visibility 0s 220ms;
 }
 
+// The sidebar's pull tab rides the content's left edge, half-way down: the
+// window's edge while the sidebar is hidden, the sidebar's otherwise. It
+// moves with the column as the sidebar folds.
+app-workspace-shell-nav-tab {
+    position: relative;
+    z-index: 4;
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: start;
+}
+
 // The page's floating controls lie over the body's top edge.
 app-workspace-shell-page-controls {
     position: relative;
@@ -154,17 +174,22 @@ app-workspace-shell-page-controls {
 }
 
 // macOS glass: a strip along the top edge moves the window. Hidden, the
-// sidebar leaves the traffic lights over the content, which then starts
-// below them; the "show menu" button and Back line up after the lights.
+// sidebar leaves the traffic lights over the content's top-left corner: a
+// page starts below them, and their band, holding Back after the lights
+// and level with them, moves the window like a title bar. The Home and a
+// platform's pages run on to the top under that transparent band: the
+// Home starts its heading after the lights (`--workspace-corner-inset`), a
+// billboard runs under them.
 :host-context(.native-glass:not(.window-fullscreen)) .workspace-shell {
     --workspace-body-top: 0px;
     --workspace-drag-strip: 18px;
 
     &.nav-hidden {
         --page-controls-start: var(--traffic-lights-clear-x, 84px);
-        --workspace-body-top: var(--traffic-lights-clear-y, 48px);
+        --workspace-lights-band: var(--traffic-lights-clear-y, 48px);
         --workspace-drag-strip: var(--traffic-lights-clear-y, 48px);
         --workspace-leading-clearance: 0px;
+        --workspace-corner-inset: var(--traffic-lights-clear-x, 84px);
         // Level with the lights.
         --page-controls-top: calc(var(--traffic-lights-clear-y, 48px) - 40px);
     }
@@ -173,7 +198,7 @@ app-workspace-shell-page-controls {
 .workspace-body {
     grid-column: 2;
     grid-row: 1;
-    padding-top: var(--workspace-body-top);
+    padding-top: calc(var(--workspace-body-top) + var(--workspace-lights-band));
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     min-height: 0;
@@ -191,23 +216,36 @@ app-workspace-shell-context-sidebar {
     min-height: 0;
 }
 
-// Back (or "show menu") floats where the context panel's title starts: the
-// panel's content moves under it. Without a panel, the page starts under
-// it and scrolls beneath it.
+// Back floats where the context panel's title starts: the panel's content
+// moves under it. Without a panel, the page starts under it and scrolls
+// beneath it.
 .has-leading-controls app-workspace-shell-context-sidebar,
 .has-leading-controls.single-pane .workspace-content {
     padding-top: var(--workspace-leading-clearance);
 }
 
+// The Home's first row stays at the top under the macOS lights' band.
+.workspace-body.is-home {
+    --workspace-lights-band: 0px;
+}
+
+// Hidden, the sidebar leaves the content against the window's left edge:
+// it keeps the same 2px off it as off the right one, clear of the rounded
+// corners.
+.nav-hidden .workspace-content {
+    margin-left: 2px;
+}
+
 // TiagoTV: a title opened from a streaming platform reads like that
 // platform's own page, without the source's category list beside it; its
-// billboard runs to the top, under Back.
+// billboard runs to the top, under Back (and the macOS lights).
 :host-context([data-platform-theme]) {
     .workspace-shell {
         --workspace-leading-clearance: 0px;
     }
 
     .workspace-body {
+        --workspace-lights-band: 0px;
         grid-template-columns: minmax(0, 1fr);
     }
 
@@ -308,12 +346,25 @@ app-workspace-shell-context-sidebar {
     box-shadow: none;
 }
 
+// A fullscreen window has no corners at all: the content runs to its
+// bottom edge too, the sidebar with it.
+:host-context(.window-fullscreen) {
+    .workspace-window {
+        padding-bottom: 0;
+    }
+
+    app-workspace-shell-sidebar {
+        margin-bottom: 0;
+    }
+}
+
 // The pill floats inside the window's lower edge there, clear of the last
 // row once it is scrolled up.
-// No corner to keep clear there: the content runs to the window's edge.
+// No corner to keep clear there: the content runs to the window's edges.
 :host-context(.native-glass) .workspace-content,
 :host-context(.window-fullscreen) .workspace-content {
     margin-right: 0;
+    margin-left: 0;
 }
 
 :host-context(.native-glass) .has-now-playing .workspace-content,
@@ -459,6 +510,11 @@ app-workspace-shell-context-sidebar {
     app-workspace-shell-page-controls {
         grid-column: 1;
         grid-row: 2;
+    }
+
+    // The strip never hides.
+    app-workspace-shell-nav-tab {
+        display: none;
     }
 
     .workspace-body {

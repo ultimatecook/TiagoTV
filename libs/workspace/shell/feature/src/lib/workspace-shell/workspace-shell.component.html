@@ -35,6 +35,7 @@
              Ajustes; the page's own controls float over the content. -->
         <app-workspace-shell-sidebar
             #workspaceSidebar
+            id="workspace-nav-sidebar"
             [attr.inert]="
                 contextDrawer.isOpen() || navSidebar.collapsed() ? '' : null
             "
@@ -58,13 +59,21 @@
             (parentalLockToggleRequested)="facade.toggleParentalLock()"
         />
 
+        <!-- The sidebar's pull tab, half-way down the content's left edge:
+             on the sidebar's edge it hides it, on the window's edge it
+             shows it again (not on a phone: the strip stays there). -->
+        <app-workspace-shell-nav-tab
+            #navTab
+            controls="workspace-nav-sidebar"
+            [attr.inert]="contextDrawer.isOpen() ? '' : null"
+        />
+
         <!-- macOS glass: with no title bar, a thin strip along the top edge
              moves the window (the floating controls stay clickable). -->
         <div class="workspace-drag-strip" aria-hidden="true"></div>
 
-        <!-- "Show menu" (sidebar hidden), Back, the phone drawer toggle and
-             the page's shortcuts, as round glass buttons over the content's
-             top edge. -->
+        <!-- Back, the phone drawer toggle and the page's shortcuts, as round
+             glass buttons over the content's top edge. -->
         <app-workspace-shell-page-controls
             #pageControls
             [attr.inert]="contextDrawer.isOpen() ? '' : null"
@@ -88,6 +97,7 @@
             class="workspace-body"
             [class.single-pane]="!facade.showContextPanel()"
             [class.has-leading-controls]="hasLeadingControls()"
+            [class.is-home]="facade.isDashboardRoute()"
             [appLayoutSlide]="facade.showContextPanel()"
             layoutSlideTargets=".workspace-content-frame"
         >

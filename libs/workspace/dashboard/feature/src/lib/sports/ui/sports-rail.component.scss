@@ -20,6 +20,9 @@
 // One line of tall cards; it scrolls sideways where the window is narrower
 // than the eight of them. The top padding is the air the heads stand in.
 .sports__row {
+    // As wide as the right bleed (the page's gutter where the page sets
+    // `--rail-bleed`), never under the 12px the cards' lift needs.
+    --rail-bleed-start: max(12px, var(--rail-bleed, 4px));
     --sport-width: clamp(150px, 12.2vw, 212px);
     display: grid;
     grid-auto-flow: column;
@@ -28,13 +31,15 @@
     // Room for the heads, a tenth of the card's height (4.3 / 3 of its
     // width) above it, raised further by the lift on hover.
     padding: calc(var(--sport-width) * 0.21 + 6px) var(--rail-bleed, 4px) 48px
-        12px;
+        var(--rail-bleed-start);
     // The padding holds the cards' shadows (the scroller clips at its
     // edge); the negative margins give the room back to the layout.
-    // The row runs on to the window's edge, past the page's gutter (it
-    // ends with as much room), so the cards are cut where the glass ends.
-    margin: 0 calc(-1 * var(--rail-bleed, 4px)) -34px -12px;
-    scroll-padding-left: 12px;
+    // The row runs on through the page's gutters to the content's edges,
+    // so scrolled cards are cut where the content ends (the window's edge
+    // with the sidebar hidden); the first one rests on the gutter.
+    margin: 0 calc(-1 * var(--rail-bleed, 4px)) -34px
+        calc(-1 * var(--rail-bleed-start));
+    scroll-padding-left: var(--rail-bleed-start);
     overflow-x: auto;
     scroll-snap-type: x proximity;
     scrollbar-width: none;

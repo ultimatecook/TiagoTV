@@ -1,0 +1,21 @@
+@let collapsed = navSidebar.collapsed();
+@let label =
+    (collapsed ? 'WORKSPACE.SIDEBAR.SHOW' : 'WORKSPACE.SIDEBAR.HIDE')
+        | translate;
+<button
+    #tab
+    type="button"
+    class="nav-tab"
+    [attr.data-test-id]="collapsed ? 'nav-sidebar-show' : 'nav-sidebar-tab'"
+    [matTooltip]="label + ' (' + navSidebar.shortcutLabel + ')'"
+    matTooltipPosition="right"
+    [attr.aria-label]="label"
+    [attr.aria-expanded]="!collapsed"
+    [attr.aria-controls]="controls()"
+    [attr.aria-keyshortcuts]="navSidebar.ariaShortcut"
+    (click)="navSidebar.toggle()"
+>
+    <mat-icon aria-hidden="true">{{
+        collapsed ? 'chevron_right' : 'chevron_left'
+    }}</mat-icon>
+</button>

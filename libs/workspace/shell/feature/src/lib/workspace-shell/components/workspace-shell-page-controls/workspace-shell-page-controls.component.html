@@ -1,26 +1,4 @@
 <div class="page-controls__group page-controls__group--leading">
-    <!-- The way back to the hidden sidebar (not on a phone: the strip
-         stays there). -->
-    @if (navSidebar.collapsed()) {
-        <button
-            #navSidebarShow
-            type="button"
-            class="page-control nav-sidebar-show"
-            data-test-id="nav-sidebar-show"
-            [matTooltip]="
-                ('WORKSPACE.SIDEBAR.SHOW' | translate) +
-                ' (' +
-                navSidebar.shortcutLabel +
-                ')'
-            "
-            [attr.aria-label]="'WORKSPACE.SIDEBAR.SHOW' | translate"
-            [attr.aria-keyshortcuts]="navSidebar.ariaShortcut"
-            (click)="navSidebar.show()"
-        >
-            <mat-icon>menu</mat-icon>
-        </button>
-    }
-
     <!-- The page's Back, or browser history while an in-app previous page
          exists. The mouse Back button, Alt+← / Cmd+[ and Esc (where the
          page offers it) run the same action. -->

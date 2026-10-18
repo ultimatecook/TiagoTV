@@ -77,18 +77,22 @@
 
 // Tiles scroll sideways; the padding is room for the hover lift.
 .row__track {
+    // As wide as the right bleed (the page's gutter), never under the 12px
+    // the lift needs.
+    --rail-bleed-start: max(12px, var(--rail-bleed, 4px));
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: var(--row-tile);
     gap: var(--row-gap);
-    padding: var(--row-lift) var(--rail-bleed, 4px) 44px 12px;
+    padding: var(--row-lift) var(--rail-bleed, 4px) 44px var(--rail-bleed-start);
     // The padding holds the cards' shadows (the scroller clips at its
     // edge); the negative margins give the room back to the layout.
-    // The row runs on to the window's edge, past the page's gutter (it
-    // ends with as much room), so the cards are cut where the glass ends.
-    margin: calc(-1 * var(--row-lift))
-        calc(-1 * var(--rail-bleed, 4px)) -32px -12px;
-    scroll-padding-left: 12px;
+    // The row runs on through the page's gutters to the content's edges,
+    // so scrolled cards are cut where the content ends (the window's edge
+    // with the sidebar hidden); the first one rests on the gutter.
+    margin: calc(-1 * var(--row-lift)) calc(-1 * var(--rail-bleed, 4px)) -32px
+        calc(-1 * var(--rail-bleed-start));
+    scroll-padding-left: var(--rail-bleed-start);
     overflow-x: auto;
     scroll-snap-type: x proximity;
     scrollbar-width: none;
@@ -156,7 +160,8 @@
 }
 
 .row__arrow--back {
-    left: -4px;
+    // At the content's edge, as the forward arrow is at the other one.
+    left: calc(-1 * max(12px, var(--rail-bleed, 4px)));
     border-radius: 12px 0 0 12px;
 }
 

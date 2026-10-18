@@ -102,20 +102,12 @@ describe('WorkspaceShellPageControlsComponent', () => {
         expect(button?.classList).toContain('is-active');
     });
 
-    it('offers the hidden sidebar back and focuses that control on request', () => {
-        const navSidebar = TestBed.inject(WorkspaceNavSidebarService);
-        expect(query('[data-test-id="nav-sidebar-show"]')).toBeNull();
-
-        navSidebar.hide();
+    it('leaves the hidden sidebar to the pull tab', () => {
+        TestBed.inject(WorkspaceNavSidebarService).hide();
         fixture.detectChanges();
-        const show = query('[data-test-id="nav-sidebar-show"]');
-        component.focusShowNavigation();
-        expect(document.activeElement).toBe(show);
 
-        show?.click();
-        fixture.detectChanges();
-        expect(navSidebar.hidden()).toBe(false);
         expect(query('[data-test-id="nav-sidebar-show"]')).toBeNull();
+        expect(query('button')).toBeNull();
     });
 
     describe('phone drawer toggle', () => {

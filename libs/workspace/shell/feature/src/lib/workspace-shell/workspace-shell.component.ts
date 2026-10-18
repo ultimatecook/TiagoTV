@@ -26,6 +26,7 @@ import {
 } from '../playlist-drop-overlay';
 import { WorkspaceShellContextSidebarComponent } from './components/workspace-shell-context-sidebar/workspace-shell-context-sidebar.component';
 import { WorkspaceShellImportOverlayComponent } from './components/workspace-shell-import-overlay/workspace-shell-import-overlay.component';
+import { WorkspaceShellNavTabComponent } from './components/workspace-shell-nav-tab/workspace-shell-nav-tab.component';
 import { WorkspaceShellPageControlsComponent } from './components/workspace-shell-page-controls/workspace-shell-page-controls.component';
 import { WorkspaceShellSidebarComponent } from './components/workspace-shell-sidebar/workspace-shell-sidebar.component';
 import { WorkspaceShellServerBannerComponent } from './components/workspace-shell-server-banner/workspace-shell-server-banner.component';
@@ -60,6 +61,7 @@ import { LIVE_CATEGORIES_POPOVER } from '@iptvnator/portal/shared/util';
         TrafficLightsClearanceDirective,
         WorkspaceShellContextSidebarComponent,
         WorkspaceShellImportOverlayComponent,
+        WorkspaceShellNavTabComponent,
         WorkspaceShellPageControlsComponent,
         WorkspaceShellServerBannerComponent,
         WorkspaceShellSidebarComponent,
@@ -103,6 +105,8 @@ export class WorkspaceShellComponent {
     );
     private readonly pageControls =
         viewChild<WorkspaceShellPageControlsComponent>('pageControls');
+    private readonly navTab =
+        viewChild<WorkspaceShellNavTabComponent>('navTab');
     private readonly sidebar =
         viewChild<WorkspaceShellSidebarComponent>('workspaceSidebar');
     private readonly sidebarHost = viewChild('workspaceSidebar', {
@@ -110,11 +114,9 @@ export class WorkspaceShellComponent {
     });
     private readonly workspaceContent =
         viewChild<ElementRef<HTMLElement>>('workspaceContent');
-    /** "Show menu" or Back floats at the top-left of the body. */
+    /** Back floats at the top-left of the body (never on the Home). */
     readonly hasLeadingControls = computed(
-        () =>
-            this.navSidebar.collapsed() ||
-            (!!this.facade.backTarget() && !this.facade.isDashboardRoute())
+        () => !!this.facade.backTarget() && !this.facade.isDashboardRoute()
     );
     /** Any floating control: a phone keeps a row for them under the strip. */
     readonly hasPageControls = computed(
@@ -151,9 +153,10 @@ export class WorkspaceShellComponent {
             wasOpen = open;
         });
 
-        // Hiding the sidebar inerts the control that hid it, and showing it
-        // removes the one that showed it: focus moves to the other control
-        // so keyboard users stay where they acted.
+        // Hiding the sidebar from inside it inerts the focused control:
+        // focus moves to the pull tab, its way back. The tab keeps focus
+        // across its own toggles; a shortcut that shows the sidebar with
+        // focus nowhere lands on the sidebar's hide control.
         let wasCollapsed = this.navSidebar.collapsed();
         effect(() => {
             const collapsed = this.navSidebar.collapsed();
@@ -260,7 +263,7 @@ export class WorkspaceShellComponent {
         const lost = !active || active === document.body;
         if (collapsed) {
             if (lost || this.sidebarHost()?.nativeElement.contains(active)) {
-                this.pageControls()?.focusShowNavigation();
+                this.navTab()?.focus();
             }
         } else if (lost) {
             this.sidebar()?.focusHideButton();

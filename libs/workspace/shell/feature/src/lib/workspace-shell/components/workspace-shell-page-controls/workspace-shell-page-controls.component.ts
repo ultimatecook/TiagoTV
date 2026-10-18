@@ -3,7 +3,6 @@ import {
     Component,
     computed,
     ElementRef,
-    inject,
     input,
     output,
     viewChild,
@@ -16,16 +15,15 @@ import {
     WorkspaceHeaderAction,
 } from '@iptvnator/portal/shared/util';
 import { WorkspaceHeaderSidebarToggle } from '../../services/helpers/workspace-shell-constants';
-import { WorkspaceNavSidebarService } from '../../services/workspace-nav-sidebar.service';
 
 /**
  * What the removed header bar used to hold for the page itself, floating
- * over the content as round glass buttons: "show menu" while the sidebar
- * is hidden, Back (and, on a phone, the context drawer's toggle) at the
- * top-left, the page's own shortcut and the
+ * over the content as round glass buttons: Back (and, on a phone, the
+ * context drawer's toggle) at the top-left, the page's own shortcut and the
  * live channel list toggle at the top-right. Each shows only when the page
  * offers it; the window, sources and app actions moved to the sidebar and
- * Settings.
+ * Settings, and the hidden sidebar's way back is the pull tab on the
+ * window's left edge (`WorkspaceShellNavTabComponent`).
  */
 @Component({
     selector: 'app-workspace-shell-page-controls',
@@ -38,10 +36,6 @@ export class WorkspaceShellPageControlsComponent {
     private readonly contextDrawerToggle = viewChild<
         ElementRef<HTMLButtonElement>
     >('contextDrawerToggle');
-    private readonly navSidebarShow =
-        viewChild<ElementRef<HTMLButtonElement>>('navSidebarShow');
-    /** The main navigation: hidden (⌃⌘S), its way back starts the row. */
-    readonly navSidebar = inject(WorkspaceNavSidebarService);
 
     /** The page's Back or the history fallback; null when there is neither. */
     readonly backTarget = input<WorkspaceBackTarget | null>(null);
@@ -106,11 +100,6 @@ export class WorkspaceShellPageControlsComponent {
         }
         keyboard.preventDefault();
         this.backRequested.emit();
-    }
-
-    /** Focus for the control that shows the hidden sidebar again. */
-    focusShowNavigation(): void {
-        this.navSidebarShow()?.nativeElement.focus();
     }
 
     /**

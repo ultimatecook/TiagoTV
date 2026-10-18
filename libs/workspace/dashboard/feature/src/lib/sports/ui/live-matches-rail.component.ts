@@ -49,16 +49,20 @@ import { SportMatchCardComponent } from './sport-match-card.component';
         }
 
         .matches__row {
+            /* As wide as the right bleed, never under the cards' 12px. */
+            --rail-bleed-start: max(12px, var(--rail-bleed, 4px));
             display: grid;
             grid-auto-flow: column;
             grid-auto-columns: clamp(260px, 22vw, 320px);
             gap: 16px;
-            /* The row runs on to the window's edge, past the page gutter;
-               the padding holds the cards' shadows, the negative margins
-               give the room back to the layout. */
-            padding: 4px var(--rail-bleed, 4px) 48px 12px;
-            margin: -4px calc(-1 * var(--rail-bleed, 4px)) -34px -12px;
-            scroll-padding-left: 12px;
+            /* The row runs on through the page's gutters to the content's
+               edges; the first card rests on the gutter. The padding holds
+               the cards' shadows, the negative margins give the room back
+               to the layout. */
+            padding: 4px var(--rail-bleed, 4px) 48px var(--rail-bleed-start);
+            margin: -4px calc(-1 * var(--rail-bleed, 4px)) -34px
+                calc(-1 * var(--rail-bleed-start));
+            scroll-padding-left: var(--rail-bleed-start);
             overflow-x: auto;
             scroll-snap-type: x proximity;
             scrollbar-width: none;

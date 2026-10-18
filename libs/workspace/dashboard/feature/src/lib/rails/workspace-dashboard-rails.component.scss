@@ -67,7 +67,7 @@
     --dashboard-top-gutter: 4px;
     --dashboard-max-width: 100%;
     --home-gap: 18px;
-    // The sideways rows run on through the right gutter to the edge.
+    // The sideways rows run on through the gutters to the content's edges.
     --rail-bleed: var(--dashboard-gutter);
     --home-feature-height: clamp(340px, 31cqw, 470px);
 }
@@ -96,6 +96,12 @@
     display: flex;
     // Leaves the floating header's avatar its corner.
     padding-right: 140px;
+    // macOS with the sidebar hidden: the traffic lights sit over this row,
+    // so the heading starts after them.
+    padding-left: max(
+        0px,
+        var(--workspace-corner-inset, 0px) - var(--dashboard-gutter)
+    );
     min-height: 40px;
     align-items: center;
 }
@@ -108,6 +114,8 @@
     border-radius: 8px;
     color: var(--app-heading-color);
     text-decoration: none;
+    // Under the macOS window's drag strip.
+    app-region: no-drag;
 
     mat-icon {
         width: 24px;
