@@ -3,7 +3,13 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { normalizeServerUrl, renew, stage, webosVersion } from './webos.mjs';
+import {
+    normalizeServerUrl,
+    renew,
+    stage,
+    stageProbe,
+    webosVersion,
+} from './webos.mjs';
 
 test('accepts http and https server addresses', () => {
     assert.equal(
@@ -42,6 +48,20 @@ test('stages the app with its version and server', () => {
             'window.TIAGOTV_SERVER = "http://192.168.1.50:4333";\n'
         );
         for (const file of [written.main, written.icon, written.largeIcon]) {
+            assert.ok(readFileSync(join(dir, file)).length > 0, file);
+        }
+    } finally {
+        rmSync(dir, { recursive: true, force: true });
+    }
+});
+
+test('stages the probe app with the TiagoTV icons', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'tiagotv-webos-test-'));
+    try {
+        const appinfo = stageProbe(dir, '0.25.0');
+        assert.equal(appinfo.id, 'com.tiagotv.probe');
+        assert.equal(appinfo.version, '0.25.0');
+        for (const file of [appinfo.main, appinfo.icon, appinfo.largeIcon]) {
             assert.ok(readFileSync(join(dir, file)).length > 0, file);
         }
     } finally {

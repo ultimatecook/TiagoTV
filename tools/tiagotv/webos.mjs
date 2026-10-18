@@ -7,6 +7,10 @@
  *     icon and a launcher that opens the self-hosted TiagoTV server
  *     (docker/README.md) at <serverUrl>, which serves the interface.
  *
+ *   node tools/tiagotv/webos.mjs probe [outDir]
+ *     Builds the "TiagoTV prueba" .ipk, which shows whether the TV could
+ *     run the whole interface without the server (webos-probe/probe.js).
+ *
  *   node tools/tiagotv/webos.mjs renew
  *     Renews the TV's Developer Mode session with the token in
  *     LG_DEVMODE_TOKEN, so the apps installed with it are not removed when
@@ -26,6 +30,8 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const APP_DIR = fileURLToPath(new URL('./webos', import.meta.url));
+const PROBE_DIR = fileURLToPath(new URL('./webos-probe', import.meta.url));
+const ICONS = ['icon.png', 'largeIcon.png'];
 const PACKAGE_JSON = fileURLToPath(
     new URL('../../package.json', import.meta.url)
 );
@@ -64,23 +70,43 @@ export function webosVersion(version) {
 export function stage(serverUrl, dir, version = readPackageVersion()) {
     const server = normalizeServerUrl(serverUrl);
     cpSync(APP_DIR, dir, { recursive: true });
-    const appinfoPath = join(dir, 'appinfo.json');
-    const appinfo = JSON.parse(readFileSync(appinfoPath, 'utf8'));
-    appinfo.version = webosVersion(version);
-    writeFileSync(appinfoPath, JSON.stringify(appinfo, null, 4) + '\n');
     writeFileSync(
         join(dir, 'server.js'),
         `window.TIAGOTV_SERVER = ${JSON.stringify(server)};\n`
     );
+    return stampVersion(dir, version);
+}
+
+export function stageProbe(dir, version = readPackageVersion()) {
+    cpSync(PROBE_DIR, dir, { recursive: true });
+    for (const icon of ICONS) {
+        cpSync(join(APP_DIR, icon), join(dir, icon));
+    }
+    return stampVersion(dir, version);
+}
+
+function stampVersion(dir, version) {
+    const appinfoPath = join(dir, 'appinfo.json');
+    const appinfo = JSON.parse(readFileSync(appinfoPath, 'utf8'));
+    appinfo.version = webosVersion(version);
+    writeFileSync(appinfoPath, JSON.stringify(appinfo, null, 4) + '\n');
     return appinfo;
 }
 
 export function packageApp(serverUrl, outDir) {
+    return buildIpk((dir) => stage(serverUrl, dir), outDir);
+}
+
+export function packageProbe(outDir) {
+    return buildIpk((dir) => stageProbe(dir), outDir);
+}
+
+function buildIpk(stageInto, outDir) {
     const out = resolve(outDir);
     const work = mkdtempSync(join(tmpdir(), 'tiagotv-webos-'));
     try {
         const appDir = join(work, 'app');
-        const { id, version } = stage(serverUrl, appDir);
+        const { id, version } = stageInto(appDir);
         mkdirSync(out, { recursive: true });
         execFileSync(
             'npx',
@@ -140,6 +166,10 @@ async function main([command, ...args]) {
         console.log(packageApp(args[0], args[1] ?? 'dist/webos'));
         return;
     }
+    if (command === 'probe' && args.length <= 1) {
+        console.log(packageProbe(args[0] ?? 'dist/webos'));
+        return;
+    }
     if (command === 'renew' && args.length === 0) {
         const remaining = await renew(process.env.LG_DEVMODE_TOKEN);
         console.log(
@@ -147,7 +177,9 @@ async function main([command, ...args]) {
         );
         return;
     }
-    console.error('Usage: webos.mjs package <serverUrl> [outDir] | renew');
+    console.error(
+        'Usage: webos.mjs package <serverUrl> [outDir] | probe [outDir] | renew'
+    );
     process.exit(2);
 }
 

@@ -119,6 +119,12 @@ ares-setup-device -a tv -i "{'username':'prisoner','host':'IP-DE-LA-TELE','port'
 ares-novacom -d tv --getkey    # pide la passphrase de la app Developer Mode
 ```
 
+**Prueba sin servidor:** `node tools/tiagotv/webos.mjs probe` arma
+`com.tiagotv.probe_….ipk` (**TiagoTV prueba**). Instalalo con `ares-install`
+como en el paso 4 y abrilo: en unos segundos muestra si la tele deja
+conectarse directo con los proveedores y si su motor web alcanza para la
+interfaz, o sea si TiagoTV entero podría ir dentro de la app, sin la compu.
+
 ### 4. Instalar TiagoTV
 
 En GitHub, **Actions → TiagoTV app (LG webOS) → Run workflow**, con la
