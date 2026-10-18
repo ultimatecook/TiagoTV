@@ -28,14 +28,6 @@
                     />
                 </span>
                 <span class="sport__shade" aria-hidden="true"></span>
-                @if (liveCount(section.id); as live) {
-                    <span class="sport__live">
-                        {{
-                            'WORKSPACE.SPORTS.LIVE_COUNT'
-                                | translate: { count: live }
-                        }}
-                    </span>
-                }
                 @if (section.logo) {
                     <img
                         class="sport__logo"

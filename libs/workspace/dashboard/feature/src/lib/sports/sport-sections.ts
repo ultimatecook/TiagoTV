@@ -184,7 +184,7 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
         artHeadroom: 0,
         artX: 50,
         logo: './assets/sports/logos/basketball.png',
-        logoSize: 1.4,
+        logoSize: 0.8,
         tint: '#5a3412',
         category: /\bnba\b|\bacb\b|baloncesto|basket/i,
         channel: /\bnba\b|\bacb\b|baloncesto|euroleague|euroliga/i,
