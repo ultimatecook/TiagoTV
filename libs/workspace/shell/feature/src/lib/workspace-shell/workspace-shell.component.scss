@@ -64,6 +64,37 @@
         0 50px 120px rgba(0, 0, 0, 0.5),
         0 10px 34px rgba(0, 0, 0, 0.35);
     app-region: no-drag;
+    // Keeps the platform tint below the window's contents.
+    isolation: isolate;
+
+    // TiagoTV: a streaming platform's page tints the glass with its colour
+    // (Netflix red, Prime blue…), lit from the top like the platform's own
+    // front page.
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        background:
+            radial-gradient(
+                120% 80% at 60% -10%,
+                color-mix(in srgb, var(--platform-ambient) 46%, transparent) 0%,
+                transparent 72%
+            ),
+            linear-gradient(
+                180deg,
+                color-mix(in srgb, var(--platform-ambient) 18%, transparent) 0%,
+                color-mix(in srgb, var(--platform-ambient) 6%, transparent) 100%
+            );
+        opacity: 0;
+        transition: opacity 600ms ease;
+        pointer-events: none;
+    }
+}
+
+:host-context(.platform-ambient) .workspace-window::before {
+    opacity: 1;
 }
 
 app-workspace-shell-sidebar {

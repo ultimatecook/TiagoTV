@@ -7,6 +7,7 @@ import {
     untracked,
 } from '@angular/core';
 import {
+    displayTitle,
     getPlaylistSourceIcon,
     isStalkerAccountPlaylist,
     isXtreamAccountPlaylist,
@@ -95,6 +96,10 @@ import type {
     DashboardSourceActionId,
 } from './dashboard-rail.utils';
 
+import { PlatformsRailComponent } from '../platforms/ui/platforms-rail.component';
+import { LiveMatchesRailComponent } from '../sports/ui/live-matches-rail.component';
+import { SportsRailComponent } from '../sports/ui/sports-rail.component';
+
 @Component({
     selector: 'lib-workspace-dashboard-rails',
     imports: [
@@ -102,8 +107,11 @@ import type {
         DashboardRailComponent,
         DashboardRailSkeletonComponent,
         EmptyStateComponent,
+        LiveMatchesRailComponent,
         MatIcon,
+        PlatformsRailComponent,
         RouterLink,
+        SportsRailComponent,
         TranslatePipe,
     ],
     templateUrl: './workspace-dashboard-rails.component.html',
@@ -122,6 +130,11 @@ import type {
     ],
 })
 export class WorkspaceDashboardRailsComponent {
+    /**
+     * TiagoTV's Home is "Continue Watching", platforms and sports; the
+     * upstream rails (New & Popular, favourites, sources, TMDB) stay off it.
+     */
+    readonly classicRails = false;
     readonly data = inject(DashboardDataService);
     /** One facade for both live-EPG sources: uploaded XMLTV and the portal. */
     readonly liveEpg = inject(DashboardLiveEpgPresenter);
@@ -232,14 +245,18 @@ export class WorkspaceDashboardRailsComponent {
         this.liveEpg.enrich(this.recentLiveCards())
     );
 
-    readonly favoriteMoviesAndSeriesCards = computed<DashboardRailCard[]>(() => {
-        this.languageTick();
-        return this.data
-            .globalFavoriteItems()
-            .filter((item) => item.type === 'movie' || item.type === 'series')
-            .slice(0, RAIL_ITEM_LIMIT)
-            .map((item) => this.toFavoriteCard(item));
-    });
+    readonly favoriteMoviesAndSeriesCards = computed<DashboardRailCard[]>(
+        () => {
+            this.languageTick();
+            return this.data
+                .globalFavoriteItems()
+                .filter(
+                    (item) => item.type === 'movie' || item.type === 'series'
+                )
+                .slice(0, RAIL_ITEM_LIMIT)
+                .map((item) => this.toFavoriteCard(item));
+        }
+    );
 
     readonly continueWatchingSeeAllState = computed(() =>
         buildDashboardRailSeeAllState(this.continueWatchingBaseCards())
@@ -496,7 +513,7 @@ export class WorkspaceDashboardRailsComponent {
         return {
             id: this.recentCardId(item),
             catalogStatus: item.catalogStatus,
-            title: item.title,
+            title: cardTitle(item),
             imageUrl: item.poster_url,
             icon: this.typeIcon(item.type),
             contentType: item.type,
@@ -545,7 +562,7 @@ export class WorkspaceDashboardRailsComponent {
                               : 'WORKSPACE.GLOBAL_FAVORITES.CATALOG_UNKNOWN'
                       )
                     : undefined,
-            title: item.title,
+            title: cardTitle(item),
             imageUrl: item.poster_url,
             icon: this.typeIcon(item.type),
             contentType: item.type,
@@ -729,4 +746,9 @@ export class WorkspaceDashboardRailsComponent {
     private t(key: string): string {
         return this.translate.instant(key);
     }
+}
+
+/** TiagoTV: films and shows by name alone; channels keep theirs. */
+function cardTitle(item: { title: string; type: string }): string {
+    return item.type === 'live' ? item.title : displayTitle(item.title);
 }

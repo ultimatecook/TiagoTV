@@ -1,0 +1,111 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.row__heading {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 10px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--app-heading-color);
+    font: inherit;
+    cursor: pointer;
+
+    &:hover .row__see-all,
+    &:focus-visible .row__see-all {
+        opacity: 1;
+        transform: none;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 4px);
+    }
+}
+
+.row__title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.row__see-all {
+    color: var(--app-body-color);
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease;
+}
+
+.row__viewport {
+    position: relative;
+
+    &:hover .row__arrow {
+        opacity: 1;
+    }
+}
+
+// Posters scroll sideways; the padding is room for the hover lift.
+.row__track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(124px, 10.6vw, 176px);
+    gap: 14px;
+    padding: 8px 4px 12px;
+    margin: -8px -4px 0;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.row__item {
+    scroll-snap-align: start;
+}
+
+.row__arrow {
+    position: absolute;
+    top: 0;
+    bottom: 48px;
+    z-index: 2;
+    width: 44px;
+    border: 0;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 34px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 160ms ease;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.65);
+    }
+}
+
+.row__arrow--back {
+    left: -4px;
+    border-radius: 12px 0 0 12px;
+}
+
+.row__arrow--forward {
+    right: -4px;
+    border-radius: 0 12px 12px 0;
+}
+
+@media (hover: none) {
+    .row__arrow {
+        display: none;
+    }
+}

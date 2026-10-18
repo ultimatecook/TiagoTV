@@ -1,0 +1,75 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.platforms__heading {
+    margin: 0 0 14px;
+}
+
+.platforms__title {
+    margin: 0;
+    color: var(--app-heading-color);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+}
+
+// The sports cards' columns, so the two rows line up.
+.platforms__row {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(150px, 12.2vw, 212px);
+    gap: 16px;
+    padding: 6px 4px 14px;
+    margin: -6px -4px 0;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.platform {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 16px 30px -22px rgba(0, 0, 0, 0.85);
+    scroll-snap-align: start;
+    text-decoration: none;
+    --platform-wordmark-size: clamp(20px, 1.9vw, 30px);
+    transition:
+        transform 200ms ease,
+        box-shadow 200ms ease;
+
+    &:hover,
+    &:focus-visible {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow:
+            inset 0 0 0 3px rgba(255, 255, 255, 0.92),
+            0 24px 36px -22px rgba(0, 0, 0, 0.9);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+// The logo fits a fixed box in the middle, whatever its own proportions.
+.platform__logo {
+    position: absolute;
+    inset: 24% 15%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .platform {
+        transition: none;
+    }
+}

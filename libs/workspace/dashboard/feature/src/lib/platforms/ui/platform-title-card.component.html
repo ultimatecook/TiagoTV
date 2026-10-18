@@ -1,0 +1,23 @@
+<button
+    type="button"
+    class="card"
+    [attr.aria-label]="title().title"
+    (click)="open()"
+>
+    <span class="card__poster">
+        @if (poster(); as url) {
+            <img
+                [src]="url"
+                alt=""
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                draggable="false"
+                (error)="posterFailed(url)"
+            />
+        } @else {
+            <span class="card__fallback">{{ title().title }}</span>
+        }
+        <span class="card__language">{{ title().language }}</span>
+    </span>
+    <span class="card__name">{{ title().title }}</span>
+</button>

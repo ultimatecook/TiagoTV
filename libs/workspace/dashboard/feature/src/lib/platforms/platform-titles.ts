@@ -1,0 +1,144 @@
+import { displayTitle } from '@iptvnator/shared/interfaces';
+import { genreLabelKey, genresIn, type PlatformGenre } from './platform-genres';
+import type {
+    PlatformCategory,
+    PlatformLanguage,
+    PlatformTitleKind,
+} from './streaming-platforms';
+
+export interface PlatformTitle {
+    readonly id: number;
+    readonly kind: PlatformTitleKind;
+    readonly categoryId: string;
+    readonly title: string;
+    readonly poster: string | null;
+    readonly language: PlatformLanguage;
+    /** Seconds since the epoch the provider added (or updated) it. */
+    readonly added: number;
+    readonly genres: readonly PlatformGenre[];
+}
+
+/** A VOD or series entry of a platform category, as the page shows it. */
+export interface PlatformCatalogItem {
+    readonly stream_id?: number | string;
+    readonly series_id?: number | string;
+    readonly name?: string;
+    readonly stream_icon?: string;
+    readonly cover?: string;
+    readonly added?: string;
+    readonly last_modified?: string;
+    readonly genre?: string | null;
+    readonly category_ids?: readonly (number | string)[] | null;
+}
+
+export function toPlatformTitles(
+    category: PlatformCategory,
+    items: readonly PlatformCatalogItem[],
+    genreCategories: ReadonlyMap<string, readonly PlatformGenre[]> = new Map()
+): PlatformTitle[] {
+    const titles: PlatformTitle[] = [];
+    for (const item of items) {
+        const id = Number(
+            category.kind === 'movie' ? item.stream_id : item.series_id
+        );
+        if (!Number.isFinite(id) || !item.name) {
+            continue;
+        }
+        const genres = new Set(genresIn(item.genre));
+        for (const categoryId of item.category_ids ?? []) {
+            for (const genre of genreCategories.get(String(categoryId)) ?? []) {
+                genres.add(genre);
+            }
+        }
+        titles.push({
+            id,
+            kind: category.kind,
+            categoryId: category.id,
+            title: displayTitle(item.name),
+            poster:
+                (category.kind === 'movie' ? item.stream_icon : item.cover) ||
+                null,
+            language: category.language,
+            added:
+                Number(
+                    category.kind === 'movie' ? item.added : item.last_modified
+                ) || 0,
+            genres: [...genres],
+        });
+    }
+    return titles;
+}
+
+/** Newest first; a title filed in two of the platform's categories once. */
+export function mergePlatformTitles(
+    lists: readonly (readonly PlatformTitle[])[]
+): PlatformTitle[] {
+    const seen = new Set<string>();
+    const merged: PlatformTitle[] = [];
+    for (const list of lists) {
+        for (const title of list) {
+            const key = `${title.kind}:${title.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(title);
+            }
+        }
+    }
+    return merged.sort((a, b) => b.added - a.added);
+}
+
+export interface PlatformRow {
+    readonly id: string;
+    readonly labelKey: string;
+    /** Newest first. */
+    readonly titles: readonly PlatformTitle[];
+}
+
+/** The newest-titles row shows the latest additions only. */
+const NEWEST_LIMIT = 30;
+/** A genre needs this many titles for a row of its own. */
+const GENRE_MIN_TITLES = 6;
+const GENRE_ROW_LIMIT = 10;
+
+/**
+ * The platform page's rows, as the platforms lay out their own: what is
+ * new, its movies, its series, then its genres, the largest first.
+ */
+export function buildPlatformRows(
+    titles: readonly PlatformTitle[]
+): PlatformRow[] {
+    const rows: PlatformRow[] = [];
+    const push = (id: string, labelKey: string, list: PlatformTitle[]) => {
+        if (list.length > 0) {
+            rows.push({ id, labelKey, titles: list });
+        }
+    };
+    push('newest', 'WORKSPACE.PLATFORMS.NEWEST', titles.slice(0, NEWEST_LIMIT));
+    push(
+        'movies',
+        'WORKSPACE.PLATFORMS.MOVIES',
+        titles.filter((title) => title.kind === 'movie')
+    );
+    push(
+        'series',
+        'WORKSPACE.PLATFORMS.SERIES',
+        titles.filter((title) => title.kind === 'series')
+    );
+
+    const byGenre = new Map<PlatformGenre, PlatformTitle[]>();
+    for (const title of titles) {
+        for (const genre of title.genres) {
+            const list = byGenre.get(genre) ?? [];
+            list.push(title);
+            byGenre.set(genre, list);
+        }
+    }
+    [...byGenre.entries()]
+        .filter(([, list]) => list.length >= GENRE_MIN_TITLES)
+        .sort((a, b) => b[1].length - a[1].length)
+        .slice(0, GENRE_ROW_LIMIT)
+        .forEach(([genre, list]) =>
+            push(`genre-${genre}`, genreLabelKey(genre), list)
+        );
+    return rows;
+}

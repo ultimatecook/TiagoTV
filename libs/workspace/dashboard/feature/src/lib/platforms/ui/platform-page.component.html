@@ -1,0 +1,52 @@
+@if (platform(); as platform) {
+    <article class="page">
+        <header class="banner" [style.background]="platform.background">
+            <lib-platform-logo class="banner__logo" [platform]="platform" />
+        </header>
+
+        @if (rows(); as rows) {
+            @if (openRow(); as row) {
+                <section class="all">
+                    <header class="all__heading">
+                        <button
+                            type="button"
+                            class="all__back"
+                            [attr.aria-label]="
+                                'WORKSPACE.PLATFORMS.BACK' | translate
+                            "
+                            (click)="backToRows()"
+                        >
+                            ‹
+                        </button>
+                        <h2 class="all__title">
+                            {{ row.labelKey | translate }}
+                        </h2>
+                        <span class="all__count">{{ row.titles.length }}</span>
+                    </header>
+                    <div class="all__grid">
+                        @for (title of visible(); track title.kind + title.id) {
+                            <lib-platform-title-card [title]="title" />
+                        }
+                    </div>
+                    @if (hasMore()) {
+                        <button type="button" class="more" (click)="showMore()">
+                            {{ 'WORKSPACE.PLATFORMS.MORE' | translate }}
+                        </button>
+                    }
+                </section>
+            } @else if (rows.length > 0) {
+                @for (row of rows; track row.id) {
+                    <lib-platform-row [row]="row" (seeAll)="openAll(row.id)" />
+                }
+            } @else {
+                <p class="note">
+                    {{ 'WORKSPACE.PLATFORMS.EMPTY' | translate }}
+                </p>
+            }
+        } @else if (catalog.failed()) {
+            <p class="note">{{ 'WORKSPACE.PLATFORMS.FAILED' | translate }}</p>
+        } @else {
+            <p class="note">{{ 'WORKSPACE.PLATFORMS.LOADING' | translate }}</p>
+        }
+    </article>
+}

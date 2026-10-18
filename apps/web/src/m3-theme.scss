@@ -363,8 +363,14 @@ html {
 // The window itself is glass (vibrancy): the shell only shades it, so the
 // desktop's colours come through, and the pills turn translucent too.
 html.native-glass .dark-theme {
-    --app-glass-bg: rgba(12, 12, 11, 0.3);
-    --app-glass-pill-bg: rgba(28, 28, 27, 0.72);
+    --app-glass-bg: rgba(12, 12, 11, 0.12);
+    --app-glass-pill-bg: rgba(28, 28, 27, 0.55);
+}
+
+// The open streaming platform's colour: its page sets it on the root
+// element and the shell tints the glass with it.
+:root {
+    --platform-ambient: transparent;
 }
 
 // ─── Global refined outlined inputs ──────────────────────────────────────────

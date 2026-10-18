@@ -1,0 +1,102 @@
+@if (section(); as section) {
+    <article class="page" [style.--sport-tint]="section.tint">
+        <header
+            class="hero"
+            [style.--art-height]="section.artHeight"
+            [style.--art-headroom]="section.artHeadroom"
+            [style.--logo-size]="section.logoSize"
+        >
+            <img
+                class="hero__art"
+                [src]="section.image"
+                alt=""
+                referrerpolicy="no-referrer"
+                draggable="false"
+            />
+            <div class="hero__text">
+                <span class="hero__eyebrow">{{
+                    'WORKSPACE.SPORTS.TITLE' | translate
+                }}</span>
+                <h1 class="hero__title">
+                    @if (section.logo) {
+                        <img
+                            class="hero__logo"
+                            [src]="section.logo"
+                            [alt]="section.title"
+                            draggable="false"
+                        />
+                    } @else {
+                        {{ section.title }}
+                    }
+                </h1>
+                @if (liveCount() > 0) {
+                    <span class="hero__live">{{
+                        'WORKSPACE.SPORTS.LIVE_COUNT'
+                            | translate: { count: liveCount() }
+                    }}</span>
+                }
+            </div>
+        </header>
+
+        @if (content(); as content) {
+            <section class="block">
+                <h2 class="block__title">
+                    {{ 'WORKSPACE.SPORTS.MATCHES' | translate }}
+                </h2>
+                @if (content.matches.length > 0) {
+                    <div class="block__matches">
+                        @for (match of content.matches; track match.streamId) {
+                            <lib-sport-match-card [match]="match" />
+                        }
+                    </div>
+                } @else {
+                    <p class="block__empty">
+                        {{ 'WORKSPACE.SPORTS.NO_MATCHES' | translate }}
+                    </p>
+                }
+            </section>
+
+            @if (content.channels.length > 0) {
+                <section class="block">
+                    <h2 class="block__title">
+                        {{ 'WORKSPACE.SPORTS.CHANNELS' | translate }}
+                    </h2>
+                    <div class="block__channels">
+                        @for (
+                            channel of content.channels;
+                            track channel.streamId
+                        ) {
+                            <button
+                                type="button"
+                                class="channel"
+                                (click)="play(channel)"
+                            >
+                                <span class="channel__logo">
+                                    @if (channel.icon) {
+                                        <img
+                                            [src]="channel.icon"
+                                            alt=""
+                                            loading="lazy"
+                                            referrerpolicy="no-referrer"
+                                        />
+                                    }
+                                </span>
+                                <span class="channel__name">{{
+                                    channel.title
+                                }}</span>
+                            </button>
+                        }
+                    </div>
+                </section>
+            }
+        } @else if (sports.failed()) {
+            <p class="block__empty">
+                {{ 'WORKSPACE.SPORTS.FAILED' | translate }}
+            </p>
+        } @else {
+            <p class="block__empty">
+                {{ 'WORKSPACE.SPORTS.LOADING' | translate }}
+            </p>
+        }
+    </article>
+}

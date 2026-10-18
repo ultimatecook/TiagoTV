@@ -5,12 +5,9 @@
         [attr.aria-label]="'WORKSPACE.SIDEBAR.HOME' | translate"
         data-test-id="sidebar-brand"
     >
-        <img
-            class="sidebar__wordmark"
-            src="./assets/brand/logo-71460.png"
-            alt=""
-            draggable="false"
-        />
+        <span class="sidebar__greeting">{{
+            'WORKSPACE.SIDEBAR.GREETING' | translate
+        }}</span>
         <img
             class="sidebar__monogram"
             src="./assets/brand/logo-7.png"

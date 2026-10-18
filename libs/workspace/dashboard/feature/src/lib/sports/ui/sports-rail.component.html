@@ -1,0 +1,52 @@
+<section class="sports" data-test-id="dashboard-sports-rail">
+    <header class="sports__heading">
+        <h2 class="sports__title">
+            {{ 'WORKSPACE.SPORTS.TITLE' | translate }}
+        </h2>
+    </header>
+    <div class="sports__row">
+        @for (section of sections; track section.id) {
+            <a
+                class="sport"
+                [routerLink]="['/workspace', 'sports', section.id]"
+                [style.--sport-tint]="section.tint"
+                [style.--art-height]="section.artHeight"
+                [style.--art-headroom]="section.artHeadroom"
+                [style.--art-x.%]="section.artX"
+                [style.--logo-size]="section.logoSize"
+                [attr.data-test-id]="'sport-card-' + section.id"
+            >
+                <span class="sport__card" aria-hidden="true"></span>
+                <span class="sport__figure" aria-hidden="true">
+                    <img
+                        class="sport__art"
+                        [src]="section.image"
+                        alt=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer"
+                        draggable="false"
+                    />
+                </span>
+                <span class="sport__shade" aria-hidden="true"></span>
+                @if (liveCount(section.id); as live) {
+                    <span class="sport__live">
+                        {{
+                            'WORKSPACE.SPORTS.LIVE_COUNT'
+                                | translate: { count: live }
+                        }}
+                    </span>
+                }
+                @if (section.logo) {
+                    <img
+                        class="sport__logo"
+                        [src]="section.logo"
+                        [alt]="section.title"
+                        draggable="false"
+                    />
+                } @else {
+                    <span class="sport__label">{{ section.title }}</span>
+                }
+            </a>
+        }
+    </div>
+</section>

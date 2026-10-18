@@ -15,6 +15,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { displayTitle } from '@iptvnator/shared/interfaces';
 import { TranslateModule } from '@ngx-translate/core';
 import { HeroTrailerBackdropComponent } from '../detail-ui/hero-trailer-backdrop.component';
 
@@ -140,7 +141,8 @@ export class ContentHeroComponent {
         const t = this.title();
         if (!t) return '';
         // Replace underscores with spaces for cleaner UX on slug/filename style titles
-        return t.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+        // TiagoTV: and without the catalog's year and language tags.
+        return displayTitle(t.replace(/_/g, ' ').replace(/\s+/g, ' ').trim());
     });
 
     private calculateHue(text: string): number {

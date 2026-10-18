@@ -1,4 +1,6 @@
 export * from './lib/rails/workspace-dashboard-rails.component';
+export { PlatformPageComponent } from './lib/platforms/ui/platform-page.component';
+export { SportSectionPageComponent } from './lib/sports/ui/sport-section-page.component';
 export * from './lib/rails/dashboard-rail.component';
 export { resolveDashboardHeroArtwork } from './lib/rails/dashboard-hero.utils';
 export type {

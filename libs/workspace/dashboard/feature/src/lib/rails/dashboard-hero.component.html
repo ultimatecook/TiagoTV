@@ -137,16 +137,7 @@
                             slide.timeRange
                         }}</app-meta-chip>
                     }
-                    @if (slide.year) {
-                        <app-meta-chip class="hero__pill">{{
-                            slide.year
-                        }}</app-meta-chip>
-                    }
-                    @if (slide.source) {
-                        <app-meta-chip class="hero__pill hero__pill--source">{{
-                            slide.source
-                        }}</app-meta-chip>
-                    }
+                    <!-- TiagoTV: no year and no source on the hero. -->
                 </p>
 
                 @if (slide.programmeTitle) {

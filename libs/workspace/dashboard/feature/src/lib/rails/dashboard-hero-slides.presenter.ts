@@ -1,4 +1,7 @@
-import { isCatalogUnavailable } from '@iptvnator/shared/interfaces';
+import {
+    displayTitle,
+    isCatalogUnavailable,
+} from '@iptvnator/shared/interfaces';
 import {
     computed,
     DestroyRef,
@@ -248,10 +251,15 @@ export class DashboardHeroSlidesPresenter {
             // episode badge names the season; without a badge the marker is
             // the sole season identity of a per-season catalog entry. A movie
             // keeps its name as is.
-            title:
-                watchKind === 'series' && episodeBadge
-                    ? splitSeasonSuffix(item.title).title
-                    : item.title,
+            // TiagoTV: films and shows go by their name alone, without the
+            // catalog's year and language tags.
+            title: isLive
+                ? item.title
+                : displayTitle(
+                      watchKind === 'series' && episodeBadge
+                          ? splitSeasonSuffix(item.title).title
+                          : item.title
+                  ),
             typeLabelKey: TYPE_LABEL_KEYS[watchKind],
             reasonLabelKey: this.reasonLabelKey(source),
             episodeBadge,

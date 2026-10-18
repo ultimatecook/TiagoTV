@@ -1,4 +1,8 @@
-import { isIdleEventChannel, parseSportEvent } from './sport-events';
+import {
+    isIdleEventChannel,
+    isStaleSlot,
+    parseSportEvent,
+} from './sport-events';
 import {
     channelInSection,
     findSportSection,
@@ -61,6 +65,31 @@ describe('parseSportEvent', () => {
         expect(isIdleEventChannel('ES | No Event')).toBe(true);
         expect(isIdleEventChannel('|ES| DAZN 1 ᴴᴰ')).toBe(false);
     });
+
+    it('drops empty slots and pay-per-view games from before yesterday', () => {
+        const now = new Date(2026, 9, 18, 12);
+
+        expect(isStaleSlot('NBA 13 :', now)).toBe(true);
+        expect(isStaleSlot(':NBA 15', now)).toBe(true);
+        expect(isStaleSlot('DAZN 1', now)).toBe(false);
+        expect(isStaleSlot('NBA TV 3', now)).toBe(false);
+        expect(
+            isStaleSlot(
+                'Philadelphia 76ers vs Boston Celtics @ Oct 16 7:00 PM :NBA 01',
+                now
+            )
+        ).toBe(true);
+        expect(
+            isStaleSlot('Lakers vs Nuggets @ Oct 17 10:30 PM :NBA 12', now)
+        ).toBe(false);
+        // A December game seen in January is last year's.
+        expect(
+            isStaleSlot(
+                'Knicks vs Nets @ Dec 30 7:00 PM :NBA 02',
+                new Date(2027, 0, 2, 12)
+            )
+        ).toBe(true);
+    });
 });
 
 describe('sport sections', () => {
@@ -79,6 +108,41 @@ describe('sport sections', () => {
         expect(id('Google Pixel Frauen-Bundesliga')).toBeNull();
         expect(id('FIA World Endurance')).toBe('motor');
         expect(id('ABN AMRO Open _ ATP 500')).toBe('tennis');
+    });
+
+    it('keeps basketball on its own card', () => {
+        const id = (competition: string) =>
+            sectionForCompetition(competition)?.id ?? null;
+
+        expect(id('Liga Endesa')).toBe('basketball');
+        expect(id('NBA')).toBe('basketball');
+        expect(id('Super League Basketball')).toBe('basketball');
+        expect(id('Basketball Champions League')).toBe('basketball');
+        expect(id('Liga Femenina Endesa')).toBeNull();
+        expect(id('UEFA Champions League')).toBe('champions-league');
+
+        const basketball = findSportSection('basketball');
+        const champions = findSportSection('champions-league');
+        if (!basketball || !champions) {
+            throw new Error('sections missing');
+        }
+        expect(
+            channelInSection(
+                basketball,
+                '|ES|DAZN ACB 1 FHD',
+                '|ES| ✪ DAZN ACB'
+            )
+        ).toBe(true);
+        expect(
+            channelInSection(basketball, '|ES| NBA TV 1', '|ES| ✪ NBA')
+        ).toBe(true);
+        expect(
+            channelInSection(
+                champions,
+                'Basketball Champions League 1',
+                '|ES| ✪ CHAMPIONS'
+            )
+        ).toBe(false);
     });
 
     it('gathers 24/7 channels by category or name', () => {

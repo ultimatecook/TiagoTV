@@ -1,0 +1,181 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+:host {
+    display: block;
+}
+
+// A broadcast scoreboard on the competition's colour: the crests stand on
+// a lit floor, the names under them, the state in the top corners.
+.match {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+    min-height: 168px;
+    box-sizing: border-box;
+    padding: 14px 16px 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    background:
+        radial-gradient(
+            120% 90% at 50% 120%,
+            color-mix(in srgb, var(--match-tint, #1b2440) 70%, white 8%) 0%,
+            transparent 70%
+        ),
+        linear-gradient(
+            160deg,
+            color-mix(in srgb, var(--match-tint, #1b2440) 75%, black) 0%,
+            #07080c 100%
+        );
+    box-shadow: 0 18px 34px -20px rgba(0, 0, 0, 0.8);
+    color: var(--app-heading-color);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        transform 180ms ease,
+        box-shadow 180ms ease,
+        border-color 180ms ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.28);
+        box-shadow: 0 22px 40px -20px rgba(0, 0, 0, 0.9);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+.match__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.match__competition {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.match__live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--app-brand-red, #e8262b);
+    color: #fff;
+
+    &::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: match-pulse 1.6s ease-in-out infinite;
+    }
+}
+
+.match__time {
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+.match__teams {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.match__team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    --crest-size: 58px;
+}
+
+.match__name {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.match__vs {
+    color: rgba(255, 255, 255, 0.5);
+    font-family: var(--app-display-font);
+    font-size: 20px;
+    letter-spacing: 0.06em;
+}
+
+.match__event {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 4px;
+    flex: 1;
+    min-height: 0;
+}
+
+.match__art {
+    position: absolute;
+    right: -18px;
+    bottom: -18px;
+    height: 150%;
+    max-width: 55%;
+    object-fit: contain;
+    object-position: bottom right;
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.match__event-title {
+    position: relative;
+    max-width: 70%;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.match__event-competition {
+    position: relative;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12.5px;
+}
+
+@keyframes match-pulse {
+    50% {
+        opacity: 0.35;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .match {
+        transition: none;
+    }
+
+    .match__live::before {
+        animation: none;
+    }
+}

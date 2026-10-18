@@ -19,6 +19,7 @@ const LEAGUE_HINTS: Partial<Record<SportSectionId, RegExp>> = {
     'serie-a': /italian serie a/i,
     'ligue-1': /french ligue 1/i,
     bundesliga: /german bundesliga/i,
+    basketball: /\bnba\b|liga acb|euroleague|british basketball/i,
 };
 
 /**
@@ -69,9 +70,10 @@ export function crestSearchNames(name: string): string[] {
 }
 
 /**
- * The crest among the search results: a men's senior football side, from
- * the competition's league when one answered ("RC Celta" also finds Gran
- * Peña, Celta's affiliate in a lower league).
+ * The crest among the search results: a men's senior side of the card's
+ * sport (football, or basketball for its card), from the competition's
+ * league when one answered ("RC Celta" also finds Gran Peña, Celta's
+ * affiliate in a lower league).
  */
 export function pickCrest(
     teams: readonly TheSportsDbTeam[],
@@ -80,7 +82,8 @@ export function pickCrest(
     const hint = section ? LEAGUE_HINTS[section] : undefined;
     const candidates = teams.filter(
         (team) =>
-            team.strSport === 'Soccer' &&
+            team.strSport ===
+                (section === 'basketball' ? 'Basketball' : 'Soccer') &&
             !!team.strBadge &&
             !NOT_SENIOR_MEN.test(
                 `${team.strTeam ?? ''} ${team.strLeague ?? ''}`

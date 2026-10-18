@@ -1951,6 +1951,7 @@
             "RAIL_RADIO": "Radio en directo"
         },
         "SIDEBAR": {
+            "GREETING": "Hey there, Tiago 👋",
             "NAV_LABEL": "Navegación principal",
             "SEARCH_PLACEHOLDER": "Buscar...",
             "GROUP_HOME": "Inicio",
@@ -2104,6 +2105,50 @@
             "HINT_SELECT": "elegir",
             "HINT_OPEN": "abrir",
             "HINT_CLOSE": "cerrar"
+        },
+        "PLATFORMS": {
+            "TITLE": "Plataformas",
+            "NEWEST": "Lo más nuevo",
+            "MOVIES": "Películas",
+            "SERIES": "Series",
+            "SEE_ALL": "Ver todo",
+            "BACK": "Volver",
+            "MORE": "Mostrar más",
+            "EMPTY": "Todavía no hay nada acá.",
+            "LOADING": "Cargando el catálogo…",
+            "FAILED": "No se pudo cargar el catálogo. Probá de nuevo en un rato.",
+            "GENRES": {
+                "ACTION": "Acción",
+                "ADVENTURE": "Aventura",
+                "COMEDY": "Comedia",
+                "DRAMA": "Drama",
+                "HORROR": "Terror",
+                "THRILLER": "Suspenso",
+                "CRIME": "Crimen",
+                "SCIFI": "Ciencia ficción",
+                "FANTASY": "Fantasía",
+                "ANIMATION": "Animación",
+                "FAMILY": "Para toda la familia",
+                "DOCUMENTARY": "Documentales",
+                "ROMANCE": "Romance",
+                "MYSTERY": "Misterio",
+                "WAR": "Bélicas",
+                "HISTORY": "Historia",
+                "REALITY": "Reality",
+                "WESTERN": "Western",
+                "MUSIC": "Música"
+            }
+        },
+        "SPORTS": {
+            "TITLE": "Deportes",
+            "TODAY": "Partidos de hoy",
+            "LIVE": "En vivo",
+            "LIVE_COUNT": "{{count}} en vivo",
+            "MATCHES": "En vivo y más tarde",
+            "CHANNELS": "Canales",
+            "NO_MATCHES": "Ahora no hay partidos en tus canales. Aparecen acá cuando el proveedor los anuncia.",
+            "LOADING": "Buscando los partidos de hoy…",
+            "FAILED": "No se pudo cargar la lista de canales. Revisá la conexión de la fuente."
         }
     },
     "LOADING": "Cargando",

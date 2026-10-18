@@ -1951,6 +1951,7 @@
             "RAIL_RADIO": "Radio"
         },
         "SIDEBAR": {
+            "GREETING": "Hey there, Tiago 👋",
             "NAV_LABEL": "Main navigation",
             "SEARCH_PLACEHOLDER": "Search...",
             "GROUP_HOME": "Home",
@@ -2104,6 +2105,50 @@
             "HINT_SELECT": "select",
             "HINT_OPEN": "open",
             "HINT_CLOSE": "close"
+        },
+        "PLATFORMS": {
+            "TITLE": "Platforms",
+            "NEWEST": "New on the platform",
+            "MOVIES": "Movies",
+            "SERIES": "Series",
+            "SEE_ALL": "See all",
+            "BACK": "Back",
+            "MORE": "Show more",
+            "EMPTY": "Nothing here yet.",
+            "LOADING": "Loading the catalogue…",
+            "FAILED": "The catalogue could not be loaded. Try again in a moment.",
+            "GENRES": {
+                "ACTION": "Action",
+                "ADVENTURE": "Adventure",
+                "COMEDY": "Comedy",
+                "DRAMA": "Drama",
+                "HORROR": "Horror",
+                "THRILLER": "Thrillers",
+                "CRIME": "Crime",
+                "SCIFI": "Sci-fi",
+                "FANTASY": "Fantasy",
+                "ANIMATION": "Animation",
+                "FAMILY": "Family",
+                "DOCUMENTARY": "Documentaries",
+                "ROMANCE": "Romance",
+                "MYSTERY": "Mystery",
+                "WAR": "War",
+                "HISTORY": "History",
+                "REALITY": "Reality",
+                "WESTERN": "Westerns",
+                "MUSIC": "Music"
+            }
+        },
+        "SPORTS": {
+            "TITLE": "Sports",
+            "TODAY": "Today's matches",
+            "LIVE": "Live",
+            "LIVE_COUNT": "{{count}} live",
+            "MATCHES": "Live and later today",
+            "CHANNELS": "Channels",
+            "NO_MATCHES": "No matches on your channels right now. They appear here once the provider names them.",
+            "LOADING": "Looking for today's matches…",
+            "FAILED": "The channel list could not be loaded. Check the source's connection."
         }
     },
     "LOADING": "Loading",

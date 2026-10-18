@@ -14,7 +14,7 @@ import { WorkspaceShellSidebarIconComponent } from './workspace-shell-sidebar-ic
 import { buildWorkspaceSidebarGroups } from './workspace-shell-sidebar-nav';
 
 /**
- * The TiagoTV glass sidebar: wordmark, search and the Home / Library
+ * The TiagoTV glass sidebar: greeting, search and the Home / Library
  * navigation. Search mirrors the header's field (same facade bindings), so
  * the shell can hand either one the find shortcut; the header's copy only
  * shows where the sidebar folds to icons.

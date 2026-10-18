@@ -1,0 +1,33 @@
+<section class="row">
+    <button type="button" class="row__heading" (click)="seeAll.emit()">
+        <h2 class="row__title">{{ row().labelKey | translate }}</h2>
+        <span class="row__see-all"
+            >{{ 'WORKSPACE.PLATFORMS.SEE_ALL' | translate }} ›</span
+        >
+    </button>
+    <div class="row__viewport">
+        <button
+            type="button"
+            class="row__arrow row__arrow--back"
+            tabindex="-1"
+            aria-hidden="true"
+            (click)="scroll(-1)"
+        >
+            ‹
+        </button>
+        <div class="row__track" #track>
+            @for (title of titles(); track title.kind + title.id) {
+                <lib-platform-title-card class="row__item" [title]="title" />
+            }
+        </div>
+        <button
+            type="button"
+            class="row__arrow row__arrow--forward"
+            tabindex="-1"
+            aria-hidden="true"
+            (click)="scroll(1)"
+        >
+            ›
+        </button>
+    </div>
+</section>

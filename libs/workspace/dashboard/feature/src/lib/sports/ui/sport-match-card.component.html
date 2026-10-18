@@ -1,0 +1,54 @@
+<button
+    type="button"
+    class="match"
+    [style.--match-tint]="section()?.tint"
+    [attr.aria-label]="match().title"
+    (click)="play()"
+>
+    <span class="match__top">
+        <span class="match__competition">{{ section()?.title }}</span>
+        @if (live()) {
+            <span class="match__live">{{
+                'WORKSPACE.SPORTS.LIVE' | translate
+            }}</span>
+        } @else {
+            <span class="match__time">{{ kickOff() }}</span>
+        }
+    </span>
+
+    @if (match().event.home && match().event.away) {
+        <span class="match__teams">
+            <span class="match__team">
+                <lib-team-crest
+                    [team]="match().event.home!"
+                    [section]="match().sectionId"
+                />
+                <span class="match__name">{{ match().event.home }}</span>
+            </span>
+            <span class="match__vs" aria-hidden="true">vs</span>
+            <span class="match__team">
+                <lib-team-crest
+                    [team]="match().event.away!"
+                    [section]="match().sectionId"
+                />
+                <span class="match__name">{{ match().event.away }}</span>
+            </span>
+        </span>
+    } @else {
+        <span class="match__event">
+            @if (section(); as art) {
+                <img
+                    class="match__art"
+                    [src]="art.image"
+                    alt=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                />
+            }
+            <span class="match__event-title">{{ match().title }}</span>
+            <span class="match__event-competition">{{
+                match().event.competition
+            }}</span>
+        </span>
+    }
+</button>

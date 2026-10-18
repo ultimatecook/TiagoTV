@@ -80,3 +80,37 @@ export function parseSportEvent(name: string): SportEvent | null {
 export function isIdleEventChannel(name: string): boolean {
     return /\|\s*no event\s*$/i.test(name.trim());
 }
+
+const MONTHS = 'jan feb mar apr may jun jul aug sep oct nov dec'.split(' ');
+/** A US pay-per-view slot's game: "Lakers vs Nuggets @ Oct 16 10:30 PM". */
+const PPV_DATE = /@\s*([a-z]{3})\s+(\d{1,2})\s+\d{1,2}:\d{2}\s*[ap]m/i;
+/** A numbered slot with nothing on it: "NBA 13 :", ":NBA 13". */
+const EMPTY_SLOT =
+    /^\s*(:\s*[a-z]{2,6}\s*\d{1,2}|[a-z]{2,6}\s*\d{1,2}\s*:)\s*$/i;
+
+/**
+ * A channel slot that names nothing to watch: an empty numbered slot, or a
+ * pay-per-view slot still named after a game from before yesterday (its
+ * US date can trail the viewer's by a day).
+ */
+export function isStaleSlot(title: string, now = new Date()): boolean {
+    if (EMPTY_SLOT.test(title)) {
+        return true;
+    }
+    const date = PPV_DATE.exec(title);
+    const month = date ? MONTHS.indexOf(date[1].toLowerCase()) : -1;
+    if (!date || month < 0) {
+        return false;
+    }
+    const yesterday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - 1
+    );
+    let game = new Date(now.getFullYear(), month, Number(date[2]));
+    // A December game seen in January belongs to last year.
+    if (game.getTime() - now.getTime() > 180 * 24 * 60 * 60 * 1000) {
+        game = new Date(now.getFullYear() - 1, month, Number(date[2]));
+    }
+    return game < yesterday;
+}

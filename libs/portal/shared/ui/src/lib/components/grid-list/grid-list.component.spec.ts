@@ -214,9 +214,7 @@ describe('GridListComponent', () => {
         // The icon is aria-hidden — the status must also exist as
         // visually-hidden text for assistive technology.
         const srText = badge.query(By.css('.visually-hidden'));
-        expect(srText.nativeElement.textContent).toContain(
-            'CATCHUP_AVAILABLE'
-        );
+        expect(srText.nativeElement.textContent).toContain('CATCHUP_AVAILABLE');
     });
 
     it('hides the catch-up badge for live cards without a playable archive', () => {
@@ -318,15 +316,16 @@ describe('GridListComponent with strip country prefix enabled', () => {
         expect(renderedTitle()).toBe('CNN');
     });
 
-    it('keeps VOD titles untouched', () => {
+    // TiagoTV: films go by their name alone, with or without the setting.
+    it('shows VOD titles without their year and language tags', () => {
         fixture.componentRef.setInput('items', [
-            { title: 'US | Some Movie' },
+            { title: 'ES | Some Movie (2020)' },
         ]);
         fixture.componentRef.setInput('type', 'vod');
 
         fixture.detectChanges();
 
-        expect(renderedTitle()).toBe('US | Some Movie');
+        expect(renderedTitle()).toBe('Some Movie');
     });
 });
 
@@ -376,9 +375,7 @@ describe('GridListComponent posters-only wall', () => {
             'grid-list--posters-only'
         );
         expect(fixture.debugElement.query(By.css('.title'))).toBeNull();
-        expect(overlay().nativeElement.textContent.trim()).toBe(
-            'Blade Runner'
-        );
+        expect(overlay().nativeElement.textContent.trim()).toBe('Blade Runner');
         expect(overlay().nativeElement.classList).not.toContain(
             'cover-title-overlay--pinned'
         );

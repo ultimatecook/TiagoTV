@@ -111,6 +111,22 @@ export const routes: Routes = [
                     ),
             },
             {
+                // TiagoTV: a competition of the Home's "Deportes" row.
+                path: 'sports/:sectionId',
+                loadComponent: () =>
+                    import('@iptvnator/workspace/dashboard/feature').then(
+                        (c) => c.SportSectionPageComponent
+                    ),
+            },
+            {
+                // TiagoTV: a streaming platform of the Home's platforms row.
+                path: 'platforms/:platformId',
+                loadComponent: () =>
+                    import('@iptvnator/workspace/dashboard/feature').then(
+                        (c) => c.PlatformPageComponent
+                    ),
+            },
+            {
                 path: 'playlists/:id',
                 loadChildren: () =>
                     import('@iptvnator/playlist/m3u/feature-player').then((m) =>
