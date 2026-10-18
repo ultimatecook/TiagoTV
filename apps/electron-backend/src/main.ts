@@ -40,6 +40,7 @@ import {
     playlistOpenRequests,
 } from './app/services/playlist-open-request';
 import { EMBEDDED_MPV_FRAME_COPY, store } from './app/services/store.service';
+import { disableDnsHttpsUpgrade } from './app/startup/dns-https-upgrade';
 
 app.setName('iptvnator');
 
@@ -71,6 +72,9 @@ if (
 ) {
     app.commandLine.appendSwitch('ozone-platform', 'x11');
 }
+
+// Before the app is ready: Chromium reads its feature switches at startup.
+disableDnsHttpsUpgrade(app.commandLine);
 
 // The frame-copy embedded MPV engine must be decided before the main window
 // exists: it relaxes the window sandbox for the preload frame pump, and
