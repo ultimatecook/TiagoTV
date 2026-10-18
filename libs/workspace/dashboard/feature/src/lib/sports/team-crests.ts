@@ -36,10 +36,18 @@ const LEAGUE_HINTS: Partial<Record<SportSectionId, RegExp>> = {
  * the provider's name ("Paris Saint-Germain").
  */
 type Alias = { name?: string; id?: string };
-const ids = (id: string, ...names: string[]) =>
-    names.map((name) => [name, { id }] as const);
+const ids = (id: string, ...names: string[]): [string, Alias][] =>
+    names.map((name) => [name, { id }]);
 
-const ALIASES: Record<string, Alias> = Object.fromEntries([
+function aliasTable(entries: [string, Alias][]): Record<string, Alias> {
+    const table: Record<string, Alias> = {};
+    for (const [name, alias] of entries) {
+        table[name] = alias;
+    }
+    return table;
+}
+
+const ALIASES: Record<string, Alias> = aliasTable([
     ...ids('133619', 'brighton', 'brighton & hove albion'),
     ...ids('133720', 'nottingham forest', "nott'm forest"),
     ...ids('133601', 'aston villa'),
@@ -61,7 +69,7 @@ const ALIASES: Record<string, Alias> = Object.fromEntries([
 ]);
 
 /** Basketball sides go by their sponsors' names, and share clubs' names. */
-const BASKETBALL_ALIASES: Record<string, Alias> = Object.fromEntries([
+const BASKETBALL_ALIASES: Record<string, Alias> = aliasTable([
     ...ids('135092', 'real madrid'),
     ...ids('135095', 'ucam murcia'),
     ...ids('135086', 'la laguna tenerife', 'tenerife'),
