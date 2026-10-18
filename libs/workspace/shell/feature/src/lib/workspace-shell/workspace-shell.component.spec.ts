@@ -7,6 +7,9 @@ import {
     signal,
     ChangeDetectionStrategy,
 } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { of, Subject } from 'rxjs';
 import { EmbeddedMpvOverlayVisibilityService } from '@iptvnator/ui/playback';
@@ -22,6 +25,7 @@ import { LayoutSlideDirective } from './layout-slide.directive';
 import { TrafficLightsClearanceDirective } from './traffic-lights-clearance.directive';
 import { WorkspaceShellComponent } from './workspace-shell.component';
 import { WorkspaceShellFacade } from './services/workspace-shell.facade';
+import { NAV_SIDEBAR_HIDDEN_STORAGE_KEY } from './services/workspace-nav-sidebar.service';
 import { WorkspaceKeyboardShortcutsService } from '../workspace-keyboard-shortcuts/workspace-keyboard-shortcuts.service';
 
 @Component({
@@ -49,6 +53,7 @@ class MockWorkspaceShellSidebarComponent {
     // Folded to icons: the sidebar search is hidden, the header's takes it.
     focusSearchInput = jest.fn(() => false);
     containsSearchInput = jest.fn(() => false);
+    focusHideButton = jest.fn();
 }
 
 @Component({
@@ -607,6 +612,119 @@ describe('WorkspaceShellComponent', () => {
         expect(facade.openGlobalSearch).not.toHaveBeenCalled();
         expect(header.focusSearchInput).toHaveBeenCalledWith({ select: true });
         jest.useRealTimers();
+    });
+
+    it('hides and shows the navigation sidebar on Ctrl+Alt+S, not while typing', async () => {
+        localStorage.removeItem(NAV_SIDEBAR_HIDDEN_STORAGE_KEY);
+        const facade = new MockWorkspaceShellFacade();
+
+        await TestBed.configureTestingModule({
+            imports: [WorkspaceShellComponent],
+            providers: [
+                provideRouter([]),
+                {
+                    provide: TranslateService,
+                    useValue: {
+                        instant: (key: string) => key,
+                        get: (key: string) => of(key),
+                        stream: (key: string) => of(key),
+                        onLangChange: new Subject(),
+                        onTranslationChange: new Subject(),
+                        onDefaultLangChange: new Subject(),
+                        currentLang: 'en',
+                        defaultLang: 'en',
+                    },
+                },
+            ],
+        })
+            .overrideComponent(WorkspaceShellComponent, {
+                set: {
+                    imports: [
+                        CdkTrapFocus,
+                        RouterOutlet,
+                        TranslatePipe,
+                        MockExternalPlaybackDockComponent,
+                        MockPlaylistDropOverlayComponent,
+                        MockPlaylistDropZoneDirective,
+                        MockWorkspaceShellContextSidebarComponent,
+                        MockWorkspaceShellHeaderComponent,
+                        MockWorkspaceShellImportOverlayComponent,
+                        MockWorkspaceShellSidebarComponent,
+                        MockWorkspaceShellServerBannerComponent,
+                        TrafficLightsClearanceDirective,
+                        LayoutSlideDirective,
+                        MatIcon,
+                        MatIconButton,
+                        MatTooltip,
+                    ],
+                    providers: [
+                        {
+                            provide: WorkspaceShellFacade,
+                            useValue: facade,
+                        },
+                        {
+                            provide: WorkspaceKeyboardShortcutsService,
+                            useClass: MockWorkspaceKeyboardShortcutsService,
+                        },
+                        {
+                            provide: EmbeddedMpvOverlayVisibilityService,
+                            useValue: {
+                                acquireExternalModalSurface: () => () =>
+                                    undefined,
+                            },
+                        },
+                        WorkspaceShellContextDrawerService,
+                    ],
+                },
+            })
+            .compileComponents();
+
+        const fixture = TestBed.createComponent(WorkspaceShellComponent);
+        fixture.detectChanges();
+        const host = fixture.nativeElement as HTMLElement;
+        const shell = host.querySelector('.workspace-shell') as HTMLElement;
+        const sidebar = host.querySelector(
+            'app-workspace-shell-sidebar'
+        ) as HTMLElement;
+        const chord = () =>
+            new KeyboardEvent('keydown', {
+                key: 's',
+                code: 'KeyS',
+                ctrlKey: true,
+                altKey: true,
+                bubbles: true,
+                cancelable: true,
+            });
+
+        const hide = chord();
+        document.dispatchEvent(hide);
+        fixture.detectChanges();
+        expect(hide.defaultPrevented).toBe(true);
+        expect(shell.classList).toContain('nav-hidden');
+        expect(sidebar.hasAttribute('inert')).toBe(true);
+        expect(localStorage.getItem(NAV_SIDEBAR_HIDDEN_STORAGE_KEY)).toBe('1');
+
+        // In a text field the chord stays the field's.
+        const field = document.createElement('input');
+        document.body.appendChild(field);
+        const typed = chord();
+        field.dispatchEvent(typed);
+        field.remove();
+        expect(typed.defaultPrevented).toBe(false);
+        expect(shell.classList).toContain('nav-hidden');
+
+        (
+            host.querySelector(
+                '[data-test-id="nav-sidebar-show"]'
+            ) as HTMLButtonElement
+        ).click();
+        fixture.detectChanges();
+        expect(shell.classList).not.toContain('nav-hidden');
+        expect(sidebar.hasAttribute('inert')).toBe(false);
+        expect(
+            host.querySelector('[data-test-id="nav-sidebar-show"]')
+        ).toBeNull();
+        localStorage.removeItem(NAV_SIDEBAR_HIDDEN_STORAGE_KEY);
     });
 
     it('opens and closes the context drawer via the toggle, backdrop and Escape', async () => {

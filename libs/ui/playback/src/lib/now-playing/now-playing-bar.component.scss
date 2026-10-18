@@ -4,6 +4,9 @@
     display: block;
 }
 
+// A lifted glass panel with the corners of the app's cards: lighter than
+// the window, lit along its top edge, and casting a deep shadow, so it reads
+// as floating over whatever scrolls under it.
 .now-playing {
     position: relative;
     display: grid;
@@ -11,20 +14,34 @@
     align-items: center;
     gap: 18px;
     min-height: 76px;
-    padding: 10px 26px 10px 12px;
+    padding: 10px 26px 10px 10px;
     box-sizing: border-box;
-    border: 1px solid var(--app-glass-border, rgba(255, 255, 255, 0.12));
-    border-radius: 999px;
-    background: var(
-        --app-glass-pill-bg,
-        linear-gradient(180deg, rgba(60, 60, 58, 0.96), rgba(34, 34, 33, 0.97))
-    );
-    // Over native glass the pill is translucent: what scrolls under it blurs.
-    -webkit-backdrop-filter: blur(28px) saturate(1.4);
-    backdrop-filter: blur(28px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-top-color: rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.14),
+            rgba(255, 255, 255, 0.05) 70%
+        ),
+        var(
+            --app-glass-pill-bg,
+            linear-gradient(
+                180deg,
+                rgba(60, 60, 58, 0.96),
+                rgba(34, 34, 33, 0.97)
+            )
+        );
+    // Over native glass the panel is translucent: what scrolls under it
+    // blurs.
+    -webkit-backdrop-filter: blur(40px) saturate(1.6);
+    backdrop-filter: blur(40px) saturate(1.6);
     box-shadow:
-        inset 0 1px 0 var(--app-glass-highlight, rgba(255, 255, 255, 0.07)),
-        0 26px 60px rgba(0, 0, 0, 0.55);
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 0 0 1px rgba(0, 0, 0, 0.35),
+        0 10px 24px rgba(0, 0, 0, 0.45),
+        0 32px 72px -12px rgba(0, 0, 0, 0.8);
     color: #f4f1ea;
 }
 
@@ -53,6 +70,7 @@
 
 // The player stays mounted from the first frame (it is what plays); it is
 // only shown once its media element is in, so the artwork bridges the load.
+// The player's views are its own components, hence ::ng-deep under this box.
 .now-playing__video {
     opacity: 0;
     transition: opacity 240ms ease;
@@ -62,47 +80,72 @@
         opacity: 1;
     }
 
-    // Everything but the picture: the bar draws the controls. The player's
-    // views are its own components, hence ::ng-deep under this box.
     ::ng-deep {
-        app-player-controls,
         app-playback-diagnostic-panel,
         app-fullscreen-channel-panel {
             display: none !important;
         }
 
-        app-web-player-view,
-        app-html-video-player,
-        div {
-            width: 100% !important;
-            height: 100% !important;
-            min-height: 0 !important;
-        }
-
         video {
-            width: 100% !important;
-            height: 100% !important;
             object-fit: cover;
             background: transparent;
-
-            &::-webkit-media-controls {
-                display: none !important;
-            }
         }
     }
 }
 
+// In the bar, the picture only: the bar draws the controls.
+:host(:not(.is-expanded)) .now-playing__video ::ng-deep {
+    app-player-controls {
+        display: none !important;
+    }
+
+    app-web-player-view,
+    app-html-video-player,
+    div,
+    video {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 0 !important;
+    }
+
+    video::-webkit-media-controls {
+        display: none !important;
+    }
+}
+
+// The artwork opens the player full-window.
 .now-playing__open {
     position: absolute;
     inset: 0;
+    display: grid;
+    place-items: center;
     padding: 0;
     border: 0;
     border-radius: inherit;
     background: transparent;
+    color: #fff;
     cursor: pointer;
+    transition: background-color 0.15s ease;
 
-    &:hover {
-        background: rgba(255, 255, 255, 0.08);
+    mat-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 22px;
+        opacity: 0;
+        transform: scale(0.8);
+        transition:
+            opacity 0.15s ease,
+            transform 0.15s ease;
+    }
+
+    &:hover,
+    &:focus-visible {
+        background: rgba(0, 0, 0, 0.42);
+
+        mat-icon {
+            opacity: 1;
+            transform: none;
+        }
     }
 
     &:focus-visible {
@@ -333,6 +376,114 @@
     &:focus-visible {
         outline: none;
     }
+}
+
+// ── Full window ────────────────────────────────────────────────────────────
+// The bar grows over the whole window (the shell makes the rest inert): the
+// same player, now with its own controls, under a slim top row.
+:host(.is-expanded) {
+    .now-playing {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: block;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: #000;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        box-shadow: none;
+        // Over the header's drag strip in the desktop app: clicks are ours.
+        app-region: no-drag;
+        animation: now-playing-open 200ms cubic-bezier(0.2, 0, 0, 1);
+
+        > :not(.now-playing__media, .now-playing__top) {
+            display: none;
+        }
+    }
+
+    .now-playing__media {
+        position: absolute;
+        inset: 0;
+        width: auto;
+        height: auto;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .now-playing__artwork {
+        object-fit: contain;
+    }
+
+    // Black once it plays: the artwork stays out of the letterbox.
+    .now-playing__video {
+        background: #000;
+        pointer-events: auto;
+
+        ::ng-deep video {
+            object-fit: contain;
+        }
+    }
+}
+
+.now-playing__top {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 2;
+    display: flex;
+    // Buttons level with the player's stream-info corner (16px down).
+    align-items: flex-start;
+    gap: 6px;
+    padding: 16px 20px 48px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.62), transparent);
+    transition: opacity 0.3s ease;
+    // Only its buttons take the pointer: the picture under the scrim still
+    // plays and pauses on click.
+    pointer-events: none;
+
+    > * {
+        pointer-events: auto;
+    }
+
+    .now-playing__meta {
+        flex: 0 1 auto;
+    }
+
+    // Close sits beside the player's own stream-info corner, not on it.
+    > :last-child {
+        margin: 0 52px 0 auto;
+    }
+}
+
+// It fades with the player's own controls.
+:host(.is-expanded)
+    ::ng-deep
+    .now-playing:has(.player-controls__bar:not(.player-controls__bar--visible))
+    .now-playing__top {
+    opacity: 0;
+
+    > * {
+        pointer-events: none;
+    }
+}
+
+@keyframes now-playing-open {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host(.is-expanded) .now-playing {
+        animation: none;
+    }
+}
+
+// macOS: the traffic lights sit over its leading corner.
+:host-context(.native-glass:not(.window-fullscreen)) .now-playing__top {
+    padding-left: var(--traffic-lights-clear-x, 84px);
 }
 
 // ── Narrow ─────────────────────────────────────────────────────────────────

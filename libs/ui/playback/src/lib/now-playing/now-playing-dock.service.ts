@@ -39,12 +39,27 @@ export interface NowPlayingSession extends NowPlayingHandoff {
 @Injectable({ providedIn: 'root' })
 export class NowPlayingDockService {
     private readonly sessionState = signal<NowPlayingSession | null>(null);
+    private readonly expandedState = signal(false);
     private nextId = 1;
 
     readonly session = this.sessionState.asReadonly();
+    /**
+     * The session opened as the full-window player. The bar grows in place,
+     * so the stream keeps playing; the shell makes the rest inert.
+     */
+    readonly expanded = this.expandedState.asReadonly();
 
     handOff(handoff: NowPlayingHandoff): void {
+        this.expandedState.set(false);
         this.sessionState.set({ ...handoff, id: this.nextId++ });
+    }
+
+    expand(): void {
+        this.expandedState.set(this.sessionState() !== null);
+    }
+
+    collapse(): void {
+        this.expandedState.set(false);
     }
 
     /** A page mounted its own player: the bar stops. */
@@ -53,6 +68,7 @@ export class NowPlayingDockService {
     }
 
     close(): void {
+        this.expandedState.set(false);
         if (this.sessionState() !== null) {
             this.sessionState.set(null);
         }

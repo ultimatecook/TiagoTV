@@ -5,6 +5,7 @@ import {
     Injector,
     OnDestroy,
     OnInit,
+    afterNextRender,
     computed,
     effect,
     inject,
@@ -13,18 +14,22 @@ import {
     viewChild,
     type AfterViewInit,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import { Router } from '@angular/router';
+import { NavigationStart, Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { filter } from 'rxjs';
 import { PORTAL_PLAYBACK_POSITIONS } from '@iptvnator/portal/shared/util';
 import { VideoPlayer } from '@iptvnator/shared/interfaces';
 import { formatTime } from '../player-controls/controls-format.utils';
+import type { PlayerMediaTitle } from '../player-controls/player-controls.model';
 import { WebPlayerViewComponent } from '../web-player-view/web-player-view.component';
 import {
     NowPlayingDockService,
     type NowPlayingSession,
 } from './now-playing-dock.service';
+import { nowPlayingHeading } from './now-playing-heading';
 import { NowPlayingVideo } from './now-playing-video';
 
 /** Seconds a skip button moves the playback. */
@@ -36,7 +41,9 @@ const POSITION_SAVE_INTERVAL_SECONDS = 10;
  * The bottom "now playing" pill. It continues the stream a page handed over
  * (`NowPlayingDockService`) in a small video where the artwork sits, with
  * close, skip, play/pause, repeat, time and volume, and saves the resume
- * position like the page did. The artwork and title lead back to the page.
+ * position like the page did. The artwork opens the same player
+ * full-window (Escape or minimize shrinks it back); the title leads back to
+ * the page.
  */
 @Component({
     selector: 'app-now-playing-bar',
@@ -44,6 +51,10 @@ const POSITION_SAVE_INTERVAL_SECONDS = 10;
     templateUrl: './now-playing-bar.component.html',
     styleUrl: './now-playing-bar.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    host: {
+        '[class.is-expanded]': 'expanded()',
+        '(document:keydown.escape)': 'onEscape($event)',
+    },
 })
 export class NowPlayingBarComponent
     implements OnInit, AfterViewInit, OnDestroy
@@ -54,11 +65,23 @@ export class NowPlayingBarComponent
     private readonly positions = inject(PORTAL_PLAYBACK_POSITIONS, {
         optional: true,
     });
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly videoHost =
         viewChild.required<ElementRef<HTMLElement>>('videoHost');
+    private readonly expandButton =
+        viewChild<ElementRef<HTMLElement>>('expandButton');
+    private readonly minimizeButton =
+        viewChild<ElementRef<HTMLElement>>('minimizeButton');
     private lastSavedPosition = 0;
 
     readonly session = input.required<NowPlayingSession>();
+    readonly expanded = this.dock.expanded;
+    /** Event channels by their match, channels and films by their name. */
+    readonly heading = computed(() => nowPlayingHeading(this.session()));
+    readonly mediaTitle = computed<PlayerMediaTitle>(() => {
+        const { title, subtitle } = this.heading();
+        return { primary: title, secondary: subtitle };
+    });
     /** The mini-player always plays in the built-in HTML5 engine. */
     readonly html5Player = VideoPlayer.Html5Player;
     readonly failed = signal(false);
@@ -89,6 +112,31 @@ export class NowPlayingBarComponent
         }
         return this.video.volume() < 0.5 ? 'volume_down' : 'volume_up';
     });
+
+    constructor() {
+        // Focus follows the player: into the full-window view when it
+        // opens, back to the artwork when it shrinks to the bar (unless the
+        // user has moved on, e.g. to the page the title opened).
+        let wasExpanded = false;
+        effect(() => {
+            const expanded = this.expanded();
+            if (expanded === wasExpanded) {
+                return;
+            }
+            wasExpanded = expanded;
+            afterNextRender(() => this.moveFocus(expanded), {
+                injector: this.injector,
+            });
+        });
+        // A navigation behind the full-window player (Back, a shortcut)
+        // shrinks it: the page it lands on should be seen.
+        this.router.events
+            ?.pipe(
+                filter((event) => event instanceof NavigationStart),
+                takeUntilDestroyed()
+            )
+            .subscribe(() => this.dock.collapse());
+    }
 
     ngOnInit(): void {
         const session = this.session();
@@ -154,15 +202,53 @@ export class NowPlayingBarComponent
         this.dock.close();
     }
 
+    /** The same player, full-window: the stream keeps playing. */
+    expand(): void {
+        this.dock.expand();
+    }
+
+    collapse(): void {
+        this.dock.collapse();
+    }
+
+    onEscape(event: Event): void {
+        // DOM fullscreen takes Escape first; menus mark it handled.
+        if (
+            !this.expanded() ||
+            event.defaultPrevented ||
+            (typeof document !== 'undefined' && document.fullscreenElement)
+        ) {
+            return;
+        }
+        event.preventDefault();
+        this.collapse();
+    }
+
     /** Back to the page the playback came from; the bar keeps playing. */
     openSource(): void {
         const session = this.session();
+        this.dock.collapse();
         if (!session.returnUrl) {
             return;
         }
         void this.router.navigateByUrl(session.returnUrl, {
             state: session.returnState ?? undefined,
         });
+    }
+
+    private moveFocus(expanded: boolean): void {
+        if (expanded) {
+            this.minimizeButton()?.nativeElement.focus();
+            return;
+        }
+        const active = document.activeElement;
+        if (
+            !active ||
+            active === document.body ||
+            this.host.nativeElement.contains(active)
+        ) {
+            this.expandButton()?.nativeElement.focus();
+        }
     }
 
     /**

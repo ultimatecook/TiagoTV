@@ -12,6 +12,10 @@
     // content starts beside them.
     --workspace-header-band: 72px;
     --workspace-sidebar-width: 272px;
+    // The sidebar's column: none while it is hidden (⌃⌘S).
+    --workspace-nav-column: var(--workspace-sidebar-width);
+    // Where the "show menu" control sits then: after the traffic lights.
+    --workspace-nav-show-x: 20px;
     // Room around the glass window: the ambient room shows through it.
     --workspace-window-inset: 22px;
     --workspace-window-radius: 34px;
@@ -38,6 +42,10 @@
     &.has-now-playing {
         padding-bottom: calc(var(--workspace-window-inset) + 30px);
     }
+
+    &.nav-hidden {
+        --workspace-nav-column: 0px;
+    }
 }
 
 // The glass window. It never clips (`overflow` stays visible): a rounded
@@ -48,8 +56,9 @@
 .workspace-window {
     position: relative;
     display: grid;
-    grid-template-columns: var(--workspace-sidebar-width) minmax(0, 1fr);
+    grid-template-columns: var(--workspace-nav-column) minmax(0, 1fr);
     grid-template-rows: var(--workspace-header-band) minmax(0, 1fr);
+    transition: grid-template-columns 220ms cubic-bezier(0.2, 0, 0, 1);
     min-width: 0;
     min-height: 0;
     padding-bottom: 22px;
@@ -104,6 +113,19 @@ app-workspace-shell-sidebar {
     // The sidebar runs into the bottom padding: its own padding keeps the
     // links off the rounded corner.
     margin-bottom: -22px;
+    // Hiding folds the column over it; it fades as it goes.
+    overflow: hidden;
+    transition:
+        opacity 220ms ease,
+        visibility 0s;
+}
+
+.nav-hidden app-workspace-shell-sidebar {
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 160ms ease,
+        visibility 0s 220ms;
 }
 
 app-workspace-shell-header {
@@ -115,6 +137,35 @@ app-workspace-shell-header {
     --workspace-header-lights-inset: 0px;
 }
 
+// The way back to the sidebar, at the header's leading edge; the header's
+// own controls start after it. It spans the folding column too, so it
+// stays put while the column folds.
+.nav-sidebar-show {
+    position: relative;
+    z-index: 3;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    align-self: center;
+    justify-self: start;
+    margin-left: var(--workspace-nav-show-x);
+    border-radius: 12px;
+    color: var(--mat-sys-on-surface-variant);
+    app-region: no-drag;
+
+    &:hover {
+        background: var(--app-hover-overlay);
+        color: var(--mat-sys-on-surface);
+    }
+}
+
+.nav-hidden app-workspace-shell-header {
+    --workspace-header-lights-inset: calc(var(--workspace-nav-show-x) + 60px);
+}
+
+:host-context(.native-glass:not(.window-fullscreen)) .workspace-shell {
+    --workspace-nav-show-x: var(--traffic-lights-clear-x, 84px);
+}
+
 // Wide windows search from the sidebar; the header keeps its copy for the
 // folded (icon-only) sidebar.
 @media (min-width: 1101px) {
@@ -124,10 +175,14 @@ app-workspace-shell-header {
 
     // Home: the header floats over the page's first row, so the avatar sits
     // level with "Continue Watching" as on the glass. A slim band remains
-    // above the scroller so nothing scrolls under the rounded corner.
-    .workspace-window--dashboard {
+    // above the scroller so nothing scrolls under the rounded corner. With
+    // the sidebar hidden the band comes back: the "show menu" control would
+    // sit on "Continue Watching".
+    .workspace-shell:not(.nav-hidden) .workspace-window--dashboard {
         grid-template-rows: 24px minmax(0, 1fr);
+    }
 
+    .workspace-window--dashboard {
         app-workspace-shell-header {
             height: var(--workspace-header-band);
             pointer-events: none;
@@ -165,6 +220,18 @@ app-workspace-shell-context-sidebar {
     min-height: 0;
 }
 
+// TiagoTV: a title opened from a streaming platform reads like that
+// platform's own page, without the source's category list beside it.
+:host-context([data-platform-theme]) {
+    .workspace-body {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    app-workspace-shell-context-sidebar {
+        display: none;
+    }
+}
+
 // Scrim behind the phone context drawer. Rendered only while the drawer is
 // open; display: none above the breakpoint so a drawer left open when the
 // viewport grows cannot block the desktop layout.
@@ -177,8 +244,9 @@ app-workspace-shell-context-sidebar {
 .workspace-now-playing {
     position: absolute;
     z-index: 5;
-    left: calc(var(--workspace-window-inset) + var(--workspace-sidebar-width));
+    left: calc(var(--workspace-window-inset) + var(--workspace-nav-column));
     right: var(--workspace-window-inset);
+    transition: left 220ms cubic-bezier(0.2, 0, 0, 1);
     bottom: 10px;
     display: flex;
     justify-content: center;
@@ -191,26 +259,36 @@ app-workspace-shell-context-sidebar {
         pointer-events: auto;
     }
 
-    // The dock as the glass "now playing" pill.
+    // The dock as the lifted glass "now playing" panel (the mini-player's
+    // look, with the corners of the app's cards).
     ::ng-deep .external-playback-dock {
         min-height: 74px;
-        padding: 10px 22px 10px 12px;
+        padding: 10px 22px 10px 10px;
         gap: 18px;
-        border: 1px solid var(--app-glass-border, rgba(255, 255, 255, 0.12));
-        border-radius: 999px;
-        background: var(
-            --app-glass-pill-bg,
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-top-color: rgba(255, 255, 255, 0.3);
+        border-radius: 24px;
+        background:
             linear-gradient(
                 180deg,
-                rgba(60, 60, 58, 0.96),
-                rgba(34, 34, 33, 0.97)
-            )
-        );
-        -webkit-backdrop-filter: blur(28px) saturate(1.4);
-        backdrop-filter: blur(28px) saturate(1.4);
+                rgba(255, 255, 255, 0.14),
+                rgba(255, 255, 255, 0.05) 70%
+            ),
+            var(
+                --app-glass-pill-bg,
+                linear-gradient(
+                    180deg,
+                    rgba(60, 60, 58, 0.96),
+                    rgba(34, 34, 33, 0.97)
+                )
+            );
+        -webkit-backdrop-filter: blur(40px) saturate(1.6);
+        backdrop-filter: blur(40px) saturate(1.6);
         box-shadow:
-            inset 0 1px 0 var(--app-glass-highlight, rgba(255, 255, 255, 0.07)),
-            0 26px 60px rgba(0, 0, 0, 0.55);
+            inset 0 1px 0 rgba(255, 255, 255, 0.12),
+            0 0 0 1px rgba(0, 0, 0, 0.35),
+            0 10px 24px rgba(0, 0, 0, 0.45),
+            0 32px 72px -12px rgba(0, 0, 0, 0.8);
     }
 
     ::ng-deep .external-playback-dock__artwork {
@@ -419,5 +497,17 @@ app-workspace-shell-context-sidebar {
         right: 0;
         bottom: 8px;
         padding: 0 8px;
+    }
+
+    .nav-sidebar-show {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workspace-window,
+    .workspace-now-playing,
+    app-workspace-shell-sidebar {
+        transition: none;
     }
 }

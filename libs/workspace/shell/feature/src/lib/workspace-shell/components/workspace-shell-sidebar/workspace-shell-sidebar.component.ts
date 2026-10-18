@@ -3,13 +3,17 @@ import {
     Component,
     computed,
     ElementRef,
+    inject,
     input,
     output,
     viewChild,
 } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import type { WorkspacePortalContext } from '@iptvnator/workspace/shell/util';
+import { WorkspaceNavSidebarService } from '../../services/workspace-nav-sidebar.service';
 import { WorkspaceShellSidebarIconComponent } from './workspace-shell-sidebar-icon.component';
 import { buildWorkspaceSidebarGroups } from './workspace-shell-sidebar-nav';
 
@@ -22,6 +26,8 @@ import { buildWorkspaceSidebarGroups } from './workspace-shell-sidebar-nav';
 @Component({
     selector: 'app-workspace-shell-sidebar',
     imports: [
+        MatIcon,
+        MatTooltip,
         RouterLink,
         RouterLinkActive,
         TranslatePipe,
@@ -34,6 +40,9 @@ import { buildWorkspaceSidebarGroups } from './workspace-shell-sidebar-nav';
 export class WorkspaceShellSidebarComponent {
     private readonly searchInput =
         viewChild<ElementRef<HTMLInputElement>>('searchInput');
+    private readonly hideButton =
+        viewChild<ElementRef<HTMLButtonElement>>('hideButton');
+    readonly navSidebar = inject(WorkspaceNavSidebarService);
 
     /** The active source the catalog entries browse; null without one. */
     readonly context = input<WorkspacePortalContext | null>(null);
@@ -79,6 +88,11 @@ export class WorkspaceShellSidebarComponent {
             inputElement.select();
         }
         return document.activeElement === inputElement;
+    }
+
+    /** Back on the hide control once the sidebar shows again. */
+    focusHideButton(): void {
+        this.hideButton()?.nativeElement.focus();
     }
 
     containsSearchInput(target: EventTarget | null): boolean {

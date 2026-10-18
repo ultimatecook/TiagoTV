@@ -4,6 +4,7 @@
         !!nowPlaying.session() ||
         (facade.showExternalPlaybackBar() && !!facade.externalPlaybackSession())
     "
+    [class.nav-hidden]="navSidebar.collapsed()"
     appPlaylistDropZone
     #dropZone="playlistDropZone"
     [appTrafficLightsClearance]="facade.isMacOS"
@@ -21,14 +22,20 @@
          true at phone width (the toggle is CSS-hidden above it and the
          service closes on viewport growth), so desktop is never inerted. -->
     <!-- The glass window: sidebar, header and content float over the
-         ambient room backdrop the dark host paints. -->
+         ambient room backdrop the dark host paints. The full-window player
+         covers it, modal: nothing behind is reachable. -->
     <div
         class="workspace-window"
         [class.workspace-window--dashboard]="facade.isDashboardRoute()"
+        [attr.inert]="nowPlaying.expanded() ? '' : null"
     >
+        <!-- Hidden (⌃⌘S), the sidebar's column folds to nothing and it
+             leaves the focus order and accessibility tree. -->
         <app-workspace-shell-sidebar
             #workspaceSidebar
-            [attr.inert]="contextDrawer.isOpen() ? '' : null"
+            [attr.inert]="
+                contextDrawer.isOpen() || navSidebar.collapsed() ? '' : null
+            "
             [context]="facade.railContext()"
             [searchQuery]="facade.searchQuery()"
             [canUseSearch]="facade.canUseSearch()"
@@ -76,6 +83,29 @@
                 facade.openAccountInfoFor($event)
             "
         />
+
+        <!-- With the sidebar hidden, the way back sits at the header's
+             leading edge (after the macOS traffic lights). -->
+        @if (navSidebar.collapsed()) {
+            <button
+                #navSidebarShow
+                type="button"
+                class="nav-sidebar-show"
+                mat-icon-button
+                data-test-id="nav-sidebar-show"
+                [matTooltip]="
+                    ('WORKSPACE.SIDEBAR.SHOW' | translate) +
+                    ' (' +
+                    navSidebar.shortcutLabel +
+                    ')'
+                "
+                [attr.aria-label]="'WORKSPACE.SIDEBAR.SHOW' | translate"
+                [attr.aria-keyshortcuts]="navSidebar.ariaShortcut"
+                (click)="navSidebar.show()"
+            >
+                <mat-icon>menu</mat-icon>
+            </button>
+        }
 
         <!-- The content frame slides to make room for the context panel
          instead of jumping (see LayoutSlideDirective). -->

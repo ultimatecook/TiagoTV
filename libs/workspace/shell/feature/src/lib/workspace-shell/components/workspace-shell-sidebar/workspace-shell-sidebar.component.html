@@ -1,20 +1,41 @@
 <aside class="sidebar">
-    <a
-        class="sidebar__brand"
-        routerLink="/workspace/dashboard"
-        [attr.aria-label]="'WORKSPACE.SIDEBAR.HOME' | translate"
-        data-test-id="sidebar-brand"
-    >
-        <span class="sidebar__greeting">{{
-            'WORKSPACE.SIDEBAR.GREETING' | translate
-        }}</span>
-        <img
-            class="sidebar__monogram"
-            src="./assets/brand/logo-7.png"
-            alt=""
-            draggable="false"
-        />
-    </a>
+    <div class="sidebar__top">
+        <a
+            class="sidebar__brand"
+            routerLink="/workspace/dashboard"
+            [attr.aria-label]="'WORKSPACE.SIDEBAR.HOME' | translate"
+            data-test-id="sidebar-brand"
+        >
+            <span class="sidebar__greeting">{{
+                'WORKSPACE.SIDEBAR.GREETING' | translate
+            }}</span>
+            <img
+                class="sidebar__monogram"
+                src="./assets/brand/logo-7.png"
+                alt=""
+                draggable="false"
+            />
+        </a>
+        <!-- Hides the sidebar to browse with the whole window; the shell
+             shows the way back at the header's leading edge. -->
+        <button
+            #hideButton
+            type="button"
+            class="sidebar__hide"
+            data-test-id="sidebar-hide"
+            [matTooltip]="
+                ('WORKSPACE.SIDEBAR.HIDE' | translate) +
+                ' (' +
+                navSidebar.shortcutLabel +
+                ')'
+            "
+            [attr.aria-label]="'WORKSPACE.SIDEBAR.HIDE' | translate"
+            [attr.aria-keyshortcuts]="navSidebar.ariaShortcut"
+            (click)="navSidebar.hide()"
+        >
+            <mat-icon>menu_open</mat-icon>
+        </button>
+    </div>
 
     @if (!hasNoPlaylists()) {
         <label class="sidebar__search" data-test-id="sidebar-search">

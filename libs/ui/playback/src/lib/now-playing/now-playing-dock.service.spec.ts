@@ -47,4 +47,24 @@ describe('NowPlayingDockService', () => {
         dock.close();
         expect(dock.session()).toBeNull();
     });
+
+    it('opens the session full-window until collapsed or ended', () => {
+        dock.expand();
+        expect(dock.expanded()).toBe(false);
+
+        dock.handOff(HANDOFF);
+        dock.expand();
+        expect(dock.expanded()).toBe(true);
+        dock.collapse();
+        expect(dock.expanded()).toBe(false);
+
+        dock.expand();
+        dock.pagePlaybackStarted();
+        expect(dock.expanded()).toBe(false);
+
+        dock.handOff(HANDOFF);
+        dock.expand();
+        dock.handOff({ ...HANDOFF, title: 'Copper Rain' });
+        expect(dock.expanded()).toBe(false);
+    });
 });

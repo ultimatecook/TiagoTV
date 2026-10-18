@@ -1,3 +1,5 @@
+@use '../../../../../../../../ui/styles/focus-ring';
+
 :host {
     display: block;
     min-width: 0;
@@ -10,6 +12,9 @@
     gap: 26px;
     height: 100%;
     box-sizing: border-box;
+    // Its own width, so hiding folds the column over it rather than
+    // squeezing it (the shell clips it).
+    width: var(--workspace-sidebar-width, 100%);
     padding: 34px 22px 28px;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -39,12 +44,55 @@
     }
 }
 
+// The greeting, and the control that hides the sidebar in the padding
+// beside it.
+.sidebar__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2px;
+    margin-right: -14px;
+}
+
 .sidebar__brand {
     display: inline-flex;
     align-self: flex-start;
-    padding: 2px 8px;
+    min-width: 0;
+    padding: 2px 4px 2px 8px;
     border-radius: 8px;
     text-decoration: none;
+}
+
+.sidebar__hide {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--app-muted-color);
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        color 160ms ease;
+
+    mat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+    }
+
+    &:hover {
+        background: var(--app-hover-overlay);
+        color: var(--app-heading-color);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
 }
 
 // Expanded, the sidebar greets; folded, it shows only the 7.
@@ -55,6 +103,8 @@
     letter-spacing: -0.01em;
     line-height: 40px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .sidebar__monogram {
@@ -185,8 +235,16 @@
         padding: 24px 10px;
     }
 
+    // The 7, the hide control under it.
+    .sidebar__top {
+        flex-direction: column;
+        gap: 10px;
+        margin-right: 0;
+    }
+
     .sidebar__brand {
         align-self: center;
+        padding-inline: 6px;
     }
 
     .sidebar__greeting,
@@ -221,6 +279,7 @@
 // Phone: the sidebar becomes a scrolling strip of icons above the header.
 @media (max-width: 640px) {
     .sidebar {
+        width: 100%;
         flex-direction: row;
         align-items: center;
         gap: 12px;
@@ -234,6 +293,11 @@
 
     .sidebar__monogram {
         height: 28px;
+    }
+
+    // The strip stays: hiding is for wider windows.
+    .sidebar__hide {
+        display: none;
     }
 
     .sidebar__nav,

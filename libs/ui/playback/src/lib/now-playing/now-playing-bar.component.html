@@ -1,14 +1,20 @@
 @let current = session();
+@let names = heading();
+@let isExpanded = expanded();
 <section
     class="now-playing"
     [class.now-playing--live]="current.isLive"
     [class.now-playing--failed]="failed()"
+    [class.now-playing--expanded]="isExpanded"
+    [attr.role]="isExpanded ? 'dialog' : null"
+    [attr.aria-modal]="isExpanded ? 'true' : null"
     [attr.aria-label]="'NOW_PLAYING.LABEL' | translate"
     data-test-id="now-playing-bar"
 >
     <!-- The stream keeps playing here, where the artwork sits. Its player's
          own chrome and shortcuts are off: the bar owns the controls, and the
-         keyboard belongs to the page being browsed. -->
+         keyboard belongs to the page being browsed. Opened full-window, the
+         same player takes them back, so nothing reloads. -->
     <div class="now-playing__media">
         @if (current.artworkUrl) {
             <img
@@ -22,13 +28,14 @@
             #videoHost
             class="now-playing__video"
             [class.now-playing__video--visible]="showVideo()"
-            data-player-shortcuts-suspended
-            inert
+            [attr.data-player-shortcuts-suspended]="isExpanded ? null : ''"
+            [attr.inert]="isExpanded ? null : ''"
         >
             <app-web-player-view
                 [streamUrl]="current.streamUrl"
                 [playbackSessionKey]="current.sessionKey"
                 [title]="current.title"
+                [mediaTitle]="mediaTitle()"
                 [playback]="current.playback"
                 [startTime]="current.startTime"
                 [volume]="current.muted ? 0 : current.volume"
@@ -37,29 +44,76 @@
                 (playbackFailed)="onPlaybackFailed()"
             />
         </div>
-        <button
-            type="button"
-            class="now-playing__open"
-            [attr.aria-label]="
-                'NOW_PLAYING.OPEN' | translate: { title: current.title }
-            "
-            (click)="openSource()"
-        ></button>
+        @if (!isExpanded) {
+            <button
+                #expandButton
+                type="button"
+                class="now-playing__open"
+                data-test-id="now-playing-expand"
+                [matTooltip]="'NOW_PLAYING.EXPAND' | translate"
+                [attr.aria-label]="'NOW_PLAYING.EXPAND' | translate"
+                aria-haspopup="dialog"
+                (click)="expand()"
+            >
+                <mat-icon aria-hidden="true">open_in_full</mat-icon>
+            </button>
+        }
     </div>
+
+    @if (isExpanded) {
+        <div class="now-playing__top">
+            <button
+                #minimizeButton
+                type="button"
+                class="now-playing__button"
+                data-test-id="now-playing-minimize"
+                [matTooltip]="'NOW_PLAYING.MINIMIZE' | translate"
+                [attr.aria-label]="'NOW_PLAYING.MINIMIZE' | translate"
+                aria-keyshortcuts="Escape"
+                (click)="collapse()"
+            >
+                <mat-icon>close_fullscreen</mat-icon>
+            </button>
+            <button
+                type="button"
+                class="now-playing__meta"
+                [matTooltip]="
+                    'NOW_PLAYING.OPEN' | translate: { title: names.title }
+                "
+                (click)="openSource()"
+            >
+                <span class="now-playing__title">{{ names.title }}</span>
+                @if (names.subtitle) {
+                    <span class="now-playing__subtitle">{{
+                        names.subtitle
+                    }}</span>
+                }
+            </button>
+            <button
+                type="button"
+                class="now-playing__button"
+                [matTooltip]="'NOW_PLAYING.CLOSE' | translate"
+                [attr.aria-label]="'NOW_PLAYING.CLOSE' | translate"
+                (click)="close()"
+            >
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+    }
 
     <button
         type="button"
         class="now-playing__meta"
-        [matTooltip]="'NOW_PLAYING.OPEN' | translate: { title: current.title }"
+        [matTooltip]="'NOW_PLAYING.OPEN' | translate: { title: names.title }"
         (click)="openSource()"
     >
-        <span class="now-playing__title">{{ current.title }}</span>
+        <span class="now-playing__title">{{ names.title }}</span>
         @if (failed()) {
             <span class="now-playing__subtitle now-playing__subtitle--failed">{{
                 'NOW_PLAYING.FAILED' | translate
             }}</span>
-        } @else if (current.subtitle) {
-            <span class="now-playing__subtitle">{{ current.subtitle }}</span>
+        } @else if (names.subtitle) {
+            <span class="now-playing__subtitle">{{ names.subtitle }}</span>
         } @else if (current.isLive) {
             <span class="now-playing__subtitle">{{
                 'NOW_PLAYING.LIVE' | translate

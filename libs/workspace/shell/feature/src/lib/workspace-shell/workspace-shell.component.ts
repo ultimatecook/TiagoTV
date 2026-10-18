@@ -1,14 +1,19 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
+    afterNextRender,
     Component,
     effect,
     ElementRef,
     HostListener,
     inject,
+    Injector,
     untracked,
     viewChild,
     ChangeDetectionStrategy,
 } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ExternalPlaybackDockComponent } from '@iptvnator/ui/components';
@@ -35,6 +40,7 @@ import { WorkspaceShellHeaderService } from './services/workspace-shell-header.s
 import { WorkspaceShellRouteStateService } from './services/workspace-shell-route-state.service';
 import { WorkspaceShellSearchSyncService } from './services/workspace-shell-search-sync.service';
 import { WorkspaceShellSearchService } from './services/workspace-shell-search.service';
+import { WorkspaceNavSidebarService } from './services/workspace-nav-sidebar.service';
 import { WorkspaceBackGesturesService } from '../workspace-back-gestures/workspace-back-gestures.service';
 import { WorkspaceKeyboardShortcutsService } from '../workspace-keyboard-shortcuts/workspace-keyboard-shortcuts.service';
 import { WorkspaceLiveCategoriesPopoverService } from '../workspace-live-categories-popover/workspace-live-categories-popover.service';
@@ -47,6 +53,9 @@ import { LIVE_CATEGORIES_POPOVER } from '@iptvnator/portal/shared/util';
         CdkTrapFocus,
         ExternalPlaybackDockComponent,
         LayoutSlideDirective,
+        MatIcon,
+        MatIconButton,
+        MatTooltip,
         NowPlayingBarComponent,
         TranslatePipe,
         PlaylistDropOverlayComponent,
@@ -88,6 +97,9 @@ export class WorkspaceShellComponent {
     readonly contextDrawer = inject(WorkspaceShellContextDrawerService);
     /** The bottom mini-player's session, when a page handed a stream over. */
     readonly nowPlaying = inject(NowPlayingDockService);
+    /** The main navigation, hideable to browse with the whole window. */
+    readonly navSidebar = inject(WorkspaceNavSidebarService);
+    private readonly injector = inject(Injector);
     private readonly mpvOverlayVisibility = inject(
         EmbeddedMpvOverlayVisibilityService
     );
@@ -95,6 +107,12 @@ export class WorkspaceShellComponent {
         viewChild<WorkspaceShellHeaderShortcutTarget>('workspaceHeader');
     private readonly sidebar =
         viewChild<WorkspaceShellSidebarComponent>('workspaceSidebar');
+    private readonly sidebarHost = viewChild('workspaceSidebar', {
+        read: ElementRef<HTMLElement>,
+    });
+    private readonly navSidebarShow = viewChild('navSidebarShow', {
+        read: ElementRef<HTMLElement>,
+    });
     private readonly workspaceContent =
         viewChild<ElementRef<HTMLElement>>('workspaceContent');
 
@@ -123,6 +141,20 @@ export class WorkspaceShellComponent {
                 });
             }
             wasOpen = open;
+        });
+
+        // Hiding the sidebar inerts the control that hid it, and showing it
+        // removes the one that showed it: focus moves to the other control
+        // so keyboard users stay where they acted.
+        let wasCollapsed = this.navSidebar.collapsed();
+        effect(() => {
+            const collapsed = this.navSidebar.collapsed();
+            if (collapsed !== wasCollapsed) {
+                wasCollapsed = collapsed;
+                afterNextRender(() => this.moveNavSidebarFocus(collapsed), {
+                    injector: this.injector,
+                });
+            }
         });
 
         // The Embedded MPV native-view video surface is composited outside
@@ -161,8 +193,13 @@ export class WorkspaceShellComponent {
         this.contextDrawer.close();
     }
 
+    // One listener per event: Angular keeps only the last @HostListener
+    // declared for the same one.
     @HostListener('document:keydown', ['$event'])
     onDocumentKeydown(event: KeyboardEvent): void {
+        if (this.handleNavSidebarShortcut(event)) {
+            return;
+        }
         if (
             event.defaultPrevented ||
             !this.facade.isElectron ||
@@ -199,6 +236,36 @@ export class WorkspaceShellComponent {
                 header?.focusSearchInput({ select: true });
             }
         });
+    }
+
+    /** ⌃⌘S on macOS, Ctrl+Alt+S elsewhere; not while typing. */
+    private handleNavSidebarShortcut(event: KeyboardEvent): boolean {
+        if (
+            event.defaultPrevented ||
+            event.repeat ||
+            !this.navSidebar.isShortcut(event) ||
+            isEditableTarget(event.target) ||
+            this.navSidebar.isPhone() ||
+            this.contextDrawer.isOpen() ||
+            this.nowPlaying.expanded()
+        ) {
+            return false;
+        }
+        event.preventDefault();
+        this.navSidebar.toggle();
+        return true;
+    }
+
+    private moveNavSidebarFocus(collapsed: boolean): void {
+        const active = document.activeElement;
+        const lost = !active || active === document.body;
+        if (collapsed) {
+            if (lost || this.sidebarHost()?.nativeElement.contains(active)) {
+                this.navSidebarShow()?.nativeElement.focus();
+            }
+        } else if (lost) {
+            this.sidebar()?.focusHideButton();
+        }
     }
 }
 
