@@ -176,8 +176,9 @@ export default class Main {
             .then(() => deferred.trigger())
             .catch(() => undefined);
         await loadingMainWindow;
-        const { module, result } = await deferred.trigger();
-        void result.appUpdateService.checkForUpdatesOnStartup();
+        const { module } = await deferred.trigger();
+        // TiagoTV: no update check at startup. The update feed would offer
+        // IPTVnator's releases, and TiagoTV is rebuilt from its own repo.
 
         await module.finishStartupAfterFirstLoad();
 

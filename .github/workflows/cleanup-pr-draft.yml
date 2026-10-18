@@ -3,14 +3,8 @@ name: Cleanup PR Draft Release
 on:
     pull_request:
         types: [closed]
-    # The event above is the fast path, not a guarantee: GitHub does not run a
-    # `pull_request: closed` workflow when the head ref is already gone at
-    # event time, which is exactly what Dependabot does when it supersedes one
-    # of its own PRs (closes it and deletes the branch in a single operation).
-    # Those drafts — and any the event path missed for other reasons — are
-    # collected by the scheduled sweep below.
-    schedule:
-        - cron: '17 4 * * *'
+    # TiagoTV: the upstream daily sweep (schedule) is off; dispatch it by
+    # hand to collect drafts the closed-PR event missed.
     workflow_dispatch:
 
 # contents: write — delete the draft release. The `actions: write` needed to

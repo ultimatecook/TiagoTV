@@ -832,9 +832,7 @@
 }
 
 .hero__eyebrow {
-    gap: 8px;
     font-size: 13px;
-    font-weight: 600;
     letter-spacing: 0.28em;
     color: var(--hero-heading);
 }
@@ -940,13 +938,9 @@
 
     .hero__content {
         align-self: end;
-        margin-right: var(--hero-inset);
     }
 
-    .hero__content::before {
-        inset: 24px calc(-1 * var(--hero-inset)) 0;
-    }
-
+    // The card's own controls rule above moved them back to the bottom.
     .hero__controls {
         top: 16px;
         bottom: auto;

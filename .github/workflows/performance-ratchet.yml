@@ -8,8 +8,6 @@ name: Performance ratchet
 # and reports but never opens a pull request.
 
 on:
-    schedule:
-        - cron: '41 4 * * 1'
     workflow_dispatch:
 
 permissions:

@@ -16,18 +16,18 @@ _Home / Library_, tarjeta destacada "Continue Watching", filas de pósters
 
 ## Navegación
 
-| Sidebar               | Qué abre                                                                |
-| --------------------- | ----------------------------------------------------------------------- |
-| Home                  | Inicio: "Continue Watching" (hero + tarjetas) y "New & Popular"         |
-| New & Popular         | El catálogo de la fuente activa ordenado por valoración                 |
-| TV Shows              | Series de la fuente activa                                              |
-| Movies                | Películas de la fuente activa                                           |
-| My List               | Favoritos de todas las fuentes                                          |
-| Browse by Languages   | TV en vivo por categorías (los proveedores agrupan por país / idioma)   |
-| Recently Added        | Lo último que agregó el proveedor (Xtream)                              |
-| Watch Later           | Historial para retomar lo que dejaste a medias                          |
-| Downloads             | Descargas offline (app de escritorio)                                   |
-| My Account            | Tus fuentes / cuentas IPTV (agregar, editar, vencimientos)              |
+| Sidebar             | Qué abre                                                              |
+| ------------------- | --------------------------------------------------------------------- |
+| Home                | Inicio: "Continue Watching" (hero + tarjetas) y "New & Popular"       |
+| New & Popular       | El catálogo de la fuente activa ordenado por valoración               |
+| TV Shows            | Series de la fuente activa                                            |
+| Movies              | Películas de la fuente activa                                         |
+| My List             | Favoritos de todas las fuentes                                        |
+| Browse by Languages | TV en vivo por categorías (los proveedores agrupan por país / idioma) |
+| Recently Added      | Lo último que agregó el proveedor (Xtream)                            |
+| Watch Later         | Historial para retomar lo que dejaste a medias                        |
+| Downloads           | Descargas offline (app de escritorio)                                 |
+| My Account          | Tus fuentes / cuentas IPTV (agregar, editar, vencimientos)            |
 
 El avatar arriba a la derecha cambia la fuente activa (⌘/Ctrl + P).
 
@@ -55,6 +55,27 @@ reproductor integrado; MKV o HEVC/AC3 conviene abrirlos con MPV o VLC
 (Settings → Playback). La guía EPG desde una IP local requiere arrancar la
 app con `IPTVNATOR_ALLOW_PRIVATE_NETWORK_URLS=1`.
 
+## Instalar en Mac
+
+1. Entrá a **Releases** del repo y descargá `tiagotv-…-mac-arm64.dmg`
+   (Mac con chip Apple).
+2. Abrí el `.dmg` y arrastrá **TiagoTV** a **Aplicaciones**.
+3. La app no está firmada por Apple, así que la primera vez macOS la
+   bloquea. Abrí la **Terminal** y pegá:
+
+    ```bash
+    xattr -dr com.apple.quarantine /Applications/TiagoTV.app
+    ```
+
+    Después abrila normalmente. (Alternativa: intentá abrirla, y en
+    **Configuración del Sistema → Privacidad y seguridad** tocá
+    **Abrir de todos modos**.)
+
+**Nueva versión:** en GitHub, **Actions → TiagoTV installer (macOS) → Run
+workflow**. En unos 20–30 minutos aparece un release nuevo con el `.dmg`;
+reemplazá la app en Aplicaciones (tus fuentes y favoritos se conservan) y
+repetí el paso 3.
+
 ## Desarrollo
 
 Requiere Node 22.22+ y pnpm 10 (`corepack enable`).
@@ -75,13 +96,16 @@ node --import tsx apps/xtream-mock-server/src/main.ts   # http://localhost:3211
 y en la app: _Add playlist → Xtream_ con servidor `http://localhost:3211`,
 usuario `marketing`, contraseña `marketing`.
 
-## Compilar la app
+## Compilar la app en tu compu
 
 ```bash
-pnpm run make:app          # instaladores en dist/executables
+pnpm run build:backend
+pnpm run make:app -- --publishPolicy=never   # instaladores en dist/executables
 ```
 
 La firma y notarización de macOS están desactivadas para builds personales.
+TiagoTV no busca actualizaciones de IPTVnator: se actualiza volviendo a
+compilar desde este repo.
 
 ## Marca
 

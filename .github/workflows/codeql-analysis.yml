@@ -12,8 +12,6 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [master]
-  schedule:
-    - cron: '0 20 * * 3'
 
 # A newer push to a pull request cancels that PR's still-running analysis:
 # only the latest commit's result matters, and superseded runs otherwise hold
