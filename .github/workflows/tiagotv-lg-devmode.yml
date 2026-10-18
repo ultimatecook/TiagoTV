@@ -1,0 +1,56 @@
+name: LG Developer Mode renewal
+
+# Keeps the LG TV's Developer Mode session alive, so the TiagoTV app
+# installed with it is not removed when the session runs out. LG takes the
+# renewal while the TV is off; the TV checks its session when it starts.
+#
+# Needs the LG_DEVMODE_TOKEN secret, the session token read from the TV
+# (README → "Instalar en la tele LG"). Without it the run only warns.
+
+on:
+    schedule:
+        # Every 8 hours, well inside the session, so a delayed or skipped
+        # scheduled run does not matter.
+        - cron: '17 */8 * * *'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: tiagotv-lg-devmode
+    cancel-in-progress: false
+
+jobs:
+    renew:
+        name: Renew the Developer Mode session
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: Check the session token
+              id: token
+              env:
+                  TOKEN: ${{ secrets.LG_DEVMODE_TOKEN }}
+              run: |
+                  if [ -z "${TOKEN}" ]; then
+                      echo "::warning::LG_DEVMODE_TOKEN is not set, so the Developer Mode session is not renewed (README → Instalar en la tele LG)."
+                      echo "ready=false" >> "${GITHUB_OUTPUT}"
+                  else
+                      echo "ready=true" >> "${GITHUB_OUTPUT}"
+                  fi
+
+            - name: Checkout code
+              if: steps.token.outputs.ready == 'true'
+              uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              if: steps.token.outputs.ready == 'true'
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: '.nvmrc'
+
+            - name: Renew
+              if: steps.token.outputs.ready == 'true'
+              env:
+                  LG_DEVMODE_TOKEN: ${{ secrets.LG_DEVMODE_TOKEN }}
+              run: node tools/tiagotv/webos.mjs renew

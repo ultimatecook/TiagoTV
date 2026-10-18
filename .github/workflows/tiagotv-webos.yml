@@ -1,0 +1,62 @@
+name: TiagoTV app (LG webOS)
+
+# Builds the LG TV app (.ipk) on demand (Actions → "TiagoTV app (LG
+# webOS)" → Run workflow) for the TiagoTV server address entered there,
+# and publishes it as a GitHub release of this repository. The app opens
+# that server, which serves the interface: see README → "Instalar en la
+# tele LG" and tools/tiagotv/webos.mjs.
+
+on:
+    workflow_dispatch:
+        inputs:
+            server:
+                description: 'Dirección del servidor TiagoTV (por ejemplo http://192.168.1.50:4333)'
+                required: true
+                type: string
+
+permissions:
+    contents: write
+
+jobs:
+    ipk:
+        name: Package the LG app
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: '.nvmrc'
+
+            - name: Test the packaging script
+              run: node --test tools/tiagotv/webos.test.mjs
+
+            - name: Package the .ipk
+              env:
+                  SERVER: ${{ inputs.server }}
+              run: node tools/tiagotv/webos.mjs package "${SERVER}" dist/webos
+
+            - name: Upload the app
+              uses: actions/upload-artifact@v7
+              with:
+                  name: TiagoTV-webos
+                  path: dist/webos/*.ipk
+                  if-no-files-found: error
+                  retention-days: 30
+
+            - name: Publish a release
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  SERVER: ${{ inputs.server }}
+              run: |
+                  set -euo pipefail
+                  VERSION="$(node -p "require('./package.json').version")"
+                  gh release create "tiagotv-webos-v${VERSION}-build.${GITHUB_RUN_NUMBER}" dist/webos/*.ipk \
+                      --target "${GITHUB_SHA}" \
+                      --title "TiagoTV para LG ${VERSION} (build ${GITHUB_RUN_NUMBER})" \
+                      --notes "App para teles LG (webOS) que abre el servidor ${SERVER}. Instalala con README → Instalar en la tele LG." \
+                      --prerelease

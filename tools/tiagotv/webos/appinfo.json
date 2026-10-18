@@ -1,0 +1,11 @@
+{
+    "id": "com.tiagotv.app",
+    "version": "0.0.0",
+    "vendor": "TiagoTV",
+    "type": "web",
+    "main": "index.html",
+    "title": "TiagoTV",
+    "icon": "icon.png",
+    "largeIcon": "largeIcon.png",
+    "requiredACG": []
+}

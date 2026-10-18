@@ -77,6 +77,85 @@ reemplazá la app en Aplicaciones (tus fuentes y favoritos se conservan) y
 repetí el paso 3. Solo hace falta cuando cambia el motor de la app; la
 interfaz se actualiza sola (abajo).
 
+## Instalar en la tele LG
+
+TiagoTV aparece en el menú de la LG con su ícono. Al abrirla se conecta con
+tu **servidor TiagoTV** (la versión web, en Docker) y muestra la interfaz que
+sirve ese servidor; si no responde, avisa y reintenta sola. Se instala con el
+**Developer Mode** de LG, y un workflow lo renueva solo para que la app no se
+borre.
+
+### 1. El servidor
+
+En una compu que quede prendida (la Mac sirve), con
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) y desde la
+carpeta del repo:
+
+```bash
+docker compose -f docker/docker-compose.yml up --build -d
+```
+
+El `--build` hace falta: sin él Docker baja la imagen de IPTVnator original.
+Probalo desde un navegador en `http://IP-DE-LA-COMPU:4333` (en la Mac la IP
+sale con `ipconfig getifaddr en0`). La app de la tele lleva esa dirección
+grabada, así que reservale una IP fija en el router. La versión web no tiene
+guía EPG ni MPV; los detalles están en [docker/README.md](docker/README.md).
+
+### 2. Developer Mode en la tele
+
+1. Creá una cuenta gratis en [LG Developer](https://webostv.developer.lge.com/).
+2. En la tele, instalá **Developer Mode** desde la LG Content Store, abrila e
+   iniciá sesión con esa cuenta.
+3. Activá **Dev Mode Status** (la tele se reinicia), volvé a abrir la app y
+   activá **Key Server**. Anotá la IP y la passphrase que muestra.
+
+### 3. Conectar la Mac con la tele
+
+Con Node instalado (`brew install node`):
+
+```bash
+npm install -g @webos-tools/cli@3.2.6
+ares-setup-device -a tv -i "{'username':'prisoner','host':'IP-DE-LA-TELE','port':'9922'}"
+ares-novacom -d tv --getkey    # pide la passphrase de la app Developer Mode
+```
+
+### 4. Instalar TiagoTV
+
+En GitHub, **Actions → TiagoTV app (LG webOS) → Run workflow**, con la
+dirección del servidor (por ejemplo `http://192.168.1.50:4333`). Bajá el
+`.ipk` del release nuevo e instalalo:
+
+```bash
+ares-install -d tv ~/Downloads/com.tiagotv.app_0.25.0_all.ipk
+```
+
+También podés armarlo desde el repo con
+`node tools/tiagotv/webos.mjs package http://192.168.1.50:4333` (queda en
+`dist/webos`). Si cambia la dirección del servidor, repetí este paso: la app
+nueva reemplaza a la anterior.
+
+### 5. Que no caduque
+
+La sesión del Developer Mode vence, y cuando vence la tele borra las apps
+instaladas con él. El workflow **LG Developer Mode renewal** la renueva cada
+8 horas, aunque la tele esté apagada. Una sola vez:
+
+1. Leé el token de la sesión:
+
+    ```bash
+    ares-novacom -d tv --run "cat /var/luna/preferences/devmode_enabled"
+    ```
+
+2. En el repo `TiagoTV`, **Settings → Secrets and variables → Actions → New
+   repository secret**: nombre `LG_DEVMODE_TOKEN`, valor el token.
+3. **Actions → LG Developer Mode renewal → Run workflow** para probarlo;
+   desde ahí corre solo.
+
+Si un día falla (GitHub te avisa por mail), el token cambió, por ejemplo
+porque apagaste el Developer Mode o volviste a iniciar sesión: repetí los
+pasos 1 y 2. En un repo público, GitHub pausa los workflows programados
+después de 60 días sin commits; si pasa, reactivalo desde **Actions**.
+
 ## Actualizaciones automáticas
 
 Cada push a `main` que toca la interfaz la publica en el repo público
