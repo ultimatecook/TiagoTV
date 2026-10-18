@@ -22,13 +22,14 @@ jobs:
     macos-arm64:
         name: macOS (Apple Silicon)
         runs-on: macos-latest
-        timeout-minutes: 90
+        timeout-minutes: 120
         env:
             IPTVNATOR_EMBEDDED_MPV_PLATFORM: darwin
             IPTVNATOR_EMBEDDED_MPV_ARCH: arm64
-            # Embedded MPV needs a vendored libmpv build; the app falls back
-            # to the built-in players and external MPV/VLC without it.
-            IPTVNATOR_REQUIRE_EMBEDDED_MPV: '0'
+            # Embedded MPV plays what Chromium cannot, such as the AC-3,
+            # E-AC-3 and DTS audio of most MKV movies (silent otherwise).
+            IPTVNATOR_REQUIRE_EMBEDDED_MPV: '1'
+            MACOSX_DEPLOYMENT_TARGET: '11.0'
         steps:
             - name: Checkout code
               uses: actions/checkout@v7
@@ -45,8 +46,40 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
+            # libmpv and its FFmpeg build from pinned sources (LGPL, see
+            # tools/embedded-mpv/README.md) in about half an hour, so the
+            # staged runtime is cached until those build scripts change.
+            - name: Restore the embedded MPV runtime
+              id: mpv-runtime
+              uses: actions/cache@v6
+              with:
+                  path: |
+                      vendor/embedded-mpv/darwin-arm64/include
+                      vendor/embedded-mpv/darwin-arm64/lib
+                      vendor/embedded-mpv/darwin-arm64/runtime-manifest.json
+                  key: embedded-mpv-darwin-arm64-macos11-${{ hashFiles('tools/embedded-mpv/build-macos-runtime.mjs', 'tools/embedded-mpv/download-pinned-source.mjs', 'tools/embedded-mpv/stage-macos-runtime.mjs', 'tools/embedded-mpv/stage-runtime.mjs') }}
+
+            - name: Build the embedded MPV runtime
+              if: steps.mpv-runtime.outputs.cache-hit != 'true'
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  brew install meson ninja pkg-config nasm autoconf automake libtool xz
+                  PREFIX="${RUNNER_TEMP}/embedded-mpv-runtime/arm64/prefix"
+                  pnpm embedded-mpv:build-runtime -- arm64 "${PREFIX}"
+                  pnpm embedded-mpv:stage-runtime -- darwin arm64 "${PREFIX}"
+
             - name: Build
               run: pnpm run build:backend
+
+            - name: Check the embedded MPV build
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  find dist/apps/electron-backend/native -maxdepth 2 -type f | sort
+                  test -f dist/apps/electron-backend/native/embedded_mpv.node
+                  test -f dist/apps/electron-backend/native/embedded-mpv-runtime.json
+                  test -f dist/apps/electron-backend/native/lib/libmpv.2.dylib || test -f dist/apps/electron-backend/native/lib/libmpv.dylib
 
             # The packaged interface's build number: the app takes interface
             # updates newer than it (tiagotv-ui-update.yml).
