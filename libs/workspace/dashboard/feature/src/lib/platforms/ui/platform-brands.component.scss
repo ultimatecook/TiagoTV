@@ -1,0 +1,113 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+// Disney+'s brand tiles: dark raised tiles with a faint edge that lift and
+// turn their edge white under the pointer. The marks are written in CSS,
+// each after the brand's own (no brand logos ship but Disney+'s).
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.brands {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: clamp(12px, 1.6vw, 24px);
+}
+
+.brand {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 9;
+    min-width: 0;
+    padding: 0 10%;
+    overflow: hidden;
+    border: 3px solid rgba(249, 249, 249, 0.1);
+    border-radius: 10px;
+    background: linear-gradient(180deg, #30323e 0%, #1e1f2a 100%);
+    box-shadow:
+        0 26px 30px -10px rgba(0, 0, 0, 0.69),
+        0 16px 10px -10px rgba(0, 0, 0, 0.73);
+    color: #f9f9f9;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        transform 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        border-color 250ms ease,
+        box-shadow 250ms ease;
+
+    &:hover {
+        transform: scale(1.05);
+        border-color: rgba(249, 249, 249, 0.8);
+        box-shadow:
+            0 40px 58px -16px rgba(0, 0, 0, 0.8),
+            0 30px 22px -10px rgba(0, 0, 0, 0.72);
+    }
+
+    // The keyboard lifts the tile too, with the app's ring.
+    &:focus-visible {
+        transform: scale(1.05);
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+.brand__disney {
+    width: 74%;
+    max-height: 70%;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    -webkit-user-drag: none;
+}
+
+.brand__pixar {
+    font-size: clamp(20px, 2.4vw, 34px);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.brand__marvel {
+    padding: 0.08em 0.16em 0;
+    background: #ec1d24;
+    font-family: var(--app-display-font);
+    font-size: clamp(26px, 3vw, 44px);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+}
+
+.brand__star-wars {
+    color: transparent;
+    font-size: clamp(15px, 1.7vw, 24px);
+    font-weight: 700;
+    line-height: 0.92;
+    letter-spacing: 0.08em;
+    text-align: center;
+    text-transform: uppercase;
+    -webkit-text-stroke: 1.4px #f9f9f9;
+}
+
+.brand__natgeo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: clamp(8px, 0.82vw, 12px);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.brand__frame {
+    flex: none;
+    width: 1.5em;
+    height: 2.2em;
+    border: 0.32em solid #ffce00;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .brand {
+        transition: none;
+    }
+}

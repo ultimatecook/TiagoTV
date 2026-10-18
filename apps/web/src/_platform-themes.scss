@@ -3,9 +3,12 @@
 // own title page: Netflix's black with the huge title and 4px buttons, Prime
 // Video's navy with the artwork on the right and the round blue play button,
 // HBO Max's black and indigo with white pills, Apple TV's black with the
-// system font and the white pill. `PlatformThemeService` (dashboard feature)
-// sets `data-platform-theme="<platform id>"` on <html> on the platform's page
-// and on its titles' pages; other platforms keep the app's own look.
+// system font and the white pill, and the newer seven (Disney+, Paramount+,
+// Hulu, Movistar Plus+, atresplayer, mitele, Crave) after one shared recipe.
+// `PlatformThemeService` (dashboard feature) sets
+// `data-platform-theme="<platform id>"` on <html> on the platform's page and
+// on its titles' pages. The last part of this file draws the platform pages
+// of those newer seven (see "Platform pages").
 //
 // The shared detail pieces (libs/ui/components: portal-detail-shell,
 // content-hero, detail-ui, season-container) read the app's `--app-*` tokens,
@@ -745,6 +748,579 @@ $primary: '.play-btn:not(.play-btn--secondary):not(.play-btn--launching):not(.pl
     }
 }
 
+// ─── The newer seven: shared recipe ─────────────────────────────────────────
+// Disney+, Paramount+, Hulu, Movistar Plus+, atresplayer, mitele and Crave
+// share one recipe, each with its own palette, face, buttons and tabs.
+
+$avenir-font: 'Avenir Next', Avenir, 'DM Sans', sans-serif;
+$clean-font: 'Helvetica Neue', 'DM Sans', Helvetica, sans-serif;
+
+// The app tokens for a dark platform page; `$cta-*` colour the primary
+// button (white with black type unless the platform's is its colour).
+@mixin page-tokens(
+    $bg,
+    $heading,
+    $body,
+    $muted,
+    $accent,
+    $widget,
+    $line,
+    $cta-bg: #fff,
+    $cta-fg: #000,
+    $cta-hover: rgba(255, 255, 255, 0.82),
+    $cta-meta: rgba(0, 0, 0, 0.6)
+) {
+    --app-content-bg: #{$bg};
+    --app-heading-color: #{$heading};
+    --app-body-color: #{$body};
+    --app-muted-color: #{$muted};
+    --app-eyebrow-color: #{$body};
+    --app-on-surface: #{$heading};
+    --app-cta-bg: #{$cta-bg};
+    --app-cta-fg: #{$cta-fg};
+    --app-cta-hover-bg: #{$cta-hover};
+    --app-cta-meta-fg: #{$cta-meta};
+    --app-rating-color: #{$heading};
+    --app-progress-color: #{$accent};
+    --app-widget-bg: #{$widget};
+    --app-card-hover-bg: rgba(255, 255, 255, 0.08);
+    --app-selection-surface: #{color-mix(in srgb, $accent 24%, transparent)};
+    --app-selection-color: #{$heading};
+    --app-line-strong: #{$line};
+}
+
+// The page's own light below the hero: a glow anchored to the foot of the
+// whole page (it scrolls with it), over the page colour the hero fades to.
+// It ends well below a short page's hero, which is opaque, so no seam.
+@mixin page-glow($glow, $at: 50% 100%) {
+    background:
+        radial-gradient(110% 36% at $at, $glow 0%, transparent 70%) local,
+        var(--surface-bg);
+}
+
+// The text column's shade and the fade into the page.
+@mixin title-scrim($side: 92%, $mid: 55%) {
+    .hero__vignette {
+        background:
+            linear-gradient(
+                90deg,
+                color-mix(in srgb, var(--surface-bg) $side, transparent) 0%,
+                color-mix(in srgb, var(--surface-bg) $mid, transparent) 38%,
+                transparent 68%
+            ),
+            linear-gradient(
+                180deg,
+                transparent 45%,
+                color-mix(in srgb, var(--surface-bg) 72%, transparent) 76%,
+                var(--surface-bg) 100%
+            );
+    }
+}
+
+// The platform's logo before "SERIES" / "MOVIE", white unless `$white` is
+// false (Hulu's green).
+@mixin kind-logo($logo, $width, $height, $white: true) {
+    .details__kind {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        &::before {
+            content: '';
+            flex: none;
+            width: $width;
+            height: $height;
+            background: url($logo) left center / contain no-repeat;
+            @if $white {
+                filter: brightness(0) invert(1);
+            }
+        }
+    }
+}
+
+@mixin title-face($size, $family: inherit, $spacing: -0.02em) {
+    .details__title {
+        font-family: $family;
+        font-size: $size;
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: $spacing;
+    }
+}
+
+// The play and secondary buttons' shape; `$caps` writes their labels in
+// spaced capitals (Disney+'s "REPRODUCIR", Hulu's "PLAY").
+@mixin action-shape($radius, $height: 48px, $caps: false) {
+    .play-btn,
+    .play-btn--secondary {
+        height: $height;
+        border-radius: $radius;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    #{$primary} {
+        padding: 0 26px 0 18px;
+    }
+
+    @if $caps {
+        .play-btn__label {
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+    }
+}
+
+@mixin secondary-button($bg, $border: 0, $hover: rgba(255, 255, 255, 0.24)) {
+    .play-btn--secondary {
+        border: $border;
+        background: $bg;
+        color: #fff;
+    }
+
+    .play-btn--secondary:hover:not(:disabled) {
+        background: $hover;
+    }
+}
+
+// The season tabs as a row of words underlined in the platform's colour.
+@mixin underlined-tabs($accent, $idle, $caps: false) {
+    .season-tabs__track {
+        gap: 20px;
+        padding: 0;
+        border: 0;
+        background: none;
+    }
+
+    .season-tabs__pill {
+        height: 34px;
+        padding: 0 2px;
+        border-radius: 0;
+        background: none;
+        color: $idle;
+        font-size: 15px;
+        font-weight: 600;
+
+        @if $caps {
+            font-size: 13px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        &:hover {
+            background: none;
+            color: #fff;
+        }
+    }
+
+    .season-tabs__pill--active,
+    .season-tabs__pill--active:hover {
+        box-shadow: inset 0 -3px 0 $accent;
+        background: none;
+        color: #fff;
+    }
+}
+
+// The season tabs as pills, the chosen one in the platform's colour.
+@mixin pill-tabs($track, $active, $active-fg: #fff, $idle: #fff) {
+    .season-tabs__track {
+        border: 0;
+        border-radius: 999px;
+        background: $track;
+    }
+
+    .season-tabs__pill {
+        border-radius: 999px;
+        color: $idle;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .season-tabs__pill--active,
+    .season-tabs__pill--active:hover {
+        background: $active;
+        color: $active-fg;
+    }
+}
+
+// Episode stills and the similar titles' posters.
+@mixin artwork-corners($radius) {
+    .episode-item__thumb {
+        border: 0;
+        border-radius: $radius;
+    }
+
+    .episode-item__title {
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .similar-card__poster {
+        border-radius: $radius;
+    }
+
+    .section-header__title {
+        font-size: 22px;
+        font-weight: 700;
+    }
+}
+
+// ─── Disney+ ────────────────────────────────────────────────────────────────
+// #1A1D29 deepening to #040714 with a blue glow, the geometric face, the
+// white "REPRODUCIR" in spaced capitals with 4px corners, the dark
+// outlined "TRÁILER", round outlined icons and capital underlined tabs.
+@include title-page('disney-plus') {
+    @include page-tokens(
+        #1a1d29,
+        #f9f9f9,
+        #cacaca,
+        #8f93a3,
+        #0072d2,
+        #31343e,
+        #3d4150,
+        #f9f9f9,
+        #040714,
+        #c6c6c6,
+        rgba(4, 7, 20, 0.6)
+    );
+    @include page-glow(rgba(0, 99, 229, 0.3));
+    font-family: $avenir-font;
+
+    @include plain-facts(#cacaca);
+    @include title-scrim(94%, 62%);
+    @include kind-logo('./assets/platforms/disney-plus.svg', 64px, 34px);
+    @include title-face(clamp(36px, 4vw, 60px), $avenir-font, -0.01em);
+    @include action-shape(4px, 52px, $caps: true);
+    @include secondary-button(
+        rgba(0, 0, 0, 0.3),
+        1px solid #f9f9f9,
+        rgba(249, 249, 249, 0.2)
+    );
+    @include round-icon-buttons(48px, rgba(0, 0, 0, 0.6), 2px solid #f9f9f9);
+    @include underlined-tabs(#f9f9f9, #a8a9ad, $caps: true);
+    @include artwork-corners(8px);
+
+    .details__kind {
+        letter-spacing: 0.16em;
+    }
+
+    .details__description {
+        color: #f9f9f9;
+    }
+
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        background: #f9f9f9;
+        color: #040714;
+    }
+
+    .episode-item__thumb {
+        box-shadow:
+            0 0 0 3px rgba(249, 249, 249, 0.1),
+            0 16px 22px -12px rgba(0, 0, 0, 0.8);
+    }
+}
+
+// ─── Paramount+ ─────────────────────────────────────────────────────────────
+// Near-black navy lit Paramount blue (#0064FF) from below, the bright blue
+// pill, round outlined icons and blue-underlined tabs.
+@include title-page('paramount-plus') {
+    @include page-tokens(
+        #070b18,
+        #fff,
+        #b5bfd9,
+        #7b86a6,
+        #0064ff,
+        #121a33,
+        #232d4d,
+        #0064ff,
+        #fff,
+        #2d7fff,
+        rgba(255, 255, 255, 0.78)
+    );
+    @include page-glow(rgba(0, 100, 255, 0.34));
+
+    @include plain-facts(#b5bfd9);
+    @include title-scrim(94%, 58%);
+    @include kind-logo('./assets/platforms/paramount-plus.svg', 70px, 38px);
+    @include title-face(clamp(36px, 4.2vw, 62px));
+    @include action-shape(999px);
+    @include secondary-button(rgba(255, 255, 255, 0.14));
+    @include round-icon-buttons(
+        48px,
+        rgba(7, 11, 24, 0.4),
+        2px solid rgba(255, 255, 255, 0.6)
+    );
+    @include underlined-tabs(#0064ff, #b5bfd9);
+    @include artwork-corners(6px);
+
+    // The blue rising from the artwork's lower left, Paramount's mountain,
+    // under the fade into the page.
+    .hero__vignette {
+        background:
+            linear-gradient(
+                180deg,
+                transparent 45%,
+                color-mix(in srgb, var(--surface-bg) 72%, transparent) 76%,
+                var(--surface-bg) 100%
+            ),
+            radial-gradient(
+                70% 80% at 0% 78%,
+                rgba(0, 100, 255, 0.42) 0%,
+                transparent 70%
+            ),
+            linear-gradient(
+                90deg,
+                color-mix(in srgb, var(--surface-bg) 92%, transparent) 0%,
+                color-mix(in srgb, var(--surface-bg) 55%, transparent) 38%,
+                transparent 68%
+            );
+    }
+
+    #{$primary} {
+        box-shadow: 0 10px 26px -10px rgba(0, 100, 255, 0.9);
+    }
+
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        border-color: #fff;
+        background: rgba(0, 100, 255, 0.35);
+    }
+
+    app-meta-chip.meta-chip--status {
+        padding: 1px 10px;
+        border-radius: 999px;
+        background: #0064ff;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+    }
+}
+
+// ─── Hulu ───────────────────────────────────────────────────────────────────
+// Black #0B0C0F, the green wordmark and green accents, a white "PLAY" in
+// capitals with 4px corners and minimal chrome.
+@include title-page('hulu') {
+    @include page-tokens(
+        #0b0c0f,
+        #fff,
+        #a3a6ac,
+        #6c7079,
+        #1ce783,
+        #1a1c21,
+        #272a31
+    );
+    @include page-glow(rgba(28, 231, 131, 0.1));
+
+    @include plain-facts(#a3a6ac);
+    @include title-scrim(95%, 60%);
+    @include kind-logo('./assets/platforms/hulu.svg', 54px, 18px, false);
+    @include title-face(clamp(38px, 4.4vw, 66px), inherit, -0.03em);
+    @include action-shape(4px, 48px, $caps: true);
+    @include secondary-button(rgba(255, 255, 255, 0.14));
+    @include round-icon-buttons(48px, rgba(255, 255, 255, 0.14));
+    @include underlined-tabs(#1ce783, #a3a6ac, $caps: true);
+    @include artwork-corners(6px);
+
+    .details__kind {
+        color: #1ce783;
+        letter-spacing: 0.16em;
+    }
+
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.26);
+    }
+
+    app-meta-chip.meta-chip--rating {
+        color: #1ce783;
+        font-weight: 700;
+    }
+
+    .episode-item__number {
+        color: #1ce783;
+    }
+}
+
+// ─── Movistar Plus+ ─────────────────────────────────────────────────────────
+// Dark navy with Movistar blue (#019DF4) and cyan, the M+ before the kind,
+// a white pill that turns blue under the pointer, blue pill tabs.
+@include title-page('movistar-plus') {
+    @include page-tokens(
+        #06142a,
+        #fff,
+        #a9c1dc,
+        #6d86a3,
+        #019df4,
+        #0f2240,
+        #1d3456,
+        #fff,
+        #06142a,
+        #019df4,
+        rgba(6, 20, 42, 0.65)
+    );
+    @include page-glow(rgba(1, 157, 244, 0.26));
+
+    @include plain-facts(#a9c1dc);
+    @include title-scrim(94%, 58%);
+    @include kind-logo('./assets/platforms/movistar-plus.png', 46px, 22px);
+    @include title-face(clamp(36px, 4.2vw, 62px));
+    @include action-shape(999px);
+    @include secondary-button(rgba(255, 255, 255, 0.12));
+    @include round-icon-buttons(
+        48px,
+        rgba(6, 20, 42, 0.4),
+        2px solid rgba(255, 255, 255, 0.6)
+    );
+    @include pill-tabs(#0f2240, #019df4, #fff, #a9c1dc);
+    @include artwork-corners(8px);
+
+    #{$primary}:hover:not(:disabled) {
+        color: #fff;
+    }
+
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        border-color: #019df4;
+        background: rgba(1, 157, 244, 0.22);
+    }
+
+    .section-header__title::before {
+        content: '+' / '';
+        margin-right: 8px;
+        color: #019df4;
+    }
+}
+
+// ─── atresplayer ────────────────────────────────────────────────────────────
+// Near-black with the orange (#FF6A00): an orange play button with 4px
+// corners, bold titles and orange-underlined tabs.
+@include title-page('atresplayer') {
+    @include page-tokens(
+        #0f0f0f,
+        #fff,
+        #b3b3b3,
+        #737373,
+        #ff6a00,
+        #1f1f1f,
+        #2e2e2e,
+        #ff6a00,
+        #fff,
+        #ff8533,
+        rgba(255, 255, 255, 0.8)
+    );
+    @include page-glow(rgba(255, 106, 0, 0.14));
+
+    @include plain-facts(#b3b3b3);
+    @include title-scrim(95%, 60%);
+    @include kind-logo('./assets/platforms/atresplayer.svg', 72px, 32px);
+    @include title-face(clamp(38px, 4.4vw, 66px), inherit, -0.025em);
+    @include action-shape(4px);
+    @include secondary-button(rgba(255, 255, 255, 0.12));
+    @include round-icon-buttons(48px, rgba(255, 255, 255, 0.12));
+    @include underlined-tabs(#ff6a00, #b3b3b3);
+    @include artwork-corners(4px);
+
+    .details__kind {
+        color: #ff6a00;
+        letter-spacing: 0.14em;
+    }
+
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        background: rgba(255, 106, 0, 0.3);
+    }
+}
+
+// ─── mitele ─────────────────────────────────────────────────────────────────
+// Dark violet lit magenta and purple (#C2187A → #6B2BFF), the gradient
+// pill, playful bold titles and round tiles.
+@include title-page('mitele') {
+    @include page-tokens(
+        #0f0a18,
+        #fff,
+        #c0b5d6,
+        #85799c,
+        #c2187a,
+        #1e1530,
+        #2f2346,
+        #c2187a,
+        #fff,
+        #d42a8c,
+        rgba(255, 255, 255, 0.78)
+    );
+    @include page-glow(rgba(107, 43, 255, 0.3), 30% 100%);
+
+    @include plain-facts(#c0b5d6);
+    @include title-scrim(94%, 58%);
+    @include kind-logo('./assets/platforms/mitele.svg', 84px, 22px, false);
+    @include title-face(clamp(38px, 4.4vw, 66px), inherit, -0.035em);
+    @include action-shape(999px);
+    @include secondary-button(rgba(255, 255, 255, 0.14));
+    @include round-icon-buttons(48px, rgba(255, 255, 255, 0.14));
+    @include pill-tabs(#1e1530, linear-gradient(90deg, #c2187a, #6b2bff));
+    @include artwork-corners(14px);
+
+    #{$primary} {
+        background: linear-gradient(90deg, #c2187a 0%, #6b2bff 100%);
+        box-shadow: 0 10px 26px -10px rgba(194, 24, 122, 0.9);
+        color: #fff;
+    }
+
+    #{$primary}:hover:not(:disabled) {
+        background: linear-gradient(90deg, #d42a8c 0%, #7d42ff 100%);
+    }
+
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        background: rgba(194, 24, 122, 0.4);
+    }
+}
+
+// ─── Crave ──────────────────────────────────────────────────────────────────
+// Black into navy with Crave's electric blue (#1F6FFF) and its glow, the
+// glowing blue pill, a clean face and blue-underlined tabs.
+@include title-page('crave') {
+    @include page-tokens(
+        #04070f,
+        #fff,
+        #aab6cf,
+        #6f7c98,
+        #1f6fff,
+        #101829,
+        #1f2a42,
+        #1f6fff,
+        #fff,
+        #4a8bff,
+        rgba(255, 255, 255, 0.78)
+    );
+    @include page-glow(rgba(31, 111, 255, 0.3), 80% 100%);
+    font-family: $clean-font;
+
+    @include plain-facts(#aab6cf);
+    @include title-scrim(94%, 58%);
+    @include kind-logo('./assets/platforms/crave.png', 66px, 14px);
+    @include title-face(clamp(36px, 4.2vw, 62px), $clean-font);
+    @include action-shape(999px);
+    @include secondary-button(rgba(255, 255, 255, 0.12));
+    @include round-icon-buttons(48px, rgba(255, 255, 255, 0.12));
+    @include underlined-tabs(#1f6fff, #aab6cf);
+    @include artwork-corners(8px);
+
+    #{$primary} {
+        box-shadow: 0 8px 30px -6px rgba(31, 111, 255, 0.85);
+    }
+
+    .icon-btn:hover:not(:disabled),
+    .more-trigger:hover:not(:disabled) {
+        background: rgba(31, 111, 255, 0.4);
+    }
+
+    .episode-item__thumb {
+        box-shadow: 0 14px 30px -14px rgba(31, 111, 255, 0.6);
+    }
+}
+
 // A narrow pane has no room beside the artwork: Prime's fills it again.
 @container detail (max-width: 760px) {
     html[data-platform-theme='prime-video']
@@ -757,11 +1333,785 @@ $primary: '.play-btn:not(.play-btn--secondary):not(.play-btn--launching):not(.pl
 // The larger 16:9 stills of the platforms' episode lists, where the pane is
 // wide enough (the shared rows shrink their own below 480px).
 @container detail (min-width: 900px) {
-    @each $platform in ('netflix', 'prime-video', 'apple-tv') {
+    @each $platform
+        in (
+            'netflix',
+            'prime-video',
+            'apple-tv',
+            'disney-plus',
+            'paramount-plus',
+            'hulu',
+            'movistar-plus',
+            'atresplayer',
+            'mitele',
+            'crave'
+        )
+    {
         html[data-platform-theme='#{$platform}']
             app-portal-detail-shell
             app-episode-item.episode-list-item:not(.episode-item--bare) {
             grid-template-columns: 40px 210px minmax(0, 1fr) 112px;
+        }
+    }
+}
+
+// ═══ Platform pages: the newer seven looks ═════════════════════════════════
+// The platform page's components (lib-platform-page, -billboard, -carousel,
+// -row, -title-card) draw Netflix, Prime Video, HBO Max and Apple TV in
+// their own stylesheets; the newer seven are drawn here, on each
+// component's `data-look`, to keep the components within their style
+// budget. A component's own rule is `.x[_ngcontent-…]` (0,2,0); every rule
+// here starts with the element and its attribute, so it wins without
+// `!important`. The tokens a component reads (`--bb-*`, `--carousel-*`,
+// `--row-*`, `--card-*`, `--page-*`) are declared on its host.
+
+@mixin look($component, $look) {
+    lib-platform-#{$component}[data-look='#{$look}'] {
+        @content;
+    }
+}
+
+// The page's ground, its side margin and the open list's tile width.
+@mixin page-ground($look, $bg, $gutter, $grid-min, $gap: 30px, $top: 8px) {
+    @include look('page', $look) {
+        --page-bg: #{$bg};
+        --page-gutter: #{$gutter};
+        --grid-min: #{$grid-min};
+
+        .page {
+            gap: $gap;
+            padding-top: $top;
+        }
+    }
+}
+
+// A billboard look: its ground, the shade over the artwork, the face and
+// the colours of the eyebrow, the meta line and the dots.
+@mixin billboard-look(
+    $look,
+    $bg,
+    $scrim,
+    $eyebrow,
+    $meta,
+    $dot,
+    $font: inherit
+) {
+    @include look('billboard', $look) {
+        --bb-bg: #{$bg};
+        --bb-font: #{$font};
+        --bb-scrim: #{$scrim};
+
+        .billboard__eyebrow {
+            color: $eyebrow;
+            letter-spacing: 0.16em;
+        }
+
+        .billboard__title {
+            font-size: clamp(40px, 4.4vw, 68px);
+            letter-spacing: -0.025em;
+        }
+
+        .billboard__meta,
+        .billboard__language {
+            color: $meta;
+        }
+
+        .billboard__dot--active::before {
+            background: $dot;
+        }
+
+        @content;
+    }
+}
+
+// The usual billboard shade: the fade into the page over everything (the
+// foot is exactly the page's colour), the platform's glow rising from the
+// lower left, then the text side's shade.
+@function billboard-scrim($bg, $glow: transparent, $glow-at: 0% 88%) {
+    @return linear-gradient(180deg, transparent 50%, $bg 100%),
+        radial-gradient(70% 80% at $glow-at, $glow 0%, transparent 70%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, transparent 16%),
+        linear-gradient(
+            90deg,
+            color-mix(in srgb, $bg 92%, transparent) 0%,
+            color-mix(in srgb, $bg 55%, transparent) 36%,
+            transparent 66%
+        );
+}
+
+// A button of the billboard or the carousel in the platform's colours.
+@mixin hero-button($bg, $fg, $hover-bg, $hover-fg: $fg, $radius: 999px) {
+    border-radius: $radius;
+    background: $bg;
+    color: $fg;
+
+    &:hover {
+        background: $hover-bg;
+        color: $hover-fg;
+    }
+}
+
+// Spaced capitals on a button's label (Disney+, Hulu).
+@mixin caps($size: 14px) {
+    font-size: $size;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+// A row look: the heading's size, weight and colours, the tiles' width
+// for each shape and the gap between them.
+@mixin row-look(
+    $look,
+    $title-color,
+    $see-all,
+    $landscape,
+    $poster: clamp(140px, 11vw, 188px),
+    $gap: 14px,
+    $weight: 700,
+    $size: clamp(17px, 1.45vw, 21px)
+) {
+    @include look('row', $look) {
+        --row-gap: #{$gap};
+        --row-lift: 16px;
+        --row-title-size: #{$size};
+        --row-title-weight: #{$weight};
+        --row-title-color: #{$title-color};
+        --row-see-all-color: #{$see-all};
+
+        @content;
+    }
+
+    lib-platform-row[data-look='#{$look}'][data-tile='landscape'] {
+        --row-tile: #{$landscape};
+        --row-arrow-bottom: 40px;
+    }
+
+    lib-platform-row[data-look='#{$look}'][data-tile='poster'] {
+        --row-tile: #{$poster};
+    }
+}
+
+// A tile look: corners, the hover's lift and edge, the name's colour and
+// the artwork's ground.
+@mixin tile-look(
+    $look,
+    $radius,
+    $hover,
+    $shadow,
+    $hover-shadow,
+    $name,
+    $ground
+) {
+    @include look('title-card', $look) {
+        --card-radius: #{$radius};
+        --card-hover: #{$hover};
+        --card-shadow: #{$shadow};
+        --card-hover-shadow: #{$hover-shadow};
+        --card-name-color: #{$name};
+
+        .card__art {
+            background: $ground;
+        }
+
+        .card__name {
+            font-size: 14px;
+            -webkit-line-clamp: 1;
+        }
+
+        @content;
+    }
+}
+
+// ─── Disney+ ────────────────────────────────────────────────────────────────
+// Navy deepening to #040714 under a blue glow; the large rounded carousel
+// with "REPRODUCIR" in white capitals; brand tiles; 16:9 tiles with the
+// faint edge that turns white as they lift.
+$disney-bg:
+    radial-gradient(
+        90% 60% at 50% 0%,
+        rgba(25, 76, 196, 0.3) 0%,
+        transparent 70%
+    ),
+    linear-gradient(180deg, #1a1d29 0%, #0e1122 50%, #040714 100%);
+
+@include page-ground(
+    'disney',
+    $disney-bg,
+    clamp(20px, 3.6vw, 56px),
+    240px,
+    34px,
+    20px
+);
+
+@include look('carousel', 'disney') {
+    --carousel-radius: 10px;
+    --carousel-bg: #0e1122;
+    --carousel-height: clamp(340px, 34vw, 500px);
+    --carousel-scrim:
+        linear-gradient(
+            90deg,
+            rgba(4, 7, 20, 0.92) 0%,
+            rgba(4, 7, 20, 0.62) 36%,
+            transparent 66%
+        ),
+        linear-gradient(180deg, transparent 55%, rgba(4, 7, 20, 0.7) 100%);
+    font-family: $avenir-font;
+
+    .carousel__frame {
+        box-shadow:
+            0 0 0 3px rgba(249, 249, 249, 0.1),
+            0 26px 30px -10px rgba(0, 0, 0, 0.69),
+            0 16px 10px -10px rgba(0, 0, 0, 0.73);
+    }
+
+    .carousel__image {
+        width: 100%;
+    }
+
+    .carousel__title {
+        font-size: clamp(32px, 3.6vw, 54px);
+        letter-spacing: -0.01em;
+    }
+
+    .carousel__meta,
+    .carousel__language {
+        border-color: #cacaca;
+        color: #cacaca;
+    }
+
+    .carousel__plot {
+        color: #f9f9f9;
+    }
+
+    .carousel__cta {
+        height: 52px;
+        padding: 0 28px 0 18px;
+        @include caps(15px);
+        @include hero-button(#f9f9f9, #040714, #c6c6c6, $radius: 4px);
+    }
+
+    .carousel__more {
+        height: 52px;
+        border-color: #f9f9f9;
+        @include caps(15px);
+    }
+
+    .carousel__more:hover {
+        background: #c6c6c6;
+        color: #040714;
+    }
+
+    .carousel__dot::before {
+        width: 6px;
+        height: 6px;
+        background: #5b5f71;
+    }
+
+    .carousel__dot--active::before {
+        background: #f9f9f9;
+    }
+}
+
+@include row-look(
+    'disney',
+    #f9f9f9,
+    #cacaca,
+    clamp(220px, 18vw, 330px),
+    $gap: 20px,
+    $weight: 600
+) {
+    font-family: $avenir-font;
+}
+
+@include tile-look(
+    'disney',
+    8px,
+    scale(1.05),
+    (0 0 0 3px rgba(249, 249, 249, 0.1), 0 26px 30px -10px rgba(0, 0, 0, 0.69)),
+    (0 0 0 3px rgba(249, 249, 249, 0.85), 0 40px 58px -16px rgba(0, 0, 0, 0.8)),
+    #cacaca,
+    linear-gradient(180deg, #30323e 0%, #1e1f2a 100%)
+) {
+    .card {
+        font-family: $avenir-font;
+    }
+
+    .card__art {
+        box-shadow: var(--card-shadow);
+        transition-duration: 250ms;
+    }
+
+    .card__name {
+        font-weight: 500;
+    }
+}
+
+// ─── Paramount+ ─────────────────────────────────────────────────────────────
+// (The billboard looks keep their ground flat for the billboard's height,
+// 680px at most, so its foot meets the page on the same colour.)
+// Near-black navy, the billboard lit Paramount blue from its lower left,
+// the bright blue pill, poster rows among the 16:9 ones, a blue glow on the
+// tile under the pointer.
+@include page-ground(
+    'paramount',
+    linear-gradient(180deg, #070b18 680px, #03050c 100%),
+    clamp(20px, 3.4vw, 52px),
+    220px
+);
+
+@include billboard-look(
+    'paramount',
+    #070b18,
+    billboard-scrim(#070b18, rgba(0, 100, 255, 0.5)),
+    #c6d4ff,
+    #b5bfd9,
+    #0064ff
+) {
+    .billboard__play {
+        box-shadow: 0 10px 28px -10px rgba(0, 100, 255, 0.95);
+        @include hero-button(#0064ff, #fff, #2d7fff);
+    }
+}
+
+@include row-look('paramount', #fff, #6ea1ff, clamp(220px, 17vw, 310px));
+
+@include tile-look(
+    'paramount',
+    6px,
+    scale(1.04),
+    0 12px 24px -16px rgba(0, 0, 0, 0.9),
+    (0 0 0 2px #fff, 0 18px 36px -12px rgba(0, 100, 255, 0.8)),
+    #c6cbd9,
+    #121a33
+);
+
+// ─── Hulu ───────────────────────────────────────────────────────────────────
+// Black #0B0C0F with green accents: the green eyebrow, a white "PLAY" in
+// capitals, "View all" at the row's far end, large 16:9 tiles with the
+// title and its kind below.
+@include page-ground('hulu', #0b0c0f, clamp(20px, 3.4vw, 52px), 280px, 32px);
+
+@include billboard-look(
+    'hulu',
+    #0b0c0f,
+    billboard-scrim(#0b0c0f),
+    #1ce783,
+    #a3a6ac,
+    #1ce783
+) {
+    .billboard__mark {
+        width: 52px;
+    }
+
+    .billboard__title {
+        letter-spacing: -0.035em;
+    }
+
+    .billboard__play,
+    .billboard__info {
+        height: 48px;
+        padding: 0 26px 0 18px;
+        @include caps;
+    }
+
+    .billboard__play {
+        @include hero-button(#fff, #000, #dedede, $radius: 4px);
+    }
+
+    .billboard__info {
+        @include hero-button(
+            rgba(255, 255, 255, 0.14),
+            #fff,
+            rgba(255, 255, 255, 0.26),
+            $radius: 4px
+        );
+    }
+}
+
+@include row-look(
+    'hulu',
+    #fff,
+    #a3a6ac,
+    clamp(260px, 22vw, 380px),
+    $gap: 16px,
+    $weight: 600
+) {
+    .row__heading {
+        display: flex;
+        width: 100%;
+    }
+
+    .row__see-all {
+        margin-left: auto;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        opacity: 1;
+        transform: none;
+    }
+
+    .row__heading:hover .row__see-all {
+        color: #1ce783;
+    }
+}
+
+@include tile-look(
+    'hulu',
+    8px,
+    scale(1.03),
+    0 0 transparent,
+    (0 0 0 2px rgba(255, 255, 255, 0.9), 0 20px 34px -18px rgba(0, 0, 0, 0.9)),
+    #fff,
+    #1a1c21
+) {
+    .card__name {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .card__sub {
+        color: #a3a6ac;
+    }
+}
+
+// ─── Movistar Plus+ ─────────────────────────────────────────────────────────
+// Dark navy with Movistar blue (#019DF4): a white pill that turns blue,
+// rows titled with the blue "+", 16:9 tiles that light blue.
+@include page-ground(
+    'movistar',
+    linear-gradient(180deg, #06142a 680px, #030914 100%),
+    clamp(20px, 3.4vw, 52px),
+    240px
+);
+
+@include billboard-look(
+    'movistar',
+    #06142a,
+    billboard-scrim(#06142a, rgba(1, 157, 244, 0.32)),
+    #a9c1dc,
+    #a9c1dc,
+    #019df4
+) {
+    .billboard__mark {
+        width: 44px;
+    }
+
+    .billboard__play {
+        @include hero-button(#fff, #06142a, #019df4, #fff);
+    }
+
+    .billboard__round:hover {
+        border-color: #019df4;
+        background: rgba(1, 157, 244, 0.25);
+    }
+}
+
+@include row-look('movistar', #fff, #019df4, clamp(230px, 18vw, 330px)) {
+    .row__title::before {
+        content: '+';
+        margin-right: 8px;
+        color: #019df4;
+        font-size: 1.25em;
+        line-height: 1;
+    }
+}
+
+@include tile-look(
+    'movistar',
+    8px,
+    scale(1.04),
+    0 12px 24px -16px rgba(0, 0, 0, 0.9),
+    (0 0 0 2px #019df4, 0 18px 34px -12px rgba(1, 157, 244, 0.6)),
+    #d6e4f2,
+    #0f2240
+);
+
+// ─── atresplayer ────────────────────────────────────────────────────────────
+// Near-black with the orange (#FF6A00): an orange "Ver ahora" with 4px
+// corners, bold row titles, 16:9 tiles with an orange bar under the one in
+// focus or under the pointer.
+@include page-ground('atres', #0f0f0f, clamp(20px, 3.4vw, 52px), 230px);
+
+@include billboard-look(
+    'atres',
+    #0f0f0f,
+    billboard-scrim(#0f0f0f),
+    #ff6a00,
+    #b3b3b3,
+    #ff6a00
+) {
+    // The stacked "ATRES player" needs the height to read.
+    .billboard__mark {
+        width: 76px;
+        height: 34px;
+    }
+
+    .billboard__title {
+        letter-spacing: -0.03em;
+    }
+
+    .billboard__play,
+    .billboard__info {
+        height: 48px;
+        padding: 0 26px 0 18px;
+    }
+
+    .billboard__play {
+        @include hero-button(#ff6a00, #fff, #ff8533, $radius: 4px);
+    }
+
+    .billboard__info {
+        @include hero-button(
+            rgba(255, 255, 255, 0.14),
+            #fff,
+            rgba(255, 255, 255, 0.26),
+            $radius: 4px
+        );
+    }
+}
+
+@include row-look('atres', #fff, #ff6a00, clamp(220px, 17vw, 310px));
+
+@include tile-look(
+    'atres',
+    4px,
+    scale(1.03),
+    0 0 transparent,
+    0 18px 30px -16px rgba(0, 0, 0, 0.9),
+    #e6e6e6,
+    #1f1f1f
+) {
+    .card__art::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
+        height: 4px;
+        background: #ff6a00;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 220ms ease;
+    }
+
+    .card:hover .card__art::after,
+    .card:focus-visible .card__art::after {
+        transform: none;
+    }
+}
+
+// ─── mitele ─────────────────────────────────────────────────────────────────
+// Dark violet lit magenta and purple: a round carousel with the gradient
+// pill, playful bold row titles after a gradient bar, round tiles with a
+// magenta edge and a purple glow.
+@include page-ground(
+    'mitele',
+    (
+        radial-gradient(
+            60% 40% at 0% 0%,
+            rgba(194, 24, 122, 0.3) 0%,
+            transparent 70%
+        ),
+        radial-gradient(
+            55% 40% at 100% 4%,
+            rgba(107, 43, 255, 0.28) 0%,
+            transparent 70%
+        ),
+        #0f0a18
+    ),
+    clamp(20px, 3.4vw, 52px),
+    230px,
+    30px,
+    20px
+);
+
+@include look('carousel', 'mitele') {
+    --carousel-radius: 18px;
+    --carousel-bg: #140d22;
+    --carousel-scrim:
+        linear-gradient(
+            90deg,
+            rgba(20, 13, 34, 0.94) 0%,
+            rgba(20, 13, 34, 0.6) 36%,
+            transparent 66%
+        ),
+        linear-gradient(180deg, transparent 55%, rgba(20, 13, 34, 0.7) 100%);
+
+    .carousel__frame {
+        box-shadow: 0 30px 60px -30px rgba(107, 43, 255, 0.75);
+    }
+
+    .carousel__image {
+        width: 100%;
+    }
+
+    .carousel__title {
+        font-size: clamp(34px, 3.8vw, 58px);
+        letter-spacing: -0.035em;
+    }
+
+    .carousel__meta,
+    .carousel__language {
+        border-color: #c0b5d6;
+        color: #c0b5d6;
+    }
+
+    .carousel__plot {
+        color: #ece6f7;
+    }
+
+    .carousel__cta {
+        box-shadow: 0 10px 26px -10px rgba(194, 24, 122, 0.9);
+        @include hero-button(
+            linear-gradient(90deg, #c2187a 0%, #6b2bff 100%),
+            #fff,
+            linear-gradient(90deg, #d42a8c 0%, #7d42ff 100%)
+        );
+    }
+
+    .carousel__more {
+        border: 0;
+        @include hero-button(
+            rgba(255, 255, 255, 0.14),
+            #fff,
+            rgba(255, 255, 255, 0.26)
+        );
+    }
+
+    .carousel__dot::before {
+        background: #3d2f57;
+    }
+
+    .carousel__dot--active::before {
+        width: 18px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #c2187a, #6b2bff);
+    }
+}
+
+@include row-look(
+    'mitele',
+    #fff,
+    #e46bb5,
+    clamp(220px, 17vw, 310px),
+    $size: clamp(18px, 1.6vw, 23px)
+) {
+    .row__title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        letter-spacing: -0.02em;
+
+        &::before {
+            content: '';
+            width: 5px;
+            height: 1.05em;
+            border-radius: 3px;
+            background: linear-gradient(180deg, #c2187a, #6b2bff);
+        }
+    }
+}
+
+@include tile-look(
+    'mitele',
+    14px,
+    translateY(-4px) scale(1.04),
+    0 14px 26px -18px rgba(0, 0, 0, 0.9),
+    (0 0 0 2px #c2187a, 0 20px 36px -12px rgba(107, 43, 255, 0.75)),
+    #e8e1f5,
+    #1e1530
+);
+
+// ─── Crave ──────────────────────────────────────────────────────────────────
+// Black into navy with Crave's electric blue (#1F6FFF): the glowing blue
+// pill, a clean face, large 16:9 cards lit blue under the pointer.
+@include page-ground(
+    'crave',
+    (
+        radial-gradient(
+            80% 50% at 85% 0%,
+            rgba(31, 111, 255, 0.22) 0%,
+            transparent 70%
+        ),
+        linear-gradient(180deg, #04070f 680px, #02040a 100%)
+    ),
+    clamp(20px, 3.4vw, 52px),
+    270px,
+    32px
+);
+
+@include billboard-look(
+    'crave',
+    #04070f,
+    billboard-scrim(#04070f, rgba(31, 111, 255, 0.45)),
+    #9db8ff,
+    #aab6cf,
+    #1f6fff,
+    $clean-font
+) {
+    .billboard__mark {
+        width: 70px;
+        height: 16px;
+    }
+
+    .billboard__play {
+        box-shadow: 0 8px 30px -6px rgba(31, 111, 255, 0.85);
+        @include hero-button(#1f6fff, #fff, #4a8bff);
+    }
+
+    .billboard__round {
+        border: 0;
+        background: rgba(255, 255, 255, 0.14);
+    }
+
+    .billboard__round:hover {
+        background: rgba(31, 111, 255, 0.45);
+    }
+}
+
+@include row-look(
+    'crave',
+    #fff,
+    #6f9dff,
+    clamp(260px, 21vw, 360px),
+    $gap: 18px,
+    $weight: 600
+) {
+    font-family: $clean-font;
+}
+
+@include tile-look(
+    'crave',
+    8px,
+    scale(1.04),
+    0 14px 28px -18px rgba(0, 0, 0, 0.9),
+    (0 0 0 2px #1f6fff, 0 14px 40px -10px rgba(31, 111, 255, 0.75)),
+    #dfe6f5,
+    #101829
+) {
+    .card {
+        font-family: $clean-font;
+    }
+}
+
+// A narrow window: the page's gutters and the open list's tiles shrink, as
+// the components do for the first four.
+@media (max-width: 760px) {
+    @each $look
+        in (
+            'disney',
+            'paramount',
+            'hulu',
+            'movistar',
+            'atres',
+            'mitele',
+            'crave'
+        )
+    {
+        lib-platform-page[data-look='#{$look}'] {
+            --page-gutter: 14px;
+            --grid-min: 200px;
         }
     }
 }

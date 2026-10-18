@@ -80,9 +80,9 @@
                     (click)="hero.open(slide.title)"
                 >
                     <mat-icon aria-hidden="true">play_arrow</mat-icon>
-                    <span>{{ 'WORKSPACE.PLATFORMS.WATCH' | translate }}</span>
+                    <span>{{ playKey() | translate }}</span>
                 </button>
-                @if (netflix) {
+                @if (textInfo()) {
                     <button
                         type="button"
                         class="billboard__info"

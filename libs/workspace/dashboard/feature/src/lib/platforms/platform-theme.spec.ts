@@ -1,4 +1,4 @@
-import { platformDesign } from './platform-design';
+import { platformDesign, rowTile } from './platform-design';
 import { platformOfRoute, readPlatformRoute } from './platform-theme';
 import { cssString } from './platform-theme.service';
 import { buildPlatformShelves } from './streaming-platforms';
@@ -105,11 +105,46 @@ describe('platform theme', () => {
         expect(platformDesign('prime-video').hero).toBe('carousel');
         expect(platformDesign('hbo-max').tiles).toBe('poster');
         expect(platformDesign('apple-tv').look).toBe('apple');
-        expect(platformDesign('hulu')).toMatchObject({
-            look: 'default',
-            hero: 'card',
-            top10: false,
+    });
+
+    it('draws the other seven platforms their own way too', () => {
+        expect(platformDesign('disney-plus')).toMatchObject({
+            look: 'disney',
+            hero: 'carousel',
+            tiles: 'landscape',
+            brands: true,
+            playKey: 'WORKSPACE.PLATFORMS.PLAY',
         });
+        expect(platformDesign('paramount-plus')).toMatchObject({
+            look: 'paramount',
+            hero: 'billboard',
+        });
+        expect(platformDesign('hulu')).toMatchObject({
+            look: 'hulu',
+            hero: 'billboard',
+            top10: false,
+            playKey: 'WORKSPACE.PLATFORMS.PLAY',
+        });
+        expect(platformDesign('movistar-plus').look).toBe('movistar');
+        expect(platformDesign('atresplayer').look).toBe('atres');
+        expect(platformDesign('mitele')).toMatchObject({
+            look: 'mitele',
+            hero: 'carousel',
+        });
+        expect(platformDesign('crave')).toMatchObject({
+            look: 'crave',
+            playKey: 'WORKSPACE.PLATFORMS.WATCH',
+        });
+    });
+
+    it("mixes Paramount+'s poster rows into its 16:9 ones", () => {
+        const paramount = platformDesign('paramount-plus');
+
+        expect(rowTile(paramount, 'newest')).toBe('landscape');
+        expect(rowTile(paramount, 'series')).toBe('poster');
+        expect(rowTile(paramount, 'genre-drama')).toBe('landscape');
+        expect(rowTile(platformDesign('hbo-max'), 'series')).toBe('poster');
+        expect(rowTile(platformDesign('netflix'), 'series')).toBe('landscape');
     });
 
     it('quotes a label for a CSS content', () => {

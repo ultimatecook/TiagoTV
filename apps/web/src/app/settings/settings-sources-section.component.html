@@ -1,0 +1,197 @@
+<section class="settings-group" id="sources">
+    <header class="settings-group__header">
+        <h2>{{ 'SETTINGS.SOURCES_TITLE' | translate }}</h2>
+        <p>{{ 'SETTINGS.SOURCES_SUBTITLE' | translate }}</p>
+    </header>
+
+    <section class="settings-section">
+        <div class="settings-section__header">
+            <h3>{{ 'SETTINGS.CARD_SOURCES' | translate }}</h3>
+        </div>
+        <div class="settings-card">
+            <div class="setting-item" data-setting-id="sources-active">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.SOURCES_ACTIVE' | translate }}</h4>
+                    <p>
+                        {{
+                            'SETTINGS.SOURCES_ACTIVE_DESCRIPTION'
+                                | translate: { shortcut: switcherShortcut }
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control sources-active">
+                    @if (active(); as source) {
+                        <app-source-tile size="md" [playlist]="source" />
+                    }
+                    <span class="sources-active__text">
+                        <span
+                            class="sources-active__name"
+                            data-test-id="settings-active-source"
+                            >{{ activeName() }}</span
+                        >
+                        @if (activeType()) {
+                            <span class="sources-active__type">{{
+                                activeType()
+                            }}</span>
+                        }
+                    </span>
+                    <button
+                        mat-stroked-button
+                        type="button"
+                        data-test-id="settings-switch-source"
+                        [disabled]="!hasShell"
+                        (click)="switchSource()"
+                    >
+                        <mat-icon>swap_horiz</mat-icon>
+                        {{ 'SETTINGS.SOURCES_SWITCH' | translate }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="setting-item" data-setting-id="sources-account">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.SOURCES_ACCOUNT' | translate }}</h4>
+                    <p>
+                        {{ 'SETTINGS.SOURCES_ACCOUNT_DESCRIPTION' | translate }}
+                    </p>
+                </div>
+                <div class="setting-item__control">
+                    <button
+                        mat-stroked-button
+                        type="button"
+                        data-test-id="settings-account-info"
+                        [disabled]="!hasShell || !hasAccount()"
+                        (click)="openAccount()"
+                    >
+                        <mat-icon>badge</mat-icon>
+                        {{ 'SETTINGS.SOURCES_ACCOUNT_OPEN' | translate }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="setting-item" data-setting-id="sources-add">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.SOURCES_ADD' | translate }}</h4>
+                    <p>{{ 'SETTINGS.SOURCES_ADD_DESCRIPTION' | translate }}</p>
+                </div>
+                <div class="setting-item__control">
+                    <button
+                        mat-flat-button
+                        type="button"
+                        data-test-id="settings-add-playlist"
+                        (click)="addPlaylist()"
+                    >
+                        <mat-icon>add</mat-icon>
+                        {{ 'SETTINGS.SOURCES_ADD_ACTION' | translate }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="setting-item" data-setting-id="sources-manage">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.SOURCES_MANAGE' | translate }}</h4>
+                    <p>
+                        {{ 'SETTINGS.SOURCES_MANAGE_DESCRIPTION' | translate }}
+                    </p>
+                </div>
+                <div class="setting-item__control">
+                    <a
+                        mat-stroked-button
+                        routerLink="/workspace/sources"
+                        data-test-id="settings-manage-sources"
+                    >
+                        <mat-icon>tune</mat-icon>
+                        {{ 'SETTINGS.SOURCES_MANAGE_ACTION' | translate }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Every source: a row opens it (and makes it the active one), its
+             menu edits, refreshes or removes it. -->
+        <div class="settings-card sources-list">
+            <app-recent-playlists (addPlaylistClicked)="addPlaylist($event)" />
+        </div>
+    </section>
+
+    <section class="settings-section">
+        <div class="settings-section__header">
+            <h3>{{ 'SETTINGS.CARD_SHORTCUTS_LOCK' | translate }}</h3>
+        </div>
+        <div class="settings-card">
+            <div class="setting-item" data-setting-id="keyboard-shortcuts">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.KEYBOARD_SHORTCUTS' | translate }}</h4>
+                    <p>
+                        {{
+                            'SETTINGS.KEYBOARD_SHORTCUTS_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control">
+                    <button
+                        mat-stroked-button
+                        type="button"
+                        data-test-id="settings-keyboard-shortcuts"
+                        [disabled]="!hasShell"
+                        (click)="openShortcuts()"
+                    >
+                        <mat-icon>keyboard</mat-icon>
+                        {{ 'SETTINGS.KEYBOARD_SHORTCUTS_OPEN' | translate }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="setting-item" data-setting-id="parental-quick">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.PARENTAL_QUICK' | translate }}</h4>
+                    <p>
+                        {{ 'SETTINGS.PARENTAL_QUICK_DESCRIPTION' | translate }}
+                    </p>
+                </div>
+                <div class="setting-item__control sources-parental">
+                    @if (parentalEnabled()) {
+                        @if (parentalUnlocked()) {
+                            <button
+                                mat-stroked-button
+                                type="button"
+                                data-test-id="settings-parental-lock-now"
+                                [disabled]="parentalBusy()"
+                                (click)="lockNow.emit()"
+                            >
+                                <mat-icon>lock</mat-icon>
+                                {{
+                                    'SETTINGS.PARENTAL_LOCK.LOCK_NOW'
+                                        | translate
+                                }}
+                            </button>
+                        } @else {
+                            <button
+                                mat-stroked-button
+                                type="button"
+                                data-test-id="settings-parental-unlock"
+                                [disabled]="parentalBusy()"
+                                (click)="unlock.emit()"
+                            >
+                                <mat-icon>lock_open</mat-icon>
+                                {{
+                                    'SETTINGS.PARENTAL_LOCK.UNLOCK' | translate
+                                }}
+                            </button>
+                        }
+                    }
+                    <button
+                        mat-button
+                        type="button"
+                        data-test-id="settings-parental-open"
+                        (click)="openParental.emit()"
+                    >
+                        {{ 'SETTINGS.PARENTAL_QUICK_OPEN' | translate }}
+                        <mat-icon iconPositionEnd>chevron_right</mat-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+</section>

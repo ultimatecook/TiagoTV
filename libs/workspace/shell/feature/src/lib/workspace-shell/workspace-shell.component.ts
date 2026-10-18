@@ -2,6 +2,7 @@ import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
     afterNextRender,
     Component,
+    computed,
     effect,
     ElementRef,
     HostListener,
@@ -11,9 +12,6 @@ import {
     viewChild,
     ChangeDetectionStrategy,
 } from '@angular/core';
-import { MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { MatTooltip } from '@angular/material/tooltip';
 import { RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ExternalPlaybackDockComponent } from '@iptvnator/ui/components';
@@ -27,8 +25,8 @@ import {
     PlaylistDropZoneDirective,
 } from '../playlist-drop-overlay';
 import { WorkspaceShellContextSidebarComponent } from './components/workspace-shell-context-sidebar/workspace-shell-context-sidebar.component';
-import { WorkspaceShellHeaderComponent } from './components/workspace-shell-header/workspace-shell-header.component';
 import { WorkspaceShellImportOverlayComponent } from './components/workspace-shell-import-overlay/workspace-shell-import-overlay.component';
+import { WorkspaceShellPageControlsComponent } from './components/workspace-shell-page-controls/workspace-shell-page-controls.component';
 import { WorkspaceShellSidebarComponent } from './components/workspace-shell-sidebar/workspace-shell-sidebar.component';
 import { WorkspaceShellServerBannerComponent } from './components/workspace-shell-server-banner/workspace-shell-server-banner.component';
 import { LayoutSlideDirective } from './layout-slide.directive';
@@ -41,6 +39,7 @@ import { WorkspaceShellRouteStateService } from './services/workspace-shell-rout
 import { WorkspaceShellSearchSyncService } from './services/workspace-shell-search-sync.service';
 import { WorkspaceShellSearchService } from './services/workspace-shell-search.service';
 import { WorkspaceNavSidebarService } from './services/workspace-nav-sidebar.service';
+import { provideWorkspaceShellCommands } from './services/workspace-shell-commands.provider';
 import { WorkspaceBackGesturesService } from '../workspace-back-gestures/workspace-back-gestures.service';
 import { WorkspaceKeyboardShortcutsService } from '../workspace-keyboard-shortcuts/workspace-keyboard-shortcuts.service';
 import { WorkspaceLiveCategoriesPopoverService } from '../workspace-live-categories-popover/workspace-live-categories-popover.service';
@@ -53,9 +52,6 @@ import { LIVE_CATEGORIES_POPOVER } from '@iptvnator/portal/shared/util';
         CdkTrapFocus,
         ExternalPlaybackDockComponent,
         LayoutSlideDirective,
-        MatIcon,
-        MatIconButton,
-        MatTooltip,
         NowPlayingBarComponent,
         TranslatePipe,
         PlaylistDropOverlayComponent,
@@ -63,8 +59,8 @@ import { LIVE_CATEGORIES_POPOVER } from '@iptvnator/portal/shared/util';
         RouterOutlet,
         TrafficLightsClearanceDirective,
         WorkspaceShellContextSidebarComponent,
-        WorkspaceShellHeaderComponent,
         WorkspaceShellImportOverlayComponent,
+        WorkspaceShellPageControlsComponent,
         WorkspaceShellServerBannerComponent,
         WorkspaceShellSidebarComponent,
     ],
@@ -83,6 +79,8 @@ import { LIVE_CATEGORIES_POPOVER } from '@iptvnator/portal/shared/util';
         // Mouse Back, the Back chord and the Electron window gestures; the
         // shortcuts service creates it for the chord.
         WorkspaceBackGesturesService,
+        // Settings → Sources & accounts runs the shell's own actions.
+        provideWorkspaceShellCommands(),
         // The live layouts inside the router outlet open the folded categories
         // rail through this token; see `LiveCategoriesPopover`.
         {
@@ -103,18 +101,28 @@ export class WorkspaceShellComponent {
     private readonly mpvOverlayVisibility = inject(
         EmbeddedMpvOverlayVisibilityService
     );
-    private readonly header =
-        viewChild<WorkspaceShellHeaderShortcutTarget>('workspaceHeader');
+    private readonly pageControls =
+        viewChild<WorkspaceShellPageControlsComponent>('pageControls');
     private readonly sidebar =
         viewChild<WorkspaceShellSidebarComponent>('workspaceSidebar');
     private readonly sidebarHost = viewChild('workspaceSidebar', {
         read: ElementRef<HTMLElement>,
     });
-    private readonly navSidebarShow = viewChild('navSidebarShow', {
-        read: ElementRef<HTMLElement>,
-    });
     private readonly workspaceContent =
         viewChild<ElementRef<HTMLElement>>('workspaceContent');
+    /** "Show menu" or Back floats at the top-left of the body. */
+    readonly hasLeadingControls = computed(
+        () =>
+            this.navSidebar.collapsed() ||
+            (!!this.facade.backTarget() && !this.facade.isDashboardRoute())
+    );
+    /** Any floating control: a phone keeps a row for them under the strip. */
+    readonly hasPageControls = computed(
+        () =>
+            this.hasLeadingControls() ||
+            this.facade.hasContextPanelContent() ||
+            !!this.facade.headerShortcut()
+    );
 
     constructor() {
         // Focus restoration is the closing half of the drawer's focus
@@ -127,11 +135,11 @@ export class WorkspaceShellComponent {
         effect(() => {
             const open = this.contextDrawer.isOpen();
             if (wasOpen && !open) {
-                // Deferred: the header is inert while the drawer is open,
+                // Deferred: the controls are inert while the drawer is open,
                 // and focus() on a still-inert element is silently ignored.
                 // The timeout runs after the render that removes `inert`.
                 setTimeout(() => {
-                    if (this.header()?.focusContextDrawerToggle()) {
+                    if (this.pageControls()?.focusContextDrawerToggle()) {
                         return;
                     }
                     // The toggle is gone — a drawer selection navigated to
@@ -206,36 +214,27 @@ export class WorkspaceShellComponent {
             !isFindShortcut(event) ||
             // The open drawer is modal: Ctrl/Cmd+F would navigate to global
             // search behind it (the search input it focuses is inside the
-            // inert header, so the shortcut would act on obscured UI).
+            // inert sidebar, so the shortcut would act on obscured UI).
             this.contextDrawer.isOpen()
         ) {
             return;
         }
 
-        const header = this.header();
         const sidebar = this.sidebar();
         const target = event.target;
-        if (
-            isEditableTarget(target) &&
-            !header?.containsSearchInput(target) &&
-            !sidebar?.containsSearchInput(target)
-        ) {
+        if (isEditableTarget(target) && !sidebar?.containsSearchInput(target)) {
             return;
         }
 
         event.preventDefault();
-        // On settings the header search already searches the settings, so
-        // find stays on the page instead of leaving for global search.
+        // On settings the search already searches the settings, so find
+        // stays on the page instead of leaving for global search.
         if (!this.facade.isSettingsRoute()) {
             this.facade.openGlobalSearch(this.facade.searchQuery());
         }
-        // The sidebar's field is the visible one on wide windows; folded to
-        // icons it hides and the header's copy takes the shortcut.
-        setTimeout(() => {
-            if (!sidebar?.focusSearchInput({ select: true })) {
-                header?.focusSearchInput({ select: true });
-            }
-        });
+        // The sidebar's field on wide windows; folded to icons, its search
+        // opens beside the rail.
+        setTimeout(() => sidebar?.focusSearchInput({ select: true }));
     }
 
     /** ⌃⌘S on macOS, Ctrl+Alt+S elsewhere; not while typing. */
@@ -261,7 +260,7 @@ export class WorkspaceShellComponent {
         const lost = !active || active === document.body;
         if (collapsed) {
             if (lost || this.sidebarHost()?.nativeElement.contains(active)) {
-                this.navSidebarShow()?.nativeElement.focus();
+                this.pageControls()?.focusShowNavigation();
             }
         } else if (lost) {
             this.sidebar()?.focusHideButton();
@@ -286,10 +285,4 @@ function isEditableTarget(target: EventTarget | null): boolean {
     return (
         tagName === 'input' || tagName === 'textarea' || tagName === 'select'
     );
-}
-
-interface WorkspaceShellHeaderShortcutTarget {
-    containsSearchInput(target: EventTarget | null): boolean;
-    focusSearchInput(options?: { select?: boolean }): void;
-    focusContextDrawerToggle(): boolean;
 }

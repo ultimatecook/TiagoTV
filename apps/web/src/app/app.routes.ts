@@ -127,6 +127,21 @@ export const routes: Routes = [
                     ),
             },
             {
+                // TiagoTV: "Por países", the live channels by country.
+                path: 'countries',
+                loadComponent: () =>
+                    import('@iptvnator/workspace/dashboard/feature').then(
+                        (c) => c.CountriesPageComponent
+                    ),
+            },
+            {
+                path: 'countries/:countryId',
+                loadComponent: () =>
+                    import('@iptvnator/workspace/dashboard/feature').then(
+                        (c) => c.CountryPageComponent
+                    ),
+            },
+            {
                 path: 'playlists/:id',
                 loadChildren: () =>
                     import('@iptvnator/playlist/m3u/feature-player').then((m) =>

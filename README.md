@@ -51,8 +51,11 @@ a mostrar. La app recuerda cómo lo dejaste.
 ## Plataformas
 
 Las tarjetas de plataformas del Home abren sus películas y series en
-español e inglés. Netflix, Prime Video, HBO Max y Apple TV toman el aspecto
-de cada plataforma, también en la ficha de un título abierto desde ahí.
+español e inglés. Cada plataforma (Netflix, Prime Video, HBO Max, Apple TV,
+Disney+, Paramount+, Hulu, Movistar Plus+, atresplayer, mitele y Crave) toma
+su propio aspecto, también en la ficha de un título abierto desde ahí; la de
+Disney+ suma sus mosaicos de Disney, Pixar, Marvel, Star Wars y National
+Geographic.
 
 ## Servidor propio en tu red
 

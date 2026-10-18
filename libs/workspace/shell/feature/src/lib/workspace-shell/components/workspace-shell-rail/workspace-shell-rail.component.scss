@@ -33,12 +33,11 @@
     --rail-link-active-border: var(--app-selection-border);
     --rail-link-active-glow: var(--app-selection-glow);
 
-    // The traffic lights sit in the header band (see the shell grid). The
-    // first link starts below that band, where the content area and the
-    // dashboard hero start, so its hover surface never touches the lights.
-    // Zoomed out, the band grows to keep the lights inside it.
+    // The traffic lights sit above the first link, so its hover surface
+    // never touches them. (The upstream rail; TiagoTV's shell renders the
+    // sidebar instead and has no header band any more.)
     &.is-macos {
-        padding-top: var(--workspace-header-band, 56px);
+        padding-top: 56px;
     }
 
     &::-webkit-scrollbar {

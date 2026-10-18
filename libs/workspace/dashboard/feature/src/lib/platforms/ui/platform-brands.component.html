@@ -1,0 +1,40 @@
+<nav
+    class="brands"
+    [attr.aria-label]="'WORKSPACE.PLATFORMS.BRANDS' | translate"
+>
+    @for (row of rows(); track row.id) {
+        <button
+            type="button"
+            class="brand"
+            [attr.data-brand]="row.brand.id"
+            [attr.aria-label]="row.labelKey | translate: row.labelParams"
+            (click)="open.emit(row.id)"
+        >
+            @switch (row.brand.id) {
+                @case ('disney') {
+                    <img
+                        class="brand__disney"
+                        src="./assets/platforms/disney-plus.svg"
+                        alt=""
+                        draggable="false"
+                    />
+                }
+                @case ('marvel') {
+                    <span class="brand__marvel">Marvel</span>
+                }
+                @case ('star-wars') {
+                    <span class="brand__star-wars">Star<br />Wars</span>
+                }
+                @case ('national-geographic') {
+                    <span class="brand__natgeo">
+                        <span class="brand__frame"></span>
+                        <span>National<br />Geographic</span>
+                    </span>
+                }
+                @default {
+                    <span class="brand__pixar">Pixar</span>
+                }
+            }
+        </button>
+    }
+</nav>

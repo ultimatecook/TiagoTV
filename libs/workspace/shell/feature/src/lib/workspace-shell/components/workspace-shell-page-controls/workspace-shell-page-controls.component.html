@@ -1,0 +1,96 @@
+<div class="page-controls__group page-controls__group--leading">
+    <!-- The way back to the hidden sidebar (not on a phone: the strip
+         stays there). -->
+    @if (navSidebar.collapsed()) {
+        <button
+            #navSidebarShow
+            type="button"
+            class="page-control nav-sidebar-show"
+            data-test-id="nav-sidebar-show"
+            [matTooltip]="
+                ('WORKSPACE.SIDEBAR.SHOW' | translate) +
+                ' (' +
+                navSidebar.shortcutLabel +
+                ')'
+            "
+            [attr.aria-label]="'WORKSPACE.SIDEBAR.SHOW' | translate"
+            [attr.aria-keyshortcuts]="navSidebar.ariaShortcut"
+            (click)="navSidebar.show()"
+        >
+            <mat-icon>menu</mat-icon>
+        </button>
+    }
+
+    <!-- The page's Back, or browser history while an in-app previous page
+         exists. The mouse Back button, Alt+← / Cmd+[ and Esc (where the
+         page offers it) run the same action. -->
+    @if (back(); as backTarget) {
+        @let backLabel = backTarget.label() || ('BACK' | translate);
+        <button
+            type="button"
+            class="page-control header-back"
+            [class.header-back--yields]="backYieldsToDrawerToggle()"
+            data-test-id="workspace-header-back"
+            (click)="backRequested.emit()"
+            (keydown.escape)="onBackEscape($event)"
+            [matTooltip]="
+                backTarget.escapeShortcut() ? backLabel + ' (Esc)' : backLabel
+            "
+            [attr.aria-label]="backLabel"
+            [attr.aria-keyshortcuts]="
+                backTarget.escapeShortcut() ? 'Escape' : null
+            "
+        >
+            <mat-icon>arrow_back</mat-icon>
+        </button>
+    }
+
+    <!-- Phone only: the context panel is an off-canvas drawer there, and
+         this is the way to open it. A detail page's Back takes its slot. -->
+    @if (showDrawerToggle()) {
+        <button
+            #contextDrawerToggle
+            type="button"
+            class="page-control context-drawer-toggle"
+            data-test-id="context-drawer-toggle"
+            (click)="contextDrawerToggleRequested.emit()"
+            [matTooltip]="contextDrawerTooltipKey() | translate"
+            [attr.aria-label]="contextDrawerToggleAriaKey() | translate"
+            [attr.aria-expanded]="isContextDrawerOpen()"
+        >
+            <mat-icon>menu_open</mat-icon>
+        </button>
+    }
+</div>
+
+<div class="page-controls__group page-controls__group--trailing">
+    @if (headerSidebarToggle(); as sidebarToggle) {
+        <button
+            type="button"
+            class="page-control header-sidebar-toggle"
+            [class.is-active]="!sidebarToggle.expanded"
+            data-test-id="header-sidebar-toggle"
+            (click)="headerSidebarToggleRequested.emit()"
+            [matTooltip]="sidebarToggle.tooltip"
+            [attr.aria-label]="sidebarToggle.ariaLabel"
+            [attr.aria-pressed]="sidebarToggle.expanded"
+        >
+            <mat-icon>view_sidebar</mat-icon>
+        </button>
+    }
+    @if (headerShortcut(); as action) {
+        <button
+            type="button"
+            class="page-control header-shortcut"
+            data-test-id="header-shortcut"
+            [class.is-active]="action.active?.() ?? false"
+            [disabled]="action.disabled?.() ?? false"
+            [attr.aria-pressed]="action.active ? action.active() : null"
+            (click)="headerShortcutRequested.emit()"
+            [matTooltip]="action.tooltipKey | translate"
+            [attr.aria-label]="action.ariaLabelKey | translate"
+        >
+            <mat-icon>{{ action.icon }}</mat-icon>
+        </button>
+    }
+</div>

@@ -50,6 +50,17 @@
                 />
             } @else {
                 @switch (activeSection()) {
+                    @case ('sources') {
+                        <!-- Sources & accounts: what the header bar held. -->
+                        <app-settings-sources-section
+                            [parentalEnabled]="parentalLock.enabled()"
+                            [parentalUnlocked]="parentalLock.unlocked()"
+                            [parentalBusy]="parentalLock.busy()"
+                            (lockNow)="parentalLock.lockNow()"
+                            (unlock)="parentalLock.unlock()"
+                            (openParental)="openSection('parental')"
+                        />
+                    }
                     @case ('playback') {
                         <app-settings-playback-section
                             [form]="settingsForm"

@@ -8,6 +8,7 @@ export const SETTINGS_NAV_GROUPS: readonly {
     readonly id: SettingsNavGroup;
     readonly labelKey: string;
 }[] = [
+    { id: 'account', labelKey: 'SETTINGS.NAV_GROUP_ACCOUNT' },
     { id: 'app', labelKey: 'SETTINGS.NAV_GROUP_APP' },
     { id: 'library', labelKey: 'SETTINGS.NAV_GROUP_LIBRARY' },
     { id: 'devices', labelKey: 'SETTINGS.NAV_GROUP_DEVICES' },
@@ -21,6 +22,14 @@ export const SETTINGS_NAV_GROUPS: readonly {
  */
 export const SETTINGS_SECTION_DEFINITIONS: readonly SettingsSectionDefinition[] =
     [
+        {
+            // TiagoTV: the sources and accounts the header bar used to
+            // switch, with the keyboard shortcuts and the quick lock.
+            id: 'sources',
+            navLabelKey: 'SETTINGS.NAV_SOURCES',
+            icon: 'account_circle',
+            group: 'account',
+        },
         {
             id: 'general',
             navLabelKey: 'SETTINGS.NAV_GENERAL',

@@ -107,7 +107,7 @@ export const STREAMING_PLATFORMS: readonly StreamingPlatform[] = [
     {
         id: 'hulu',
         name: 'hulu',
-        logo: null,
+        logo: `${LOGOS}hulu.svg`,
         logoTone: 'brand',
         wordmarkColor: '#1ce783',
         background: 'linear-gradient(160deg, #10161a 0%, #050708 100%)',
@@ -116,8 +116,8 @@ export const STREAMING_PLATFORMS: readonly StreamingPlatform[] = [
     },
     {
         id: 'movistar-plus',
-        name: 'movistar+',
-        logo: null,
+        name: 'Movistar Plus+',
+        logo: `${LOGOS}movistar-plus.png`,
         logoTone: 'white',
         wordmarkColor: '#fff',
         background: 'linear-gradient(140deg, #0b4fa0 0%, #019df4 100%)',
@@ -127,7 +127,7 @@ export const STREAMING_PLATFORMS: readonly StreamingPlatform[] = [
     {
         id: 'atresplayer',
         name: 'atresplayer',
-        logo: null,
+        logo: `${LOGOS}atresplayer.svg`,
         logoTone: 'white',
         wordmarkColor: '#fff',
         background: 'linear-gradient(140deg, #c43c00 0%, #ff7a1a 100%)',
@@ -137,8 +137,8 @@ export const STREAMING_PLATFORMS: readonly StreamingPlatform[] = [
     {
         id: 'mitele',
         name: 'mitele',
-        logo: null,
-        logoTone: 'white',
+        logo: `${LOGOS}mitele.svg`,
+        logoTone: 'brand',
         wordmarkColor: '#fff',
         background: 'linear-gradient(140deg, #3b0a63 0%, #b0156e 100%)',
         ambient: '#c2187a',
@@ -147,7 +147,7 @@ export const STREAMING_PLATFORMS: readonly StreamingPlatform[] = [
     {
         id: 'crave',
         name: 'Crave',
-        logo: null,
+        logo: `${LOGOS}crave.png`,
         logoTone: 'white',
         wordmarkColor: '#fff',
         background: 'linear-gradient(140deg, #0a1f44 0%, #1f5fd1 100%)',

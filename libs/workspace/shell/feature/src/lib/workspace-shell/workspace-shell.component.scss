@@ -6,16 +6,20 @@
 }
 
 .workspace-shell {
-    // The header band. On macOS it also holds the traffic lights, which app
-    // zoom does not scale: zoomed out, it stays tall enough to contain them
-    // (`TrafficLightsClearanceDirective` publishes the clearance), so no
-    // content starts beside them.
-    --workspace-header-band: 72px;
-    --workspace-sidebar-width: 272px;
+    --workspace-sidebar-width: 252px;
     // The sidebar's column: none while it is hidden (⌃⌘S).
     --workspace-nav-column: var(--workspace-sidebar-width);
-    // Where the "show menu" control sits then: after the traffic lights.
-    --workspace-nav-show-x: 20px;
+    // No header bar: the content starts at the window's top. A rounded
+    // window keeps a sliver so nothing scrolls into its top corner.
+    --workspace-body-top: 12px;
+    // The macOS window's drag strip along the top edge (none elsewhere: the
+    // ambient margin moves a frameless window).
+    --workspace-drag-strip: 0px;
+    // The floating page controls (Back, the page's shortcuts).
+    --page-controls-top: calc(var(--workspace-body-top) + 14px);
+    --page-controls-start: 16px;
+    // How far a context panel's content moves down under them.
+    --workspace-leading-clearance: 48px;
     // Room around the glass window: the ambient room shows through it.
     --workspace-window-inset: 22px;
     --workspace-window-radius: 34px;
@@ -51,13 +55,13 @@
 // The glass window. It never clips (`overflow` stays visible): a rounded
 // clip around the scroller would give every composited layer inside it a
 // mask layer (see the content frame below). Instead nothing scrolls under
-// its rounded corners: the header row clears the top corner and the body
+// its rounded corners: the body starts a sliver below the top corner and
 // stops above the bottom one.
 .workspace-window {
     position: relative;
     display: grid;
     grid-template-columns: var(--workspace-nav-column) minmax(0, 1fr);
-    grid-template-rows: var(--workspace-header-band) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     transition: grid-template-columns 220ms cubic-bezier(0.2, 0, 0, 1);
     min-width: 0;
     min-height: 0;
@@ -108,7 +112,7 @@
 
 app-workspace-shell-sidebar {
     grid-column: 1;
-    grid-row: 1 / span 2;
+    grid-row: 1;
     min-height: 0;
     // The sidebar runs into the bottom padding: its own padding keeps the
     // links off the rounded corner.
@@ -128,81 +132,48 @@ app-workspace-shell-sidebar {
         visibility 0s 220ms;
 }
 
-app-workspace-shell-header {
-    position: relative;
-    z-index: 2;
-    grid-column: 2;
-    grid-row: 1;
-    min-width: 0;
-    --workspace-header-lights-inset: 0px;
-}
-
-// The way back to the sidebar, at the header's leading edge; the header's
-// own controls start after it. It spans the folding column too, so it
-// stays put while the column folds.
-.nav-sidebar-show {
+// The page's floating controls lie over the body's top edge.
+app-workspace-shell-page-controls {
     position: relative;
     z-index: 3;
-    grid-column: 1 / -1;
+    grid-column: 2;
     grid-row: 1;
-    align-self: center;
-    justify-self: start;
-    margin-left: var(--workspace-nav-show-x);
-    border-radius: 12px;
-    color: var(--mat-sys-on-surface-variant);
-    app-region: no-drag;
-
-    &:hover {
-        background: var(--app-hover-overlay);
-        color: var(--mat-sys-on-surface);
-    }
+    align-self: start;
+    min-width: 0;
 }
 
-.nav-hidden app-workspace-shell-header {
-    --workspace-header-lights-inset: calc(var(--workspace-nav-show-x) + 60px);
+.workspace-drag-strip {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    left: var(--workspace-nav-column);
+    height: var(--workspace-drag-strip);
+    app-region: drag;
+    pointer-events: none;
 }
 
+// macOS glass: a strip along the top edge moves the window. Hidden, the
+// sidebar leaves the traffic lights over the content, which then starts
+// below them; the "show menu" button and Back line up after the lights.
 :host-context(.native-glass:not(.window-fullscreen)) .workspace-shell {
-    --workspace-nav-show-x: var(--traffic-lights-clear-x, 84px);
-}
+    --workspace-body-top: 0px;
+    --workspace-drag-strip: 18px;
 
-// Wide windows search from the sidebar; the header keeps its copy for the
-// folded (icon-only) sidebar.
-@media (min-width: 1101px) {
-    app-workspace-shell-header ::ng-deep .search-field {
-        display: none;
-    }
-
-    // Home: the header floats over the page's first row, so the avatar sits
-    // level with "Continue Watching" as on the glass. A slim band remains
-    // above the scroller so nothing scrolls under the rounded corner. With
-    // the sidebar hidden the band comes back: the "show menu" control would
-    // sit on "Continue Watching".
-    .workspace-shell:not(.nav-hidden) .workspace-window--dashboard {
-        grid-template-rows: 24px minmax(0, 1fr);
-    }
-
-    .workspace-window--dashboard {
-        app-workspace-shell-header {
-            height: var(--workspace-header-band);
-            pointer-events: none;
-
-            ::ng-deep .workspace-header > * {
-                pointer-events: auto;
-            }
-
-            // Home is the top of the app: the history Back would sit on
-            // "Continue Watching"; the sidebar is the way around.
-            ::ng-deep .header-back {
-                display: none;
-            }
-        }
+    &.nav-hidden {
+        --page-controls-start: var(--traffic-lights-clear-x, 84px);
+        --workspace-body-top: var(--traffic-lights-clear-y, 48px);
+        --workspace-drag-strip: var(--traffic-lights-clear-y, 48px);
+        --workspace-leading-clearance: 0px;
+        // Level with the lights.
+        --page-controls-top: calc(var(--traffic-lights-clear-y, 48px) - 40px);
     }
 }
 
 .workspace-body {
     grid-column: 2;
-    grid-row: 2;
+    grid-row: 1;
+    padding-top: var(--workspace-body-top);
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     min-height: 0;
@@ -220,9 +191,22 @@ app-workspace-shell-context-sidebar {
     min-height: 0;
 }
 
+// Back (or "show menu") floats where the context panel's title starts: the
+// panel's content moves under it. Without a panel, the page starts under
+// it and scrolls beneath it.
+.has-leading-controls app-workspace-shell-context-sidebar,
+.has-leading-controls.single-pane .workspace-content {
+    padding-top: var(--workspace-leading-clearance);
+}
+
 // TiagoTV: a title opened from a streaming platform reads like that
-// platform's own page, without the source's category list beside it.
+// platform's own page, without the source's category list beside it; its
+// billboard runs to the top, under Back.
 :host-context([data-platform-theme]) {
+    .workspace-shell {
+        --workspace-leading-clearance: 0px;
+    }
+
     .workspace-body {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -313,6 +297,7 @@ app-workspace-shell-context-sidebar {
 :host-context(.native-glass) .workspace-shell,
 :host-context(.window-fullscreen) .workspace-shell {
     --workspace-window-inset: 0px;
+    --workspace-body-top: 0px;
     padding: 0;
 }
 
@@ -442,15 +427,23 @@ app-workspace-shell-context-sidebar {
 }
 
 @media (max-width: 640px) {
+    // Under the strip, a row for Back and the drawer toggle when the page
+    // has them: on a phone they would cover the list's first rows.
     .workspace-shell {
         --workspace-window-inset: 0px;
-        --workspace-header-band: 56px;
+        --workspace-body-top: 0px;
+        --page-controls-top: 8px;
+        --workspace-leading-clearance: 0px;
         padding: 0;
+
+        &.has-page-controls {
+            --workspace-body-top: 54px;
+        }
     }
 
     .workspace-window {
         grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: 56px var(--workspace-header-band) minmax(0, 1fr);
+        grid-template-rows: 56px minmax(0, 1fr);
         padding-bottom: 0;
         border: 0;
         border-radius: 0;
@@ -463,14 +456,14 @@ app-workspace-shell-context-sidebar {
         margin-bottom: 0;
     }
 
-    app-workspace-shell-header {
+    app-workspace-shell-page-controls {
         grid-column: 1;
         grid-row: 2;
     }
 
     .workspace-body {
         grid-column: 1;
-        grid-row: 3;
+        grid-row: 2;
         // Side by side there is no room for both: a 300px context panel on a
         // 375px screen leaves the content unusable. The context sidebar
         // becomes a position: fixed off-canvas drawer (its own stylesheet),
@@ -497,10 +490,6 @@ app-workspace-shell-context-sidebar {
         right: 0;
         bottom: 8px;
         padding: 0 8px;
-    }
-
-    .nav-sidebar-show {
-        display: none;
     }
 }
 

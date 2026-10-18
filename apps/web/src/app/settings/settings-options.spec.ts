@@ -92,6 +92,7 @@ describe('buildSettingsSectionNavItems', () => {
                 supportsServerStorage: true,
             }).map((item) => item.id)
         ).toEqual([
+            'sources',
             'general',
             'playback',
             'epg',
@@ -114,6 +115,7 @@ describe('buildSettingsSectionNavItems', () => {
         const groupOf = (id: string) =>
             items.find((item) => item.id === id)?.group;
 
+        expect(groupOf('sources')).toBe('account');
         expect(groupOf('general')).toBe('app');
         expect(groupOf('tmdb')).toBe('library');
         expect(groupOf('remote-control')).toBe('devices');

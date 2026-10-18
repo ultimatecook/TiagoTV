@@ -46,6 +46,7 @@ import type { StreamingPlatform } from '../streaming-platforms';
             letter-spacing: -0.03em;
             line-height: 1;
             text-overflow: ellipsis;
+            text-transform: none;
             white-space: nowrap;
         }
     `,

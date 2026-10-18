@@ -1,0 +1,100 @@
+<article class="page" data-test-id="countries-page">
+    <header class="intro">
+        <span class="intro__eyebrow">{{
+            'WORKSPACE.COUNTRIES.EYEBROW' | translate
+        }}</span>
+        <h1 class="intro__title">
+            {{ 'WORKSPACE.COUNTRIES.TITLE' | translate }}
+        </h1>
+        @if (summary(); as summary) {
+            <p class="intro__meta">
+                {{ 'WORKSPACE.COUNTRIES.SUMMARY' | translate: summary }}
+            </p>
+        }
+    </header>
+
+    @if (countries.regions(); as regions) {
+        @if (regions.length > 0) {
+            <div class="regions">
+                @for (region of regions; track region.definition.id) {
+                    <section
+                        class="region"
+                        [class.region--wide]="region.definition.id === 'latam'"
+                        [style.--region-span]="region.countries.length"
+                        [attr.aria-label]="
+                            region.definition.titleKey | translate
+                        "
+                    >
+                        <h2 class="region__title">
+                            {{ region.definition.titleKey | translate }}
+                        </h2>
+                        @for (
+                            country of region.countries;
+                            track country.definition.id
+                        ) {
+                            <a
+                                class="country"
+                                [routerLink]="[
+                                    '/workspace',
+                                    'countries',
+                                    country.definition.id,
+                                ]"
+                                [attr.data-test-id]="
+                                    'country-card-' + country.definition.id
+                                "
+                            >
+                                <lib-country-flag
+                                    class="country__glow"
+                                    [definition]="country.definition"
+                                />
+                                <lib-country-flag
+                                    class="country__flag"
+                                    [definition]="country.definition"
+                                />
+                                <span class="country__name">{{
+                                    country.definition.nameKey | translate
+                                }}</span>
+                                <span class="country__count">{{
+                                    (country.channelCount === 1
+                                        ? 'WORKSPACE.COUNTRIES.CHANNELS_ONE'
+                                        : 'WORKSPACE.COUNTRIES.CHANNELS'
+                                    )
+                                        | translate
+                                            : { count: country.channelCount }
+                                }}</span>
+                            </a>
+                        }
+                    </section>
+                }
+            </div>
+        } @else {
+            <p class="state">
+                {{ 'WORKSPACE.COUNTRIES.EMPTY' | translate }}
+            </p>
+        }
+    } @else if (!countries.hasSource()) {
+        <p class="state">
+            {{ 'WORKSPACE.COUNTRIES.NO_SOURCE' | translate }}
+        </p>
+    } @else if (countries.failed() && !countries.loading()) {
+        <div class="state">
+            <p>{{ 'WORKSPACE.COUNTRIES.FAILED' | translate }}</p>
+            <button type="button" class="state__retry" (click)="retry()">
+                <mat-icon aria-hidden="true">refresh</mat-icon>
+                {{ 'RETRY' | translate }}
+            </button>
+        </div>
+    } @else {
+        <div
+            class="regions"
+            role="status"
+            [attr.aria-label]="'WORKSPACE.COUNTRIES.LOADING' | translate"
+        >
+            <div class="region region--wide">
+                @for (card of skeletons; track card) {
+                    <span class="country country--skeleton"></span>
+                }
+            </div>
+        </div>
+    }
+</article>

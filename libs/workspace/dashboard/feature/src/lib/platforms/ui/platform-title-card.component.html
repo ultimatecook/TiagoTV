@@ -29,7 +29,7 @@
     @if (!netflixTile && !rank()) {
         <span class="card__name">{{ title().title }}</span>
     }
-    @if (look() === 'apple') {
+    @if (look() === 'apple' || look() === 'hulu') {
         <span class="card__sub"
             >{{ typeKey() | translate }}
             @if (genreKey(); as genre) {

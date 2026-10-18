@@ -15,9 +15,9 @@ import { titleTypeKey } from './platform-hero-slides';
 
 /**
  * A platform title's tile: opens the title's page. A 2:3 poster, or the
- * 16:9 artwork of Netflix, Prime Video and Apple TV (the backdrop where
- * the catalog has one, else the poster cropped), dressed as the platform
- * dresses its own.
+ * 16:9 artwork of Netflix, Prime Video, Apple TV, Disney+… (the backdrop
+ * where the catalog has one, else the poster cropped), dressed as the
+ * platform dresses its own.
  */
 @Component({
     selector: 'lib-platform-title-card',
@@ -62,7 +62,7 @@ export class PlatformTitleCardComponent {
         const rank = this.rank();
         return rank ? `${rank}. ${this.title().title}` : this.title().title;
     });
-    /** "Series · Drama", under Apple TV's cards. */
+    /** "Series · Drama", under Apple TV's and Hulu's cards. */
     readonly typeKey = computed(() => titleTypeKey(this.title()));
     readonly genreKey = computed(() => {
         const genre = this.title().genres[0];

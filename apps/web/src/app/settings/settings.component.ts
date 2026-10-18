@@ -64,6 +64,7 @@ import { SettingsPlaybackSectionComponent } from './settings-playback-section.co
 import { SettingsRemoteControlFacade } from './settings-remote-control.facade';
 import { SettingsRemoteControlSectionComponent } from './settings-remote-control-section.component';
 import { SettingsServerSectionComponent } from './settings-server-section.component';
+import { SettingsSourcesSectionComponent } from './settings-sources-section.component';
 import { SettingsSearchFacade } from './settings-search.facade';
 import { SettingsSearchResultsComponent } from './settings-search-results.component';
 import { SettingsTmdbSectionComponent } from './settings-tmdb-section.component';
@@ -112,6 +113,7 @@ export const SETTINGS_DEFAULT_SECTION = 'general';
         SettingsRemoteControlSectionComponent,
         SettingsSearchResultsComponent,
         SettingsServerSectionComponent,
+        SettingsSourcesSectionComponent,
         SettingsTmdbSectionComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,

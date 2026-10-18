@@ -5,6 +5,7 @@
         (facade.showExternalPlaybackBar() && !!facade.externalPlaybackSession())
     "
     [class.nav-hidden]="navSidebar.collapsed()"
+    [class.has-page-controls]="hasPageControls()"
     appPlaylistDropZone
     #dropZone="playlistDropZone"
     [appTrafficLightsClearance]="facade.isMacOS"
@@ -15,22 +16,23 @@
     }
 
     <!-- While the drawer is open it is modal: `inert` removes the rail,
-         header, content and playback footer from BOTH the focus order and
+         page controls, content and playback footer from BOTH the focus order and
          the accessibility tree — CdkTrapFocus alone constrains Tab focus but
          a screen reader's virtual cursor could still reach and activate the
          visually obscured controls behind the backdrop. isOpen can only be
          true at phone width (the toggle is CSS-hidden above it and the
          service closes on viewport growth), so desktop is never inerted. -->
-    <!-- The glass window: sidebar, header and content float over the
+    <!-- The glass window: sidebar and content float over the
          ambient room backdrop the dark host paints. The full-window player
          covers it, modal: nothing behind is reachable. -->
     <div
         class="workspace-window"
-        [class.workspace-window--dashboard]="facade.isDashboardRoute()"
         [attr.inert]="nowPlaying.expanded() ? '' : null"
     >
         <!-- Hidden (⌃⌘S), the sidebar's column folds to nothing and it
-             leaves the focus order and accessibility tree. -->
+             leaves the focus order and accessibility tree. There is no
+             header bar: the sidebar holds search, the source switcher and
+             Ajustes; the page's own controls float over the content. -->
         <app-workspace-shell-sidebar
             #workspaceSidebar
             [attr.inert]="
@@ -41,77 +43,51 @@
             [canUseSearch]="facade.canUseSearch()"
             [searchPlaceholder]="facade.searchPlaceholder()"
             [hasNoPlaylists]="facade.hasNoPlaylists()"
-            (searchChanged)="facade.onSearchInput($event)"
-            (searchSubmitted)="facade.onSearchEnter($event)"
-        />
-
-        <app-workspace-shell-header
-            #workspaceHeader
-            [attr.inert]="contextDrawer.isOpen() ? '' : null"
-            [backTarget]="facade.backTarget()"
+            [isSettingsRoute]="facade.isSettingsRoute()"
+            [activeDownloadsCount]="facade.activeDownloadsCount()"
             [playlistTitle]="facade.playlistTitle()"
             [playlistSubtitle]="facade.playlistSubtitle()"
-            [searchQuery]="facade.searchQuery()"
-            [canUseSearch]="facade.canUseSearch()"
-            [searchPlaceholder]="facade.searchPlaceholder()"
-            [searchScopeLabel]="facade.searchScopeLabel()"
-            [searchStatusLabel]="facade.searchStatusLabel()"
+            [parentalLockState]="facade.parentalLockState()"
+            (searchChanged)="facade.onSearchInput($event)"
+            (searchSubmitted)="facade.onSearchEnter($event)"
+            (commandPaletteRequested)="facade.openCommandPalette()"
+            (addPlaylistRequested)="facade.openAddPlaylistDialog()"
+            (accountInfoForPlaylistRequested)="
+                facade.openAccountInfoFor($event)
+            "
+            (parentalLockToggleRequested)="facade.toggleParentalLock()"
+        />
+
+        <!-- macOS glass: with no title bar, a thin strip along the top edge
+             moves the window (the floating controls stay clickable). -->
+        <div class="workspace-drag-strip" aria-hidden="true"></div>
+
+        <!-- "Show menu" (sidebar hidden), Back, the phone drawer toggle and
+             the page's shortcuts, as round glass buttons over the content's
+             top edge. -->
+        <app-workspace-shell-page-controls
+            #pageControls
+            [attr.inert]="contextDrawer.isOpen() ? '' : null"
+            [backTarget]="facade.backTarget()"
+            [hideBack]="facade.isDashboardRoute()"
             [headerShortcut]="facade.headerShortcut()"
             [headerSidebarToggle]="facade.headerSidebarToggle()"
-            [isElectron]="facade.isElectron"
-            [hasNoPlaylists]="facade.hasNoPlaylists()"
-            [isDownloadsView]="facade.isDownloadsView()"
-            [activeDownloadsCount]="facade.activeDownloadsCount()"
-            [isSettingsRoute]="facade.isSettingsRoute()"
-            [parentalLockState]="facade.parentalLockState()"
             [showContextDrawerToggle]="facade.hasContextPanelContent()"
             [isContextDrawerOpen]="contextDrawer.isOpen()"
             [contextDrawerToggleAriaKey]="facade.contextDrawerLabelKeys().aria"
             [contextDrawerTooltipKey]="facade.contextDrawerLabelKeys().tooltip"
             (backRequested)="facade.goBack()"
             (contextDrawerToggleRequested)="contextDrawer.toggle()"
-            (searchChanged)="facade.onSearchInput($event)"
-            (searchSubmitted)="facade.onSearchEnter($event)"
-            (commandPaletteRequested)="facade.openCommandPalette()"
-            (shortcutsRequested)="keyboardShortcuts.openShortcutsDialog()"
-            (addPlaylistRequested)="facade.openAddPlaylistDialog()"
             (headerShortcutRequested)="facade.runHeaderShortcut()"
             (headerSidebarToggleRequested)="facade.toggleLiveSidebar()"
-            (parentalLockToggleRequested)="facade.toggleParentalLock()"
-            (downloadsRequested)="facade.openDownloadsShortcut()"
-            (accountInfoForPlaylistRequested)="
-                facade.openAccountInfoFor($event)
-            "
         />
-
-        <!-- With the sidebar hidden, the way back sits at the header's
-             leading edge (after the macOS traffic lights). -->
-        @if (navSidebar.collapsed()) {
-            <button
-                #navSidebarShow
-                type="button"
-                class="nav-sidebar-show"
-                mat-icon-button
-                data-test-id="nav-sidebar-show"
-                [matTooltip]="
-                    ('WORKSPACE.SIDEBAR.SHOW' | translate) +
-                    ' (' +
-                    navSidebar.shortcutLabel +
-                    ')'
-                "
-                [attr.aria-label]="'WORKSPACE.SIDEBAR.SHOW' | translate"
-                [attr.aria-keyshortcuts]="navSidebar.ariaShortcut"
-                (click)="navSidebar.show()"
-            >
-                <mat-icon>menu</mat-icon>
-            </button>
-        }
 
         <!-- The content frame slides to make room for the context panel
          instead of jumping (see LayoutSlideDirective). -->
         <div
             class="workspace-body"
             [class.single-pane]="!facade.showContextPanel()"
+            [class.has-leading-controls]="hasLeadingControls()"
             [appLayoutSlide]="facade.showContextPanel()"
             layoutSlideTargets=".workspace-content-frame"
         >

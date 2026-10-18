@@ -10,11 +10,13 @@ import {
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
-import { platformDesign } from '../platform-design';
+import { buildBrandRows } from '../platform-brands';
+import { platformDesign, rowTile } from '../platform-design';
 import { PlatformThemeService } from '../platform-theme.service';
 import { buildPlatformRows } from '../platform-titles';
 import { findStreamingPlatform } from '../streaming-platforms';
 import { PlatformBillboardComponent } from './platform-billboard.component';
+import { PlatformBrandsComponent } from './platform-brands.component';
 import { PlatformCarouselComponent } from './platform-carousel.component';
 import { PlatformHeroComponent } from './platform-hero.component';
 import { PlatformLogoComponent } from './platform-logo.component';
@@ -28,13 +30,14 @@ const PAGE = 60;
  * A platform's page (/workspace/platforms/:platformId), laid out like the
  * platform's own app (`platformDesign`): Netflix's billboard, 16:9 tiles
  * and Top 10, Prime Video's carousel, HBO Max's posters, Apple TV's large
- * cards. Then what is new, its movies, its series and its genres, one row
- * each; a row's title opens all of it.
+ * cards, Disney+'s carousel and brand tiles… Then what is new, its movies,
+ * its series and its genres, one row each; a row's title opens all of it.
  */
 @Component({
     selector: 'lib-platform-page',
     imports: [
         PlatformBillboardComponent,
+        PlatformBrandsComponent,
         PlatformCarouselComponent,
         PlatformHeroComponent,
         PlatformLogoComponent,
@@ -73,14 +76,33 @@ export class PlatformPageComponent {
             : null;
     });
 
+    /** Disney+'s brands (Marvel, Star Wars…), each a list of its own. */
+    readonly brandRows = computed(() => {
+        const titles = this.titles();
+        const platform = this.platform();
+        return titles && platform && this.design()?.brands
+            ? buildBrandRows(titles, platform.name)
+            : [];
+    });
+
     /** The row shown whole, or null for the rows. */
     readonly openRowId = signal<string | null>(null);
-    readonly openRow = computed(
-        () => this.rows()?.find((row) => row.id === this.openRowId()) ?? null
-    );
+    readonly openRow = computed(() => {
+        const id = this.openRowId();
+        return (
+            [...(this.rows() ?? []), ...this.brandRows()].find(
+                (row) => row.id === id
+            ) ?? null
+        );
+    });
     readonly shown = linkedSignal({
         source: this.openRowId,
         computation: () => PAGE,
+    });
+    /** The open row's tiles, Paramount+'s posters among its 16:9 rows. */
+    readonly gridTile = computed(() => {
+        const design = this.design();
+        return design ? rowTile(design, this.openRowId() ?? '') : 'poster';
     });
     readonly visible = computed(
         () => this.openRow()?.titles.slice(0, this.shown()) ?? []

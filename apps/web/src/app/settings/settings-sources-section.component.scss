@@ -1,0 +1,46 @@
+:host {
+    display: contents;
+}
+
+// The active source: its tile, name and type before the switch button.
+.sources-active {
+    gap: 12px;
+}
+
+.sources-active__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 260px;
+    text-align: start;
+}
+
+.sources-active__name {
+    overflow: hidden;
+    color: var(--app-heading-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sources-active__type {
+    color: var(--app-muted-color);
+    font-size: 12px;
+}
+
+// Every source, as on the Sources page; the card rounds its rows.
+.sources-list {
+    margin-top: 12px;
+    overflow: hidden;
+}
+
+.sources-parental {
+    gap: 6px;
+}
+
+@media (max-width: 760px) {
+    .sources-active__text {
+        display: none;
+    }
+}

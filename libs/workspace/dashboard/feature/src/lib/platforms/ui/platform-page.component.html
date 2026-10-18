@@ -1,5 +1,6 @@
 @if (platform(); as platform) {
     @let look = design()?.look ?? 'default';
+    @let playKey = design()?.playKey ?? 'WORKSPACE.PLATFORMS.WATCH';
     <article class="page">
         @if (titles(); as titles) {
             @switch (design()?.hero) {
@@ -8,12 +9,15 @@
                         class="page__billboard"
                         [platform]="platform"
                         [look]="look"
+                        [playKey]="playKey"
                         [titles]="titles"
                     />
                 }
                 @case ('carousel') {
                     <lib-platform-carousel
                         [platform]="platform"
+                        [look]="look"
+                        [playKey]="playKey"
                         [titles]="titles"
                     />
                 }
@@ -60,7 +64,7 @@
                             <lib-platform-title-card
                                 [title]="title"
                                 [look]="look"
-                                [tile]="design()?.tiles ?? 'poster'"
+                                [tile]="gridTile()"
                             />
                         }
                     </div>
@@ -71,6 +75,12 @@
                     }
                 </section>
             } @else if (rows.length > 0) {
+                @if (brandRows().length > 0) {
+                    <lib-platform-brands
+                        [rows]="brandRows()"
+                        (open)="openAll($event)"
+                    />
+                }
                 @if (design(); as design) {
                     @for (row of rows; track row.id) {
                         <lib-platform-row

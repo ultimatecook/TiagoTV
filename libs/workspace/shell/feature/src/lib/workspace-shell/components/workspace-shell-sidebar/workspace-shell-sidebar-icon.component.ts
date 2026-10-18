@@ -12,7 +12,15 @@ export type WorkspaceSidebarIconName =
     | 'download'
     | 'user'
     | 'settings'
-    | 'search';
+    | 'search'
+    | 'chevron'
+    | 'platforms'
+    | 'trophy'
+    | 'live'
+    | 'channels'
+    | 'bookmark'
+    | 'lock'
+    | 'lock-open';
 
 /**
  * Thin line icons for the TiagoTV sidebar (24px grid, 1.6px stroke). The
@@ -91,6 +99,41 @@ export type WorkspaceSidebarIconName =
                 @case ('search') {
                     <circle cx="11" cy="11" r="6.6" />
                     <path d="m20 20-4.3-4.3" />
+                }
+                @case ('chevron') {
+                    <path d="m8 10 4 4 4-4" />
+                }
+                @case ('platforms') {
+                    <rect x="3.5" y="5.5" width="17" height="12" rx="2.5" />
+                    <path d="m10.5 9.2 4 2.3-4 2.3z" />
+                    <path d="M8.5 20.5h7" />
+                }
+                @case ('trophy') {
+                    <path d="M7.5 4h9v5.5a4.5 4.5 0 0 1-9 0z" />
+                    <path
+                        d="M7.5 6H4.5a3 3 0 0 0 3 4M16.5 6h3a3 3 0 0 1-3 4M12 14v3.5M8.5 20.5h7M9.5 17.5h5"
+                    />
+                }
+                @case ('live') {
+                    <circle cx="12" cy="12" r="2" />
+                    <path
+                        d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.4 5.4a9.3 9.3 0 0 0 0 13.2M18.6 5.4a9.3 9.3 0 0 1 0 13.2"
+                    />
+                }
+                @case ('channels') {
+                    <rect x="3.5" y="4" width="17" height="16" rx="2.5" />
+                    <path d="M7.5 9h9M7.5 12h9M7.5 15h6" />
+                }
+                @case ('bookmark') {
+                    <path d="M6.5 4.5h11v16l-5.5-4-5.5 4z" />
+                }
+                @case ('lock') {
+                    <rect x="5" y="10.5" width="14" height="10" rx="2.2" />
+                    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+                }
+                @case ('lock-open') {
+                    <rect x="5" y="10.5" width="14" height="10" rx="2.2" />
+                    <path d="M8.5 10.5V8a3.5 3.5 0 0 1 6.8-1.2" />
                 }
             }
         </svg>

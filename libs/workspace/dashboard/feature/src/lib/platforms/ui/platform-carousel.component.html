@@ -1,3 +1,4 @@
+@let prime = look() === 'prime';
 <section
     class="carousel"
     aria-roledescription="carousel"
@@ -37,13 +38,15 @@
         @for (slide of hero.current(); track slide.key) {
             <div class="carousel__content">
                 <h2 class="carousel__title">{{ slide.title.title }}</h2>
-                <p class="carousel__included">
-                    <span class="carousel__check" aria-hidden="true"></span>
-                    {{
-                        'WORKSPACE.PLATFORMS.INCLUDED'
-                            | translate: { platform: 'Prime' }
-                    }}
-                </p>
+                @if (prime) {
+                    <p class="carousel__included">
+                        <span class="carousel__check" aria-hidden="true"></span>
+                        {{
+                            'WORKSPACE.PLATFORMS.INCLUDED'
+                                | translate: { platform: 'Prime' }
+                        }}
+                    </p>
+                }
                 <p class="carousel__meta">
                     <span>{{ typeKey(slide.title) | translate }}</span>
                     @for (genre of slide.genres; track genre) {
@@ -57,28 +60,44 @@
                     <p class="carousel__plot">{{ slide.plot }}</p>
                 }
                 <div class="carousel__actions">
-                    <button
-                        type="button"
-                        class="carousel__play"
-                        (click)="hero.open(slide.title)"
-                    >
-                        <span class="carousel__disc" aria-hidden="true">
-                            <mat-icon>play_arrow</mat-icon>
-                        </span>
-                        <span>{{
-                            'WORKSPACE.PLATFORMS.WATCH' | translate
-                        }}</span>
-                    </button>
-                    <button
-                        type="button"
-                        class="carousel__round"
-                        [attr.aria-label]="
-                            'WORKSPACE.PLATFORMS.MORE_INFO' | translate
-                        "
-                        (click)="hero.open(slide.title)"
-                    >
-                        <mat-icon aria-hidden="true">info_outline</mat-icon>
-                    </button>
+                    @if (prime) {
+                        <button
+                            type="button"
+                            class="carousel__play"
+                            (click)="hero.open(slide.title)"
+                        >
+                            <span class="carousel__disc" aria-hidden="true">
+                                <mat-icon>play_arrow</mat-icon>
+                            </span>
+                            <span>{{ playKey() | translate }}</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="carousel__round"
+                            [attr.aria-label]="
+                                'WORKSPACE.PLATFORMS.MORE_INFO' | translate
+                            "
+                            (click)="hero.open(slide.title)"
+                        >
+                            <mat-icon aria-hidden="true">info_outline</mat-icon>
+                        </button>
+                    } @else {
+                        <button
+                            type="button"
+                            class="carousel__cta"
+                            (click)="hero.open(slide.title)"
+                        >
+                            <mat-icon aria-hidden="true">play_arrow</mat-icon>
+                            <span>{{ playKey() | translate }}</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="carousel__more"
+                            (click)="hero.open(slide.title)"
+                        >
+                            {{ 'WORKSPACE.PLATFORMS.MORE_INFO' | translate }}
+                        </button>
+                    }
                 </div>
             </div>
         }

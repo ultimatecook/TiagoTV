@@ -1,40 +1,49 @@
-import { buildWorkspaceSidebarGroups } from './workspace-shell-sidebar-nav';
+import {
+    buildWorkspaceSidebarNav,
+    SIDEBAR_SETTINGS_PATH,
+    WorkspaceSidebarItem,
+} from './workspace-shell-sidebar-nav';
 
-function linksById(
-    groups: ReturnType<typeof buildWorkspaceSidebarGroups>
-): Record<string, string> {
-    return Object.fromEntries(
-        groups.flatMap((group) =>
-            group.items.map((item) => [item.id, item.link.join('/')])
-        )
-    );
+function allItems(
+    nav: ReturnType<typeof buildWorkspaceSidebarNav>
+): WorkspaceSidebarItem[] {
+    return [...nav.main, nav.allChannels, ...nav.saved, nav.settings];
 }
 
-describe('buildWorkspaceSidebarGroups', () => {
-    it('lists the Home and Library entries of the design, in order', () => {
-        const groups = buildWorkspaceSidebarGroups(null);
+function linksById(
+    nav: ReturnType<typeof buildWorkspaceSidebarNav>
+): Record<string, string> {
+    const links: Record<string, string> = {};
+    for (const item of allItems(nav)) {
+        links[item.id] = item.link.join('/');
+    }
+    return links;
+}
 
-        expect(groups.map((group) => group.id)).toEqual(['home', 'library']);
-        expect(groups[0].items.map((item) => item.id)).toEqual([
+describe('buildWorkspaceSidebarNav', () => {
+    it('lists the main links, the live channels link and Guardados, in order', () => {
+        const nav = buildWorkspaceSidebarNav(null);
+
+        expect(nav.main.map((item) => item.id)).toEqual([
             'home',
-            'new-popular',
-            'tv-shows',
             'movies',
+            'tv-shows',
+            'new-popular',
+            'countries',
+        ]);
+        expect(nav.allChannels.id).toBe('all-channels');
+        expect(nav.saved.map((item) => item.id)).toEqual([
             'my-list',
-            'languages',
-        ]);
-        expect(groups[1].items.map((item) => item.id)).toEqual([
-            'recently-added',
             'watch-later',
+            'recently-added',
             'downloads',
-            'account',
-            'settings',
         ]);
+        expect(nav.settings.id).toBe('settings');
     });
 
     it('browses the active Xtream source', () => {
         const links = linksById(
-            buildWorkspaceSidebarGroups({
+            buildWorkspaceSidebarNav({
                 provider: 'xtreams',
                 playlistId: 'p1',
             })
@@ -42,77 +51,80 @@ describe('buildWorkspaceSidebarGroups', () => {
 
         expect(links).toMatchObject({
             home: '/workspace/dashboard',
-            'new-popular': '/workspace/xtreams/p1/popular',
-            'tv-shows': '/workspace/xtreams/p1/series',
             movies: '/workspace/xtreams/p1/vod',
+            'tv-shows': '/workspace/xtreams/p1/series',
+            'new-popular': '/workspace/xtreams/p1/popular',
+            countries: '/workspace/countries',
+            'all-channels': '/workspace/xtreams/p1/live',
             'my-list': '/workspace/global-favorites',
-            languages: '/workspace/xtreams/p1/live',
-            'recently-added': '/workspace/xtreams/p1/recently-added',
             'watch-later': '/workspace/global-recent',
+            'recently-added': '/workspace/xtreams/p1/recently-added',
             downloads: '/workspace/downloads',
-            account: '/workspace/sources',
         });
     });
 
-    it('opens the Stalker live TV and M3U groups for "Browse by Languages"', () => {
+    it('opens the Stalker live TV and the M3U channel list for "All channels"', () => {
         expect(
-            linksById(
-                buildWorkspaceSidebarGroups({
-                    provider: 'stalker',
-                    playlistId: 's1',
-                })
-            ).languages
+            buildWorkspaceSidebarNav({
+                provider: 'stalker',
+                playlistId: 's1',
+            }).allChannels.link.join('/')
         ).toBe('/workspace/stalker/s1/itv');
         expect(
-            linksById(
-                buildWorkspaceSidebarGroups({
-                    provider: 'playlists',
-                    playlistId: 'm1',
-                })
-            ).languages
-        ).toBe('/workspace/playlists/m1/groups');
+            buildWorkspaceSidebarNav({
+                provider: 'playlists',
+                playlistId: 'm1',
+            }).allChannels.link.join('/')
+        ).toBe('/workspace/playlists/m1/all');
     });
 
     it('sends catalog entries to the sources page without an active source', () => {
-        const links = linksById(buildWorkspaceSidebarGroups(null));
+        const links = linksById(buildWorkspaceSidebarNav(null));
 
         expect(links.movies).toBe('/workspace/sources');
         expect(links['tv-shows']).toBe('/workspace/sources');
+        expect(links['all-channels']).toBe('/workspace/sources');
         expect(links['recently-added']).toBe('/workspace/global-recent');
+    });
+
+    it('opens Settings on its sources section, as "My Account" did', () => {
+        const { settings } = buildWorkspaceSidebarNav(null);
+
+        expect(settings.link).toEqual(SIDEBAR_SETTINGS_PATH);
+        expect(settings.link.join('/')).toBe('/workspace/settings/sources');
+        // Lit on every settings page by the shell, not by this one link.
+        expect(settings.highlights).toBe(false);
     });
 
     it('lights up only the entry that owns a shared page', () => {
         const highlighting = (
-            groups: ReturnType<typeof buildWorkspaceSidebarGroups>
+            nav: ReturnType<typeof buildWorkspaceSidebarNav>
         ) =>
-            groups
-                .flatMap((group) => group.items)
+            allItems(nav)
                 .filter((item) => item.highlights)
                 .map((item) => item.id);
 
         // Without a source, the catalog entries all open the sources page
-        // (My Account's) and Recently Added opens Watch Later's.
-        expect(highlighting(buildWorkspaceSidebarGroups(null))).toEqual([
+        // and Recently Added opens Watch Later's.
+        expect(highlighting(buildWorkspaceSidebarNav(null))).toEqual([
             'home',
+            'countries',
             'my-list',
             'watch-later',
             'downloads',
-            'account',
-            'settings',
         ]);
         expect(
             highlighting(
-                buildWorkspaceSidebarGroups({
+                buildWorkspaceSidebarNav({
                     provider: 'xtreams',
                     playlistId: 'p1',
                 })
             )
-        ).toHaveLength(11);
+        ).toHaveLength(10);
     });
 
     it('marks only Home as an exact match', () => {
-        const exact = buildWorkspaceSidebarGroups(null)
-            .flatMap((group) => group.items)
+        const exact = allItems(buildWorkspaceSidebarNav(null))
             .filter((item) => item.exact)
             .map((item) => item.id);
 

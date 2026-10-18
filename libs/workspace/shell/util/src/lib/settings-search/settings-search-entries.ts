@@ -27,6 +27,48 @@ function dashboardRail(
  */
 export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
     {
+        id: 'sources-active',
+        section: 'sources',
+        labelKey: 'SETTINGS.SOURCES_ACTIVE',
+        descriptionKey: 'SETTINGS.SOURCES_ACTIVE_DESCRIPTION',
+        keywords: ['source', 'playlist', 'switch', 'provider', 'account'],
+    },
+    {
+        id: 'sources-account',
+        section: 'sources',
+        labelKey: 'SETTINGS.SOURCES_ACCOUNT',
+        descriptionKey: 'SETTINGS.SOURCES_ACCOUNT_DESCRIPTION',
+        keywords: ['account', 'expiry', 'expiration', 'xtream', 'stalker'],
+    },
+    {
+        id: 'sources-add',
+        section: 'sources',
+        labelKey: 'SETTINGS.SOURCES_ADD',
+        descriptionKey: 'SETTINGS.SOURCES_ADD_DESCRIPTION',
+        keywords: ['add', 'playlist', 'source', 'm3u', 'xtream', 'stalker'],
+    },
+    {
+        id: 'sources-manage',
+        section: 'sources',
+        labelKey: 'SETTINGS.SOURCES_MANAGE',
+        descriptionKey: 'SETTINGS.SOURCES_MANAGE_DESCRIPTION',
+        keywords: ['sources', 'playlists', 'edit', 'refresh', 'remove'],
+    },
+    {
+        id: 'keyboard-shortcuts',
+        section: 'sources',
+        labelKey: 'SETTINGS.KEYBOARD_SHORTCUTS',
+        descriptionKey: 'SETTINGS.KEYBOARD_SHORTCUTS_DESCRIPTION',
+        keywords: ['keyboard', 'shortcuts', 'keys', 'hotkeys'],
+    },
+    {
+        id: 'parental-quick',
+        section: 'sources',
+        labelKey: 'SETTINGS.PARENTAL_QUICK',
+        descriptionKey: 'SETTINGS.PARENTAL_QUICK_DESCRIPTION',
+        keywords: ['parental', 'lock', 'pin', 'kids'],
+    },
+    {
         id: 'language',
         section: 'general',
         labelKey: 'SETTINGS.LANGUAGE',

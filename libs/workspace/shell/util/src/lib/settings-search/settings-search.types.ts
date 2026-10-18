@@ -23,7 +23,8 @@ export type SettingsSearchCapabilities = Readonly<
 >;
 
 /** Settings navigation groups; About has none and sits in the footer. */
-export type SettingsNavGroup = 'app' | 'library' | 'devices' | 'data';
+export type SettingsNavGroup =
+    'account' | 'app' | 'library' | 'devices' | 'data';
 
 /** One routed settings section page (`/workspace/settings/:id`). */
 export interface SettingsSectionDefinition {

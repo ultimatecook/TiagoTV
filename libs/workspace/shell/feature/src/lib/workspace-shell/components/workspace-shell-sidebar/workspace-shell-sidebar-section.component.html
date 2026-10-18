@@ -1,0 +1,198 @@
+<!-- Wide: the label discloses the rows below it. Folded: the section's icon
+     opens them in a flyout beside the rail. -->
+<h2 class="section__heading">
+    <button
+        type="button"
+        class="section__toggle"
+        cdkOverlayOrigin
+        #origin="cdkOverlayOrigin"
+        [attr.data-test-id]="'sidebar-section-' + sectionId()"
+        [attr.aria-expanded]="folded() ? flyoutOpen() : open()"
+        [attr.aria-controls]="folded() ? null : listId()"
+        [attr.aria-haspopup]="folded() ? 'dialog' : null"
+        [attr.title]="folded() ? (labelKey() | translate) : null"
+        (click)="toggle()"
+    >
+        <app-workspace-shell-sidebar-icon
+            class="section__icon"
+            [name]="glyph()"
+        />
+        <span class="section__label">{{ labelKey() | translate }}</span>
+        <app-workspace-shell-sidebar-icon
+            class="section__chevron"
+            [class.section__chevron--open]="open()"
+            name="chevron"
+        />
+    </button>
+</h2>
+
+@if (open() && !folded()) {
+    <ul class="section__list" [id]="listId()">
+        <ng-container
+            *ngTemplateOutlet="
+                entryRows;
+                context: { $implicit: inlineEntries() }
+            "
+        />
+        @if (hiddenCount() > 0) {
+            <li>
+                <button
+                    type="button"
+                    class="section__more"
+                    [attr.data-test-id]="'sidebar-more-' + sectionId()"
+                    [attr.aria-expanded]="showsAll()"
+                    (click)="toggleShowAll()"
+                >
+                    <app-workspace-shell-sidebar-icon
+                        name="chevron"
+                        [class.section__chevron--open]="showsAll()"
+                    />
+                    <span>{{
+                        showsAll()
+                            ? ('WORKSPACE.SIDEBAR.SHOW_LESS' | translate)
+                            : ('WORKSPACE.SIDEBAR.SHOW_MORE'
+                              | translate: { count: hiddenCount() })
+                    }}</span>
+                </button>
+            </li>
+        }
+        <ng-container *ngTemplateOutlet="itemRows" />
+    </ul>
+}
+
+<ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="origin"
+    [cdkConnectedOverlayOpen]="flyoutOpen()"
+    [cdkConnectedOverlayPositions]="positions"
+    [cdkConnectedOverlayHasBackdrop]="true"
+    [cdkConnectedOverlayPush]="true"
+    [cdkConnectedOverlayViewportMargin]="8"
+    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    cdkConnectedOverlayPanelClass="sidebar-flyout-pane"
+    (backdropClick)="closeFlyout()"
+    (detach)="closeFlyout()"
+    (overlayKeydown)="onFlyoutKeydown($event)"
+>
+    <div
+        class="sidebar-flyout"
+        role="dialog"
+        [attr.aria-label]="labelKey() | translate"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+    >
+        <p class="sidebar-flyout__title">{{ labelKey() | translate }}</p>
+        <ul class="section__list">
+            <ng-container
+                *ngTemplateOutlet="
+                    entryRows;
+                    context: { $implicit: entries() ?? [] }
+                "
+            />
+            <ng-container *ngTemplateOutlet="itemRows" />
+        </ul>
+    </div>
+</ng-template>
+
+<ng-template #entryRows let-entries>
+    @for (entry of entries; track entry.id) {
+        <li>
+            @if (entry.link) {
+                <a
+                    class="section__row"
+                    [routerLink]="entry.link"
+                    routerLinkActive="is-active"
+                    [attr.data-test-id]="
+                        'sidebar-' + sectionId() + '-' + entry.id
+                    "
+                    (click)="closeFlyout()"
+                >
+                    <ng-container
+                        *ngTemplateOutlet="chip; context: { $implicit: entry }"
+                    />
+                    <span class="section__row-label">{{ entry.label }}</span>
+                </a>
+            } @else {
+                <button
+                    type="button"
+                    class="section__row"
+                    [attr.data-test-id]="
+                        'sidebar-' + sectionId() + '-' + entry.id
+                    "
+                    (click)="runEntry(entry)"
+                >
+                    <ng-container
+                        *ngTemplateOutlet="chip; context: { $implicit: entry }"
+                    />
+                    <span class="section__row-label">{{ entry.label }}</span>
+                </button>
+            }
+        </li>
+    }
+    @if (isEmpty()) {
+        <li class="section__empty">{{ emptyKey() | translate }}</li>
+    }
+</ng-template>
+
+<ng-template #itemRows>
+    @for (item of items(); track item.id) {
+        <li>
+            <a
+                #rla="routerLinkActive"
+                class="section__row section__row--link"
+                [routerLink]="item.link"
+                routerLinkActive
+                [routerLinkActiveOptions]="{ exact: item.exact }"
+                [class.is-active]="item.highlights && rla.isActive"
+                [attr.aria-current]="
+                    item.highlights && rla.isActive ? 'page' : null
+                "
+                [attr.data-test-id]="'sidebar-link-' + item.id"
+                (click)="closeFlyout()"
+            >
+                <app-workspace-shell-sidebar-icon
+                    class="section__row-icon"
+                    [name]="item.icon"
+                    [filled]="item.highlights && rla.isActive"
+                />
+                <span class="section__row-label">{{
+                    item.labelKey | translate
+                }}</span>
+                @if (badges()[item.id]; as badge) {
+                    <span
+                        class="section__badge"
+                        [attr.data-test-id]="'sidebar-badge-' + item.id"
+                        >{{ badge }}</span
+                    >
+                }
+            </a>
+        </li>
+    }
+</ng-template>
+
+<ng-template #chip let-entry>
+    <span
+        class="section__chip"
+        aria-hidden="true"
+        [style.background]="entry.chip.background"
+    >
+        @if (entry.chip.logo) {
+            <img
+                class="section__chip-logo"
+                [class.section__chip-logo--white]="entry.chip.whiteLogo"
+                [style.--chip-logo-size]="entry.chip.logoSize"
+                [src]="entry.chip.logo"
+                alt=""
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                draggable="false"
+            />
+        } @else {
+            <span
+                class="section__chip-letter"
+                [style.color]="entry.chip.letterColor"
+                >{{ entry.chip.letter }}</span
+            >
+        }
+    </span>
+</ng-template>

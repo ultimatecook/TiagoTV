@@ -1,4 +1,4 @@
-<aside class="sidebar">
+<aside class="sidebar" [class.sidebar--folded]="navSidebar.isFolded()">
     <div class="sidebar__top">
         <a
             class="sidebar__brand"
@@ -17,7 +17,7 @@
             />
         </a>
         <!-- Hides the sidebar to browse with the whole window; the shell
-             shows the way back at the header's leading edge. -->
+             floats the way back after the macOS traffic lights. -->
         <button
             #hideButton
             type="button"
@@ -37,7 +37,7 @@
         </button>
     </div>
 
-    @if (!hasNoPlaylists()) {
+    @if (showSearch()) {
         <label class="sidebar__search" data-test-id="sidebar-search">
             <app-workspace-shell-sidebar-icon name="search" />
             <input
@@ -53,52 +53,197 @@
                 "
                 [attr.aria-label]="searchPlaceholder() | translate"
             />
+            <!-- The palette's pointer entry; ⌘K / Ctrl+K on a keyboard. -->
+            <button
+                type="button"
+                class="sidebar__command"
+                data-test-id="sidebar-command-palette"
+                (click)="openCommandPalette()"
+                [matTooltip]="
+                    'WORKSPACE.SHELL.COMMAND_PALETTE_SHORTCUT' | translate
+                "
+                [attr.aria-label]="
+                    'WORKSPACE.SHELL.OPEN_COMMAND_PALETTE' | translate
+                "
+            >
+                {{ commandShortcutLabel }}
+            </button>
         </label>
+        <!-- Folded: the field becomes an icon that opens it beside the rail. -->
+        <button
+            type="button"
+            class="sidebar__search-button"
+            data-test-id="sidebar-search-button"
+            cdkOverlayOrigin
+            #searchOrigin="cdkOverlayOrigin"
+            [attr.aria-expanded]="searchOpen()"
+            aria-haspopup="dialog"
+            [disabled]="!canUseSearch()"
+            [attr.title]="'WORKSPACE.SIDEBAR.SEARCH' | translate"
+            [attr.aria-label]="'WORKSPACE.SIDEBAR.SEARCH' | translate"
+            (click)="toggleSearch()"
+        >
+            <app-workspace-shell-sidebar-icon name="search" />
+        </button>
+        <ng-template
+            cdkConnectedOverlay
+            [cdkConnectedOverlayOrigin]="searchOrigin"
+            [cdkConnectedOverlayOpen]="searchOpen()"
+            [cdkConnectedOverlayPositions]="searchPositions"
+            [cdkConnectedOverlayHasBackdrop]="true"
+            [cdkConnectedOverlayPush]="true"
+            [cdkConnectedOverlayViewportMargin]="8"
+            cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+            (backdropClick)="closeSearch()"
+            (detach)="closeSearch()"
+            (overlayKeydown)="onSearchFlyoutKeydown($event)"
+        >
+            <div class="sidebar__search sidebar__search--flyout" role="search">
+                <app-workspace-shell-sidebar-icon name="search" />
+                <input
+                    #flyoutSearchInput
+                    type="search"
+                    spellcheck="false"
+                    data-test-id="sidebar-search-flyout-input"
+                    [value]="searchQuery()"
+                    (input)="onSearchInput($event)"
+                    (keydown.enter)="onSearchEnter($event)"
+                    [disabled]="!canUseSearch()"
+                    [placeholder]="searchPlaceholder() | translate"
+                    [attr.aria-label]="searchPlaceholder() | translate"
+                />
+                <button
+                    type="button"
+                    class="sidebar__command"
+                    (click)="openCommandPalette()"
+                    [attr.aria-label]="
+                        'WORKSPACE.SHELL.OPEN_COMMAND_PALETTE' | translate
+                    "
+                >
+                    {{ commandShortcutLabel }}
+                </button>
+            </div>
+        </ng-template>
     }
 
     <nav
         class="sidebar__nav"
         [attr.aria-label]="'WORKSPACE.SIDEBAR.NAV_LABEL' | translate"
     >
-        @for (group of groups(); track group.id) {
-            <section class="sidebar__group" [attr.data-group]="group.id">
-                <h2 class="sidebar__group-label">
-                    {{ group.labelKey | translate }}
-                </h2>
-                <ul class="sidebar__list">
-                    @for (item of group.items; track item.id) {
-                        <li>
-                            <a
-                                #rla="routerLinkActive"
-                                class="sidebar__link"
-                                [routerLink]="item.link"
-                                routerLinkActive
-                                [routerLinkActiveOptions]="{
-                                    exact: item.exact,
-                                }"
-                                [class.is-active]="
-                                    item.highlights && rla.isActive
-                                "
-                                [attr.aria-current]="
-                                    item.highlights && rla.isActive
-                                        ? 'page'
-                                        : null
-                                "
-                                [attr.title]="item.labelKey | translate"
-                                [attr.data-test-id]="'sidebar-link-' + item.id"
-                            >
-                                <app-workspace-shell-sidebar-icon
-                                    [name]="item.icon"
-                                    [filled]="item.highlights && rla.isActive"
-                                />
-                                <span class="sidebar__link-label">{{
-                                    item.labelKey | translate
-                                }}</span>
-                            </a>
-                        </li>
-                    }
-                </ul>
-            </section>
-        }
+        <ul class="sidebar__list">
+            @for (item of nav().main; track item.id) {
+                <li>
+                    <a
+                        #rla="routerLinkActive"
+                        class="sidebar__link"
+                        [routerLink]="item.link"
+                        routerLinkActive
+                        [routerLinkActiveOptions]="{ exact: item.exact }"
+                        [class.is-active]="item.highlights && rla.isActive"
+                        [attr.aria-current]="
+                            item.highlights && rla.isActive ? 'page' : null
+                        "
+                        [attr.title]="item.labelKey | translate"
+                        [attr.data-test-id]="'sidebar-link-' + item.id"
+                    >
+                        <app-workspace-shell-sidebar-icon
+                            [name]="item.icon"
+                            [filled]="item.highlights && rla.isActive"
+                        />
+                        <span class="sidebar__link-label">{{
+                            item.labelKey | translate
+                        }}</span>
+                    </a>
+                </li>
+            }
+        </ul>
+
+        <app-workspace-shell-sidebar-section
+            sectionId="platforms"
+            labelKey="WORKSPACE.SIDEBAR.GROUP_PLATFORMS"
+            glyph="platforms"
+            [entries]="catalog.platforms()"
+            [emptyKey]="platformsEmptyKey()"
+            (opened)="catalog.loadPlatforms()"
+        />
+        <app-workspace-shell-sidebar-section
+            sectionId="sports"
+            labelKey="WORKSPACE.SIDEBAR.GROUP_SPORTS"
+            glyph="trophy"
+            [entries]="catalog.sports"
+        />
+        <app-workspace-shell-sidebar-section
+            sectionId="live"
+            labelKey="WORKSPACE.SIDEBAR.GROUP_LIVE"
+            glyph="live"
+            [entries]="catalog.liveChannels()"
+            [items]="[nav().allChannels]"
+            (opened)="catalog.loadLiveChannels()"
+        />
+        <app-workspace-shell-sidebar-section
+            sectionId="saved"
+            labelKey="WORKSPACE.SIDEBAR.GROUP_SAVED"
+            glyph="bookmark"
+            [items]="nav().saved"
+            [badges]="downloadBadges()"
+        />
     </nav>
+
+    <!-- The account corner: the source switcher (⌘P) and Ajustes, where
+         sources, shortcuts and the parental lock live too. Hidden, the
+         sidebar leaves the switcher to the shortcut's fallback. -->
+    <div class="sidebar__footer">
+        @if (!navSidebar.collapsed()) {
+            <app-playlist-switcher
+                class="sidebar__switcher"
+                [currentTitle]="playlistTitle()"
+                [subtitle]="playlistSubtitle()"
+                (accountInfoForPlaylistRequested)="
+                    accountInfoForPlaylistRequested.emit($event)
+                "
+                (addPlaylistRequested)="addPlaylistRequested.emit()"
+            />
+        }
+        <div class="sidebar__footer-row">
+            <a
+                class="sidebar__link sidebar__link--settings"
+                [routerLink]="nav().settings.link"
+                [class.is-active]="isSettingsRoute()"
+                [attr.aria-current]="isSettingsRoute() ? 'page' : null"
+                [attr.title]="nav().settings.labelKey | translate"
+                data-test-id="sidebar-link-settings"
+            >
+                <app-workspace-shell-sidebar-icon
+                    [name]="nav().settings.icon"
+                />
+                <span class="sidebar__link-label">{{
+                    nav().settings.labelKey | translate
+                }}</span>
+            </a>
+            @if (parentalLockState() !== 'off') {
+                @let lockKey =
+                    parentalLockState() === 'locked'
+                        ? 'PARENTAL_LOCK.HEADER_UNLOCK'
+                        : 'PARENTAL_LOCK.HEADER_LOCK';
+                <button
+                    type="button"
+                    class="sidebar__lock"
+                    data-test-id="header-parental-lock"
+                    [class.is-active]="parentalLockState() === 'locked'"
+                    [attr.aria-pressed]="parentalLockState() === 'locked'"
+                    [matTooltip]="lockKey | translate"
+                    [attr.aria-label]="lockKey | translate"
+                    (click)="parentalLockToggleRequested.emit()"
+                >
+                    <app-workspace-shell-sidebar-icon
+                        [name]="
+                            parentalLockState() === 'locked'
+                                ? 'lock'
+                                : 'lock-open'
+                        "
+                    />
+                </button>
+            }
+        </div>
+    </div>
 </aside>

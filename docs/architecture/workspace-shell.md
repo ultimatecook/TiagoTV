@@ -10,8 +10,10 @@ Related:
 ## Summary
 
 - `/workspace` is the primary app surface.
-- `WorkspaceShellComponent` owns the persistent frame: rail, header, optional
-  context panel, content outlet, and external playback footer.
+- `WorkspaceShellComponent` owns the persistent frame: the TiagoTV sidebar,
+  the floating page controls, optional context panel, content outlet, and
+  external playback footer. There is no header bar: the content reaches the
+  window's top (see [Shell Structure](#shell-structure)).
 - Descendant workspace pages inherit `layout = 'workspace'` from the
   `/workspace` root route.
 - Provider route trees now bootstrap through route-scoped session providers
@@ -53,7 +55,8 @@ Current workspace routes:
 9. `/workspace/downloads`
 10. `/workspace/settings/:section` (`/workspace/settings` redirects to
     `general`; the settings context panel links each section page; sections:
-    `general`, `playback`, `epg`, `dashboard`, `remote-control`, `tmdb`,
+    `sources` (TiagoTV: sources & accounts, shortcuts, quick parental
+    lock), `general`, `playback`, `epg`, `dashboard`, `remote-control`, `tmdb`,
     `parental` — see [parental lock](parental-lock.md) — `backup`, `reset`,
     `about`)
 11. `/workspace/xtreams/:id/...`
@@ -67,8 +70,8 @@ Provider route integration:
 
 1. Every routed view renders inside the workspace shell (the only top-level
    paths outside `/workspace` are redirects), so views keep no standalone
-   layout branches: the shell header owns search, Back and the playlist
-   switcher.
+   layout branches: the shell sidebar owns search and the source switcher,
+   and the floating page controls own Back.
 2. Xtream and Stalker parent routes attach route-scoped session providers that
    bootstrap the active playlist, sync provider section state, and clean up
    provider-local state when the route is destroyed.
@@ -84,27 +87,41 @@ Provider route integration:
 
 The shell is intentionally split into four persistent regions:
 
-1. Left rail:
-    1. Static workspace links for dashboard, sources, global favorites, and
-       recently viewed. The routed global-search rail link is Electron-only
-       because its data source is the SQLite worker bridge.
-    2. Provider-aware context links derived from the active or current playlist.
-    3. Settings remains a persistent footer shortcut in the rail. In
-       [server storage mode](pwa-self-hosted.md#server-storage-mode) a server
-       status shortcut sits above it: its dot shows online, offline or
-       sign-in needed, and it opens Settings → Server.
-    4. No brand mark: it only repeated the first workspace link (Dashboard,
-       or Sources when the dashboard is off).
-2. Top header:
-    1. Leading Back slot: the current page's registered Back, else browser
-       history while an in-app previous page exists, else nothing. The mouse
-       Back button, Alt+← / Cmd+[ and the Electron window gestures run it.
-       See [Header Back](#header-back).
-    2. Playlist switcher.
-    3. Route-aware search input and command palette trigger.
-    4. Add source action.
-    5. Optional playlist refresh and route-specific shortcut actions.
-    6. Downloads shortcut in Electron.
+1. Sidebar (`components/workspace-shell-sidebar/`, TiagoTV):
+    1. Greeting and the hide control (⌃⌘S / Ctrl+Alt+S; remembered under
+       `tiagotv:nav-sidebar-hidden`), then the search field with the command
+       palette's `⌘K` chip.
+    2. Main links: Home, Movies, Series, New & Popular and By country
+       (`/workspace/countries`), built by `buildWorkspaceSidebarNav()` for the
+       active source.
+    3. Collapsible sections with a disclosure chevron, open or closed as left
+       (`tiagotv:sidebar-sections`): Platforms (the platforms the Xtream
+       source carries, from `PlatformsCatalogService`), Sports (the Home's
+       competitions), Live channels (the always-on brands the source carries,
+       from `SportsCatalogService`; a row plays the brand's main feed, and
+       "All channels" opens the live TV view) and Saved (My List, Watch
+       Later, Recently Added, Downloads with the active-downloads badge).
+       `WorkspaceSidebarCatalogService` adapts the dashboard feature's
+       catalogs to rows; platforms and channels load when their section
+       opens. Long lists show five rows and "Show N more".
+    4. Footer: the source switcher (`app-playlist-switcher`, ⌘P / Ctrl+P;
+       with the sidebar hidden, the shortcut shows it first), Settings
+       (opened on Sources & accounts) and, while the parental lock is on,
+       its lock/unlock toggle.
+    5. Folded to icons (≤1100 px) the search and each section are an icon
+       that opens a flyout (CDK connected overlay, focus trapped, Escape
+       closes); at phone width (≤640 px) the sidebar is a scrolling strip
+       above the content.
+2. Floating page controls (`components/workspace-shell-page-controls/`):
+   round glass buttons over the body's top edge, each only while the page
+   offers it. Top-left: "show menu" while the sidebar is hidden, the page's
+   Back (see [Header Back](#header-back)) and, at phone width, the context
+   drawer's toggle. Top-right: the live channel list toggle and the page's
+   header shortcut (`WorkspaceHeaderContextService`). With a leading control
+   the context panel's content, or a single-pane page, starts 48 px lower
+   (`--workspace-leading-clearance`) and scrolls under it; a streaming
+   platform's pages keep their billboard at the top. At phone width the
+   body keeps a 54 px row for the controls when the page has any.
 3. Main body:
     1. Optional left context panel.
     2. Main router outlet content. In server storage mode an offline banner
@@ -112,6 +129,13 @@ The shell is intentionally split into four persistent regions:
        the scroller, so full-height pages keep their height.
 4. Optional footer:
     1. External playback session bar when a docked session is visible.
+
+What the removed header held now lives in the sidebar and in Settings →
+Sources & accounts (`/workspace/settings/sources`): switching, adding and
+managing sources, account details, the keyboard shortcuts sheet and the
+quick parental lock. That page reaches the shell through
+`WORKSPACE_SHELL_COMMANDS` (`@iptvnator/workspace/shell/util`), which the
+shell component provides.
 
 ### Content surface corner
 
@@ -136,10 +160,9 @@ cannot pass on a page with nothing to clip.
 ### Layout slides
 
 When a route change adds or removes the context panel, the content frame
-moves by the panel's width (323 px on desktop), and when Back or the phone
-drawer toggle appears or leaves, the header controls after it move by the
-slot's width (44 px). Both happen in the frame that swaps the page, so they
-used to be one jump: a layout shift of 0.233 in the open-source journey,
+moves by the panel's width (323 px on desktop). It happens in the frame
+that swaps the page, so it used to be one jump: a layout shift of 0.233 in
+the open-source journey,
 0.222 of it the content frame (see
 [performance journeys](./performance-journeys.md#j2-open-source-open-a-source-to-a-browsable-list)).
 
@@ -149,15 +172,13 @@ width transition. The new layout applies at once; each target starts
 translated back to the position it had and animates its transform to none
 (FLIP), so nothing waits for the animation and Chromium records no layout
 shift for a transform. The shell's `.workspace-body` slides
-`.workspace-content-frame` when `showContextPanel` changes; the header slides
-the drawer toggle, switcher, search and action groups when its leading
-navigation (Back, drawer toggle) changes.
+`.workspace-content-frame` when `showContextPanel` changes. (The removed
+header also slid its controls when Back appeared; the floating controls
+move nothing.)
 
 1. **Previous positions.** `offsetLeft` values, which ignore transforms, are
    recorded after every render in which the slide key or the record key
-   changed (the header's record key covers the other inputs that move its
-   controls: settings route, no playlists, parental lock, shortcuts) and
-   when the host or a target resizes (window resize, a context panel folding
+   changed and when the host or a target resizes (window resize, a context panel folding
    or being dragged wider). A slide therefore starts where the target was
    last laid out, and a target that has no recorded position or did not move
    is left alone.
@@ -192,7 +213,7 @@ services:
 1. `WorkspaceShellRouteStateService` owns current route parsing, rail links,
    context-panel state, dashboard startup preference, and playlist source
    signals.
-2. `WorkspaceShellSearchService` owns the route-aware header search capability
+2. `WorkspaceShellSearchService` owns the route-aware sidebar search capability
    and public search actions.
 3. `WorkspaceShellSearchSyncService` owns the search query signals, debounced
    application, provider-store synchronization, and query-param sync.
@@ -250,15 +271,17 @@ removal in the same way, so a routed page must not carry one.
 
 ## Header Back
 
-The header's leading slot is the workspace's one page-level Back. Pages do not
+There is no header bar any more: the floating page controls' leading slot
+is the workspace's one page-level Back. Pages do not
 render an arrow of their own: they register a `WorkspaceBackTarget`
 (`@iptvnator/portal/shared/util`) with `WorkspaceBackNavigationService`
 (`@iptvnator/portal/shared/data-access`), normally through
 `registerWorkspaceBack()`, which registers for the calling component's
 lifetime while its optional `available` predicate holds. The newest
 registration wins, and each release removes only its own target. The button
-(`data-test-id="workspace-header-back"`) sits beside the macOS traffic lights,
-never scrolls, and has Electron `no-drag` hit testing. A target supplies its
+(`data-test-id="workspace-header-back"`) floats at the body's top-left (after
+"show menu" while the sidebar is hidden), never scrolls, and has Electron
+`no-drag` hit testing. Home hides it: its hero is the top of the app. A target supplies its
 label (else the translated "Back"), whether Escape on the page runs it, and
 `run()`.
 
@@ -272,7 +295,7 @@ label (else the translated "Back"), whether Escape on the page runs it, and
 Detail-page semantics (Escape, browse and watch) are in
 [Portal Detail Navigation](./portal-detail-navigation.md#detail-scroll-and-focus).
 
-**History fallback.** Without a registration, the header shows Back while the
+**History fallback.** Without a registration, the controls show Back while the
 previous history entry is an in-app one, and runs `Location.back()`. The
 service reads that from the Navigation API: the previous entry must be
 same-document (`NavigationHistoryEntry.sameDocument`), so the router pushed it
@@ -323,11 +346,11 @@ history entries, so Forward would skip them.
 **Platform gestures.** The mouse Back button, Alt+← (Cmd+[ on macOS) and, in
 Electron, the window's `app-command` `browser-backward` (Windows and Linux:
 mouse Back buttons and the Browser Back key) and trackpad `swipe` left (macOS)
-run the same action as the header button, through
+run the same action as the Back button, through
 `WorkspaceBackGesturesService` (shell-provided). Each gesture has one of
 three results (`WorkspaceBackGestureResult`):
 
-- `back`: the header has a target and nothing sits above the page, so
+- `back`: the page controls have a target and nothing sits above the page, so
   `WorkspaceBackNavigationService.goBack()` runs. "Above the page" is document
   fullscreen (a fullscreen player), an open phone context drawer, a showing
   CDK backdrop, or a visible `[role="dialog"]`, `[role="alertdialog"]` or
@@ -335,7 +358,7 @@ three results (`WorkspaceBackGestureResult`):
 - `blocked`: something sits above the page. Nothing navigates, and the
   gesture is still swallowed, because browser Back would navigate under the
   dialog (which then closes) or out of the fullscreen player.
-- `none`: the header has no Back. The gesture stays the browser's: in the PWA
+- `none`: the page controls have no Back. The gesture stays the browser's: in the PWA
   it may leave the app, as browser Back does.
 
 Unless the result is `none`, the browser's default is prevented (the mouse
@@ -399,7 +422,7 @@ switcher. The platform gestures above and browser Back still work there.
 
 1. Downloads offline and recording detail error states keep their labelled
    "Back to Downloads" button beside Retry or Remove. It is the error state's
-   recovery action, not page chrome; the header shows the same Back.
+   recovery action, not page chrome; the page controls show the same Back.
 2. Back controls internal to a surface, which leave a panel rather than the
    page: the Embedded MPV dock panel and the alternative-sources panel inside
    the VOD "…" menu.
@@ -462,12 +485,12 @@ Search is shell-owned and route-aware:
 2. Enabled on sources routes.
 3. Enabled for `/workspace/search`, which is the Electron-only routed
    global-search view. `Ctrl/Cmd+F` in Electron opens this route and
-   focuses/selects the header search input instead of opening a fullscreen
+   focuses/selects the sidebar search input (its flyout when folded) instead of opening a fullscreen
    dialog.
 4. Enabled for supported Xtream and Stalker content/search views.
 5. Placeholder text and search handling vary by provider and section.
 6. Input changes are debounced before route/store updates are applied.
-7. Global search uses the header input as its primary input and writes the
+7. Global search uses the sidebar search input as its primary input and writes the
    search phrase to the `q` query parameter, so history/back-forward behavior
    matches the rest of the workspace.
 8. The URL is authoritative for the search box only when it carries search
@@ -538,7 +561,7 @@ Command palette behavior is shell-owned but view-extensible:
 
 ### Settings search
 
-Settings rows are searchable from the header search on `/workspace/settings`
+Settings rows are searchable from the sidebar search on `/workspace/settings`
 and from the command palette. Both use the same index and ranking.
 
 1. The index is `SETTINGS_SEARCH_ENTRIES` in
@@ -567,7 +590,7 @@ and from the command palette. Both use the same index and ranking.
    section page and the settings context panel shows per-section match
    counts, muting sections without matches. The search box is shown on
    settings even when no playlist exists.
-6. Choosing a result, pressing `Enter` in the header search (best match), or
+6. Choosing a result, pressing `Enter` in the sidebar search (best match), or
    picking a settings command in the palette calls `reveal()`: it navigates
    to the section page without `q` (which clears the box) and the page
    scrolls to, focuses, and briefly highlights the row once the form is
@@ -578,7 +601,7 @@ and from the command palette. Both use the same index and ranking.
    the term first, because either `q` sync navigation would supersede the
    reveal navigation. Keyboard users keep a `:focus-visible` ring on the row
    after the highlight fades.
-7. `Ctrl/Cmd+F` on settings focuses the header search instead of opening
+7. `Ctrl/Cmd+F` on settings focuses the sidebar search instead of opening
    global search.
 
 Keyboard shortcut help is shell-owned:
@@ -608,30 +631,24 @@ The Electron window hides the native title bar on all desktop platforms
 1. macOS keeps the native traffic lights (`titleBarOverlay: true`,
    `trafficLightPosition` from `MACOS_TRAFFIC_LIGHTS_POSITION` in
    `@iptvnator/shared/interfaces`); the renderer draws no window buttons.
-   The lights sit in the header band (`--workspace-header-band`, 56 px) over
-   the rail and the header's leading padding. The macOS rail
-   (`.app-rail.is-macos`) starts its first link below the band: level with
-   the content area and the dashboard hero, with its hover surface clear of
-   the lights. The header's content starts 84 window pixels from the
-   window's left edge (60 px rail plus 24 px padding). macOS 26 ends the
-   lights at 76 (earlier releases at 68), which is where Back's left edge
-   sits at 100 % because of its 8 px pull-in.
+   TiagoTV has no header band: the lights sit over the sidebar's top strip,
+   which starts its content below them and moves the window
+   (`app-region: drag`). In the native glass window (`native-glass`) an
+   18 px transparent strip along the content's top edge
+   (`.workspace-drag-strip`) moves it too; the floating page controls stay
+   `no-drag`. With the sidebar hidden, the content starts below the lights
+   (`--traffic-lights-clear-y`) and that band, holding "show menu" and Back
+   after the lights (`--traffic-lights-clear-x`), is the drag region.
 
    App zoom (see "Zoom level") scales CSS pixels but not the lights. On
    macOS, `TrafficLightsClearanceDirective` on `.workspace-shell` reads the
    page zoom factor (`outerWidth / innerWidth`, refreshed on `resize`) and
    publishes the clearance in CSS pixels as `--traffic-lights-clear-x` (84
    window pixels) and `--traffic-lights-clear-y` (48: the lights' bottom
-   plus a gap). Zoomed out, the band grows to the vertical clearance, so the
-   lights never overlap the content area. The header's leading padding grows
-   to the horizontal clearance, less the rail column
-   (`--workspace-header-lights-inset`). At 100 % both match the default
-   layout. Off macOS nothing is published and the defaults apply. The phone
-   layout, which puts the rail in a row above the header, ignores the
-   inset. `window-controls.e2e.ts` ("macOS traffic lights") checks the rail
-   alignment, the first header control (the switcher on the first page,
-   which has no history fallback yet, then a detail page's Back) and the
-   content top at default and minimum zoom.
+   plus a gap), which the sidebar's top padding and the hidden-sidebar band
+   read. Off macOS nothing is published and the defaults apply.
+   `window-controls.e2e.ts` ("macOS traffic lights") was written for the
+   header band and needs updating to this layout.
 2. Windows and Linux use renderer-drawn window controls
    (`app-window-controls`, `libs/ui/components/src/lib/window-controls/`).
    `frame` is intentionally left untouched so native resize borders and

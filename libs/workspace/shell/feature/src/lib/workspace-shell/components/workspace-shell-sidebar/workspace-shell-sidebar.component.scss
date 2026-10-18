@@ -6,26 +6,22 @@
     min-height: 0;
 }
 
+// Top (greeting, search) and footer (source, Ajustes) stay; the links
+// between them scroll.
 .sidebar {
     display: flex;
     flex-direction: column;
-    gap: 26px;
+    gap: 14px;
     height: 100%;
     box-sizing: border-box;
     // Its own width, so hiding folds the column over it rather than
     // squeezing it (the shell clips it).
     width: var(--workspace-sidebar-width, 100%);
-    padding: 34px 22px 28px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: none;
+    padding: 26px 12px 12px;
+    overflow: hidden;
     // The hairline that splits the sidebar from the content, as on the glass.
     border-right: 1px solid var(--app-separator);
     app-region: no-drag;
-
-    &::-webkit-scrollbar {
-        display: none;
-    }
 }
 
 // macOS glass window: the sidebar runs up under the traffic lights, so it
@@ -33,7 +29,7 @@
 // title bar. A fullscreen window hides them.
 :host-context(.native-glass:not(.window-fullscreen)) .sidebar {
     position: relative;
-    padding-top: calc(var(--traffic-lights-clear-y, 48px) + 8px);
+    padding-top: calc(var(--traffic-lights-clear-y, 48px) + 4px);
 
     &::before {
         content: '';
@@ -44,26 +40,26 @@
     }
 }
 
-// The greeting, and the control that hides the sidebar in the padding
-// beside it.
+// The greeting, and the control that hides the sidebar beside it.
 .sidebar__top {
     display: flex;
+    flex: none;
     align-items: center;
     justify-content: space-between;
     gap: 2px;
-    margin-right: -14px;
 }
 
 .sidebar__brand {
     display: inline-flex;
-    align-self: flex-start;
     min-width: 0;
-    padding: 2px 4px 2px 8px;
+    padding: 0 4px 0 10px;
     border-radius: 8px;
     text-decoration: none;
 }
 
-.sidebar__hide {
+.sidebar__hide,
+.sidebar__lock,
+.sidebar__search-button {
     display: grid;
     flex: none;
     place-items: center;
@@ -85,6 +81,11 @@
         font-size: 20px;
     }
 
+    app-workspace-shell-sidebar-icon {
+        width: 18px;
+        height: 18px;
+    }
+
     &:hover {
         background: var(--app-hover-overlay);
         color: var(--app-heading-color);
@@ -95,21 +96,25 @@
     }
 }
 
+.sidebar__lock.is-active {
+    color: var(--app-selection-color);
+}
+
 // Expanded, the sidebar greets; folded, it shows only the 7.
 .sidebar__greeting {
+    overflow: hidden;
     color: var(--app-heading-color);
-    font-size: 21px;
+    font-size: 19px;
     font-weight: 600;
     letter-spacing: -0.01em;
-    line-height: 40px;
-    white-space: nowrap;
-    overflow: hidden;
+    line-height: 34px;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .sidebar__monogram {
     display: none;
-    height: 40px;
+    height: 36px;
     width: auto;
     filter: drop-shadow(0 2px 10px rgba(232, 38, 43, 0.12));
     -webkit-user-drag: none;
@@ -117,10 +122,11 @@
 
 .sidebar__search {
     display: flex;
+    flex: none;
     align-items: center;
-    gap: 10px;
-    height: 42px;
-    padding: 0 16px;
+    gap: 8px;
+    height: 36px;
+    padding: 0 6px 0 12px;
     border: 1px solid var(--app-search-border);
     border-radius: 999px;
     background: var(--app-search-bg);
@@ -131,8 +137,8 @@
         background-color 160ms ease;
 
     app-workspace-shell-sidebar-icon {
-        width: 19px;
-        height: 19px;
+        width: 17px;
+        height: 17px;
     }
 
     input {
@@ -143,7 +149,7 @@
         background: transparent;
         color: var(--app-heading-color);
         font: inherit;
-        font-size: 14.5px;
+        font-size: 13.5px;
 
         &::placeholder {
             color: var(--app-muted-color);
@@ -164,31 +170,68 @@
 
     &:focus-within {
         border-color: var(--app-focus-ring);
-        background: color-mix(in srgb, var(--app-search-bg) 100%, white 4%);
         box-shadow: 0 0 0 3px
             color-mix(in srgb, var(--app-focus-ring) 14%, transparent);
     }
 }
 
-.sidebar__nav {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
+// The folded search, beside the rail: the field at a usable width.
+.sidebar__search--flyout {
+    width: 300px;
+    height: 40px;
+    background: var(--app-widget-bg);
+    box-shadow: var(--app-popover-shadow);
 }
 
-.sidebar__group-label {
-    margin: 0 0 12px;
-    padding: 0 10px;
-    color: var(--app-body-color);
-    font-size: 17px;
-    font-weight: 500;
-    letter-spacing: 0.005em;
+.sidebar__command {
+    flex: none;
+    height: 22px;
+    padding: 0 7px;
+    border: 1px solid var(--app-search-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--app-muted-color);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--app-hover-overlay);
+        color: var(--app-heading-color);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 1px);
+    }
+}
+
+.sidebar__search-button {
+    display: none;
+}
+
+.sidebar__nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    // Room for the rows' focus rings inside the scroller's clip.
+    margin-inline: -4px;
+    padding: 0 4px 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 .sidebar__list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 1px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -197,12 +240,12 @@
 .sidebar__link {
     display: flex;
     align-items: center;
-    gap: 16px;
-    height: 44px;
-    padding: 0 14px;
-    border-radius: 10px;
+    gap: 12px;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 9px;
     color: color-mix(in srgb, var(--app-heading-color) 82%, transparent);
-    font-size: 15.5px;
+    font-size: 13.5px;
     font-weight: 500;
     text-decoration: none;
     white-space: nowrap;
@@ -210,9 +253,19 @@
         background-color 160ms ease,
         color 160ms ease;
 
+    app-workspace-shell-sidebar-icon {
+        width: 18px;
+        height: 18px;
+        margin-inline: 4px;
+    }
+
     &:hover {
         background: var(--app-hover-overlay);
         color: var(--app-heading-color);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: -2px);
     }
 
     &.is-active {
@@ -227,68 +280,146 @@
     text-overflow: ellipsis;
 }
 
-// Folded: icons only. The header carries the search from here down.
+.sidebar__footer {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 10px;
+    border-top: 1px solid var(--app-separator);
+}
+
+.sidebar__footer-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .sidebar__link {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+// The source switcher as the account row: quiet until hovered.
+.sidebar__switcher ::ng-deep .playlist-switcher-trigger {
+    height: 44px;
+    padding: 0 10px 0 6px;
+    border-radius: 10px;
+    background: transparent;
+
+    &:hover {
+        background: var(--app-hover-overlay);
+    }
+}
+
+// Folded: icons only; the search and the sections open beside the rail.
 @media (max-width: 1100px) {
     .sidebar {
         align-items: center;
-        gap: 22px;
-        padding: 24px 10px;
+        gap: 12px;
+        padding: 22px 8px 12px;
     }
 
     // The 7, the hide control under it.
     .sidebar__top {
         flex-direction: column;
-        gap: 10px;
-        margin-right: 0;
+        gap: 8px;
     }
 
     .sidebar__brand {
-        align-self: center;
-        padding-inline: 6px;
+        padding-inline: 4px;
     }
 
     .sidebar__greeting,
     .sidebar__search,
-    .sidebar__group-label,
     .sidebar__link-label {
         display: none;
     }
 
+    .sidebar__search--flyout {
+        display: flex;
+    }
+
     .sidebar__monogram {
         display: block;
-        height: 38px;
+    }
+
+    .sidebar__search-button {
+        display: grid;
+        width: 44px;
+        height: 40px;
+        border-radius: 10px;
+        color: color-mix(in srgb, var(--app-heading-color) 82%, transparent);
+
+        app-workspace-shell-sidebar-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        &[aria-expanded='true'] {
+            background: var(--app-selection-surface-strong);
+        }
     }
 
     .sidebar__nav {
-        gap: 18px;
-    }
-
-    .sidebar__group + .sidebar__group {
-        padding-top: 18px;
-        border-top: 1px solid var(--app-separator);
+        align-items: center;
+        gap: 6px;
+        width: 100%;
     }
 
     .sidebar__link {
         justify-content: center;
-        width: 46px;
-        height: 46px;
+        width: 44px;
+        height: 40px;
         padding: 0;
+
+        app-workspace-shell-sidebar-icon {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+        }
+    }
+
+    .sidebar__footer,
+    .sidebar__footer-row {
+        align-items: center;
+    }
+
+    .sidebar__footer {
+        width: 100%;
+    }
+
+    .sidebar__footer-row {
+        flex-direction: column;
+    }
+
+    // The switcher keeps only the source's tile.
+    .sidebar__switcher ::ng-deep .playlist-switcher-trigger {
+        justify-content: center;
+        width: 44px;
+        padding: 0;
+
+        .playlist-info,
+        .dropdown-icon {
+            display: none;
+        }
     }
 }
 
-// Phone: the sidebar becomes a scrolling strip of icons above the header.
+// Phone: the sidebar becomes a scrolling strip of icons above the content.
 @media (max-width: 640px) {
     .sidebar {
         width: 100%;
         flex-direction: row;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         height: 100%;
-        padding: 0 12px;
+        padding: 0 10px;
         overflow-x: auto;
         overflow-y: hidden;
         border-right: 0;
         border-bottom: 1px solid var(--app-separator);
+        scrollbar-width: none;
     }
 
     .sidebar__monogram {
@@ -301,23 +432,29 @@
     }
 
     .sidebar__nav,
-    .sidebar__list {
+    .sidebar__list,
+    .sidebar__footer,
+    .sidebar__footer-row {
         flex-direction: row;
     }
 
     .sidebar__nav {
-        gap: 12px;
+        flex: none;
+        width: auto;
+        margin: 0;
+        padding: 0;
+        overflow: visible;
     }
 
-    .sidebar__group + .sidebar__group {
-        padding-top: 0;
-        padding-left: 12px;
+    .sidebar__footer {
+        width: auto;
+        padding: 0 0 0 10px;
         border-top: 0;
         border-left: 1px solid var(--app-separator);
     }
 
-    .sidebar__link {
+    .sidebar__link,
+    .sidebar__search-button {
         width: 40px;
-        height: 40px;
     }
 }

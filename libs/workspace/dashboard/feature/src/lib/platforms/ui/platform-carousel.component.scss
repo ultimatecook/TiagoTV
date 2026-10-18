@@ -1,12 +1,24 @@
 @use '../../../../../../../ui/styles/focus-ring';
 
-// Prime Video's rounded hero carousel on navy (#0f171e), in Prime's blue
-// (#00a8e1). Each artwork layer rounds its own corners, so the frame clips
-// nothing while the slides crossfade.
+// The rounded hero carousel: Prime Video's on navy (#0f171e) in Prime's
+// blue (#00a8e1) here; Disney+'s and mitele's re-token it from the global
+// platform stylesheet. Each artwork layer rounds its own corners, so the
+// frame clips nothing while the slides crossfade.
 :host {
     --prime-navy: #0f171e;
     --prime-blue: #00a8e1;
     --carousel-radius: 8px;
+    --carousel-bg: #1a242f;
+    --carousel-height: clamp(330px, 33vw, 480px);
+    --carousel-scrim:
+        linear-gradient(
+            90deg,
+            var(--carousel-bg) 0%,
+            var(--carousel-bg) 28%,
+            color-mix(in srgb, var(--carousel-bg) 70%, transparent) 44%,
+            transparent 70%
+        ),
+        linear-gradient(180deg, transparent 60%, rgba(15, 23, 30, 0.6) 100%);
     display: block;
     min-width: 0;
 }
@@ -19,9 +31,9 @@
     position: relative;
     display: flex;
     align-items: center;
-    height: clamp(330px, 33vw, 480px);
+    height: var(--carousel-height);
     border-radius: var(--carousel-radius);
-    background: #1a242f;
+    background: var(--carousel-bg);
     box-shadow: 0 24px 50px -30px rgba(0, 0, 0, 0.9);
 }
 
@@ -64,15 +76,7 @@
     position: absolute;
     inset: 0;
     border-radius: var(--carousel-radius);
-    background:
-        linear-gradient(
-            90deg,
-            #1a242f 0%,
-            #1a242f 28%,
-            rgba(26, 36, 47, 0.7) 44%,
-            transparent 70%
-        ),
-        linear-gradient(180deg, transparent 60%, rgba(15, 23, 30, 0.6) 100%);
+    background: var(--carousel-scrim);
     pointer-events: none;
 }
 
@@ -173,6 +177,59 @@
     align-items: center;
     gap: 16px;
     margin-top: 6px;
+}
+
+// The labelled play button and "More info" of the other looks: white
+// and a translucent outline, recoloured per look.
+.carousel__cta,
+.carousel__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 48px;
+    padding: 0 24px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease;
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+.carousel__cta {
+    padding-left: 16px;
+    background: #fff;
+    color: #000;
+
+    mat-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 28px;
+        line-height: 28px;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.82);
+    }
+}
+
+.carousel__more {
+    border-color: rgba(255, 255, 255, 0.7);
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+
+    &:hover {
+        border-color: #fff;
+        background: rgba(255, 255, 255, 0.14);
+    }
 }
 
 // The round blue disc with the label beside it, Prime's "Play".
@@ -344,8 +401,8 @@
         background: linear-gradient(
             180deg,
             transparent 20%,
-            rgba(26, 36, 47, 0.85) 60%,
-            #1a242f 100%
+            color-mix(in srgb, var(--carousel-bg) 85%, transparent) 60%,
+            var(--carousel-bg) 100%
         );
     }
 

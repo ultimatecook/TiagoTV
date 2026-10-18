@@ -1,0 +1,120 @@
+@use '../../../../../../../../ui/styles/focus-ring';
+
+// A transparent layer over the content's top edge: only the buttons take
+// the pointer, the page under the rest stays clickable.
+:host {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: var(--page-controls-top, 14px) 16px 0
+        var(--page-controls-start, 16px);
+    pointer-events: none;
+}
+
+.page-controls__group {
+    display: flex;
+    gap: 8px;
+}
+
+// Round glass, as the mini-player and the Home's arrows.
+.page-control {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid var(--app-glass-border, rgba(255, 255, 255, 0.12));
+    border-radius: 50%;
+    background: var(--app-glass-pill-bg, rgba(28, 28, 27, 0.7));
+    color: var(--app-heading-color);
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    backdrop-filter: blur(24px) saturate(1.5);
+    box-shadow:
+        inset 0 1px 0 var(--app-glass-highlight, rgba(255, 255, 255, 0.08)),
+        0 6px 18px rgba(0, 0, 0, 0.35);
+    app-region: no-drag;
+    transition:
+        background-color 160ms ease,
+        transform 160ms ease;
+
+    mat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+    }
+
+    &:hover {
+        background: color-mix(
+            in srgb,
+            var(--app-heading-color) 16%,
+            rgba(28, 28, 27, 0.8)
+        );
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.5;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+
+    &.is-active {
+        color: var(--app-selection-color);
+    }
+}
+
+.header-back {
+    animation: page-control-enter 180ms ease;
+}
+
+@keyframes page-control-enter {
+    from {
+        opacity: 0;
+    }
+}
+
+// Above the phone breakpoint the context panel is always visible beside the
+// content, so its drawer toggle would open nothing.
+.context-drawer-toggle {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    :host {
+        padding: 10px 10px 0;
+    }
+
+    .context-drawer-toggle {
+        display: grid;
+    }
+
+    // The history fallback must not cost a list its only way into the
+    // drawer.
+    .header-back--yields {
+        display: none;
+    }
+
+    // The live rail is a bottom drawer with its own toggle on a phone.
+    .header-sidebar-toggle {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-control {
+        transition: none;
+    }
+
+    .header-back {
+        animation: none;
+    }
+}

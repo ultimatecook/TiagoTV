@@ -7,9 +7,6 @@ import {
     signal,
     ChangeDetectionStrategy,
 } from '@angular/core';
-import { MatIconButton } from '@angular/material/button';
-import { MatIcon } from '@angular/material/icon';
-import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { of, Subject } from 'rxjs';
 import { EmbeddedMpvOverlayVisibilityService } from '@iptvnator/ui/playback';
@@ -22,6 +19,7 @@ import {
     WorkspaceShellContextPanel,
 } from '@iptvnator/workspace/shell/util';
 import { LayoutSlideDirective } from './layout-slide.directive';
+import { WorkspaceShellPageControlsComponent } from './components/workspace-shell-page-controls/workspace-shell-page-controls.component';
 import { TrafficLightsClearanceDirective } from './traffic-lights-clearance.directive';
 import { WorkspaceShellComponent } from './workspace-shell.component';
 import { WorkspaceShellFacade } from './services/workspace-shell.facade';
@@ -48,56 +46,44 @@ class MockWorkspaceShellSidebarComponent {
     readonly canUseSearch = input(false);
     readonly searchPlaceholder = input('');
     readonly hasNoPlaylists = input(false);
+    readonly isSettingsRoute = input(false);
+    readonly activeDownloadsCount = input(0);
+    readonly playlistTitle = input('');
+    readonly playlistSubtitle = input('');
+    readonly parentalLockState = input<'off' | 'locked' | 'unlocked'>('off');
     readonly searchChanged = output<string>();
     readonly searchSubmitted = output<string>();
-    // Folded to icons: the sidebar search is hidden, the header's takes it.
-    focusSearchInput = jest.fn(() => false);
+    readonly commandPaletteRequested = output<void>();
+    readonly addPlaylistRequested = output<void>();
+    readonly accountInfoForPlaylistRequested = output<unknown>();
+    readonly parentalLockToggleRequested = output<void>();
+    focusSearchInput = jest.fn(() => true);
     containsSearchInput = jest.fn(() => false);
     focusHideButton = jest.fn();
 }
 
 @Component({
-    selector: 'app-workspace-shell-header',
+    selector: 'app-workspace-shell-page-controls',
     template: '',
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
 })
-class MockWorkspaceShellHeaderComponent {
+class MockWorkspaceShellPageControlsComponent {
     readonly backTarget = input<unknown>(null);
-    readonly playlistTitle = input('');
-    readonly playlistSubtitle = input('');
-    readonly searchQuery = input('');
-    readonly canUseSearch = input(false);
-    readonly searchPlaceholder = input('');
-    readonly searchScopeLabel = input('');
-    readonly searchStatusLabel = input('');
+    readonly hideBack = input(false);
     readonly headerShortcut = input<unknown>(null);
-    readonly isElectron = input(false);
-    readonly hasNoPlaylists = input(false);
-    readonly isDownloadsView = input(false);
-    readonly activeDownloadsCount = input(0);
-    readonly isSettingsRoute = input(false);
+    readonly headerSidebarToggle = input<unknown>(null);
     readonly showContextDrawerToggle = input(false);
     readonly isContextDrawerOpen = input(false);
     readonly contextDrawerToggleAriaKey = input('');
     readonly contextDrawerTooltipKey = input('');
-    readonly headerSidebarToggle = input<unknown>(null);
-    readonly parentalLockState = input<'off' | 'locked' | 'unlocked'>('off');
     readonly backRequested = output<void>();
-    readonly searchChanged = output<string>();
-    readonly searchSubmitted = output<string>();
-    readonly commandPaletteRequested = output<void>();
-    readonly shortcutsRequested = output<void>();
-    readonly addPlaylistRequested = output<void>();
-    readonly headerShortcutRequested = output<void>();
-    readonly downloadsRequested = output<void>();
-    readonly headerSidebarToggleRequested = output<void>();
-    readonly parentalLockToggleRequested = output<void>();
     readonly contextDrawerToggleRequested = output<void>();
+    readonly headerShortcutRequested = output<void>();
+    readonly headerSidebarToggleRequested = output<void>();
 
-    focusSearchInput = jest.fn();
-    containsSearchInput = jest.fn(() => false);
     focusContextDrawerToggle = jest.fn(() => true);
+    focusShowNavigation = jest.fn();
 }
 
 @Component({
@@ -272,7 +258,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropOverlayComponent,
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
-                        MockWorkspaceShellHeaderComponent,
+                        MockWorkspaceShellPageControlsComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
@@ -308,14 +294,22 @@ describe('WorkspaceShellComponent', () => {
         expect(
             fixture.nativeElement.querySelector('app-workspace-shell-sidebar')
         ).not.toBeNull();
+        // No header bar: the page's own controls float over the content.
         expect(
             fixture.nativeElement.querySelector('app-workspace-shell-header')
+        ).toBeNull();
+        expect(
+            fixture.nativeElement.querySelector(
+                'app-workspace-shell-page-controls'
+            )
         ).not.toBeNull();
-        const header = fixture.debugElement.query(
-            By.directive(MockWorkspaceShellHeaderComponent)
-        ).componentInstance as MockWorkspaceShellHeaderComponent;
-        expect(header.activeDownloadsCount()).toBe(3);
-        // macOS: the window and header read the traffic-light clearance.
+        const sidebar = fixture.debugElement.query(
+            By.directive(MockWorkspaceShellSidebarComponent)
+        ).componentInstance as MockWorkspaceShellSidebarComponent;
+        // The downloads badge and the source switcher moved to the sidebar.
+        expect(sidebar.activeDownloadsCount()).toBe(3);
+        expect(sidebar.playlistTitle()).toBe('Playlist A');
+        // macOS: the window and sidebar read the traffic-light clearance.
         expect(
             (
                 fixture.nativeElement.querySelector(
@@ -370,7 +364,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropOverlayComponent,
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
-                        MockWorkspaceShellHeaderComponent,
+                        MockWorkspaceShellPageControlsComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
@@ -418,7 +412,7 @@ describe('WorkspaceShellComponent', () => {
         ).not.toBeNull();
     });
 
-    it('opens keyboard shortcuts when the header requests them', async () => {
+    it('runs the actions the header used to hold from the sidebar', async () => {
         const facade = new MockWorkspaceShellFacade();
 
         await TestBed.configureTestingModule({
@@ -450,7 +444,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropOverlayComponent,
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
-                        MockWorkspaceShellHeaderComponent,
+                        MockWorkspaceShellPageControlsComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
@@ -481,19 +475,23 @@ describe('WorkspaceShellComponent', () => {
 
         const fixture = TestBed.createComponent(WorkspaceShellComponent);
         fixture.detectChanges();
-        const shortcutsService = fixture.debugElement.injector.get(
-            WorkspaceKeyboardShortcutsService
-        ) as unknown as MockWorkspaceKeyboardShortcutsService;
-        const header = fixture.debugElement.query(
-            By.directive(MockWorkspaceShellHeaderComponent)
-        ).componentInstance as MockWorkspaceShellHeaderComponent;
+        const sidebar = fixture.debugElement.query(
+            By.directive(MockWorkspaceShellSidebarComponent)
+        ).componentInstance as MockWorkspaceShellSidebarComponent;
+        const playlist = { _id: 'p1' };
 
-        header.shortcutsRequested.emit();
+        sidebar.commandPaletteRequested.emit();
+        sidebar.addPlaylistRequested.emit();
+        sidebar.accountInfoForPlaylistRequested.emit(playlist);
+        sidebar.parentalLockToggleRequested.emit();
 
-        expect(shortcutsService.openShortcutsDialog).toHaveBeenCalledTimes(1);
+        expect(facade.openCommandPalette).toHaveBeenCalledTimes(1);
+        expect(facade.openAddPlaylistDialog).toHaveBeenCalledTimes(1);
+        expect(facade.openAccountInfoFor).toHaveBeenCalledWith(playlist);
+        expect(facade.toggleParentalLock).toHaveBeenCalledTimes(1);
     });
 
-    it('opens the routed global search and focuses header search on Ctrl/Cmd+F', async () => {
+    it('opens the routed global search and focuses the sidebar search on Ctrl/Cmd+F', async () => {
         jest.useFakeTimers();
         const facade = new MockWorkspaceShellFacade();
 
@@ -526,7 +524,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropOverlayComponent,
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
-                        MockWorkspaceShellHeaderComponent,
+                        MockWorkspaceShellPageControlsComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
@@ -557,9 +555,9 @@ describe('WorkspaceShellComponent', () => {
 
         const fixture = TestBed.createComponent(WorkspaceShellComponent);
         fixture.detectChanges();
-        const header = fixture.debugElement.query(
-            By.directive(MockWorkspaceShellHeaderComponent)
-        ).componentInstance as MockWorkspaceShellHeaderComponent;
+        const sidebar = fixture.debugElement.query(
+            By.directive(MockWorkspaceShellSidebarComponent)
+        ).componentInstance as MockWorkspaceShellSidebarComponent;
         const event = new KeyboardEvent('keydown', {
             key: 'f',
             metaKey: true,
@@ -572,31 +570,30 @@ describe('WorkspaceShellComponent', () => {
 
         expect(event.defaultPrevented).toBe(true);
         expect(facade.openGlobalSearch).toHaveBeenCalledWith('');
-        expect(header.focusSearchInput).toHaveBeenCalledWith({ select: true });
-
-        // On a wide window the sidebar's search is the visible one and
-        // takes the shortcut; the header's copy is left alone.
-        const sidebar = fixture.debugElement.query(
-            By.directive(MockWorkspaceShellSidebarComponent)
-        ).componentInstance as MockWorkspaceShellSidebarComponent;
-        sidebar.focusSearchInput.mockReturnValueOnce(true);
-        header.focusSearchInput.mockClear();
-        document.dispatchEvent(
-            new KeyboardEvent('keydown', {
-                key: 'f',
-                metaKey: true,
-                bubbles: true,
-                cancelable: true,
-            })
-        );
-        jest.runOnlyPendingTimers();
+        // The sidebar's field, or (folded to icons) its search flyout.
         expect(sidebar.focusSearchInput).toHaveBeenCalledWith({ select: true });
-        expect(header.focusSearchInput).not.toHaveBeenCalled();
 
-        // On settings the header search is the settings search, so find
-        // focuses it in place instead of leaving for global search.
+        // While typing in the search itself, find stays the shell's.
+        sidebar.containsSearchInput.mockReturnValueOnce(true);
+        sidebar.focusSearchInput.mockClear();
+        const field = document.createElement('input');
+        document.body.appendChild(field);
+        const fromField = new KeyboardEvent('keydown', {
+            key: 'f',
+            metaKey: true,
+            bubbles: true,
+            cancelable: true,
+        });
+        field.dispatchEvent(fromField);
+        field.remove();
+        jest.runOnlyPendingTimers();
+        expect(fromField.defaultPrevented).toBe(true);
+        expect(sidebar.focusSearchInput).toHaveBeenCalledWith({ select: true });
+
+        // On settings the search is the settings search, so find focuses it
+        // in place instead of leaving for global search.
         facade.openGlobalSearch.mockClear();
-        header.focusSearchInput.mockClear();
+        sidebar.focusSearchInput.mockClear();
         facade.isSettingsRoute.set(true);
         const settingsEvent = new KeyboardEvent('keydown', {
             key: 'f',
@@ -610,7 +607,7 @@ describe('WorkspaceShellComponent', () => {
 
         expect(settingsEvent.defaultPrevented).toBe(true);
         expect(facade.openGlobalSearch).not.toHaveBeenCalled();
-        expect(header.focusSearchInput).toHaveBeenCalledWith({ select: true });
+        expect(sidebar.focusSearchInput).toHaveBeenCalledWith({ select: true });
         jest.useRealTimers();
     });
 
@@ -647,15 +644,13 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropOverlayComponent,
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
-                        MockWorkspaceShellHeaderComponent,
+                        // The real controls: "show menu" lives there.
+                        WorkspaceShellPageControlsComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
                         TrafficLightsClearanceDirective,
                         LayoutSlideDirective,
-                        MatIcon,
-                        MatIconButton,
-                        MatTooltip,
                     ],
                     providers: [
                         {
@@ -760,7 +755,7 @@ describe('WorkspaceShellComponent', () => {
                         MockPlaylistDropOverlayComponent,
                         MockPlaylistDropZoneDirective,
                         MockWorkspaceShellContextSidebarComponent,
-                        MockWorkspaceShellHeaderComponent,
+                        MockWorkspaceShellPageControlsComponent,
                         MockWorkspaceShellImportOverlayComponent,
                         MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
@@ -804,15 +799,15 @@ describe('WorkspaceShellComponent', () => {
         expect(backdrop()).toBeNull();
         expect(sidebar().classList.contains('drawer-open')).toBe(false);
 
-        const header = fixture.debugElement.query(
-            By.directive(MockWorkspaceShellHeaderComponent)
-        ).componentInstance as MockWorkspaceShellHeaderComponent;
-        expect(header.showContextDrawerToggle()).toBe(true);
+        const controls = fixture.debugElement.query(
+            By.directive(MockWorkspaceShellPageControlsComponent)
+        ).componentInstance as MockWorkspaceShellPageControlsComponent;
+        expect(controls.showContextDrawerToggle()).toBe(true);
 
-        header.contextDrawerToggleRequested.emit();
+        controls.contextDrawerToggleRequested.emit();
         fixture.detectChanges();
         expect(sidebar().classList.contains('drawer-open')).toBe(true);
-        expect(header.isContextDrawerOpen()).toBe(true);
+        expect(controls.isContextDrawerOpen()).toBe(true);
         // Assistive technology must hear a named modal surface open —
         // dialog semantics exist only while the drawer is open.
         expect(sidebar().getAttribute('role')).toBe('dialog');
@@ -829,7 +824,7 @@ describe('WorkspaceShellComponent', () => {
         ).toBe(true);
         expect(
             fixture.nativeElement
-                .querySelector('app-workspace-shell-header')
+                .querySelector('app-workspace-shell-page-controls')
                 .hasAttribute('inert')
         ).toBe(true);
         expect(
@@ -852,11 +847,12 @@ describe('WorkspaceShellComponent', () => {
         ).toBe(false);
         // Closing must hand focus back to the toggle: the closed drawer is
         // visibility: hidden, so focus left inside it would drop to <body>.
-        // The restore is deferred past the render that un-inerts the header.
+        // The restore is deferred past the render that un-inerts the
+        // controls.
         jest.runOnlyPendingTimers();
-        expect(header.focusContextDrawerToggle).toHaveBeenCalled();
+        expect(controls.focusContextDrawerToggle).toHaveBeenCalled();
 
-        header.contextDrawerToggleRequested.emit();
+        controls.contextDrawerToggleRequested.emit();
         fixture.detectChanges();
         expect(sidebar().classList.contains('drawer-open')).toBe(true);
 
@@ -884,7 +880,7 @@ describe('WorkspaceShellComponent', () => {
 
         // Ctrl/Cmd+F must not navigate to global search while the drawer is
         // modal — it would act on the obscured, inert background.
-        header.contextDrawerToggleRequested.emit();
+        controls.contextDrawerToggleRequested.emit();
         fixture.detectChanges();
         document.dispatchEvent(
             new KeyboardEvent('keydown', {

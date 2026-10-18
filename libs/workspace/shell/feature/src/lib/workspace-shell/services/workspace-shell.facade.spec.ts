@@ -1,4 +1,8 @@
 import { PlaylistSwitcherOpenService } from '@iptvnator/playlist/shared/ui';
+import {
+    NAV_SIDEBAR_HIDDEN_STORAGE_KEY,
+    WorkspaceNavSidebarService,
+} from './workspace-nav-sidebar.service';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
@@ -60,6 +64,9 @@ class MockXtreamStore {
         category_name?: string;
         name?: string;
     } | null>(null);
+    readonly getDisplayedCategoriesBySelectedType = signal<
+        Array<{ category_name?: string; name?: string }>
+    >([]);
     readonly selectedCategoryId = signal<number | null>(null);
     readonly vodStreams = signal<unknown[]>([{ id: 1 }]);
     readonly liveStreams = signal<unknown[]>([{ id: 2 }]);
@@ -710,6 +717,14 @@ describe('WorkspaceShellFacade', () => {
         expect(facade.searchScopeLabel()).toBe(
             'WORKSPACE.SHELL.RAIL_MOVIES / Drama'
         );
+
+        // A provider name reads as the rail shows it.
+        xtreamStore.getSelectedCategory.set({
+            category_name: '|ES| ✪ COMEDIA',
+        });
+        expect(facade.searchScopeLabel()).toBe(
+            'WORKSPACE.SHELL.RAIL_MOVIES / COMEDIA'
+        );
     });
 
     it('applies q to Xtream category search on vod routes', () => {
@@ -1143,7 +1158,8 @@ describe('WorkspaceShellFacade', () => {
             return event;
         };
 
-        // Settings hides the switcher: the key keeps its default there.
+        // No switcher on screen (and no hidden sidebar to show): the key
+        // keeps its default.
         expect(press().defaultPrevented).toBe(false);
         expect(opened).not.toHaveBeenCalled();
 
@@ -1164,6 +1180,22 @@ describe('WorkspaceShellFacade', () => {
 
         unregister();
         subscription.unsubscribe();
+    });
+
+    it('shows the hidden sidebar on Ctrl/Cmd+P: its foot holds the switcher', () => {
+        const navSidebar = TestBed.inject(WorkspaceNavSidebarService);
+        navSidebar.hide();
+        const event = new KeyboardEvent('keydown', {
+            key: 'p',
+            ctrlKey: true,
+            cancelable: true,
+        });
+
+        document.dispatchEvent(event);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(navSidebar.hidden()).toBe(false);
+        localStorage.removeItem(NAV_SIDEBAR_HIDDEN_STORAGE_KEY);
     });
 
     it('records the executed command id after the palette closes with a selection', () => {

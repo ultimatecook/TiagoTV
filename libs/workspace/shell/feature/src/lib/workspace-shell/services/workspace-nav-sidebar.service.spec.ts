@@ -90,13 +90,16 @@ describe('WorkspaceNavSidebarService', () => {
     });
 
     it('keeps the phone strip whatever the choice', () => {
-        let onChange: ((event: { matches: boolean }) => void) | undefined;
-        const matchMedia = jest.fn(() => ({
+        const listeners = new Map<
+            string,
+            (event: { matches: boolean }) => void
+        >();
+        const matchMedia = jest.fn((query: string) => ({
             matches: true,
             addEventListener: (
                 _type: string,
                 listener: (event: { matches: boolean }) => void
-            ) => (onChange = listener),
+            ) => listeners.set(query, listener),
             removeEventListener: jest.fn(),
         }));
         const { service } = createService({ matchMedia });
@@ -106,8 +109,28 @@ describe('WorkspaceNavSidebarService', () => {
         expect(service.hidden()).toBe(true);
         expect(service.collapsed()).toBe(false);
 
-        onChange?.({ matches: false });
+        listeners.get('(max-width: 640px)')?.({ matches: false });
         expect(service.collapsed()).toBe(true);
+    });
+
+    it('follows the folded (icons only) width', () => {
+        const listeners = new Map<
+            string,
+            (event: { matches: boolean }) => void
+        >();
+        const matchMedia = jest.fn((query: string) => ({
+            matches: false,
+            addEventListener: (
+                _type: string,
+                listener: (event: { matches: boolean }) => void
+            ) => listeners.set(query, listener),
+            removeEventListener: jest.fn(),
+        }));
+        const { service } = createService({ matchMedia });
+
+        expect(service.isFolded()).toBe(false);
+        listeners.get('(max-width: 1100px)')?.({ matches: true });
+        expect(service.isFolded()).toBe(true);
     });
 
     it('takes Ctrl+Alt+S off macOS', () => {

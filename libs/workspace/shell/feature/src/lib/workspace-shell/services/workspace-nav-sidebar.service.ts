@@ -9,8 +9,10 @@ import {
 
 /** `'1'` while the main navigation sidebar is hidden. */
 export const NAV_SIDEBAR_HIDDEN_STORAGE_KEY = 'tiagotv:nav-sidebar-hidden';
-/** The phone layout keeps the navigation as a strip above the header. */
+/** The phone layout keeps the navigation as a strip above the content. */
 const PHONE_QUERY = '(max-width: 640px)';
+/** Narrower windows fold the sidebar to icons; its sections open as flyouts. */
+const FOLDED_QUERY = '(max-width: 1100px)';
 
 /**
  * Whether the main navigation sidebar is hidden, so the content and header
@@ -23,9 +25,12 @@ export class WorkspaceNavSidebarService {
     private readonly view = inject(DOCUMENT).defaultView;
     private readonly hiddenState = signal(this.readStored());
     private readonly phoneState = signal(false);
+    private readonly foldedState = signal(false);
 
     readonly hidden = this.hiddenState.asReadonly();
     readonly isPhone = this.phoneState.asReadonly();
+    /** Folded to icons (or the phone strip): sections open as flyouts. */
+    readonly isFolded = this.foldedState.asReadonly();
     /** The sidebar is out of the layout: hidden, and not on a phone. */
     readonly collapsed = computed(
         () => this.hiddenState() && !this.phoneState()
@@ -36,20 +41,17 @@ export class WorkspaceNavSidebarService {
     readonly ariaShortcut = this.isMac ? 'Control+Meta+S' : 'Control+Alt+S';
 
     constructor() {
-        // Guarded: JSDOM has no matchMedia.
-        const media =
-            typeof this.view?.matchMedia === 'function'
-                ? this.view.matchMedia(PHONE_QUERY)
-                : null;
-        if (media) {
-            this.phoneState.set(media.matches);
-            const onChange = (event: MediaQueryListEvent) =>
-                this.phoneState.set(event.matches);
-            media.addEventListener('change', onChange);
-            inject(DestroyRef).onDestroy(() =>
-                media.removeEventListener('change', onChange)
-            );
-        }
+        const destroyRef = inject(DestroyRef);
+        this.watch(
+            PHONE_QUERY,
+            (matches) => this.phoneState.set(matches),
+            destroyRef
+        );
+        this.watch(
+            FOLDED_QUERY,
+            (matches) => this.foldedState.set(matches),
+            destroyRef
+        );
     }
 
     toggle(): void {
@@ -73,6 +75,27 @@ export class WorkspaceNavSidebarService {
             chord &&
             !event.shiftKey &&
             (event.code === 'KeyS' || event.key?.toLowerCase() === 's')
+        );
+    }
+
+    private watch(
+        query: string,
+        apply: (matches: boolean) => void,
+        destroyRef: DestroyRef
+    ): void {
+        // Guarded: JSDOM has no matchMedia.
+        const media =
+            typeof this.view?.matchMedia === 'function'
+                ? this.view.matchMedia(query)
+                : null;
+        if (!media) {
+            return;
+        }
+        apply(media.matches);
+        const onChange = (event: MediaQueryListEvent) => apply(event.matches);
+        media.addEventListener('change', onChange);
+        destroyRef.onDestroy(() =>
+            media.removeEventListener('change', onChange)
         );
     }
 

@@ -8,7 +8,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import type { PlatformDesign } from '../platform-design';
+import { rowTile, type PlatformDesign } from '../platform-design';
 import type { PlatformRow } from '../platform-titles';
 import { PlatformTitleCardComponent } from './platform-title-card.component';
 
@@ -38,8 +38,10 @@ export class PlatformRowComponent {
     readonly seeAll = output<void>();
 
     readonly titles = computed(() => this.row().titles.slice(0, ROW_LIMIT));
+    /** The cards' shape: the design's, or Paramount+'s posters. */
+    readonly cardTile = computed(() => rowTile(this.design(), this.row().id));
     readonly tile = computed(() =>
-        this.row().ranked ? 'ranked' : this.design().tiles
+        this.row().ranked ? 'ranked' : this.cardTile()
     );
     private readonly track =
         viewChild.required<ElementRef<HTMLElement>>('track');

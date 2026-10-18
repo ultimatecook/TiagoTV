@@ -36,16 +36,19 @@ function themeContexts(): { light: string; dark: string } {
 }
 
 describe('m3-theme watch-progress token', () => {
-    it('declares --app-progress-color from the selection colour in both themes', () => {
+    // Light progress follows the selection colour; TiagoTV's dark theme
+    // draws it in the brand red, as streaming apps do.
+    it('declares --app-progress-color in both themes', () => {
         const { light, dark } = themeContexts();
-        const progress =
-            /--app-progress-color:\s*var\(--app-selection-color\);/;
         const selection = /--app-selection-color:\s*#[0-9a-f]{6};/i;
 
         for (const context of [light, dark]) {
             expect(context).toMatch(selection);
-            expect(context).toMatch(progress);
         }
+        expect(light).toMatch(
+            /--app-progress-color:\s*var\(--app-selection-color\);/
+        );
+        expect(dark).toMatch(/--app-progress-color:\s*var\(--app-brand-red\);/);
         expect(light.match(selection)?.[0]).not.toBe(
             dark.match(selection)?.[0]
         );
@@ -89,6 +92,67 @@ function hexToken(context: string, name: string): string {
     return (value ?? '').toLowerCase();
 }
 
+/**
+ * The strong selection surface as a colour over a percentage: a
+ * color-mix of the selection colour, or (on the dark glass) a
+ * translucent rgba() overlay.
+ */
+function strongSelection(
+    context: string,
+    selection: string
+): { color: string; percent: number } {
+    const mixed =
+        /--app-selection-surface-strong:\s*color-mix\(\s*in srgb,\s*var\(--app-selection-color\)\s*(\d+)%/.exec(
+            context
+        );
+    if (mixed) {
+        return { color: selection, percent: Number(mixed[1]) };
+    }
+    return (
+        rgbaToken(context, '--app-selection-surface-strong') ?? {
+            color: selection,
+            percent: Number.NaN,
+        }
+    );
+}
+
+/** An rgba() token as its colour and its opacity in percent. */
+function rgbaToken(
+    context: string,
+    name: string
+): { color: string; percent: number } | null {
+    const rgba = new RegExp(
+        `${name}:\\s*rgba\\(\\s*(\\d+),\\s*(\\d+),\\s*(\\d+),\\s*([\\d.]+)\\s*\\)`
+    ).exec(context);
+    if (!rgba) {
+        return null;
+    }
+    const color = `#${[rgba[1], rgba[2], rgba[3]]
+        .map((channel) => Number(channel).toString(16).padStart(2, '0'))
+        .join('')}`;
+    return { color, percent: Number(rgba[4]) * 100 };
+}
+
+/**
+ * A surface as the opaque colour it shows: the dark glass leaves the rail
+ * and header transparent over the shell, and lays hover overlays on the
+ * content.
+ */
+function surfaceColor(context: string, name: string): string {
+    if (new RegExp(`${name}:\\s*transparent;`).test(context)) {
+        return hexToken(context, '--app-shell-bg');
+    }
+    const overlay = rgbaToken(context, name);
+    if (overlay) {
+        return mix(
+            overlay.color,
+            overlay.percent,
+            hexToken(context, '--app-content-bg')
+        );
+    }
+    return hexToken(context, name);
+}
+
 describe('m3-theme focus ring token', () => {
     // The ring sits 2px outside the focused element, on whatever the element
     // sits on: an app surface, or one tinted by the selection colour.
@@ -108,18 +172,14 @@ describe('m3-theme focus ring token', () => {
         for (const [theme, context] of Object.entries({ light, dark })) {
             const ring = hexToken(context, '--app-focus-ring');
             const selection = hexToken(context, '--app-selection-color');
-            const strongTint = Number(
-                /--app-selection-surface-strong:\s*color-mix\(\s*in srgb,\s*var\(--app-selection-color\)\s*(\d+)%/.exec(
-                    context
-                )?.[1]
-            );
-            expect(strongTint).toBeGreaterThan(0);
+            const strong = strongSelection(context, selection);
+            expect(strong.percent).toBeGreaterThan(0);
 
             for (const surface of surfaces) {
-                const base = hexToken(context, surface);
+                const base = surfaceColor(context, surface);
                 for (const background of [
                     base,
-                    mix(selection, strongTint, base),
+                    mix(strong.color, strong.percent, base),
                 ]) {
                     expect({
                         theme,
