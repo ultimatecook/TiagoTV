@@ -12,7 +12,6 @@ import {
     isStalkerAccountPlaylist,
     isXtreamAccountPlaylist,
     normalizeDashboardRailsSettings,
-    playlistDisplayLabel,
 } from '@iptvnator/shared/interfaces';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -581,12 +580,9 @@ export class WorkspaceDashboardRailsComponent {
         return {
             id: `added-${item.id}-${item.playlist_id}-${item.added_at}`,
             title: item.title,
-            // Genres when the catalog lists them; otherwise "where was it
-            // added", the one fact that varies per card here.
-            subtitle:
-                genres.length > 0
-                    ? genres.join(' • ')
-                    : playlistDisplayLabel(item.playlist_name),
+            // Genres when the catalog lists them. TiagoTV follows one
+            // source: its name says nothing on a card.
+            subtitle: genres.length > 0 ? genres.join(' • ') : undefined,
             matchPercent: ratingMatchPercent(item.rating),
             imageUrl: item.poster_url,
             icon: this.typeIcon(item.type),
@@ -600,7 +596,6 @@ export class WorkspaceDashboardRailsComponent {
         const subtitle = [
             item.year !== null ? String(item.year) : null,
             item.rating ? `★ ${item.rating}` : null,
-            item.match?.playlistName ?? null,
         ]
             .filter((value): value is string => Boolean(value))
             .join(' · ');
@@ -630,7 +625,6 @@ export class WorkspaceDashboardRailsComponent {
         const subtitle = [
             item.year !== null ? String(item.year) : null,
             item.rating ? `★ ${item.rating}` : null,
-            item.match.playlistName,
         ]
             .filter((value): value is string => Boolean(value))
             .join(' · ');
