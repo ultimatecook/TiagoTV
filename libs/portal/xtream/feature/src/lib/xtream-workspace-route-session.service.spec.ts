@@ -227,6 +227,7 @@ describe('XtreamWorkspaceRouteSession', () => {
             section: getXtreamSectionFromUrl(url) as
                 | 'favorites'
                 | 'live'
+                | 'popular'
                 | 'recently-added'
                 | 'search'
                 | 'series'
@@ -634,6 +635,40 @@ describe('XtreamWorkspaceRouteSession', () => {
         expect(xtreamStore.hasUsableOfflineCache).not.toHaveBeenCalled();
         expect(xtreamStore.initializeContent).toHaveBeenCalled();
         expect(xtreamStore.hydrateCachedContent).not.toHaveBeenCalled();
+    });
+
+    it('initializes the whole catalog for the New & Popular page', async () => {
+        router.url = `/workspace/xtreams/${PLAYLIST_ID}/popular`;
+        xtreamStore.checkPortalStatus.mockImplementation(async () => {
+            portalStatus.set('active');
+            return 'active';
+        });
+
+        TestBed.inject(XtreamWorkspaceRouteSession);
+        await flushEffects();
+
+        expect(xtreamStore.initializeContent).toHaveBeenCalled();
+    });
+
+    it('hydrates the recently-added scope for an offline New & Popular page', async () => {
+        router.url = `/workspace/xtreams/${PLAYLIST_ID}/popular`;
+        hasUsableOfflineCache = true;
+        activePlaylist.set(UPDATED_ACTIVE_PLAYLIST);
+        xtreamStore.checkPortalStatus.mockImplementation(async () => {
+            portalStatus.set('unavailable');
+            return 'unavailable';
+        });
+
+        TestBed.inject(XtreamWorkspaceRouteSession);
+        await flushEffects();
+        await flushEffects();
+
+        expect(xtreamStore.hasUsableOfflineCache).toHaveBeenCalledWith(
+            'recently-added'
+        );
+        expect(xtreamStore.hydrateCachedContent).toHaveBeenCalledWith(
+            'recently-added'
+        );
     });
 
     it('hydrates cached search routes when any Xtream content is persisted', async () => {

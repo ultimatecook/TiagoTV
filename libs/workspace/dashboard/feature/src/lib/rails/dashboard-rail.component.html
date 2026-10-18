@@ -1,37 +1,52 @@
-<section class="rail" [attr.data-test-id]="testId()">
-    <header class="rail__header">
-        <h2 class="rail__title">
-            <span class="rail__label">{{ label() }}</span>
-            @if ((totalCount() ?? items().length) > 0) {
-                <span class="rail__count app-count-badge" aria-hidden="true">{{
-                    totalCount() ?? items().length
-                }}</span>
+<section
+    class="rail"
+    [class.rail--headless]="!showHeader()"
+    [attr.data-test-id]="testId()"
+    [attr.aria-label]="showHeader() ? null : label()"
+>
+    @if (showHeader()) {
+        <header class="rail__header">
+            <h2 class="rail__title">
+                <span class="rail__label">{{ label() }}</span>
+                @if ((totalCount() ?? items().length) > 0) {
+                    <span
+                        class="rail__count app-count-badge"
+                        aria-hidden="true"
+                        >{{ totalCount() ?? items().length }}</span
+                    >
+                }
+            </h2>
+            @if (seeAllLink(); as link) {
+                <a
+                    class="rail__see-all"
+                    [routerLink]="link"
+                    [state]="seeAllState() ?? {}"
+                    [attr.data-test-id]="
+                        testId() ? testId() + '-manage-all' : null
+                    "
+                >
+                    <span class="rail__see-all-label">
+                        @if (
+                            (totalCount() ?? items().length) > items().length
+                        ) {
+                            {{
+                                'WORKSPACE.DASHBOARD.SEE_ALL_COUNT'
+                                    | translate
+                                        : {
+                                              count:
+                                                  totalCount() ??
+                                                  items().length,
+                                          }
+                            }}
+                        } @else {
+                            {{ 'WORKSPACE.DASHBOARD.SEE_ALL' | translate }}
+                        }
+                    </span>
+                    <mat-icon>chevron_right</mat-icon>
+                </a>
             }
-        </h2>
-        @if (seeAllLink(); as link) {
-            <a
-                class="rail__see-all"
-                [routerLink]="link"
-                [state]="seeAllState() ?? {}"
-                [attr.data-test-id]="testId() ? testId() + '-manage-all' : null"
-            >
-                <span class="rail__see-all-label">
-                    @if ((totalCount() ?? items().length) > items().length) {
-                        {{
-                            'WORKSPACE.DASHBOARD.SEE_ALL_COUNT'
-                                | translate
-                                    : {
-                                          count: totalCount() ?? items().length,
-                                      }
-                        }}
-                    } @else {
-                        {{ 'WORKSPACE.DASHBOARD.SEE_ALL' | translate }}
-                    }
-                </span>
-                <mat-icon>chevron_right</mat-icon>
-            </a>
-        }
-    </header>
+        </header>
+    }
 
     <div
         #viewport
@@ -217,9 +232,27 @@
                             </div>
 
                             <div class="rail__meta">
+                                @if (typeLabelKey(card); as typeKey) {
+                                    <span class="rail__card-tag">
+                                        <img
+                                            class="rail__card-mark"
+                                            src="./assets/brand/logo-7.png"
+                                            alt=""
+                                            draggable="false"
+                                        />
+                                        {{ typeKey | translate }}
+                                    </span>
+                                }
                                 <span class="rail__card-title">{{
                                     cardTitle(card)
                                 }}</span>
+                                @if (card.matchPercent) {
+                                    <span class="rail__card-match">{{
+                                        'WORKSPACE.DASHBOARD.MATCH'
+                                            | translate
+                                                : { value: card.matchPercent }
+                                    }}</span>
+                                }
                                 @if (
                                     card.episodeBadge ||
                                     card.remainingLabel ||

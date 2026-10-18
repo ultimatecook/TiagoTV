@@ -7,6 +7,7 @@ export type PortalRailSection =
     | 'itv'
     | 'library'
     | 'live'
+    | 'popular'
     | 'recent'
     | 'recently-added'
     | 'radio'

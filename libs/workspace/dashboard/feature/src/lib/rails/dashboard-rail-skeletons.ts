@@ -65,6 +65,18 @@ export function createDashboardRailSkeletons(
             },
         ],
         [
+            'xtreamRecentlyAdded',
+            {
+                loading: () =>
+                    rails().xtreamRecentlyAdded &&
+                    host.xtreamPlaylistCount() > 0 &&
+                    host.data.xtreamRecentlyAddedLoading(),
+                rendered: () =>
+                    rails().xtreamRecentlyAdded &&
+                    host.xtreamRecentlyAddedCards().length > 0,
+            },
+        ],
+        [
             'liveFavorites',
             {
                 loading: () => host.showLiveFavoritesSkeleton(),
@@ -103,18 +115,6 @@ export function createDashboardRailSkeletons(
                     rails().recentSources && !host.data.playlistsLoaded(),
                 rendered: () =>
                     rails().recentSources && host.sourceCards().length > 0,
-            },
-        ],
-        [
-            'xtreamRecentlyAdded',
-            {
-                loading: () =>
-                    rails().xtreamRecentlyAdded &&
-                    host.xtreamPlaylistCount() > 0 &&
-                    host.data.xtreamRecentlyAddedLoading(),
-                rendered: () =>
-                    rails().xtreamRecentlyAdded &&
-                    host.xtreamRecentlyAddedCards().length > 0,
             },
         ],
         [

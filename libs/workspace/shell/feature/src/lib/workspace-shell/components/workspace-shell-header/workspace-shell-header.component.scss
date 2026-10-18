@@ -11,19 +11,76 @@
     gap: 12px;
     // The shell's header band: 56px, taller on macOS when zoomed out.
     height: 100%;
-    padding: 0 24px;
+    padding: 0 30px 0 36px;
     // macOS: app zoom does not scale the traffic lights, so zoomed out the
     // leading controls keep their 100 % distance from them (see the shell).
-    padding-inline-start: max(24px, var(--workspace-header-lights-inset, 0px));
-    border-bottom: 1px solid var(--mat-sys-outline-variant);
-    background: var(--app-header-bg, var(--mat-sys-surface-container-low));
+    padding-inline-start: max(36px, var(--workspace-header-lights-inset, 0px));
+    background: var(--app-header-bg, transparent);
     app-region: drag;
 }
 
-.playlist-switcher {
-    width: min(260px, 32vw);
+// The source switcher is the profile avatar at the trailing edge: a round
+// tile and a chevron. The source name stays in the accessibility tree and
+// shows in the panel it opens.
+.playlist-switcher.playlist-switcher {
+    order: 10;
     flex-shrink: 0;
+    width: auto;
+    margin-inline-start: 4px;
     app-region: no-drag;
+
+    ::ng-deep .playlist-switcher-trigger {
+        gap: 6px;
+        height: 48px;
+        padding: 3px 8px 3px 3px;
+        border-radius: 999px;
+        background: transparent;
+
+        &:hover,
+        &.is-open {
+            background: var(--app-hover-overlay);
+            box-shadow: none;
+        }
+
+        app-source-tile,
+        .trigger-placeholder-tile {
+            --source-tile-size: 42px;
+            --source-tile-radius: 50%;
+            --source-tile-icon: 20px;
+            --source-tile-bg: radial-gradient(
+                circle at 30% 25%,
+                #ff5a52 0%,
+                var(--app-brand-red, #e8262b) 38%,
+                #5d0b0e 100%
+            );
+            --source-tile-color: #fff;
+            --source-tile-ring: #2a2c22;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            box-shadow:
+                0 0 0 2px rgba(255, 255, 255, 0.22),
+                0 6px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        .trigger-placeholder-tile {
+            background: var(--source-tile-bg);
+            color: #fff;
+        }
+
+        .playlist-info {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+        }
+
+        .dropdown-icon {
+            color: var(--app-body-color);
+        }
+    }
 }
 
 // Pulled toward the edge so the arrow glyph, not the button's padding, sits
@@ -218,7 +275,7 @@
 
         &:hover {
             color: var(--mat-sys-on-surface);
-            background: var(--mat-sys-surface-container);
+            background: var(--app-hover-overlay);
         }
 
         &.is-active {
@@ -241,14 +298,14 @@
     color: var(--mat-sys-primary);
 }
 
+// Page actions gather at the trailing edge, before the avatar.
 .header-actions--leading {
-    margin-left: -4px;
+    order: 8;
+    margin-left: auto;
 }
 
 .header-actions--trailing {
-    margin-left: auto;
-    padding-left: 8px;
-    border-left: 1px solid var(--mat-sys-outline-variant);
+    order: 9;
     app-region: no-drag;
 }
 
@@ -343,10 +400,6 @@
         gap: 10px;
     }
 
-    .playlist-switcher {
-        width: 190px;
-    }
-
     .header-actions {
         gap: 0;
     }
@@ -377,15 +430,6 @@
     // drawer, and two navigation icons do not fit beside the switcher.
     .header-back--yields {
         display: none;
-    }
-
-    .playlist-switcher {
-        width: auto;
-        // Fixed at 140px this crowded the search field off a 320px header
-        // whenever a route contributed its shortcut button; the switcher is
-        // the one region whose content can ellipsize, so it is what shrinks.
-        min-width: 88px;
-        flex: 0 1 140px;
     }
 
     .search-field {

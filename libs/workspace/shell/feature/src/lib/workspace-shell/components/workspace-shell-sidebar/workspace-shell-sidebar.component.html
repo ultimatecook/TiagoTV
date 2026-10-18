@@ -1,0 +1,81 @@
+<aside class="sidebar">
+    <a
+        class="sidebar__brand"
+        routerLink="/workspace/dashboard"
+        [attr.aria-label]="'WORKSPACE.SIDEBAR.HOME' | translate"
+        data-test-id="sidebar-brand"
+    >
+        <img
+            class="sidebar__wordmark"
+            src="./assets/brand/logo-71460.png"
+            alt=""
+            draggable="false"
+        />
+        <img
+            class="sidebar__monogram"
+            src="./assets/brand/logo-7.png"
+            alt=""
+            draggable="false"
+        />
+    </a>
+
+    @if (!hasNoPlaylists()) {
+        <label class="sidebar__search" data-test-id="sidebar-search">
+            <app-workspace-shell-sidebar-icon name="search" />
+            <input
+                #searchInput
+                type="search"
+                spellcheck="false"
+                [value]="searchQuery()"
+                (input)="onSearchInput($event)"
+                (keydown.enter)="onSearchEnter($event)"
+                [disabled]="!canUseSearch()"
+                [placeholder]="
+                    'WORKSPACE.SIDEBAR.SEARCH_PLACEHOLDER' | translate
+                "
+                [attr.aria-label]="searchPlaceholder() | translate"
+            />
+        </label>
+    }
+
+    <nav
+        class="sidebar__nav"
+        [attr.aria-label]="'WORKSPACE.SIDEBAR.NAV_LABEL' | translate"
+    >
+        @for (group of groups(); track group.id) {
+            <section class="sidebar__group" [attr.data-group]="group.id">
+                <h2 class="sidebar__group-label">
+                    {{ group.labelKey | translate }}
+                </h2>
+                <ul class="sidebar__list">
+                    @for (item of group.items; track item.id) {
+                        <li>
+                            <a
+                                #rla="routerLinkActive"
+                                class="sidebar__link"
+                                [routerLink]="item.link"
+                                routerLinkActive="is-active"
+                                [routerLinkActiveOptions]="{
+                                    exact: item.exact,
+                                }"
+                                [attr.aria-current]="
+                                    rla.isActive ? 'page' : null
+                                "
+                                [attr.title]="item.labelKey | translate"
+                                [attr.data-test-id]="'sidebar-link-' + item.id"
+                            >
+                                <app-workspace-shell-sidebar-icon
+                                    [name]="item.icon"
+                                    [filled]="rla.isActive"
+                                />
+                                <span class="sidebar__link-label">{{
+                                    item.labelKey | translate
+                                }}</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+    </nav>
+</aside>

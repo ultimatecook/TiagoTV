@@ -16,6 +16,8 @@ interface TestRecentlyAddedItem {
     readonly category_id: number;
     readonly last_modified?: string;
     readonly poster_url: string;
+    readonly rating?: string;
+    readonly rating_5based?: number;
     readonly title: string;
     readonly xtream_id: number;
 }
@@ -50,6 +52,10 @@ class MockXtreamStore {
 }
 
 describe('RecentlyAddedComponent', () => {
+    // "popular" is the New & Popular page, which reuses this component.
+    const route: { snapshot: { data: Record<string, unknown> } } = {
+        snapshot: { data: {} },
+    };
     let store: MockXtreamStore;
     let dateNowSpy: jest.SpyInstance<number, []>;
     let router: { navigate: jest.Mock };
@@ -73,7 +79,7 @@ describe('RecentlyAddedComponent', () => {
                 },
                 {
                     provide: ActivatedRoute,
-                    useValue: {},
+                    useValue: route,
                 },
                 {
                     provide: TranslateService,
@@ -150,6 +156,37 @@ describe('RecentlyAddedComponent', () => {
         const titles = component.recentlyAddedVod().map((item) => item.title);
 
         expect(titles).toEqual(['Fresh 1', 'Fresh 2']);
+    });
+
+    it('ranks the catalog by rating on the New & Popular page', () => {
+        route.snapshot.data = { mode: 'popular' };
+        store.vodStreams.set([
+            createItem(1, { title: 'Unrated', xtream_id: 1 }),
+            createItem(2, { title: 'Good', xtream_id: 2, rating: '7.1' }),
+            createItem(3, { title: 'Best', xtream_id: 3, rating: '8.9' }),
+            createItem(4, {
+                title: 'Five based',
+                xtream_id: 4,
+                rating_5based: 4,
+            }),
+        ]);
+        store.liveStreams.set([createItem(5, { title: 'Channel' })]);
+
+        try {
+            const component = TestBed.runInInjectionContext(
+                () => new RecentlyAddedComponent()
+            );
+
+            expect(component.titleKey).toBe(
+                'WORKSPACE.DASHBOARD.NEW_AND_POPULAR'
+            );
+            expect(
+                component.recentlyAddedVod().map((item) => item.title)
+            ).toEqual(['Best', 'Five based', 'Good']);
+            expect(component.recentlyAddedLive()).toEqual([]);
+        } finally {
+            route.snapshot.data = {};
+        }
     });
 
     it('uses the series sort timestamp priority for displayed dates', () => {

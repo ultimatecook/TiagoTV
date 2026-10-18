@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MetaChipComponent } from '@iptvnator/ui/components';
 import { DashboardHeroSlidesPresenter } from './dashboard-hero-slides.presenter';
+import { ratingMatchPercent } from './dashboard-match.utils';
 import { HERO_ROTATION_MS } from './dashboard-hero-slides.utils';
 import type { DashboardHeroSlide } from './dashboard-hero.utils';
 
@@ -42,12 +43,15 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
     templateUrl: './dashboard-hero.component.html',
     styleUrl: './dashboard-hero.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [DashboardHeroSlidesPresenter],
+    // The presenter comes from the page (`lib-workspace-dashboard-rails`),
+    // which also reads it to lay out its first section.
     host: {
         '[style.--hero-rotation-ms]': 'rotationMs + "ms"',
     },
 })
 export class DashboardHeroComponent {
+    readonly matchPercent = ratingMatchPercent;
+
     readonly presenter = inject(DashboardHeroSlidesPresenter);
     readonly slides = this.presenter.slides;
     readonly rotationMs = HERO_ROTATION_MS;

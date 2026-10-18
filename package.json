@@ -1,15 +1,14 @@
 {
-    "name": "iptvnator",
+    "name": "tiagotv",
     "version": "0.25.0",
     "engines": {
         "node": "^22.22.3 || ^24.15.0"
     },
     "license": "MIT",
-    "description": "IPTV player application.",
-    "homepage": "https://github.com/4gray/iptvnator",
+    "description": "TiagoTV: personal IPTV player with a cinematic glass UI. Based on IPTVnator.",
+    "homepage": "https://github.com/ultimatecook/TiagoTV",
     "author": {
-        "name": "4gray",
-        "email": "fourgray@proton.me"
+        "name": "Tiago Locatelli"
     },
     "keywords": [
         "angular",

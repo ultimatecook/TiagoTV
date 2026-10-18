@@ -49,6 +49,7 @@ const PORTAL_SECTIONS: readonly PortalRailSection[] = [
     'itv',
     'library',
     'live',
+    'popular',
     'recent',
     'recently-added',
     'radio',
@@ -60,6 +61,7 @@ const PORTAL_SECTIONS: readonly PortalRailSection[] = [
 const XTREAM_ROUTE_QUERY_SEARCH_SECTIONS = new Set<PortalRailSection>([
     'favorites',
     'downloads',
+    'popular',
     'recent',
     'recently-added',
 ]);

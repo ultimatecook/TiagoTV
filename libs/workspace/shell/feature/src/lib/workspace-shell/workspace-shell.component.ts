@@ -20,7 +20,7 @@ import {
 import { WorkspaceShellContextSidebarComponent } from './components/workspace-shell-context-sidebar/workspace-shell-context-sidebar.component';
 import { WorkspaceShellHeaderComponent } from './components/workspace-shell-header/workspace-shell-header.component';
 import { WorkspaceShellImportOverlayComponent } from './components/workspace-shell-import-overlay/workspace-shell-import-overlay.component';
-import { WorkspaceShellRailComponent } from './components/workspace-shell-rail/workspace-shell-rail.component';
+import { WorkspaceShellSidebarComponent } from './components/workspace-shell-sidebar/workspace-shell-sidebar.component';
 import { WorkspaceShellServerBannerComponent } from './components/workspace-shell-server-banner/workspace-shell-server-banner.component';
 import { LayoutSlideDirective } from './layout-slide.directive';
 import { TrafficLightsClearanceDirective } from './traffic-lights-clearance.directive';
@@ -51,8 +51,8 @@ import { LIVE_CATEGORIES_POPOVER } from '@iptvnator/portal/shared/util';
         WorkspaceShellContextSidebarComponent,
         WorkspaceShellHeaderComponent,
         WorkspaceShellImportOverlayComponent,
-        WorkspaceShellRailComponent,
         WorkspaceShellServerBannerComponent,
+        WorkspaceShellSidebarComponent,
     ],
     templateUrl: './workspace-shell.component.html',
     styleUrl: './workspace-shell.component.scss',
@@ -86,6 +86,8 @@ export class WorkspaceShellComponent {
     );
     private readonly header =
         viewChild<WorkspaceShellHeaderShortcutTarget>('workspaceHeader');
+    private readonly sidebar =
+        viewChild<WorkspaceShellSidebarComponent>('workspaceSidebar');
     private readonly workspaceContent =
         viewChild<ElementRef<HTMLElement>>('workspaceContent');
 
@@ -167,8 +169,13 @@ export class WorkspaceShellComponent {
         }
 
         const header = this.header();
+        const sidebar = this.sidebar();
         const target = event.target;
-        if (isEditableTarget(target) && !header?.containsSearchInput(target)) {
+        if (
+            isEditableTarget(target) &&
+            !header?.containsSearchInput(target) &&
+            !sidebar?.containsSearchInput(target)
+        ) {
             return;
         }
 
@@ -178,7 +185,13 @@ export class WorkspaceShellComponent {
         if (!this.facade.isSettingsRoute()) {
             this.facade.openGlobalSearch(this.facade.searchQuery());
         }
-        setTimeout(() => header?.focusSearchInput({ select: true }));
+        // The sidebar's field is the visible one on wide windows; folded to
+        // icons it hides and the header's copy takes the shortcut.
+        setTimeout(() => {
+            if (!sidebar?.focusSearchInput({ select: true })) {
+                header?.focusSearchInput({ select: true });
+            }
+        });
     }
 }
 

@@ -15,7 +15,8 @@ import {
 } from '@iptvnator/shared/interfaces';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router } from '@angular/router';
+import { MatIcon } from '@angular/material/icon';
+import { Router, RouterLink } from '@angular/router';
 import { isPortalPlaybackWatched } from '@iptvnator/portal/shared/util';
 import { Store } from '@ngrx/store';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -62,6 +63,12 @@ import { DashboardPortalLiveEpgPresenter } from './dashboard-portal-live-epg.pre
 import { DashboardHeroComponent } from './dashboard-hero.component';
 import { buildLiveEpgCardsForEnabledRails } from './dashboard-live-epg.utils';
 import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
+import { DashboardHeroSlidesPresenter } from './dashboard-hero-slides.presenter';
+import { createDashboardFeatureSection } from './dashboard-feature-section';
+import {
+    ratingMatchPercent,
+    splitCatalogGenres,
+} from './dashboard-match.utils';
 import { DashboardLiveEpgClock } from './dashboard-live-epg-clock';
 import { createSourceExpiryClock } from './dashboard-source-expiry-clock';
 import {
@@ -95,6 +102,8 @@ import type {
         DashboardRailComponent,
         DashboardRailSkeletonComponent,
         EmptyStateComponent,
+        MatIcon,
+        RouterLink,
         TranslatePipe,
     ],
     templateUrl: './workspace-dashboard-rails.component.html',
@@ -107,12 +116,16 @@ import type {
         DashboardLiveEpgClock,
         DashboardLiveEpgPresenter,
         DashboardPortalLiveEpgPresenter,
+        // Page-level so the "Continue Watching" section knows whether the
+        // hero card has anything to show.
+        DashboardHeroSlidesPresenter,
     ],
 })
 export class WorkspaceDashboardRailsComponent {
     readonly data = inject(DashboardDataService);
     /** One facade for both live-EPG sources: uploaded XMLTV and the portal. */
     readonly liveEpg = inject(DashboardLiveEpgPresenter);
+    readonly heroSlides = inject(DashboardHeroSlidesPresenter);
     private readonly dialog = inject(MatDialog);
     private readonly dialogService = inject(DialogService);
     private readonly playlistDeleteAction = inject(PlaylistDeleteActionService);
@@ -312,6 +325,13 @@ export class WorkspaceDashboardRailsComponent {
 
     /** Per-rail skeleton gates; see createDashboardRailSkeletons. */
     readonly railSkeletons = createDashboardRailSkeletons(this);
+
+    private readonly featureSection = createDashboardFeatureSection(this);
+    readonly showFeatureSection = this.featureSection.visible;
+    readonly featureSideCards = this.featureSection.sideCards;
+    readonly featureHeadingKey = this.featureSection.headingKey;
+    readonly featureSeeAllLink = this.featureSection.seeAllLink;
+    readonly newAndPopularLink = this.featureSection.newAndPopularLink;
 
     constructor() {
         // Re-entering the dashboard should pick up any DB-backed recent/favorite
@@ -540,11 +560,17 @@ export class WorkspaceDashboardRailsComponent {
     private toRecentlyAddedCard(
         item: DashboardRecentlyAddedItem
     ): DashboardRailCard {
+        const genres = splitCatalogGenres(item.genre, 2);
         return {
             id: `added-${item.id}-${item.playlist_id}-${item.added_at}`,
             title: item.title,
-            // "Where was it added" is the one fact that varies per card here.
-            subtitle: playlistDisplayLabel(item.playlist_name),
+            // Genres when the catalog lists them; otherwise "where was it
+            // added", the one fact that varies per card here.
+            subtitle:
+                genres.length > 0
+                    ? genres.join(' • ')
+                    : playlistDisplayLabel(item.playlist_name),
+            matchPercent: ratingMatchPercent(item.rating),
             imageUrl: item.poster_url,
             icon: this.typeIcon(item.type),
             contentType: item.type,

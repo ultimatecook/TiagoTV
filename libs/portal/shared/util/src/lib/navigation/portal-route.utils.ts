@@ -18,6 +18,7 @@ const PORTAL_SECTIONS = new Set<PortalRailSection>([
     'itv',
     'library',
     'live',
+    'popular',
     'recent',
     'recently-added',
     'search',

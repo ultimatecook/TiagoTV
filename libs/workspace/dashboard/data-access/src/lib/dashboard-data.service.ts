@@ -61,6 +61,7 @@ import {
     type DashboardContentKind,
 } from './dashboard-navigation.util';
 import { createDashboardContinueWatching } from './dashboard-continue-watching';
+import { loadPwaXtreamRecentlyAdded } from './dashboard-pwa-recently-added';
 import {
     emptyDashboardPlaybackPositionMaps,
     loadDashboardPlaybackPositions,
@@ -571,15 +572,14 @@ export class DashboardDataService {
             this.xtreamRecentlyAddedLoadingState.set(true);
         }
 
-        if (!this.hasPortalActivityStorage) {
-            this.xtreamRecentlyAddedItemsState.set([]);
-            this.xtreamRecentlyAddedLoadingState.set(false);
-            this.xtreamRecentlyAddedLoadedState.set(true);
-            return;
-        }
-
         try {
-            const items = await this.getXtreamRecentlyAddedItems(limit);
+            const items = this.hasPortalActivityStorage
+                ? await this.getXtreamRecentlyAddedItems(limit)
+                : await loadPwaXtreamRecentlyAdded(
+                      this.xtreamDataSource,
+                      this.getXtreamPlaylists(),
+                      limit
+                  );
             this.xtreamRecentlyAddedItemsState.set(items);
         } catch (err) {
             console.warn(

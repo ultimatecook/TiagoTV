@@ -101,4 +101,10 @@ export interface PortalFavoriteItem extends PortalActivityItem {
 /** A recently-added catalog item with an `added_at` timestamp. */
 export interface PortalAddedItem extends PortalActivityItem {
     added_at: string;
+    /** The provider's 0–10 rating, when its catalog lists one. */
+    rating?: string;
+    /** Comma-separated genres, as Xtream series catalogs list them. */
+    genre?: string;
+    /** The synopsis the catalog lists (Xtream series). */
+    plot?: string;
 }

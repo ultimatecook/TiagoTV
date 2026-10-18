@@ -38,6 +38,8 @@ export interface DashboardRailCard {
     id: string;
     title: string;
     subtitle?: string;
+    /** "82% Match", from the catalog rating; cover cards only. */
+    matchPercent?: number | null;
     catalogStatus?: XtreamFavoriteCatalogStatus;
     imageUrl?: string;
     icon: string;
@@ -166,6 +168,11 @@ export class DashboardRailComponent implements AfterViewInit, OnDestroy {
      * known duration) would otherwise come in shorter.
      */
     readonly reserveMetaLine = input(false);
+    /**
+     * False drops the title row: the Home's first section titles the hero
+     * and its side cards together, above both.
+     */
+    readonly showHeader = input(true);
 
     private readonly viewport =
         viewChild.required<ElementRef<HTMLDivElement>>('viewport');
@@ -401,6 +408,20 @@ export class DashboardRailComponent implements AfterViewInit, OnDestroy {
             card.contentType === 'live' &&
                 this.settingsStore.stripCountryPrefix?.()
         );
+    }
+
+    /** The small brand-marked tag above a cover card's title. */
+    protected typeLabelKey(card: DashboardRailCard): string | null {
+        switch (card.contentType) {
+            case 'movie':
+                return 'WORKSPACE.DASHBOARD.TYPE_MOVIE';
+            case 'series':
+                return 'WORKSPACE.DASHBOARD.TYPE_SERIES';
+            case 'live':
+                return 'WORKSPACE.DASHBOARD.TYPE_LIVE';
+            default:
+                return null;
+        }
     }
 
     selectAction(

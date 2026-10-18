@@ -163,6 +163,12 @@ export function createXtreamRoutes(): Route[] {
                             path: 'recently-added',
                             loadComponent: loadRecentlyAddedComponent,
                         },
+                        {
+                            // "New & Popular": the catalog ranked by rating.
+                            path: 'popular',
+                            loadComponent: loadRecentlyAddedComponent,
+                            data: { mode: 'popular' },
+                        },
                     ],
                 },
                 {

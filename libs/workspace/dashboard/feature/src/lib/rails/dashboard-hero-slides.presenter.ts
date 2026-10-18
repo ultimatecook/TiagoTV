@@ -35,6 +35,7 @@ import {
     type DashboardHeroSource,
 } from './dashboard-hero-slides.utils';
 import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
+import { splitCatalogGenres } from './dashboard-match.utils';
 import type { DashboardLiveEpgDetails } from './dashboard-live-epg.utils';
 import {
     buildDashboardEpisodeBadge,
@@ -218,6 +219,9 @@ export class DashboardHeroSlidesPresenter {
         const position = isLive
             ? null
             : this.data.getPlaybackPositionForItem(item);
+        // Without TMDB a catalog import still lists a rating, genres and a
+        // synopsis for many titles; the slide falls back to those.
+        const catalog = source.kind === 'added' ? source.item : null;
         const artwork = resolveDashboardHeroArtwork(
             {
                 backdropUrl: item.backdrop_url || extras?.backdropUrl || null,
@@ -251,8 +255,8 @@ export class DashboardHeroSlidesPresenter {
             typeLabelKey: TYPE_LABEL_KEYS[watchKind],
             reasonLabelKey: this.reasonLabelKey(source),
             episodeBadge,
-            rating: extras?.rating ?? null,
-            genres: extras?.genres ?? [],
+            rating: extras?.rating ?? catalog?.rating ?? null,
+            genres: extras?.genres ?? splitCatalogGenres(catalog?.genre),
             year: extras?.year ?? item.release_year ?? null,
             source: playlistDisplayLabel(
                 item.playlist_name,
@@ -267,7 +271,7 @@ export class DashboardHeroSlidesPresenter {
             timeRange: details?.nowPlayingTimeRange ?? null,
             description: isLive
                 ? (details?.nowPlayingDescription ?? null)
-                : (extras?.overview ?? null),
+                : (extras?.overview ?? catalog?.plot ?? null),
             progress: isLive
                 ? (details?.nowPlayingProgress ?? null)
                 : playbackProgressPercent(position),

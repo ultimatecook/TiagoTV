@@ -37,6 +37,39 @@
 @import '@fontsource/jetbrains-mono/400.css';
 @import '@fontsource/jetbrains-mono/500.css';
 
+// TiagoTV display face: the wordmark and the title lockups on cinematic
+// cards. Bebas Neue (SIL OFL 1.1, see assets/fonts/bebas-neue/OFL.txt) ships a
+// single 400 weight; it is only fetched once a display element renders.
+@font-face {
+    font-family: 'Bebas Neue';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url('./assets/fonts/bebas-neue/bebas-neue-latin-ext-400-normal.woff2')
+        format('woff2');
+    unicode-range:
+        U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+        U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+        U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: 'Bebas Neue';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url('./assets/fonts/bebas-neue/bebas-neue-latin-400-normal.woff2')
+        format('woff2');
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+        U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+html {
+    --app-display-font: 'Bebas Neue', 'DM Sans', 'Roboto', sans-serif;
+}
+
 // ─── Shared Components ────────────────────────────────────────────────────────
 
 // Always-visible themed scrollbar. Apply to scroll containers that should
@@ -203,8 +236,35 @@ textarea {
 // Only the app host takes the dark surface: components such as the fullscreen
 // channel panel and the playback diagnostic's alternative sources carry
 // `dark-theme` for its tokens while painting their own surfaces.
+//
+// TiagoTV: the dark app host is a softly lit room the glass window floats
+// in — foliage green above, a warm lamp glow on the right and a wooden floor
+// below. Pure CSS so it costs no image decode and never repaints.
 body.dark-theme {
-    background: var(--mat-sys-surface) !important;
+    background:
+        radial-gradient(
+            120% 70% at 50% -12%,
+            rgba(74, 98, 52, 0.55) 0%,
+            rgba(40, 54, 30, 0.25) 42%,
+            transparent 70%
+        ),
+        radial-gradient(
+            38% 46% at 99% 58%,
+            rgba(214, 150, 74, 0.28) 0%,
+            transparent 70%
+        ),
+        radial-gradient(
+            34% 50% at 0% 60%,
+            rgba(150, 92, 44, 0.24) 0%,
+            transparent 72%
+        ),
+        linear-gradient(
+            180deg,
+            #10130d 0%,
+            #15140f 46%,
+            #2a1d12 82%,
+            #3a2717 100%
+        ) !important;
 }
 
 .dark-theme {

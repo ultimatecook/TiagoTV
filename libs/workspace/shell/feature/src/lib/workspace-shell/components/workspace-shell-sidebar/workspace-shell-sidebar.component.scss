@@ -1,0 +1,235 @@
+:host {
+    display: block;
+    min-width: 0;
+    min-height: 0;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 34px 22px 28px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    // The hairline that splits the sidebar from the content, as on the glass.
+    border-right: 1px solid var(--app-separator);
+    app-region: no-drag;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.sidebar__brand {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+
+.sidebar__wordmark,
+.sidebar__monogram {
+    display: block;
+    height: 40px;
+    width: auto;
+    filter: drop-shadow(0 2px 10px rgba(232, 38, 43, 0.12));
+    -webkit-user-drag: none;
+}
+
+.sidebar__monogram {
+    display: none;
+}
+
+.sidebar__search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 42px;
+    padding: 0 16px;
+    border: 1px solid var(--app-search-border);
+    border-radius: 999px;
+    background: var(--app-search-bg);
+    color: var(--app-body-color);
+    cursor: text;
+    transition:
+        border-color 160ms ease,
+        background-color 160ms ease;
+
+    app-workspace-shell-sidebar-icon {
+        width: 19px;
+        height: 19px;
+    }
+
+    input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--app-heading-color);
+        font: inherit;
+        font-size: 14.5px;
+
+        &::placeholder {
+            color: var(--app-muted-color);
+        }
+
+        &::-webkit-search-cancel-button {
+            filter: grayscale(1) brightness(1.6);
+        }
+
+        &:disabled {
+            cursor: default;
+        }
+    }
+
+    &:hover {
+        border-color: var(--app-selection-border);
+    }
+
+    &:focus-within {
+        border-color: var(--app-selection-border);
+        background: color-mix(in srgb, var(--app-search-bg) 100%, white 4%);
+    }
+}
+
+.sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.sidebar__group-label {
+    margin: 0 0 12px;
+    padding: 0 10px;
+    color: var(--app-body-color);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+}
+
+.sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 10px;
+    color: color-mix(in srgb, var(--app-heading-color) 82%, transparent);
+    font-size: 15.5px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        background-color 160ms ease,
+        color 160ms ease;
+
+    &:hover {
+        background: var(--app-hover-overlay);
+        color: var(--app-heading-color);
+    }
+
+    &.is-active {
+        background: var(--app-selection-surface-strong);
+        color: var(--app-heading-color);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+}
+
+.sidebar__link-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// Folded: icons only. The header carries the search from here down.
+@media (max-width: 1100px) {
+    .sidebar {
+        align-items: center;
+        gap: 22px;
+        padding: 24px 10px;
+    }
+
+    .sidebar__brand {
+        align-self: center;
+    }
+
+    .sidebar__wordmark,
+    .sidebar__search,
+    .sidebar__group-label,
+    .sidebar__link-label {
+        display: none;
+    }
+
+    .sidebar__monogram {
+        display: block;
+        height: 38px;
+    }
+
+    .sidebar__nav {
+        gap: 18px;
+    }
+
+    .sidebar__group + .sidebar__group {
+        padding-top: 18px;
+        border-top: 1px solid var(--app-separator);
+    }
+
+    .sidebar__link {
+        justify-content: center;
+        width: 46px;
+        height: 46px;
+        padding: 0;
+    }
+}
+
+// Phone: the sidebar becomes a scrolling strip of icons above the header.
+@media (max-width: 640px) {
+    .sidebar {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        height: 100%;
+        padding: 0 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        border-right: 0;
+        border-bottom: 1px solid var(--app-separator);
+    }
+
+    .sidebar__monogram {
+        height: 28px;
+    }
+
+    .sidebar__nav,
+    .sidebar__list {
+        flex-direction: row;
+    }
+
+    .sidebar__nav {
+        gap: 12px;
+    }
+
+    .sidebar__group + .sidebar__group {
+        padding-top: 0;
+        padding-left: 12px;
+        border-top: 0;
+        border-left: 1px solid var(--app-separator);
+    }
+
+    .sidebar__link {
+        width: 40px;
+        height: 40px;
+    }
+}

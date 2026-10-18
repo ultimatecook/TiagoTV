@@ -15,28 +15,69 @@
             (addPlaylistClicked)="onAddPlaylist($event)"
         />
     } @else {
-        <!-- Hero: rotating cinematic banner. Renders its own skeleton while
-             the first history load runs, and nothing when there is nothing
-             to feature. Each block below renders as soon as ITS data is
-             ready — no longer pinned on the slowest rail's I/O. -->
-        @if (dashboardRails().hero) {
-            <lib-dashboard-hero />
+        <!-- "Continue Watching": the rotating hero card beside tall
+             cards of the unfinished titles. Without any history the
+             section features the newest titles instead. Each block renders
+             as soon as ITS data is ready. -->
+        @if (showFeatureSection()) {
+            <section
+                class="home-feature"
+                data-test-id="dashboard-feature-section"
+            >
+                <header class="home-heading">
+                    <a
+                        class="home-heading__link"
+                        [routerLink]="featureSeeAllLink()"
+                        [state]="continueWatchingSeeAllState()"
+                    >
+                        <h2 class="home-heading__title">
+                            {{ featureHeadingKey() | translate }}
+                        </h2>
+                        <mat-icon aria-hidden="true">chevron_right</mat-icon>
+                    </a>
+                </header>
+                <div
+                    class="home-feature__row"
+                    [class.home-feature__row--hero-only]="
+                        featureSideCards().length === 0
+                    "
+                >
+                    @if (dashboardRails().hero) {
+                        <div class="home-feature__hero">
+                            <lib-dashboard-hero />
+                        </div>
+                    }
+                    @if (featureSideCards().length > 0) {
+                        <lib-dashboard-rail
+                            class="home-feature__rail"
+                            [label]="featureHeadingKey() | translate"
+                            [showHeader]="false"
+                            [items]="featureSideCards()"
+                            aspectRatio="1 / 2"
+                            [testId]="'dashboard-continue-watching-rail'"
+                            (actionSelected)="
+                                onContinueWatchingActionSelected($event)
+                            "
+                        />
+                    }
+                </div>
+            </section>
         }
 
-        <!-- Continue watching (movies + series) -->
+        <!-- New & Popular: the newest titles of the Xtream sources -->
         @if (
-            dashboardRails().continueWatching &&
-            continueWatchingCards().length > 0
+            dashboardRails().xtreamRecentlyAdded &&
+            xtreamRecentlyAddedCards().length > 0
         ) {
             <lib-dashboard-rail
-                [label]="'WORKSPACE.DASHBOARD.CONTINUE_WATCHING' | translate"
-                [items]="continueWatchingCards()"
-                [totalCount]="data.continueWatchingItems().length"
-                [seeAllLink]="['/workspace/global-recent']"
-                [seeAllState]="continueWatchingSeeAllState()"
-                [testId]="'dashboard-continue-watching-rail'"
-                [reserveMetaLine]="true"
-                (actionSelected)="onContinueWatchingActionSelected($event)"
+                [label]="'WORKSPACE.DASHBOARD.NEW_AND_POPULAR' | translate"
+                [items]="xtreamRecentlyAddedCards()"
+                [seeAllLink]="newAndPopularLink()"
+                [testId]="'dashboard-xtream-recently-added-rail'"
+            />
+        } @else if (railSkeletons.xtreamRecentlyAdded()) {
+            <lib-dashboard-rail-skeleton
+                testId="dashboard-xtream-recently-added-rail-skeleton"
             />
         }
 
@@ -125,26 +166,6 @@
             <lib-dashboard-rail-skeleton
                 aspectRatio="16 / 9"
                 testId="dashboard-recent-sources-rail-skeleton"
-            />
-        }
-
-        <!-- Xtream recently-added rail (only relevant if there are Xtream playlists) -->
-        @if (
-            dashboardRails().xtreamRecentlyAdded &&
-            xtreamRecentlyAddedCards().length > 0
-        ) {
-            <lib-dashboard-rail
-                [label]="
-                    'WORKSPACE.DASHBOARD.XTREAM_RECENTLY_ADDED' | translate
-                "
-                [items]="xtreamRecentlyAddedCards()"
-                [totalCount]="data.xtreamRecentlyAddedItems().length"
-                [testId]="'dashboard-xtream-recently-added-rail'"
-                [reserveMetaLine]="true"
-            />
-        } @else if (railSkeletons.xtreamRecentlyAdded()) {
-            <lib-dashboard-rail-skeleton
-                testId="dashboard-xtream-recently-added-rail-skeleton"
             />
         }
 

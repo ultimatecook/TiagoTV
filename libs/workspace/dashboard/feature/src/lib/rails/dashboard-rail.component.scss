@@ -667,3 +667,184 @@
     flex: 0 0 auto;
     font-variant-numeric: tabular-nums;
 }
+
+// ── TiagoTV: cinematic cover cards ─────────────────────────────────────────
+// The heading reads "New & Popular ›": the title and a chevron that opens
+// the full list. Cover cards carry their title on the artwork, over a dark
+// fade, under a small brand-marked type tag.
+:host {
+    --rail-radius: 20px;
+}
+
+.rail__header {
+    justify-content: flex-start;
+    gap: 6px;
+    min-height: 32px;
+}
+
+.rail__title {
+    font-size: 1.4rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--app-heading-color);
+}
+
+.rail__count {
+    display: none;
+}
+
+.rail__see-all {
+    padding: 4px;
+    color: var(--app-heading-color);
+
+    .rail__see-all-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+    }
+
+    &:hover {
+        color: var(--app-heading-color);
+        background: var(--app-hover-overlay);
+    }
+}
+
+.rail__card:not(.rail__card--channel) {
+    &:hover {
+        transform: translateY(-3px);
+
+        .rail__art {
+            box-shadow:
+                0 22px 40px -18px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(255, 255, 255, 0.28);
+        }
+
+        .rail__card-title {
+            color: #fff;
+        }
+    }
+
+    .rail__card-link {
+        display: grid;
+        grid-template-areas: 'card';
+        gap: 0;
+    }
+
+    .rail__art,
+    .rail__meta {
+        grid-area: card;
+    }
+
+    .rail__art {
+        border-color: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 16px 34px -20px rgba(0, 0, 0, 0.65);
+
+        // The fade the overlaid title sits on.
+        &::after {
+            content: '';
+            position: absolute;
+            inset: 34% 0 0;
+            z-index: 1;
+            background: linear-gradient(
+                180deg,
+                transparent 0%,
+                rgba(0, 0, 0, 0.62) 36%,
+                rgba(0, 0, 0, 0.94) 78%,
+                rgba(0, 0, 0, 0.97) 100%
+            );
+            pointer-events: none;
+        }
+    }
+
+    .rail__art-progress {
+        z-index: 3;
+        left: 14px;
+        right: 14px;
+        bottom: 10px;
+        height: 3px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.22);
+        overflow: hidden;
+    }
+
+    .rail__meta {
+        position: relative;
+        z-index: 2;
+        align-self: end;
+        gap: 6px;
+        padding: 0 14px 18px;
+        pointer-events: none;
+    }
+
+    &:has(.rail__art-progress) .rail__meta {
+        padding-bottom: 24px;
+    }
+
+    .rail__card-title {
+        font-family: var(--app-display-font);
+        font-size: clamp(1.35rem, 1.1rem + 0.6cqw, 1.9rem);
+        font-weight: 400;
+        line-height: 0.95;
+        letter-spacing: 0.012em;
+        text-transform: uppercase;
+        white-space: normal;
+        color: #fbf8f2;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .rail__card-meta-row,
+    .rail__card-subtitle,
+    .rail__card-remaining {
+        color: rgba(251, 248, 242, 0.72);
+    }
+}
+
+.rail__card-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #fbf8f2;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.rail__card-mark {
+    display: block;
+    width: auto;
+    height: 13px;
+    -webkit-user-drag: none;
+}
+
+// Beside the hero the rail is a column of tall cards that fills the row.
+.rail--headless {
+    gap: 0;
+}
+
+.rail__card-match {
+    color: var(--app-match-color, #46d369);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+// Over the glass the edge fades read as dark bands: the chevrons alone
+// signal more cards.
+.rail__viewport::before,
+.rail__viewport::after {
+    display: none;
+}

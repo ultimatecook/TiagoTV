@@ -1,6 +1,6 @@
 {
-    "appId": "com.fourgray.iptvnator",
-    "productName": "IPTVnator",
+    "appId": "com.ultimatecook.tiagotv",
+    "productName": "TiagoTV",
     "artifactName": "${name}-${version}-${os}-${arch}.${ext}",
     "fileAssociations": [
         {
@@ -21,8 +21,8 @@
     "publish": [
         {
             "provider": "github",
-            "owner": "4gray",
-            "repo": "iptvnator"
+            "owner": "ultimatecook",
+            "repo": "TiagoTV"
         }
     ],
     "directories": {
@@ -52,9 +52,9 @@
         "**/embedded-mpv-runtime.json"
     ],
     "extraMetadata": {
-        "name": "iptvnator",
-        "productName": "IPTVnator",
-        "desktopName": "iptvnator",
+        "name": "tiagotv",
+        "productName": "TiagoTV",
+        "desktopName": "tiagotv",
         "main": "electron-backend/main.js"
     },
     "extraResources": ["dist/apps/electron-backend/workers"],
@@ -70,17 +70,17 @@
             }
         ],
         "category": "public.app-category.video",
-        "forceCodeSigning": true,
+        "forceCodeSigning": false,
         "gatekeeperAssess": false,
         "hardenedRuntime": true,
         "entitlements": "apps/electron-backend/macos/entitlements.mac.plist",
         "entitlementsInherit": "apps/electron-backend/macos/entitlements.mac.inherit.plist",
-        "notarize": true,
+        "notarize": false,
         "icon": "apps/web/src/assets/icons/favicon.icns"
     },
     "linux": {
         "category": "Video",
-        "executableName": "iptvnator",
+        "executableName": "tiagotv",
         "executableArgs": ["--ozone-platform=x11"],
         "target": [
             {
@@ -114,9 +114,9 @@
     "appImage": {
         "desktop": {
             "entry": {
-                "X-AppImage-Name": "IPTVnator",
-                "X-AppImage-Homepage": "https://github.com/4gray/iptvnator",
-                "X-AppImage-UpdateURL": "https://github.com/4gray/iptvnator"
+                "X-AppImage-Name": "TiagoTV",
+                "X-AppImage-Homepage": "https://github.com/ultimatecook/TiagoTV",
+                "X-AppImage-UpdateURL": "https://github.com/ultimatecook/TiagoTV"
             }
         }
     },
@@ -140,8 +140,8 @@
         ],
         "files": [
             [
-                "apps/electron-backend/linux/com.fourgray.iptvnator.metainfo.xml",
-                "/share/metainfo/com.fourgray.iptvnator.metainfo.xml"
+                "apps/electron-backend/linux/com.ultimatecook.tiagotv.metainfo.xml",
+                "/share/metainfo/com.ultimatecook.tiagotv.metainfo.xml"
             ]
         ]
     },

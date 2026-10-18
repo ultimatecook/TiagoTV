@@ -755,3 +755,217 @@
         animation: none;
     }
 }
+
+// ── TiagoTV: the hero as a cinematic card ─────────────────────────────────
+// On the glass Home the hero is the first card of "Continue Watching": a
+// rounded, contained card with the key art on the right and the title
+// block on a dark wash at the left, instead of a banner that bleeds to the
+// content edges. The rules above keep their geometry roles; these restate
+// the frame.
+.hero {
+    --hero-inset: clamp(22px, 2.4vw, 34px);
+    --hero-tail: 0px;
+    --hero-text-width: min(460px, 56%);
+    --hero-scrim: #0c0c0a;
+    --hero-heading: #fbf8f2;
+    --hero-body: rgba(251, 248, 242, 0.8);
+
+    height: 100%;
+    min-height: var(--home-feature-height, 430px);
+    margin: 0;
+    padding-bottom: 0;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 24px;
+    background: var(--hero-scrim);
+    box-shadow:
+        0 30px 60px -28px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+// The poster stands sharp on the right as key art; its blurred copy
+// washes the whole card behind it.
+.hero__backdrop--poster:not(.hero__backdrop--live) {
+    .hero__backdrop-image {
+        filter: blur(34px) saturate(1.35) brightness(0.7);
+    }
+
+    .hero__backdrop-keyart {
+        width: min(62%, 720px);
+        object-position: center 22%;
+        -webkit-mask-image: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(0, 0, 0, 0.6) 22%,
+            #000 48%
+        );
+        mask-image: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(0, 0, 0, 0.6) 22%,
+            #000 48%
+        );
+    }
+}
+
+.hero__scrim {
+    background:
+        linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--hero-scrim) 94%, transparent) 0%,
+            color-mix(in srgb, var(--hero-scrim) 82%, transparent)
+                var(--hero-text-edge),
+            color-mix(in srgb, var(--hero-scrim) 18%, transparent)
+                calc(var(--hero-text-edge) + 16%),
+            transparent 100%
+        ),
+        linear-gradient(
+            180deg,
+            transparent 55%,
+            color-mix(in srgb, var(--hero-scrim) 60%, transparent) 100%
+        );
+}
+
+.hero__content {
+    align-self: center;
+    gap: 14px;
+    padding: 40px 0 34px;
+}
+
+.hero__eyebrow {
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    color: var(--hero-heading);
+}
+
+.hero__mark {
+    display: block;
+    width: auto;
+    height: 20px;
+    margin-right: 2px;
+    -webkit-user-drag: none;
+}
+
+.hero__title {
+    font-family: var(--app-display-font);
+    font-size: clamp(44px, 5.4cqw, 82px);
+    font-weight: 400;
+    line-height: 0.9;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+
+.hero__meta {
+    gap: 4px 14px;
+    align-items: center;
+    font-size: 14px;
+}
+
+// Facts read as a line of text on the card, not as chips.
+.hero__meta app-meta-chip.hero__pill {
+    padding: 0;
+    background: none;
+    color: var(--hero-body);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.hero__meta app-meta-chip.hero__pill.meta-chip--rating {
+    color: var(--app-match-color, #46d369);
+    font-weight: 600;
+}
+
+.hero__description {
+    font-size: 14.5px;
+    line-height: 1.5;
+    -webkit-line-clamp: 3;
+}
+
+.hero__actions {
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.hero__button,
+.hero__button--primary {
+    height: 46px;
+    padding: 0 22px 0 18px;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.hero__button--primary {
+    background: #fff;
+    color: #0b0b09;
+
+    &:hover {
+        background: #e9e6df;
+    }
+}
+
+.hero__button--secondary {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--hero-heading);
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.22);
+    }
+}
+
+.hero__controls {
+    right: var(--hero-inset);
+    bottom: 24px;
+    padding: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.hero__dot::before {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.hero--skeleton {
+    background: linear-gradient(135deg, #22231c 0%, #121210 100%);
+}
+
+@container dashboard (max-width: 720px) {
+    .hero {
+        --hero-text-width: 100%;
+        min-height: 380px;
+    }
+
+    .hero__content {
+        align-self: end;
+        margin-right: var(--hero-inset);
+    }
+
+    .hero__content::before {
+        inset: 24px calc(-1 * var(--hero-inset)) 0;
+    }
+
+    .hero__controls {
+        top: 16px;
+        bottom: auto;
+    }
+
+    // Stacked: the key art fills the card and fades out under the text.
+    .hero__backdrop--poster:not(.hero__backdrop--live) .hero__backdrop-keyart {
+        width: 100%;
+        opacity: 1;
+        -webkit-mask-image: linear-gradient(180deg, #000 35%, transparent 80%);
+        mask-image: linear-gradient(180deg, #000 35%, transparent 80%);
+    }
+
+    .hero__scrim {
+        background: linear-gradient(
+            180deg,
+            transparent 25%,
+            color-mix(in srgb, var(--hero-scrim) 85%, transparent) 65%,
+            var(--hero-scrim) 100%
+        );
+    }
+}

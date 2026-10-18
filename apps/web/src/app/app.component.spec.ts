@@ -226,7 +226,7 @@ describe('AppComponent', () => {
         expect(router.navigateByUrl).toHaveBeenCalledWith(route);
     });
 
-    it('should apply system theme when no settings are stored', () => {
+    it('should apply the dark theme when no settings are stored', () => {
         jest.spyOn(settingsService, 'changeTheme');
 
         component.initSettings();
@@ -235,7 +235,7 @@ describe('AppComponent', () => {
             STORE_KEY.Settings
         );
         expect(settingsService.changeTheme).toHaveBeenCalledWith(
-            Theme.SystemTheme
+            Theme.DarkTheme
         );
     });
 

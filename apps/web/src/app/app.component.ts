@@ -199,10 +199,11 @@ export class AppComponent implements OnInit {
     }
 
     /**
-     * Applies the operating system color scheme when no explicit theme is set
+     * Applies the default theme when no explicit theme is set: TiagoTV's
+     * cinematic glass look is dark by design.
      */
     detectDarkMode(): void {
-        this.settingsService.changeTheme(Theme.SystemTheme);
+        this.settingsService.changeTheme(Theme.DarkTheme);
     }
 
     /**

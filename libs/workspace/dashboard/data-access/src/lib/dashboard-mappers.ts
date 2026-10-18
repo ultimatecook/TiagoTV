@@ -107,6 +107,9 @@ export function mapDbRecentlyAddedToItem(
         category_id: item.category_id,
         xtream_id: item.xtream_id,
         poster_url: item.poster_url,
+        ...(item.backdrop_url ? { backdrop_url: item.backdrop_url } : {}),
+        ...(item.release_year ? { release_year: item.release_year } : {}),
+        ...(item.rating ? { rating: String(item.rating) } : {}),
         source: 'xtream',
     };
 }

@@ -22,6 +22,7 @@ import {
     type DashboardFavoriteItem,
 } from '@iptvnator/workspace/dashboard/data-access';
 import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
+import { DashboardHeroSlidesPresenter } from './dashboard-hero-slides.presenter';
 import { WorkspaceDashboardRailsComponent } from './workspace-dashboard-rails.component';
 
 describe('dashboard favorite status translations', () => {
@@ -93,6 +94,13 @@ describe('dashboard favorite status translations', () => {
                     {
                         provide: DashboardLiveEpgPresenter,
                         useValue: { connect: jest.fn() },
+                    },
+                    {
+                        provide: DashboardHeroSlidesPresenter,
+                        useValue: {
+                            slides: signal([]),
+                            loading: signal(false),
+                        },
                     },
                     {
                         provide: DashboardSourceExpiryService,

@@ -33,19 +33,22 @@ import { WorkspaceKeyboardShortcutsService } from '../workspace-keyboard-shortcu
 class MockWorkspaceShellServerBannerComponent {}
 
 @Component({
-    selector: 'app-workspace-shell-rail',
+    selector: 'app-workspace-shell-sidebar',
     template: '',
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
 })
-class MockWorkspaceShellRailComponent {
-    readonly isMacOS = input(false);
-    readonly workspaceLinks = input<unknown[]>([]);
-    readonly primaryContextLinks = input<unknown[]>([]);
-    readonly secondaryContextLinks = input<unknown[]>([]);
-    readonly selectedSection = input<string | null>(null);
-    readonly railProviderClass = input('');
-    readonly isSettingsRoute = input(false);
+class MockWorkspaceShellSidebarComponent {
+    readonly context = input<WorkspacePortalContext | null>(null);
+    readonly searchQuery = input('');
+    readonly canUseSearch = input(false);
+    readonly searchPlaceholder = input('');
+    readonly hasNoPlaylists = input(false);
+    readonly searchChanged = output<string>();
+    readonly searchSubmitted = output<string>();
+    // Folded to icons: the sidebar search is hidden, the header's takes it.
+    focusSearchInput = jest.fn(() => false);
+    containsSearchInput = jest.fn(() => false);
 }
 
 @Component({
@@ -156,6 +159,8 @@ class MockWorkspaceShellFacade {
     readonly secondaryContextLinks = signal([]);
     readonly currentSection = signal<string | null>(null);
     readonly railProviderClass = signal('rail-context-region');
+    readonly railContext = signal<WorkspacePortalContext | null>(null);
+    readonly isDashboardRoute = signal(false);
     readonly isSettingsRoute = signal(false);
     readonly playlistTitle = signal('Playlist A');
     readonly playlistSubtitle = signal('Subtitle');
@@ -264,7 +269,7 @@ describe('WorkspaceShellComponent', () => {
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellHeaderComponent,
                         MockWorkspaceShellImportOverlayComponent,
-                        MockWorkspaceShellRailComponent,
+                        MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
                         TrafficLightsClearanceDirective,
                         LayoutSlideDirective,
@@ -296,7 +301,7 @@ describe('WorkspaceShellComponent', () => {
 
         expect(fixture.componentInstance).toBeTruthy();
         expect(
-            fixture.nativeElement.querySelector('app-workspace-shell-rail')
+            fixture.nativeElement.querySelector('app-workspace-shell-sidebar')
         ).not.toBeNull();
         expect(
             fixture.nativeElement.querySelector('app-workspace-shell-header')
@@ -305,7 +310,7 @@ describe('WorkspaceShellComponent', () => {
             By.directive(MockWorkspaceShellHeaderComponent)
         ).componentInstance as MockWorkspaceShellHeaderComponent;
         expect(header.activeDownloadsCount()).toBe(3);
-        // macOS: the rail and header read the traffic-light clearance.
+        // macOS: the window and header read the traffic-light clearance.
         expect(
             (
                 fixture.nativeElement.querySelector(
@@ -362,7 +367,7 @@ describe('WorkspaceShellComponent', () => {
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellHeaderComponent,
                         MockWorkspaceShellImportOverlayComponent,
-                        MockWorkspaceShellRailComponent,
+                        MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
                         TrafficLightsClearanceDirective,
                         LayoutSlideDirective,
@@ -442,7 +447,7 @@ describe('WorkspaceShellComponent', () => {
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellHeaderComponent,
                         MockWorkspaceShellImportOverlayComponent,
-                        MockWorkspaceShellRailComponent,
+                        MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
                         TrafficLightsClearanceDirective,
                         LayoutSlideDirective,
@@ -518,7 +523,7 @@ describe('WorkspaceShellComponent', () => {
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellHeaderComponent,
                         MockWorkspaceShellImportOverlayComponent,
-                        MockWorkspaceShellRailComponent,
+                        MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
                         TrafficLightsClearanceDirective,
                         LayoutSlideDirective,
@@ -563,6 +568,25 @@ describe('WorkspaceShellComponent', () => {
         expect(event.defaultPrevented).toBe(true);
         expect(facade.openGlobalSearch).toHaveBeenCalledWith('');
         expect(header.focusSearchInput).toHaveBeenCalledWith({ select: true });
+
+        // On a wide window the sidebar's search is the visible one and
+        // takes the shortcut; the header's copy is left alone.
+        const sidebar = fixture.debugElement.query(
+            By.directive(MockWorkspaceShellSidebarComponent)
+        ).componentInstance as MockWorkspaceShellSidebarComponent;
+        sidebar.focusSearchInput.mockReturnValueOnce(true);
+        header.focusSearchInput.mockClear();
+        document.dispatchEvent(
+            new KeyboardEvent('keydown', {
+                key: 'f',
+                metaKey: true,
+                bubbles: true,
+                cancelable: true,
+            })
+        );
+        jest.runOnlyPendingTimers();
+        expect(sidebar.focusSearchInput).toHaveBeenCalledWith({ select: true });
+        expect(header.focusSearchInput).not.toHaveBeenCalled();
 
         // On settings the header search is the settings search, so find
         // focuses it in place instead of leaving for global search.
@@ -620,7 +644,7 @@ describe('WorkspaceShellComponent', () => {
                         MockWorkspaceShellContextSidebarComponent,
                         MockWorkspaceShellHeaderComponent,
                         MockWorkspaceShellImportOverlayComponent,
-                        MockWorkspaceShellRailComponent,
+                        MockWorkspaceShellSidebarComponent,
                         MockWorkspaceShellServerBannerComponent,
                         TrafficLightsClearanceDirective,
                         LayoutSlideDirective,
@@ -692,7 +716,7 @@ describe('WorkspaceShellComponent', () => {
         ).toBe(true);
         expect(
             fixture.nativeElement
-                .querySelector('app-workspace-shell-rail')
+                .querySelector('app-workspace-shell-sidebar')
                 .hasAttribute('inert')
         ).toBe(true);
 

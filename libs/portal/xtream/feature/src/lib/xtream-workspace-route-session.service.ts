@@ -77,6 +77,7 @@ function isImportDrivenSection(section: string | null): boolean {
         section === 'series' ||
         section === 'search' ||
         section === 'recently-added' ||
+        section === 'popular' ||
         section === 'actor' ||
         section === 'discover'
     );
@@ -105,6 +106,9 @@ function toCachedContentScope(
         case 'search':
         case 'recently-added':
             return section;
+        // "New & Popular" ranks the same whole catalog Recently added reads.
+        case 'popular':
+            return 'recently-added';
         // Neither reads one content type: both match TMDB titles against
         // the whole catalog, so they take the aggregate scope search uses.
         // Without it an expired or offline portal skips hydration and the

@@ -40,13 +40,10 @@
                             "
                             (error)="presenter.markImageFailed(backdropUrl)"
                         />
-                        <!-- A channel logo is not a backdrop: it sits on the
-                             right as the slide's artwork. A title's poster
-                             only washes the stage, blurred. -->
-                        @if (
-                            slide.backdropSource === 'poster' &&
-                            slide.contentType === 'live'
-                        ) {
+                        <!-- A poster or channel logo is not a backdrop: it
+                             sits sharp on the right as the slide's key art,
+                             over its own blurred wash. -->
+                        @if (slide.backdropSource === 'poster') {
                             <img
                                 class="hero__backdrop-keyart"
                                 [src]="backdropUrl"
@@ -85,6 +82,12 @@
                 "
             >
                 <p class="hero__eyebrow">
+                    <img
+                        class="hero__mark"
+                        src="./assets/brand/logo-7.png"
+                        alt=""
+                        draggable="false"
+                    />
                     <span
                         class="hero__type"
                         [class.hero__type--live]="slide.contentType === 'live'"
@@ -108,9 +111,16 @@
                         }}</app-meta-chip>
                     }
                     @if (slide.rating) {
-                        <app-meta-chip class="hero__pill" variant="rating"
-                            >★ {{ slide.rating }}</app-meta-chip
-                        >
+                        <app-meta-chip class="hero__pill" variant="rating">
+                            @if (matchPercent(slide.rating); as match) {
+                                {{
+                                    'WORKSPACE.DASHBOARD.MATCH'
+                                        | translate: { value: match }
+                                }}
+                            } @else {
+                                ★ {{ slide.rating }}
+                            }
+                        </app-meta-chip>
                     }
                     @for (genre of slide.genres; track genre) {
                         <app-meta-chip class="hero__pill">{{
