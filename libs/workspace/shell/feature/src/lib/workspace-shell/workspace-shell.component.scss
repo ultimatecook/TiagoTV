@@ -247,6 +247,12 @@ app-workspace-shell-context-sidebar {
 
 // The pill floats inside the window's lower edge there, clear of the last
 // row once it is scrolled up.
+// No corner to keep clear there: the content runs to the window's edge.
+:host-context(.native-glass) .workspace-content,
+:host-context(.window-fullscreen) .workspace-content {
+    margin-right: 0;
+}
+
 :host-context(.native-glass) .has-now-playing .workspace-content,
 :host-context(.window-fullscreen) .has-now-playing .workspace-content {
     padding-bottom: 92px;

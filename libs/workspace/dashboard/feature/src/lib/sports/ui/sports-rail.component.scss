@@ -27,8 +27,14 @@
     gap: 16px;
     // Room for the heads, a tenth of the card's height (4.3 / 3 of its
     // width) above it, raised further by the lift on hover.
-    padding: calc(var(--sport-width) * 0.21 + 6px) 4px 14px;
-    margin: 0 -4px;
+    padding: calc(var(--sport-width) * 0.21 + 6px) var(--rail-bleed, 4px) 48px
+        12px;
+    // The padding holds the cards' shadows (the scroller clips at its
+    // edge); the negative margins give the room back to the layout.
+    // The row runs on to the window's edge, past the page's gutter (it
+    // ends with as much room), so the cards are cut where the glass ends.
+    margin: 0 calc(-1 * var(--rail-bleed, 4px)) -34px -12px;
+    scroll-padding-left: 12px;
     overflow-x: auto;
     scroll-snap-type: x proximity;
     scrollbar-width: none;

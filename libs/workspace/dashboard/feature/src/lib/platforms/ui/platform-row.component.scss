@@ -59,8 +59,13 @@
     grid-auto-flow: column;
     grid-auto-columns: clamp(124px, 10.6vw, 176px);
     gap: 14px;
-    padding: 8px 4px 12px;
-    margin: -8px -4px 0;
+    padding: 8px var(--rail-bleed, 4px) 44px 12px;
+    // The padding holds the cards' shadows (the scroller clips at its
+    // edge); the negative margins give the room back to the layout.
+    // The row runs on to the window's edge, past the page's gutter (it
+    // ends with as much room), so the cards are cut where the glass ends.
+    margin: -8px calc(-1 * var(--rail-bleed, 4px)) -32px -12px;
+    scroll-padding-left: 12px;
     overflow-x: auto;
     scroll-snap-type: x proximity;
     scrollbar-width: none;
@@ -100,7 +105,7 @@
 }
 
 .row__arrow--forward {
-    right: -4px;
+    right: calc(-1 * var(--rail-bleed, 4px));
     border-radius: 0 12px 12px 0;
 }
 

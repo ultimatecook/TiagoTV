@@ -67,6 +67,8 @@
     --dashboard-top-gutter: 4px;
     --dashboard-max-width: 100%;
     --home-gap: 18px;
+    // The sideways rows run on through the right gutter to the edge.
+    --rail-bleed: var(--dashboard-gutter);
     --home-feature-height: clamp(340px, 31cqw, 470px);
 }
 

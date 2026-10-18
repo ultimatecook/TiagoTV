@@ -23,8 +23,13 @@
     grid-auto-flow: column;
     grid-auto-columns: clamp(150px, 12.2vw, 212px);
     gap: 16px;
-    padding: 6px 4px 14px;
-    margin: -6px -4px 0;
+    padding: 6px var(--rail-bleed, 4px) 48px 12px;
+    // The padding holds the cards' shadows (the scroller clips at its
+    // edge); the negative margins give the room back to the layout.
+    // The row runs on to the window's edge, past the page's gutter (it
+    // ends with as much room), so the cards are cut where the glass ends.
+    margin: -6px calc(-1 * var(--rail-bleed, 4px)) -34px -12px;
+    scroll-padding-left: 12px;
     overflow-x: auto;
     scroll-snap-type: x proximity;
     scrollbar-width: none;

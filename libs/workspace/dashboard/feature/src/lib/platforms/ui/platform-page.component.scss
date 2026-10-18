@@ -6,10 +6,12 @@
 }
 
 .page {
+    // The rows run on through the right gutter to the window's edge.
+    --rail-bleed: 28px;
     display: flex;
     flex-direction: column;
     gap: 26px;
-    padding: 8px 28px 40px;
+    padding: 8px var(--rail-bleed) 40px;
 }
 
 // The platform's colour with its logo large in the middle, holding the
@@ -111,7 +113,8 @@
 
 @media (max-width: 760px) {
     .page {
-        padding: 8px 14px 32px;
+        --rail-bleed: 14px;
+        padding: 8px var(--rail-bleed) 32px;
     }
 
     .all__grid {

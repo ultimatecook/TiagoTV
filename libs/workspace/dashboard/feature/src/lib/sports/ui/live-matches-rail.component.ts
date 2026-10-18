@@ -48,8 +48,12 @@ import { SportMatchCardComponent } from './sport-match-card.component';
             grid-auto-flow: column;
             grid-auto-columns: clamp(260px, 22vw, 320px);
             gap: 16px;
-            padding: 4px 4px 14px;
-            margin: -4px -4px 0;
+            /* The row runs on to the window's edge, past the page gutter;
+               the padding holds the cards' shadows, the negative margins
+               give the room back to the layout. */
+            padding: 4px var(--rail-bleed, 4px) 48px 12px;
+            margin: -4px calc(-1 * var(--rail-bleed, 4px)) -34px -12px;
+            scroll-padding-left: 12px;
             overflow-x: auto;
             scroll-snap-type: x proximity;
             scrollbar-width: none;
