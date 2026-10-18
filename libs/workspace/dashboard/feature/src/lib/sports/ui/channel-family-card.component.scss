@@ -1,0 +1,172 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+// The card: dark glass like the page's match cards, the channel's logo on
+// its plate, its full name, and a numbered chip per feed.
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+.family__main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: var(--app-heading-color);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover .family__play {
+        opacity: 1;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 4px);
+
+        .family__play {
+            opacity: 1;
+        }
+    }
+}
+
+// Every logo on the same plate: light for the dark logos most channels
+// file, dark for the white ones (DAZN's, Prime Video's).
+.family__plate {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 92px;
+    height: 58px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #f4f5f7;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+
+    img {
+        max-width: 80%;
+        max-height: 74%;
+        object-fit: contain;
+        -webkit-user-drag: none;
+    }
+}
+
+.family__plate--dark {
+    background: linear-gradient(140deg, #1b1e27 0%, #2c303c 100%);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+// A bundled logo in white, on its brand's colour or the competition's.
+.family__plate--brand {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+
+    img {
+        max-width: 72%;
+        max-height: 60%;
+    }
+}
+
+.family__fallback {
+    width: 28px;
+    height: 28px;
+    color: #6b7180;
+    font-size: 28px;
+}
+
+.family__text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+// The whole name, on up to two lines.
+.family__name {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.family__count {
+    color: var(--app-body-color);
+    font-size: 12.5px;
+}
+
+.family__play {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 22px;
+    line-height: 34px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 160ms ease;
+}
+
+.family__feeds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.family__feed {
+    min-width: 34px;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--app-heading-color);
+    font: inherit;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 140ms ease,
+        border-color 140ms ease;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.24);
+        background: rgba(255, 255, 255, 0.16);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host,
+    .family__play,
+    .family__feed {
+        transition: none;
+    }
+}

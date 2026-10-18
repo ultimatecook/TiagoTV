@@ -1,0 +1,61 @@
+@let fam = family();
+<button
+    type="button"
+    class="family__main"
+    [attr.data-test-id]="'channel-family-' + fam.key"
+    (click)="playFeed(fam.feeds[0])"
+>
+    @if (icon(); as icon) {
+        <span
+            class="family__plate"
+            [class.family__plate--dark]="darkPlate()"
+            aria-hidden="true"
+        >
+            <img
+                [src]="icon"
+                alt=""
+                loading="lazy"
+                referrerpolicy="no-referrer"
+                draggable="false"
+                (error)="nextIcon()"
+            />
+        </span>
+    } @else if (bundled(); as bundled) {
+        <span
+            class="family__plate family__plate--brand"
+            [style.background]="bundled.background"
+            aria-hidden="true"
+        >
+            <img [src]="bundled.logo" alt="" draggable="false" />
+        </span>
+    } @else {
+        <span class="family__plate" aria-hidden="true">
+            <mat-icon class="family__fallback">live_tv</mat-icon>
+        </span>
+    }
+    <span class="family__text">
+        <span class="family__name">{{ fam.name }}</span>
+        <span class="family__count">{{
+            (fam.feeds.length === 1
+                ? 'WORKSPACE.SPORTS.FEEDS_ONE'
+                : 'WORKSPACE.SPORTS.FEEDS'
+            ) | translate: { count: fam.feeds.length }
+        }}</span>
+    </span>
+    <mat-icon class="family__play" aria-hidden="true">play_arrow</mat-icon>
+</button>
+@if (fam.feeds.length > 1) {
+    <div class="family__feeds" role="group" [attr.aria-label]="fam.name">
+        @for (feed of fam.feeds; track feed.number) {
+            <button
+                type="button"
+                class="family__feed"
+                [attr.aria-label]="feedLabel(feed)"
+                [title]="feedLabel(feed)"
+                (click)="playFeed(feed)"
+            >
+                {{ feed.number }}
+            </button>
+        }
+    </div>
+}

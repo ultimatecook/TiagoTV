@@ -129,10 +129,12 @@ export function buildSportsCatalog(
         }
         for (const section of SPORT_SECTIONS) {
             const sectionChannels = channels.get(section.id)!;
-            // HD and SD copies of one channel share a cleaned title.
+            // HD and SD copies of one channel share a cleaned title: the
+            // first one stays, unless a later one has the logo it lacks.
             const key = channel.title.toLowerCase();
+            const kept = sectionChannels.get(key);
             if (
-                !sectionChannels.has(key) &&
+                (!kept || (!kept.icon && channel.icon)) &&
                 channelInSection(section, stream.name, categoryName)
             ) {
                 sectionChannels.set(key, channel);

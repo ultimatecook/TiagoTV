@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { SportsCatalogService } from '../sports-catalog.service';
@@ -21,6 +26,6 @@ export class SportsRailComponent {
 
     constructor() {
         // The competition pages and today's matches read the same catalog.
-        void inject(SportsCatalogService).load();
+        inject(SportsCatalogService).keepFresh(inject(DestroyRef));
     }
 }

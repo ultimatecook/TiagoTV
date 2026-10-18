@@ -84,9 +84,9 @@ export function isIdleEventChannel(name: string): boolean {
 const MONTHS = 'jan feb mar apr may jun jul aug sep oct nov dec'.split(' ');
 /** A US pay-per-view slot's game: "Lakers vs Nuggets @ Oct 16 10:30 PM". */
 const PPV_DATE = /@\s*([a-z]{3})\s+(\d{1,2})\s+\d{1,2}:\d{2}\s*[ap]m/i;
-/** A numbered slot with nothing on it: "NBA 13 :", ":NBA 13". */
+/** A numbered slot with nothing on it: "NBA 13 :", ":NBA 13", "UEFA | 15 -". */
 const EMPTY_SLOT =
-    /^\s*(:\s*[a-z]{2,6}\s*\d{1,2}|[a-z]{2,6}\s*\d{1,2}\s*:)\s*$/i;
+    /^\s*(:\s*[a-z]{2,6}\s*\d{1,2}|[a-z]{2,6}\s*\d{1,2}\s*:|[a-z]{2,6}\s*\|\s*\d{1,2}\s*-?)\s*$/i;
 
 /**
  * A channel slot that names nothing to watch: an empty numbered slot, or a

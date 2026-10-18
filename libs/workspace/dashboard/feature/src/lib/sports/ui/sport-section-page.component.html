@@ -43,9 +43,9 @@
                 <h2 class="block__title">
                     {{ 'WORKSPACE.SPORTS.MATCHES' | translate }}
                 </h2>
-                @if (content.matches.length > 0) {
+                @if (matches().length > 0) {
                     <div class="block__matches">
-                        @for (match of content.matches; track match.streamId) {
+                        @for (match of matches(); track match.streamId) {
                             <lib-sport-match-card [match]="match" />
                         }
                     </div>
@@ -56,35 +56,19 @@
                 }
             </section>
 
-            @if (content.channels.length > 0) {
+            @if (families().length > 0) {
                 <section class="block">
                     <h2 class="block__title">
                         {{ 'WORKSPACE.SPORTS.CHANNELS' | translate }}
                     </h2>
                     <div class="block__channels">
-                        @for (
-                            channel of content.channels;
-                            track channel.streamId
-                        ) {
-                            <button
-                                type="button"
-                                class="channel"
-                                (click)="play(channel)"
-                            >
-                                <span class="channel__logo">
-                                    @if (channel.icon) {
-                                        <img
-                                            [src]="channel.icon"
-                                            alt=""
-                                            loading="lazy"
-                                            referrerpolicy="no-referrer"
-                                        />
-                                    }
-                                </span>
-                                <span class="channel__name">{{
-                                    channel.title
-                                }}</span>
-                            </button>
+                        @for (family of families(); track family.key) {
+                            <lib-channel-family-card
+                                [family]="family"
+                                [fallbackLogo]="section.logo"
+                                [fallbackTint]="section.tint"
+                                (playChannel)="play($event)"
+                            />
                         }
                     </div>
                 </section>

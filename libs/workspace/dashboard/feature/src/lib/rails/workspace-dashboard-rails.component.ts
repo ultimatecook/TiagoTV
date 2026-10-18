@@ -96,6 +96,7 @@ import type {
 } from './dashboard-rail.utils';
 
 import { PlatformsRailComponent } from '../platforms/ui/platforms-rail.component';
+import { LiveChannelsRailComponent } from '../sports/ui/live-channels-rail.component';
 import { LiveMatchesRailComponent } from '../sports/ui/live-matches-rail.component';
 import { SportsRailComponent } from '../sports/ui/sports-rail.component';
 
@@ -106,6 +107,7 @@ import { SportsRailComponent } from '../sports/ui/sports-rail.component';
         DashboardRailComponent,
         DashboardRailSkeletonComponent,
         EmptyStateComponent,
+        LiveChannelsRailComponent,
         LiveMatchesRailComponent,
         MatIcon,
         PlatformsRailComponent,

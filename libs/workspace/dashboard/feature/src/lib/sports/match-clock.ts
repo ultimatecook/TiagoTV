@@ -50,12 +50,22 @@ export class KickoffMemory {
         this.times = read(storage);
     }
 
+    /**
+     * Keeps the kick-offs of upcoming matches. A live match first seen
+     * without one started by now at the latest: that time stands in for
+     * it, so a "Live" that outlasts its match still ends.
+     */
     remember(matches: readonly SportMatch[], now = Date.now()): void {
         let changed = false;
         for (const match of matches) {
-            const start = match.event.start?.getTime();
-            if (start !== undefined && this.times[matchKey(match)] !== start) {
-                this.times[matchKey(match)] = start;
+            const key = matchKey(match);
+            const start =
+                match.event.start?.getTime() ??
+                (match.event.status === 'live' && !(key in this.times)
+                    ? now
+                    : undefined);
+            if (start !== undefined && this.times[key] !== start) {
+                this.times[key] = start;
                 changed = true;
             }
         }

@@ -1,0 +1,46 @@
+@if (sports.liveChannels().length > 0) {
+    <section class="channels" data-test-id="dashboard-live-channels-rail">
+        <header class="channels__heading">
+            <h2 class="channels__title">
+                {{ 'WORKSPACE.SPORTS.LIVE_CHANNELS' | translate }}
+            </h2>
+        </header>
+        <div class="channels__row">
+            @for (tile of sports.liveChannels(); track tile.brand.id) {
+                <button
+                    type="button"
+                    class="channel"
+                    [style.background]="tile.brand.background"
+                    [attr.aria-label]="tile.brand.name"
+                    [attr.data-test-id]="'live-channel-' + tile.brand.id"
+                    (click)="sports.play(tile.channel)"
+                >
+                    <span class="channel__live" aria-hidden="true"></span>
+                    @if (tile.brand.logo) {
+                        <img
+                            class="channel__logo"
+                            [src]="tile.brand.logo"
+                            [style.--logo-size]="tile.brand.logoSize ?? 1"
+                            alt=""
+                            draggable="false"
+                        />
+                    } @else if (tile.icon) {
+                        <span class="channel__plate">
+                            <img
+                                [src]="tile.icon"
+                                alt=""
+                                loading="lazy"
+                                referrerpolicy="no-referrer"
+                                draggable="false"
+                            />
+                        </span>
+                    } @else {
+                        <span class="channel__wordmark">{{
+                            tile.brand.name
+                        }}</span>
+                    }
+                </button>
+            }
+        </div>
+    </section>
+}

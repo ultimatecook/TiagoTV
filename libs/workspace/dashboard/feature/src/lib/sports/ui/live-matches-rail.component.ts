@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    inject,
+} from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { SportsCatalogService } from '../sports-catalog.service';
 import { SportMatchCardComponent } from './sport-match-card.component';
@@ -73,6 +78,6 @@ export class LiveMatchesRailComponent {
     readonly sports = inject(SportsCatalogService);
 
     constructor() {
-        void this.sports.load();
+        this.sports.keepFresh(inject(DestroyRef));
     }
 }

@@ -2,22 +2,30 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
+    DestroyRef,
     inject,
     input,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
+import { groupChannelFamilies } from '../channel-families';
 import { SportsCatalogService } from '../sports-catalog.service';
 import { findSportSection } from '../sport-sections';
 import type { SportChannel } from '../sports-catalog';
+import { ChannelFamilyCardComponent } from './channel-family-card.component';
 import { SportMatchCardComponent } from './sport-match-card.component';
 
 /**
  * A competition's page (/workspace/sports/:sectionId): its matches on now
- * and later today, then its channels. Everything plays in the live player.
+ * and to come (none that is over), then its channels, one card per
+ * channel with its feeds. Everything plays in the live player.
  */
 @Component({
     selector: 'lib-sport-section-page',
-    imports: [SportMatchCardComponent, TranslatePipe],
+    imports: [
+        ChannelFamilyCardComponent,
+        SportMatchCardComponent,
+        TranslatePipe,
+    ],
     templateUrl: './sport-section-page.component.html',
     styleUrl: './sport-section-page.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,15 +41,22 @@ export class SportSectionPageComponent {
         const catalog = this.sports.catalog();
         return section && catalog ? catalog[section.id] : null;
     });
+    readonly matches = computed(() =>
+        (this.content()?.matches ?? []).filter(
+            (match) => !this.sports.isOver(match)
+        )
+    );
     readonly liveCount = computed(
         () =>
-            this.content()?.matches.filter(
-                (match) => match.event.status === 'live'
-            ).length ?? 0
+            this.matches().filter((match) => match.event.status === 'live')
+                .length
+    );
+    readonly families = computed(() =>
+        groupChannelFamilies(this.content()?.channels ?? [])
     );
 
     constructor() {
-        void this.sports.load();
+        this.sports.keepFresh(inject(DestroyRef));
     }
 
     play(channel: SportChannel): void {

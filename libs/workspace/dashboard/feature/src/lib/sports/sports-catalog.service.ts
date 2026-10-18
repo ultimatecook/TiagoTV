@@ -1,4 +1,10 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import {
+    computed,
+    inject,
+    Injectable,
+    signal,
+    type DestroyRef,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { selectAllPlaylistsMeta } from '@iptvnator/m3u-state';
@@ -9,20 +15,26 @@ import {
     xtreamSourceCredentials,
     type XtreamSourceCredentials,
 } from '../xtream-source';
+import { buildLiveChannels, type LiveChannelTile } from './live-channels';
+import { isMatchOver, KickoffMemory } from './match-clock';
 import { TeamCrestResolver } from './team-crests';
 import {
     buildSportsCatalog,
     todaysMatches,
     type SportChannel,
+    type SportMatch,
     type SportsCatalog,
 } from './sports-catalog';
 
 /** Event channels rename themselves through the day: a short cache. */
 const FRESH_MS = 3 * 60 * 1000;
+/** How often an open sports view checks the clock (and the cache's age). */
+const TICK_MS = 60 * 1000;
 
 interface LoadedCatalog {
     readonly playlistId: string;
     readonly catalog: SportsCatalog;
+    readonly liveChannels: readonly LiveChannelTile[];
     readonly at: number;
 }
 
@@ -39,7 +51,11 @@ export class SportsCatalogService {
         selectAllPlaylistsMeta
     );
     private readonly loaded = signal<LoadedCatalog | null>(null);
+    private readonly kickOffs = new KickoffMemory(browserStorage());
     private inFlight: Promise<void> | null = null;
+    /** The open sports views; the catalog is kept fresh while any is. */
+    private holders = 0;
+    private ticker: ReturnType<typeof setInterval> | null = null;
 
     readonly crests = new TeamCrestResolver({
         fetchJson: async (url) => {
@@ -60,10 +76,47 @@ export class SportsCatalogService {
             ? loaded.catalog
             : null;
     });
+    private readonly clock = signal(new Date());
+    /** The wall clock, a minute at a time while a sports view is open. */
+    readonly now = this.clock.asReadonly();
     readonly today = computed(() => {
         const catalog = this.catalog();
-        return catalog ? todaysMatches(catalog) : [];
+        return catalog
+            ? todaysMatches(catalog, this.now(), (match) =>
+                  this.kickOffs.kickOffOf(match)
+              )
+            : [];
     });
+    readonly liveChannels = computed(() => {
+        const loaded = this.loaded();
+        return loaded && loaded.playlistId === this.source()?._id
+            ? loaded.liveChannels
+            : [];
+    });
+
+    /** Whether a match listed as live or upcoming is in fact over. */
+    isOver(match: SportMatch): boolean {
+        return isMatchOver(match, this.kickOffs.kickOffOf(match), this.now());
+    }
+
+    /**
+     * Loads the catalog and keeps it fresh (and the clock running) until
+     * `destroyRef` is destroyed: event channels rename themselves through
+     * the day, and a match's "Live" outlasts its final whistle.
+     */
+    keepFresh(destroyRef: DestroyRef): void {
+        void this.load();
+        if (this.holders++ === 0) {
+            this.clock.set(new Date());
+            this.ticker = setInterval(() => this.tick(), TICK_MS);
+        }
+        destroyRef.onDestroy(() => {
+            if (--this.holders === 0 && this.ticker !== null) {
+                clearInterval(this.ticker);
+                this.ticker = null;
+            }
+        });
+    }
 
     /** Loads the catalog unless a fresh one is held. */
     load(): Promise<void> {
@@ -111,15 +164,31 @@ export class SportsCatalogService {
                 this.api.getCategories(credentials, 'live', options),
                 this.api.getLiveStreams(credentials, options),
             ]);
+            const catalog = buildSportsCatalog(categories, streams);
+            this.kickOffs.remember(
+                Object.values(catalog).reduce<SportMatch[]>(
+                    (all, content) => all.concat(content.matches),
+                    []
+                )
+            );
             this.loaded.set({
                 playlistId,
-                catalog: buildSportsCatalog(categories, streams),
+                catalog,
+                liveChannels: buildLiveChannels(categories, streams),
                 at: Date.now(),
             });
         } catch {
             this.failed.set(true);
         } finally {
             this.loading.set(false);
+        }
+    }
+
+    private tick(): void {
+        this.clock.set(new Date());
+        // A hidden window reloads once it is looked at again.
+        if (typeof document === 'undefined' || !document.hidden) {
+            void this.load();
         }
     }
 }

@@ -71,6 +71,10 @@ describe('parseSportEvent', () => {
 
         expect(isStaleSlot('NBA 13 :', now)).toBe(true);
         expect(isStaleSlot(':NBA 15', now)).toBe(true);
+        expect(isStaleSlot('UEFA | 15 -', now)).toBe(true);
+        expect(isStaleSlot('UEFA | 13 - Aston Villa vs Ajax 20.00', now)).toBe(
+            false
+        );
         expect(isStaleSlot('DAZN 1', now)).toBe(false);
         expect(isStaleSlot('NBA TV 3', now)).toBe(false);
         expect(
