@@ -53,6 +53,10 @@ describe('Xtream live auto-open playback queue', () => {
             { category_id: 1 },
             { category_id: 7 },
         ]),
+        getDisplayedCategoriesBySelectedType: signal([
+            { category_id: 1 },
+            { category_id: 7 },
+        ]),
         getCategoryItemCounts: signal(new Map()),
         epgItems: signal([]),
         currentEpgItem: signal(null),

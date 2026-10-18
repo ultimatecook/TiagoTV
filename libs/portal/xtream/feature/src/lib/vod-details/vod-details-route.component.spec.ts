@@ -250,7 +250,8 @@ describe('VodDetailsRouteComponent', () => {
         fixture.detectChanges();
 
         const host = fixture.nativeElement as HTMLElement;
-        expect(host.textContent).toContain('Die Kühe sind Los! (2004) DE');
+        // TiagoTV shows titles without the year the provider appends.
+        expect(host.textContent).toContain('Die Kühe sind Los! DE');
         expect(
             host.querySelector('[data-testid="xtream-vod-fallback"]')
                 ?.textContent
@@ -360,7 +361,8 @@ describe('VodDetailsRouteComponent', () => {
         fixture.detectChanges();
 
         const host = fixture.nativeElement as HTMLElement;
-        expect(host.textContent).toContain('City of McFarland (2015)');
+        expect(host.textContent).toContain('City of McFarland');
+        expect(host.textContent).not.toContain('(2015)');
         expect(
             host.querySelector('[data-testid="xtream-vod-fallback"]')
         ).toBeNull();

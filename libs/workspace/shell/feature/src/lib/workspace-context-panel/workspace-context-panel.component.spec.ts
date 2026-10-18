@@ -81,7 +81,7 @@ describe('WorkspaceContextPanelComponent', () => {
     const xtreamIsLoadingCategories = signal(false);
 
     const xtreamStore = {
-        getCategoriesBySelectedType: xtreamCategories,
+        getDisplayedCategoriesBySelectedType: xtreamCategories,
         getCategoryItemCounts: xtreamCategoryItemCounts,
         selectedCategoryId: xtreamSelectedCategoryId,
         selectedTypeContentState: xtreamSelectedTypeContentState,
@@ -366,6 +366,31 @@ describe('WorkspaceContextPanelComponent', () => {
         expect(localStorage.getItem(WORKSPACE_CATEGORY_SORT_STORAGE_KEY)).toBe(
             'name-desc'
         );
+    });
+
+    it('labels provider categories by their own name, searched and sorted by it', () => {
+        fixture.componentRef.setInput('section', 'live');
+        xtreamSelectedTypeContentState.set('ready');
+        xtreamCategories.set([
+            { id: 1, name: '|ES| ✪ DAZN LA LIGA' },
+            { id: 2, name: '|UK| ✪ MUSIC' },
+            { id: 3, name: '|LAT|  ✪ ARGENTINA' },
+            { id: 4, name: '|US| ✪ MUSIC' },
+        ]);
+        fixture.componentInstance.setCategorySortMode('name-asc');
+        fixture.detectChanges();
+
+        expect(getCategoryLabels(fixture)).toEqual([
+            'ARGENTINA',
+            'DAZN LA LIGA',
+            'MUSIC · UK',
+            'MUSIC · US',
+        ]);
+
+        // The provider's code no longer matches every row of its language.
+        fixture.componentInstance.categorySearchTerm.set('es');
+        fixture.detectChanges();
+        expect(getCategoryLabels(fixture)).toEqual([]);
     });
 
     it.each([

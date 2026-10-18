@@ -30,7 +30,8 @@
                         {{ item.labelKey | translate }}
                     } @else {
                         {{
-                            item.category_name ||
+                            labels().get(item) ||
+                                item.category_name ||
                                 $any(item).name ||
                                 ('PORTALS.UNNAMED_CATEGORY' | translate)
                         }}

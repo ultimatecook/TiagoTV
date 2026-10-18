@@ -54,6 +54,12 @@ export function cleanChannelName(raw: string): string {
     return name || raw.trim();
 }
 
+/** An event channel, named after the match it carries ("Live | …"). */
+export function isEventChannelName(raw: string): boolean {
+    const parts = raw.split('|');
+    return parts.length > 1 && EVENT_STATUS.test(parts[0].trim());
+}
+
 /**
  * What a channel shows: the match and its competition on an event
  * channel, the cleaned name otherwise.
@@ -78,4 +84,12 @@ export function displayChannelName(raw: string): DisplayChannelName {
     const competition =
         rest.length > 1 ? cleanChannelName(rest.pop() as string) : null;
     return { title: rest.join(' · '), subtitle: competition };
+}
+
+/**
+ * "ES | No Event", "GB | No Event": an event channel waiting for its next
+ * match, which carries nothing until then.
+ */
+export function isIdleEventChannel(name: string): boolean {
+    return /\|\s*no event\s*$/i.test(name.trim());
 }

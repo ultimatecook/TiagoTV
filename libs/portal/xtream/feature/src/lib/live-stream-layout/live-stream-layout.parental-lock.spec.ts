@@ -63,6 +63,9 @@ describe('LiveStreamLayoutComponent parental lock', () => {
         getCategoriesBySelectedType: signal([
             { category_id: 1, category_name: 'News' },
         ]),
+        getDisplayedCategoriesBySelectedType: signal([
+            { category_id: 1, category_name: 'News' },
+        ]),
         liveCategories: signal([{ id: 41, xtream_id: 7, name: 'Adult' }]),
         getCategoryItemCounts: signal(new Map<number, number>([[1, 1]])),
         getPaginatedContent: emptyList,

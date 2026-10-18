@@ -34,6 +34,10 @@ export interface WorkspaceCategoryViewItem {
 })
 export class WorkspaceContextCategoryViewComponent {
     readonly items = input<ReadonlyArray<WorkspaceCategoryViewItem>>([]);
+    /** Display labels by item, where the host cleans the provider's names. */
+    readonly labels = input<ReadonlyMap<WorkspaceCategoryViewItem, string>>(
+        new Map()
+    );
     readonly selectedCategoryId = input<string | number | null | undefined>();
     readonly itemCounts = input<Map<number, number>>(new Map());
     readonly showCounts = input(false);

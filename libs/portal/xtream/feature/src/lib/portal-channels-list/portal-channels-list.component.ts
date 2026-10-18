@@ -32,9 +32,12 @@ import { debounceTime } from 'rxjs/operators';
 import {
     foldSearchText,
     buildXtreamEpgMappingKey,
+    DisplayChannelName,
+    displayChannelName,
     EpgItem,
     EpgProgram,
     epgProviderClockMs,
+    isEventChannelName,
     XtreamCategory,
     XtreamItem,
 } from '@iptvnator/shared/interfaces';
@@ -315,6 +318,27 @@ export class PortalChannelsListComponent implements AfterViewInit, OnDestroy {
 
     trackBy(_index: number, item: XtreamChannelListItem | XtreamItem) {
         return item.xtream_id;
+    }
+
+    /**
+     * TiagoTV: an event channel ("Live | Leeds United - Manchester United |
+     * Premier League | ES") by its match, the competition as its second
+     * line; any other channel by its own name. Read once per row.
+     */
+    private readonly channelLabels = new WeakMap<
+        XtreamChannelListItem,
+        DisplayChannelName
+    >();
+    channelLabel(item: XtreamChannelListItem): DisplayChannelName {
+        let label = this.channelLabels.get(item);
+        if (!label) {
+            const raw = item.title || item.name || '';
+            label = isEventChannelName(raw)
+                ? displayChannelName(raw)
+                : { title: raw, subtitle: null };
+            this.channelLabels.set(item, label);
+        }
+        return label;
     }
 
     protected readonly isCatchupAvailable = isXtreamCatchupAvailable;

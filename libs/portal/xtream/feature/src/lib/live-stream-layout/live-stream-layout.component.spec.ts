@@ -80,6 +80,7 @@ describe('LiveStreamLayoutComponent', () => {
 
     const xtreamStore = {
         getCategoriesBySelectedType: categories,
+        getDisplayedCategoriesBySelectedType: categories,
         getCategoryItemCounts: categoryItemCounts,
         getPaginatedContent: paginatedContent,
         hasMoreContent,
@@ -420,6 +421,23 @@ describe('LiveStreamLayoutComponent', () => {
                 .querySelector('.epg')
                 .classList.contains('epg-collapsed')
         ).toBe(false);
+    });
+
+    it('heads the channels rail with the category label the rail shows', () => {
+        categories.set([
+            { category_id: 1, category_name: '|ES| ✪ DAZN LA LIGA' },
+            { category_id: 2, category_name: '|UK| ✪ MUSIC' },
+        ]);
+        expect(component.selectedCategoryInfo()).toEqual({
+            name: 'DAZN LA LIGA',
+            count: 1,
+        });
+
+        categories.set([
+            { category_id: 1, category_name: '|ES| ✪ MUSIC' },
+            { category_id: 2, category_name: '|UK| ✪ MUSIC' },
+        ]);
+        expect(component.selectedCategoryInfo()?.name).toBe('MUSIC · ES');
     });
 
     it('shows the channel loading skeleton surface while live content loads without a selected category', () => {

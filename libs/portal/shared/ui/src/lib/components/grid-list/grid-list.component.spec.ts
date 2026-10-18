@@ -263,6 +263,35 @@ describe('GridListComponent', () => {
         expect(title.nativeElement.textContent.trim()).toBe('US | CNN');
     });
 
+    it('names an Xtream event channel by its match, the competition under it', () => {
+        fixture.componentRef.setInput('items', [
+            {
+                name: 'Live | Leeds United - Manchester United | Premier League | ES',
+            },
+            {
+                name: 'Next | 2026-10-18 | 16:00 (GMT) | Girona FC - FC Andorra | LALIGA HYPERMOTION | ES',
+            },
+            { name: 'US | CNN' },
+        ]);
+        fixture.componentRef.setInput('type', 'live');
+
+        fixture.detectChanges();
+
+        const texts = (selector: string) =>
+            fixture.debugElement
+                .queryAll(By.css(selector))
+                .map((element) => element.nativeElement.textContent.trim());
+        expect(texts('.title')).toEqual([
+            'Leeds United - Manchester United',
+            'Girona FC - FC Andorra',
+            'US | CNN',
+        ]);
+        expect(texts('.subtitle')).toEqual([
+            'Premier League',
+            'LALIGA HYPERMOTION',
+        ]);
+    });
+
     it('falls back to a placeholder title for items without a name', () => {
         fixture.componentRef.setInput('items', [{}]);
 

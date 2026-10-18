@@ -45,3 +45,54 @@ export function isSpanishOrEnglishCategory(
     }
     return code !== 'MULTI' || ENGLISH.test(name);
 }
+
+/** The provider's code in front of a name: "|ES| ", "|LAT|  ". */
+const LEADING_CODE = /^\s*\|[^|]{1,12}\|\s*/;
+/** The decoration after it: "✪ ", "★ ". */
+const LEADING_MARKS = /^[\s✪★☆•●◆✦]+/;
+
+/**
+ * A category's own name, without the provider's code and decoration:
+ * "|ES| ✪ DAZN LA LIGA" → "DAZN LA LIGA", "|LAT|  ✪ ARGENTINA" →
+ * "ARGENTINA". A name that is nothing else is returned as it came.
+ */
+export function cleanCategoryName(name: string): string {
+    const clean = name
+        .replace(LEADING_CODE, '')
+        .replace(LEADING_MARKS, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    return clean || name.trim();
+}
+
+/**
+ * The labels of a category list, in order: each clean name, with the code
+ * after it where two categories would otherwise read the same
+ * ("|UK| ✪ MUSIC", "|US| ✪ MUSIC" → "MUSIC · UK", "MUSIC · US").
+ */
+export function categoryDisplayLabels(names: readonly string[]): string[] {
+    const labels = names.map(cleanCategoryName);
+    const namesByLabel = new Map<string, Set<string>>();
+    labels.forEach((label, index) => {
+        const key = label.toLowerCase();
+        const same = namesByLabel.get(key) ?? new Set<string>();
+        same.add(names[index]);
+        namesByLabel.set(key, same);
+    });
+    return labels.map((label, index) => {
+        const code = categoryLanguageCode(names[index]);
+        const clashes = (namesByLabel.get(label.toLowerCase())?.size ?? 0) > 1;
+        return code && clashes ? `${label} · ${code}` : label;
+    });
+}
+
+/** One category's label among `names`, as {@link categoryDisplayLabels}. */
+export function categoryDisplayLabel(
+    name: string,
+    names: readonly string[]
+): string {
+    const index = names.indexOf(name);
+    return index === -1
+        ? cleanCategoryName(name)
+        : categoryDisplayLabels(names)[index];
+}

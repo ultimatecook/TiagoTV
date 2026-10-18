@@ -1,4 +1,9 @@
-import { cleanChannelName, displayChannelName } from './display-channel-name';
+import {
+    cleanChannelName,
+    displayChannelName,
+    isEventChannelName,
+    isIdleEventChannel,
+} from './display-channel-name';
 
 describe('displayChannelName', () => {
     it.each([
@@ -67,5 +72,34 @@ describe('cleanChannelName', () => {
     it('never empties a name', () => {
         expect(cleanChannelName('|ES|')).toBe('|ES|');
         expect(cleanChannelName('ᴴᴰ')).toBe('ᴴᴰ');
+    });
+});
+
+describe('isIdleEventChannel', () => {
+    it.each([
+        ['ES | No Event', true],
+        ['FR | No Event ', true],
+        ['GB|no event', true],
+        ['LIVE EVENT 25 - NO EVENT', false],
+        [
+            'Live | Leeds United - Manchester United | Premier League | ES',
+            false,
+        ],
+        ['|ES| DAZN 1', false],
+    ])('"%s" is idle: %s', (name, idle) => {
+        expect(isIdleEventChannel(name)).toBe(idle);
+    });
+});
+
+describe('isEventChannelName', () => {
+    it.each([
+        ['Live | Leeds United - Manchester United | Premier League | ES', true],
+        ['Next | 2026-10-18 | 16:00 (GMT) | Girona FC - FC Andorra | ES', true],
+        ['End | Udinese vs. Lecce | Serie A Enilive | FR', true],
+        ['ES | No Event', false],
+        ['|ES| DAZN 1 ᴴᴰ', false],
+        ['Live Sports', false],
+    ])('"%s" is an event channel: %s', (name, event) => {
+        expect(isEventChannelName(name)).toBe(event);
     });
 });

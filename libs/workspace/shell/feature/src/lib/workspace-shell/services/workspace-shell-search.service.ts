@@ -10,6 +10,7 @@ import {
     RuntimeCapabilitiesService,
     injectTranslationTick,
 } from '@iptvnator/services';
+import { categoryDisplayLabel } from '@iptvnator/shared/interfaces';
 import { WorkspaceSearchCapability } from '@iptvnator/workspace/shell/util';
 import { SettingsSearchService } from '@iptvnator/workspace/shell/util/settings-search';
 import {
@@ -159,7 +160,7 @@ export class WorkspaceShellSearchService {
                 translate: (key, params) => this.translateText(key, params),
                 // No selected category means the grid lists every item.
                 xtreamCategory: this.xtreamStore.selectedCategoryId()
-                    ? this.xtreamStore.getSelectedCategory()
+                    ? this.xtreamCategoryLabel()
                     : { name: this.translateText('PORTALS.ALL_ITEMS') },
                 // This computed reads the language tick, so the every-item
                 // genre is translated in the current language.
@@ -185,6 +186,24 @@ export class WorkspaceShellSearchService {
     readonly searchStatusLabel = computed(
         () => this.searchCapability().statusLabel
     );
+
+    /** The selected category by the label its rail shows ("DAZN LA LIGA"). */
+    private xtreamCategoryLabel(): { name?: string } | undefined {
+        const category = this.xtreamStore.getSelectedCategory();
+        const name = category?.category_name ?? category?.name;
+        return name === undefined
+            ? category
+            : {
+                  name: categoryDisplayLabel(
+                      name,
+                      this.xtreamStore
+                          .getDisplayedCategoriesBySelectedType()
+                          .map(
+                              (shown) => shown.category_name ?? shown.name ?? ''
+                          )
+                  ),
+              };
+    }
 
     onSearchInput(value: string): void {
         this.searchSync.onSearchInput(value);

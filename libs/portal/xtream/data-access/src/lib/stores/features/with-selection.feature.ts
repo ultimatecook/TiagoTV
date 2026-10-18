@@ -1,4 +1,4 @@
-import { computed } from '@angular/core';
+import { Signal, computed } from '@angular/core';
 import {
     patchState,
     signalStoreFeature,
@@ -8,6 +8,10 @@ import {
 } from '@ngrx/signals';
 import { ContentType, XtreamContentLoadState } from '../../xtream-state';
 import { foldSearchText } from '@iptvnator/shared/interfaces';
+import {
+    LanguageScopedCatalog,
+    scopeCatalogByLanguage,
+} from '../xtream-content-language';
 
 /**
  * Module-level collator — allocating Intl.Collator is expensive;
@@ -152,6 +156,11 @@ interface XtreamSelectionItem {
     readonly title?: string;
     readonly xtream_id?: number;
 }
+
+type ScopedCatalog = LanguageScopedCatalog<
+    XtreamSelectionCategory,
+    XtreamSelectionItem
+>;
 
 type ParentSelectionStoreLike = {
     contentLoadStateByType?: () => Record<ContentType, XtreamContentLoadState>;
@@ -307,17 +316,38 @@ export function withSelection() {
                 });
             };
 
+            // TiagoTV: the rails and grids read the Spanish and English
+            // catalog (see xtream-content-language); the state stays whole.
+            const storeLike = store as ParentSelectionStoreLike;
+            const scopedCatalogs: Record<ContentType, Signal<ScopedCatalog>> = {
+                live: computed(() =>
+                    scopeCatalogByLanguage(
+                        storeLike.liveCategories?.() || [],
+                        storeLike.liveStreams?.() || [],
+                        'live'
+                    )
+                ),
+                vod: computed(() =>
+                    scopeCatalogByLanguage(
+                        storeLike.vodCategories?.() || [],
+                        storeLike.vodStreams?.() || [],
+                        'vod'
+                    )
+                ),
+                series: computed(() =>
+                    scopeCatalogByLanguage(
+                        storeLike.serialCategories?.() || [],
+                        storeLike.serialStreams?.() || [],
+                        'series'
+                    )
+                ),
+            };
+
             // Memoized sorted content - only recalculates when content/type changes
             const sortedContent = computed(() => {
                 const categoryType = store.selectedContentType();
                 const sortMode = store.contentSortMode();
-                const storeAny = store as ParentSelectionStoreLike;
-                const content =
-                    categoryType === 'live'
-                        ? storeAny.liveStreams?.() || []
-                        : categoryType === 'vod'
-                          ? storeAny.vodStreams?.() || []
-                          : storeAny.serialStreams?.() || [];
+                const content = scopedCatalogs[categoryType]().allItems;
 
                 if (categoryType === 'vod' || categoryType === 'series') {
                     return sortByMode(content, sortMode, categoryType);
@@ -345,19 +375,13 @@ export function withSelection() {
             };
 
             const liveItemCounts = computed(() =>
-                buildCountMap(
-                    (store as ParentSelectionStoreLike).liveStreams?.() || []
-                )
+                buildCountMap(scopedCatalogs.live().items)
             );
             const vodItemCounts = computed(() =>
-                buildCountMap(
-                    (store as ParentSelectionStoreLike).vodStreams?.() || []
-                )
+                buildCountMap(scopedCatalogs.vod().items)
             );
             const seriesItemCounts = computed(() =>
-                buildCountMap(
-                    (store as ParentSelectionStoreLike).serialStreams?.() || []
-                )
+                buildCountMap(scopedCatalogs.series().items)
             );
             const selectedTypeContentState = computed(() => {
                 const storeAny = store as ParentSelectionStoreLike;
@@ -387,14 +411,7 @@ export function withSelection() {
                 const categoryType = store.selectedContentType();
                 const sortMode = store.contentSortMode();
                 const searchTerm = store.categorySearchTerm();
-
-                const storeAny = store as ParentSelectionStoreLike;
-                const content =
-                    categoryType === 'live'
-                        ? storeAny.liveStreams?.() || []
-                        : categoryType === 'vod'
-                          ? storeAny.vodStreams?.() || []
-                          : storeAny.serialStreams?.() || [];
+                const content = scopedCatalogs[categoryType]().items;
 
                 if (categoryType === 'vod' || categoryType === 'series') {
                     const minRating = store.minRating();
@@ -532,6 +549,24 @@ export function withSelection() {
                           ? vodItemCounts()
                           : seriesItemCounts();
                 }),
+
+                /**
+                 * The categories the rail lists for the selected content
+                 * type: the Spanish and English ones (every category of a
+                 * provider that does not tag them by language).
+                 */
+                getDisplayedCategoriesBySelectedType: computed(
+                    () =>
+                        scopedCatalogs[store.selectedContentType()]().categories
+                ),
+
+                /**
+                 * The listed categories' items by type, idle event slots
+                 * left out: what an every-category view shows.
+                 */
+                getDisplayedContentByType: computed(
+                    () => (type: ContentType) => scopedCatalogs[type]().allItems
+                ),
 
                 /**
                  * Get categories for the currently selected content type

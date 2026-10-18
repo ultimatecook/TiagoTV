@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -44,6 +44,19 @@ class MockXtreamStore {
     readonly liveStreams = signal<TestRecentlyAddedItem[]>([]);
     readonly vodStreams = signal<TestRecentlyAddedItem[]>([]);
     readonly serialStreams = signal<TestRecentlyAddedItem[]>([]);
+    /**
+     * The language-scoped catalog: this stub leaves out category 99, the
+     * way the store leaves out a French or Italian one.
+     */
+    readonly getDisplayedContentByType = computed(
+        () => (type: 'live' | 'vod' | 'series') =>
+            (type === 'live'
+                ? this.liveStreams()
+                : type === 'vod'
+                  ? this.vodStreams()
+                  : this.serialStreams()
+            ).filter((item) => item.category_id !== 99)
+    );
     readonly currentPlaylist = signal({ id: 'playlist-1' });
     readonly isLoadingContent = signal(false);
     readonly isLoadingCategories = signal(false);
@@ -135,6 +148,28 @@ describe('RecentlyAddedComponent', () => {
         expect(titles.at(-1)).toBe('Fresh 30');
         expect(titles).not.toContain('Fresh 31');
         expect(titles).not.toContain('Future Provider Item');
+    });
+
+    it('lists the Spanish and English catalog only, as the grids do', () => {
+        store.vodStreams.set([
+            createItem(1, { title: 'Torrente', xtream_id: 1 }),
+            createItem(2, { title: 'Fantozzi', xtream_id: 2, category_id: 99 }),
+        ]);
+        store.liveStreams.set([
+            createItem(3, { title: 'DAZN 1', xtream_id: 3 }),
+            createItem(4, { title: 'FR | No Event', category_id: 99 }),
+        ]);
+
+        const component = TestBed.runInInjectionContext(
+            () => new RecentlyAddedComponent()
+        );
+
+        expect(component.recentlyAddedVod().map((item) => item.title)).toEqual([
+            'Torrente',
+        ]);
+        expect(component.recentlyAddedLive().map((item) => item.title)).toEqual(
+            ['DAZN 1']
+        );
     });
 
     it('filters invalid provider dates before slicing small VOD rails', () => {

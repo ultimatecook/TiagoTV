@@ -106,6 +106,9 @@ describe('LiveStreamLayoutComponent sidebar levels', () => {
         getCategoriesBySelectedType: signal([
             { category_id: 1, category_name: 'News' },
         ]),
+        getDisplayedCategoriesBySelectedType: signal([
+            { category_id: 1, category_name: 'News' },
+        ]),
         getCategoryItemCounts: signal(new Map<number, number>([[1, 7]])),
         getPaginatedContent: emptyList,
         hasMoreContent: signal(false),

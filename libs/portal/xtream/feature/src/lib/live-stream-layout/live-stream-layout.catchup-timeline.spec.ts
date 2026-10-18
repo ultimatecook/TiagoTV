@@ -84,6 +84,9 @@ describe('LiveStreamLayoutComponent catch-up timeline segments', () => {
         getCategoriesBySelectedType: signal([
             { category_id: 1, category_name: 'News' },
         ]),
+        getDisplayedCategoriesBySelectedType: signal([
+            { category_id: 1, category_name: 'News' },
+        ]),
         liveCategories: signal([{ id: 1, xtream_id: 1, name: 'News' }]),
         getCategoryItemCounts: signal(new Map<number, number>([[1, 1]])),
         getPaginatedContent: emptyList,

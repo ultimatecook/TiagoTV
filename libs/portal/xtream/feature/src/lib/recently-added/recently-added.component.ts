@@ -77,18 +77,22 @@ export class RecentlyAddedComponent {
             ? 'WORKSPACE.DASHBOARD.NEW_AND_POPULAR'
             : 'PORTALS.SIDEBAR.RECENTLY_ADDED';
 
+    /** TiagoTV: the Spanish and English catalog only, as the grids. */
+    private readonly displayedContent = (type: ContentType) =>
+        this.xtreamStore.getDisplayedContentByType()(
+            type
+        ) as RecentlyAddedItem[];
+
     readonly recentlyAddedLive = computed(() =>
         this.mode === 'popular'
             ? []
-            : this.getRecentlyAdded(
-                  this.xtreamStore.liveStreams() as RecentlyAddedItem[]
-              )
+            : this.getRecentlyAdded(this.displayedContent('live'))
     );
     readonly recentlyAddedVod = computed(() =>
-        this.rank(this.xtreamStore.vodStreams() as RecentlyAddedItem[])
+        this.rank(this.displayedContent('vod'))
     );
     readonly recentlyAddedSeries = computed(() =>
-        this.rank(this.xtreamStore.serialStreams() as RecentlyAddedItem[], true)
+        this.rank(this.displayedContent('series'), true)
     );
 
     readonly skeletonSlots = SKELETON_CARDS_PER_RAIL;

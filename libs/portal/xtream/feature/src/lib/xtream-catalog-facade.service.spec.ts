@@ -45,10 +45,14 @@ describe('XtreamCatalogFacadeService', () => {
     const contentSortMode = signal<PortalCatalogSortMode>('date-desc');
     const minRating = signal<number | null>(null);
     const currentPlaylist = signal<XtreamPlaylistData | null>(PLAYLIST_ONE);
+    const displayedCategories = signal<
+        Array<{ category_name?: string; name?: string }>
+    >([{ name: 'Movies' }]);
 
     const xtreamStore = {
         selectedContentType: contentType,
         getSelectedCategory: selectedCategory,
+        getDisplayedCategoriesBySelectedType: displayedCategories,
         selectedCategoryId,
         getPaginatedContent: paginatedContent,
         selectItemsFromSelectedCategory: selectedCategoryItems,
@@ -95,6 +99,7 @@ describe('XtreamCatalogFacadeService', () => {
         contentSortMode.set('date-desc');
         minRating.set(null);
         currentPlaylist.set(PLAYLIST_ONE);
+        displayedCategories.set([{ name: 'Movies' }]);
 
         xtreamStore.loadAllPositions.mockClear();
         xtreamStore.setCategorySearchTerm.mockClear();
@@ -128,6 +133,26 @@ describe('XtreamCatalogFacadeService', () => {
         selectedCategory.set({ id: 0, name: '' });
 
         expect(service.selectedCategoryTitle()).toBeNull();
+    });
+
+    it('titles a provider category by the label its rail shows', () => {
+        selectedCategory.set({
+            category_id: '11',
+            category_name: '|ES| ✪ COMEDIA',
+        });
+        displayedCategories.set([
+            { category_name: '|ES| ✪ COMEDIA' },
+            { category_name: '|EN| ✪ THRILLER' },
+            { category_name: '|ES| ✪ THRILLER' },
+        ]);
+        expect(service.selectedCategoryTitle()).toBe('COMEDIA');
+
+        selectedCategory.set({ id: 12, name: '|EN| ✪ THRILLER' });
+        displayedCategories.set([
+            { name: '|EN| ✪ THRILLER' },
+            { name: '|ES| ✪ THRILLER' },
+        ]);
+        expect(service.selectedCategoryTitle()).toBe('THRILLER · EN');
     });
 
     it('delegates category search to the Xtream store', () => {

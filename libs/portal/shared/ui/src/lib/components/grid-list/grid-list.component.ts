@@ -14,7 +14,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { applyChannelNameStrip } from '@iptvnator/shared/m3u-utils';
-import { displayTitle, readProviderRating } from '@iptvnator/shared/interfaces';
+import {
+    DisplayChannelName,
+    displayChannelName,
+    displayTitle,
+    isEventChannelName,
+    readProviderRating,
+} from '@iptvnator/shared/interfaces';
 import {
     PortalWatchState,
     getXtreamCatchupDays,
@@ -108,6 +114,7 @@ function normalizeArtworkUrl(value: string | undefined): string | undefined {
                     @let i = $any(item);
                     @let title =
                         channelTitle(i) || ('PORTALS.UNTITLED' | translate);
+                    @let subtitle = channelSubtitle(i);
                     <mat-card
                         [class.grid-card--logo]="variant() === 'logo'"
                         role="button"
@@ -213,8 +220,13 @@ function normalizeArtworkUrl(value: string | undefined): string | undefined {
                             </div>
                         }
                         @if (!postersOnly()) {
-                            <mat-card-actions>
+                            <mat-card-actions
+                                [class.card-actions--stacked]="!!subtitle"
+                            >
                                 <div class="title">{{ title }}</div>
+                                @if (subtitle) {
+                                    <div class="subtitle">{{ subtitle }}</div>
+                                }
                             </mat-card-actions>
                         }
                     </mat-card>
@@ -340,6 +352,9 @@ export class GridListComponent {
     }
     protected readonly channelTitle = (item: GridListItem): string => {
         const raw = item.title ?? item.o_name ?? item.name ?? '';
+        if (this.type() === 'live' && isEventChannelName(raw)) {
+            return this.xtreamChannelName(item).title;
+        }
         // TiagoTV: films and shows by name alone, without year and
         // language tags.
         const stripped = this.isLiveGrid()
@@ -351,6 +366,30 @@ export class GridListComponent {
         // Empty: the template shows the translated "Untitled" label.
         return stripped;
     };
+
+    /** An Xtream event channel's competition, under its match. */
+    protected readonly channelSubtitle = (item: GridListItem): string | null =>
+        this.type() === 'live' ? this.xtreamChannelName(item).subtitle : null;
+
+    /**
+     * TiagoTV: an Xtream event channel by the match it carries, not by
+     * "Live | Leeds United - Manchester United | Premier League | ES".
+     * Read once per row.
+     */
+    private readonly xtreamChannelNames = new WeakMap<
+        GridListItem,
+        DisplayChannelName
+    >();
+    private xtreamChannelName(item: GridListItem): DisplayChannelName {
+        let name = this.xtreamChannelNames.get(item);
+        if (!name) {
+            name = displayChannelName(
+                String(item.title ?? item.o_name ?? item.name ?? '')
+            );
+            this.xtreamChannelNames.set(item, name);
+        }
+        return name;
+    }
 
     readonly skeletonRows = computed(() =>
         Array.from({ length: 12 }, (_, index) => index)

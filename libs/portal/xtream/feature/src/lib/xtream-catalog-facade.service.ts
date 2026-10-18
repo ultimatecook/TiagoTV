@@ -9,6 +9,7 @@ import {
     watchStateFromProgressPercent,
 } from '@iptvnator/portal/shared/util';
 import { XtreamStore } from '@iptvnator/portal/xtream/data-access';
+import { categoryDisplayLabel } from '@iptvnator/shared/interfaces';
 
 const SORT_STORAGE_KEY = 'xtream-category-sort-mode';
 
@@ -48,7 +49,19 @@ export class XtreamCatalogFacadeService implements PortalCatalogFacade<
             return null;
         }
         const category = this.selectedCategory();
-        return String(category?.['name'] ?? category?.['title'] ?? '');
+        const name = String(
+            category?.['category_name'] ??
+                category?.['name'] ??
+                category?.['title'] ??
+                ''
+        );
+        // The rail's label: "COMEDIA", not "|ES| ✪ COMEDIA".
+        return categoryDisplayLabel(
+            name,
+            this.xtreamStore
+                .getDisplayedCategoriesBySelectedType()
+                .map((shown) => shown.category_name ?? shown.name ?? '')
+        );
     });
     readonly categoryItemCount = computed(
         () => this.xtreamStore.selectItemsFromSelectedCategory().length

@@ -36,6 +36,7 @@ import {
     injectTranslationTick,
 } from '@iptvnator/services';
 import {
+    categoryDisplayLabels,
     toParentalLockStalkerCategoryType,
     toParentalLockXtreamCategoryType,
 } from '@iptvnator/shared/interfaces';
@@ -185,7 +186,21 @@ export class WorkspaceContextPanelComponent {
                 this.section() === 'radio')
     );
 
-    readonly xtreamCategories = this.xtreamStore.getCategoriesBySelectedType;
+    /** TiagoTV: the Spanish and English categories only. */
+    readonly xtreamCategories =
+        this.xtreamStore.getDisplayedCategoriesBySelectedType;
+    /** "|ES| ✪ DAZN LA LIGA" reads "DAZN LA LIGA"; see categoryDisplayLabels. */
+    readonly xtreamCategoryLabels = computed(() => {
+        const categories = this.xtreamCategories() as WorkspaceCategoryLike[];
+        const labels = categoryDisplayLabels(
+            categories.map(
+                (category) => category.category_name ?? category.name ?? ''
+            )
+        );
+        return new Map<WorkspaceCategoryViewItem, string>(
+            categories.map((category, index) => [category, labels[index]])
+        );
+    });
     readonly xtreamCategoryItemCounts = this.xtreamStore.getCategoryItemCounts;
     readonly xtreamSelectedCategoryId = this.xtreamStore.selectedCategoryId;
     readonly xtreamSelectedTypeContentState =
@@ -809,7 +824,12 @@ export class WorkspaceContextPanelComponent {
         if (category.labelKey) {
             return this.translate.instant(category.labelKey);
         }
-        return category.category_name ?? category.name ?? '';
+        return (
+            this.xtreamCategoryLabels().get(category) ??
+            category.category_name ??
+            category.name ??
+            ''
+        );
     }
 
     private isAllCategory(category: WorkspaceCategoryLike): boolean {

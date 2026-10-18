@@ -22,8 +22,7 @@ import { PlaylistMeta } from '@iptvnator/shared/interfaces';
 function normalizeOptionalConnectionValue(
     value: string | null | undefined
 ): string | null {
-    const normalized = value?.trim();
-    return normalized ? normalized : null;
+    return value?.trim() || null;
 }
 
 function toXtreamPlaylistData(

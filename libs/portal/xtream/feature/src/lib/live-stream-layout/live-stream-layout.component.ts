@@ -84,6 +84,7 @@ import { LiveEpgPanelSummary } from '@iptvnator/ui/shared-portals';
 import {
     buildXtreamEpgMappingKey,
     EpgItem,
+    categoryDisplayLabel,
     EpgProgram,
     epgProviderClockMs,
     filterRecordingProgramsOverlap,
@@ -409,10 +410,19 @@ export class LiveStreamLayoutComponent
             (c) => String(c.category_id ?? c.id) === String(categoryId)
         );
         const count = this.categoryItemCounts()?.get(categoryId) ?? 0;
+        const name = category?.category_name ?? category?.name ?? null;
 
         // A null name falls back to a translated label in the template.
         return {
-            name: category?.category_name ?? category?.name ?? null,
+            // The rail's label: "DAZN LA LIGA", not "|ES| ✪ DAZN LA LIGA".
+            name:
+                name &&
+                categoryDisplayLabel(
+                    name,
+                    this.xtreamStore
+                        .getDisplayedCategoriesBySelectedType()
+                        .map((shown) => shown.category_name ?? shown.name ?? '')
+                ),
             count,
         };
     });

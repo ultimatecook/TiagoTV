@@ -950,6 +950,23 @@ describe('PortalChannelsListComponent', () => {
         expect(row().isFavorite()).toBe(true);
     });
 
+    it('names an event channel by its match, the competition as its second line', () => {
+        const list = fixture.componentInstance;
+        expect(
+            list.channelLabel({
+                xtream_id: 1,
+                name: 'Live | Leeds United - Manchester United | Premier League | ES',
+            })
+        ).toEqual({
+            title: 'Leeds United - Manchester United',
+            subtitle: 'Premier League',
+        });
+        // Any other channel keeps its name (the row applies the strip setting).
+        expect(
+            list.channelLabel({ xtream_id: 2, name: 'UK | ITV FHD' })
+        ).toEqual({ title: 'UK | ITV FHD', subtitle: null });
+    });
+
     it('scrolls the virtual list to the selected live channel', () => {
         const channels = Array.from({ length: 20 }, (_, index) => ({
             title: `Channel ${index + 1}`,
