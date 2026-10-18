@@ -2,6 +2,7 @@ export * from './lib/latest-request-guard';
 export * from './lib/logger';
 export * from './lib/category-sort';
 export * from './lib/channel-sort';
+export * from './lib/channel-families';
 export * from './lib/favorites-channel-sort';
 export * from './lib/portal-catalog-detail';
 export * from './lib/portal-catalog-facade';

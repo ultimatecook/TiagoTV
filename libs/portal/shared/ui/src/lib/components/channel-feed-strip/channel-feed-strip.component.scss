@@ -1,0 +1,314 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+// One row under the player: the brand and a hint on the left, its feeds
+// in a strip that scrolls sideways (the row's only scroller). It sits on
+// the guide's panel surface so player, strip and guide read as one stack.
+:host {
+    // Provider logos are drawn for a light background, DAZN's in white:
+    // each sits on a plate of its own, as on the Home's sports pages.
+    --feeds-plate: #f4f5f7;
+    --feeds-plate-dark: linear-gradient(140deg, #1b1e27 0%, #2c303c 100%);
+
+    display: block;
+    flex: 0 0 auto;
+    min-width: 0;
+    border-top: 1px solid var(--app-widget-header-border);
+    background: var(--app-widget-bg);
+    color: var(--app-heading-color);
+    // The player's column, not the window, decides when the row stacks.
+    container-type: inline-size;
+}
+
+.feeds {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 0 8px 14px;
+}
+
+.feeds__heading {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    max-width: 280px;
+}
+
+.feeds__badge {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 56px;
+    height: 34px;
+    overflow: hidden;
+    border-radius: 9px;
+    box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--app-on-surface) 12%, transparent);
+}
+
+.feeds__badge--brand img {
+    width: calc(70% * var(--feeds-logo-size, 1));
+    height: calc(56% * var(--feeds-logo-size, 1));
+    object-fit: contain;
+    -webkit-user-drag: none;
+}
+
+.feeds__badge--icon {
+    background: var(--app-card-hover-bg);
+    color: var(--app-muted-color);
+
+    mat-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 22px;
+    }
+}
+
+.feeds__plate {
+    background: var(--feeds-plate);
+
+    img {
+        max-width: 80%;
+        max-height: 74%;
+        object-fit: contain;
+        -webkit-user-drag: none;
+    }
+}
+
+.feeds__plate--dark {
+    background: var(--feeds-plate-dark);
+}
+
+.feeds__titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.feeds__title,
+.feeds__hint {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.feeds__title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.feeds__hint {
+    color: var(--app-muted-color);
+    font-size: 11.5px;
+    line-height: 1.25;
+}
+
+.feeds__row {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    // Room for the focus ring, which the scroller would otherwise clip.
+    padding: 4px 14px 4px 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--app-muted-color) 55%, transparent)
+        transparent;
+}
+
+// Shared shape of a country and a feed.
+.feeds__region,
+.feeds__option {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    border: 1px solid color-mix(in srgb, var(--app-on-surface) 10%, transparent);
+    border-radius: 10px;
+    color: inherit;
+    font: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        background-color 140ms ease,
+        border-color 140ms ease;
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.feeds__region {
+    padding: 0 6px 0 10px;
+    border-color: transparent;
+    background: none;
+    color: var(--app-body-color);
+    font-size: 12.5px;
+    font-weight: 600;
+
+    &:hover {
+        background: var(--app-hover-overlay);
+    }
+
+    // A gap before every country but the first.
+    &:not(:first-child) {
+        margin-inline-start: 8px;
+    }
+}
+
+.feeds__flag {
+    width: 20px;
+    height: 14px;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px
+        color-mix(in srgb, var(--app-on-surface) 14%, transparent);
+    object-fit: cover;
+    -webkit-user-drag: none;
+}
+
+.feeds__region-count {
+    min-width: 18px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--app-neutral-tag-surface);
+    color: var(--app-muted-color);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+}
+
+.feeds__caret {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    transform: rotate(-90deg);
+    transition: transform 140ms ease;
+
+    .feeds__region--open & {
+        transform: none;
+    }
+}
+
+.feeds__option {
+    padding: 0 12px 0 4px;
+    background: color-mix(in srgb, var(--app-on-surface) 5%, transparent);
+
+    &:not(:has(.feeds__option-logo)) {
+        padding-inline-start: 12px;
+    }
+
+    &:hover {
+        border-color: color-mix(
+            in srgb,
+            var(--app-on-surface) 22%,
+            transparent
+        );
+        background: color-mix(in srgb, var(--app-on-surface) 10%, transparent);
+    }
+}
+
+// The one playing: the app's selection, a red light, and no action.
+.feeds__option--current {
+    border-color: var(--app-selection-border);
+    background: linear-gradient(
+        135deg,
+        var(--app-selection-surface-strong),
+        var(--app-selection-surface)
+    );
+    box-shadow: 0 6px 14px -10px var(--app-selection-glow);
+    cursor: default;
+
+    &:hover {
+        border-color: var(--app-selection-border);
+        background: linear-gradient(
+            135deg,
+            var(--app-selection-surface-strong),
+            var(--app-selection-surface)
+        );
+    }
+}
+
+.feeds__option-logo {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 44px;
+    height: 30px;
+    overflow: hidden;
+    border-radius: 7px;
+}
+
+.feeds__option-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+}
+
+.feeds__option-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.feeds__option-copy {
+    color: var(--app-muted-color);
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.feeds__live {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--app-live-color);
+    box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--app-live-color) 22%, transparent);
+}
+
+// A narrow player (a phone, or wide rails beside it): the brand takes a
+// line of its own above the feeds, and the hint gives way.
+@container (max-width: 720px) {
+    .feeds {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px 0 6px 12px;
+    }
+
+    .feeds__heading {
+        flex-basis: 100%;
+        max-width: none;
+        padding-inline-end: 12px;
+    }
+
+    .feeds__badge {
+        width: 44px;
+        height: 28px;
+    }
+
+    .feeds__hint {
+        display: none;
+    }
+
+    .feeds__row {
+        padding-inline-end: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .feeds__region,
+    .feeds__option,
+    .feeds__caret {
+        transition: none;
+    }
+}

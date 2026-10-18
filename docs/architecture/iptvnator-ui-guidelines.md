@@ -698,6 +698,25 @@ remain local when the meaning is explicit.
   Tab (`epg-timeline-interaction.e2e.ts` walks past the rendered range both
   ways).
 
+### Other Feeds Strip (TiagoTV)
+
+- Xtream Live TV renders `app-channel-feed-strip` (`@iptvnator/portal/shared/ui`)
+  between the player and the EPG panel ("Otras señales de ESPN") while the
+  playing channel's brand or family has another feed or copy. It sits outside
+  the player, so it stays when a start fails and the diagnostic shows.
+- `channelFeedGroup` in `@iptvnator/portal/shared/util` builds it, next to the
+  channel-family naming and brand list the Home's sports views use. Candidates
+  are the channels the rails list (`getDisplayedContentByType('live')`, hidden
+  categories and event slots out). The playing channel's country comes first;
+  other countries are collapsed toggles, the next one open when the playing
+  country has nothing else. The playing feed lists all its copies
+  ("Opción 2"), every other feed its first copy.
+- A feed plays through `playLive` with its category's list, as if picked from
+  the rail; nothing is preloaded or probed (the provider allows one stream).
+- One tab stop (the playing feed, marked `aria-current`, inert on click);
+  arrows, Home and End move between countries and feeds and are consumed
+  there, so player shortcuts never see them.
+
 ### Collapsible Live Sidebar
 
 - Live-TV panels fold from the outside in, in three nested levels owned by

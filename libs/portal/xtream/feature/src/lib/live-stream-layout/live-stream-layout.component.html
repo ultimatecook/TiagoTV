@@ -175,6 +175,14 @@
                 />
             </div>
         }
+        <!-- TiagoTV: the playing channel's other feeds; outside the player,
+             so they stay when a start fails and its diagnostic shows. -->
+        @if (liveFeeds.group(); as feeds) {
+            <app-channel-feed-strip
+                [group]="feeds"
+                (feedSelected)="playFeed($event)"
+            />
+        }
         @if (supportsEpg) {
             <div
                 class="epg"

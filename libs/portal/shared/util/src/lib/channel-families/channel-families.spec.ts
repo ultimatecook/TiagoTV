@@ -4,17 +4,11 @@ import {
     groupChannelFamilies,
     hasWhiteLogo,
     parseChannelName,
+    type FamilyChannel,
 } from './channel-families';
-import { cleanChannelTitle, type SportChannel } from './sports-catalog';
 
-let nextId = 1;
-function channel(name: string, icon: string | null = null): SportChannel {
-    return {
-        streamId: nextId++,
-        categoryId: '1',
-        title: cleanChannelTitle(name),
-        icon,
-    };
+function channel(name: string, icon: string | null = null): FamilyChannel {
+    return { title: name, icon };
 }
 
 describe('parseChannelName', () => {
@@ -99,6 +93,29 @@ describe('channelFamilyName', () => {
     });
 });
 
+describe('channelFamilyName for the live brands', () => {
+    it('drops a trailing country code', () => {
+        expect(
+            channelFamilyName('fox sports florida', [
+                '|US| Fox Sports Florida ᴴᴰ US',
+            ])
+        ).toBe('Fox Sports Florida');
+    });
+
+    it("writes the brands' other feeds their way", () => {
+        expect(channelFamilyName('fox sports premium', [])).toBe(
+            'FOX Sports Premium'
+        );
+        expect(channelFamilyName('tyc sports internacional', [])).toBe(
+            'TyC Sports Internacional'
+        );
+        expect(channelFamilyName('espn+', ['|ARG| ESPN+'])).toBe('ESPN+');
+        expect(
+            channelFamilyName('espn acc network', ['|US| ESPN ACC NETWORK'])
+        ).toBe('ESPN ACC Network');
+    });
+});
+
 describe('channelFamilyName for event slots', () => {
     it('names a pay-per-view slot after its event and time', () => {
         const uefa = 'UEFA | 03 - Lech Poznan vs Bayer 04 Leverkusen 17:45 pm';
@@ -149,15 +166,15 @@ describe('groupChannelFamilies', () => {
 
         expect(second).toHaveLength(2);
         // The copy with a logo plays first.
-        expect(second[0].title).toBe('HYPERMOTION 2 Orange');
+        expect(second[0].title).toBe('HYPERMOTION 2 HD Orange');
     });
 
     it("never plays a provider's backup first", () => {
         const first = families[1].feeds[0].channels;
 
         expect(first.map((copy) => copy.title)).toEqual([
-            'DAZN LIGA',
-            'DAZN LIGA 1 B',
+            '|ES| DAZN LIGA HD',
+            '|ES| DAZN LIGA 1 HD B',
         ]);
     });
 

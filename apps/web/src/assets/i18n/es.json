@@ -1008,6 +1008,13 @@
             "SEARCH_PLACEHOLDER": "Buscar grupos…",
             "NO_RESULTS": "No se encontraron grupos coincidentes",
             "SAVE": "Guardar"
+        },
+        "FEEDS": {
+            "TITLE": "Otras señales de {{name}}",
+            "HINT": "Si una no carga, probá otra",
+            "OPTION": "Opción {{number}}",
+            "REGION_LABEL": "{{country}}, {{count}} señales",
+            "OTHER_REGION": "Otras"
         }
     },
     "TOP_MENU": {
@@ -2187,6 +2194,7 @@
             "TODAY": "Partidos de hoy",
             "LIVE": "En vivo",
             "LIVE_COUNT": "{{count}} en vivo",
+            "WATCH_ON": "Ver en {{channels}}",
             "MATCHES": "En vivo y más tarde",
             "CHANNELS": "Canales",
             "LIVE_CHANNELS": "Canales en vivo",

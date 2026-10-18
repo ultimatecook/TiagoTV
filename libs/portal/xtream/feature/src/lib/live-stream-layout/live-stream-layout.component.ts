@@ -34,6 +34,7 @@ import {
     ResizableDirective,
 } from '@iptvnator/ui/components';
 import {
+    ChannelFeedStripComponent,
     GridListComponent,
     InfiniteScrollDirective,
     ChannelListHiddenStateComponent,
@@ -41,6 +42,7 @@ import {
 } from '@iptvnator/portal/shared/ui';
 import {
     createLivePanelsController,
+    type FeedCandidate,
     PORTAL_PLAYER,
     PortalChannelSortMode,
     getPortalChannelSortModeLabelKey,
@@ -114,6 +116,7 @@ import {
     XtreamLiveChannelNavigationService,
     type XtreamLiveChannelItem,
 } from './xtream-live-channel-navigation.service';
+import { createXtreamLiveFeeds } from './xtream-live-feeds';
 
 const LIVE_CHANNEL_SORT_STORAGE_KEY = 'xtream-live-channel-sort-mode';
 
@@ -132,6 +135,7 @@ const LIVE_CHANNEL_SORT_STORAGE_KEY = 'xtream-live-channel-sort-mode';
         },
     ],
     imports: [
+        ChannelFeedStripComponent,
         EpgListViewComponent,
         EpgTimelineComponent,
         MatButtonModule,
@@ -193,6 +197,11 @@ export class LiveStreamLayoutComponent
     readonly selectedCategoryId = this.xtreamStore.selectedCategoryId;
     readonly channelNavigation = inject(XtreamLiveChannelNavigationService);
     readonly liveChannelSortMode = this.channelNavigation.sortMode;
+    /** TiagoTV: the playing channel's other feeds, under the player. */
+    readonly liveFeeds = createXtreamLiveFeeds(
+        this.xtreamStore,
+        this.channelNavigation.activeItem
+    );
 
     private readonly fullscreenChannelPanelTemplate = viewChild<
         TemplateRef<FullscreenChannelPanelContext>
@@ -729,6 +738,18 @@ export class LiveStreamLayoutComponent
             item.title ?? item.name ?? '',
             item.poster_url ?? item.stream_icon ?? null
         );
+    }
+
+    /** A feed from the strip: played as a channel picked from its category. */
+    playFeed(feed: FeedCandidate): void {
+        const item = this.liveFeeds.itemFor(feed);
+        if (item) {
+            this.playLive(
+                item,
+                true,
+                this.channelNavigation.channelsForAutoOpen(item)
+            );
+        }
     }
 
     async onProgramActivated(event: EpgProgramActivationEvent): Promise<void> {

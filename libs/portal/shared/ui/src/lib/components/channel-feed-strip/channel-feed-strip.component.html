@@ -1,0 +1,147 @@
+@let feeds = group();
+<div class="feeds">
+    <div class="feeds__heading">
+        @if (feeds.brand?.logo; as logo) {
+            <span
+                class="feeds__badge feeds__badge--brand"
+                [style.background]="feeds.brand?.background"
+                aria-hidden="true"
+            >
+                <img
+                    [src]="logo"
+                    [style.--feeds-logo-size]="feeds.brand?.logoSize ?? 1"
+                    alt=""
+                    draggable="false"
+                />
+            </span>
+        } @else if (feeds.icon) {
+            <span
+                class="feeds__badge feeds__plate"
+                [class.feeds__plate--dark]="feeds.whiteIcon"
+                aria-hidden="true"
+            >
+                <img
+                    [src]="feeds.icon"
+                    alt=""
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                    draggable="false"
+                />
+            </span>
+        } @else {
+            <span class="feeds__badge feeds__badge--icon" aria-hidden="true">
+                <mat-icon>live_tv</mat-icon>
+            </span>
+        }
+        <span class="feeds__titles">
+            <span class="feeds__title" [id]="titleId">{{
+                'CHANNELS.FEEDS.TITLE' | translate: { name: feeds.name }
+            }}</span>
+            <span class="feeds__hint">{{
+                'CHANNELS.FEEDS.HINT' | translate
+            }}</span>
+        </span>
+    </div>
+    <div
+        class="feeds__row"
+        role="toolbar"
+        aria-orientation="horizontal"
+        [attr.aria-labelledby]="titleId"
+        data-test-id="channel-feeds"
+        (keydown)="onKeydown($event)"
+        (focusin)="onFocusIn($event)"
+    >
+        @for (region of regions(); track region.key) {
+            @if (labelled()) {
+                @let stop = regionStop(region.key);
+                <button
+                    type="button"
+                    class="feeds__region"
+                    [class.feeds__region--open]="region.open"
+                    [attr.data-feed-stop]="stop"
+                    [attr.data-test-id]="'channel-feeds-region-' + region.key"
+                    [attr.tabindex]="tabIndexOf(stop)"
+                    [attr.aria-expanded]="region.open"
+                    [attr.aria-label]="
+                        'CHANNELS.FEEDS.REGION_LABEL'
+                            | translate
+                                : {
+                                      country: region.nameKey | translate,
+                                      count: region.options.length,
+                                  }
+                    "
+                    (click)="toggle(region)"
+                >
+                    @if (region.flag) {
+                        <img
+                            class="feeds__flag"
+                            [src]="region.flag"
+                            alt=""
+                            draggable="false"
+                        />
+                    }
+                    <span class="feeds__region-name">{{
+                        region.nameKey | translate
+                    }}</span>
+                    <span class="feeds__region-count">{{
+                        region.options.length
+                    }}</span>
+                    <mat-icon class="feeds__caret" aria-hidden="true"
+                        >expand_more</mat-icon
+                    >
+                </button>
+            }
+            @if (region.open) {
+                @for (option of region.options; track option.channel.id) {
+                    @let stop = optionStop(option);
+                    <button
+                        type="button"
+                        class="feeds__option"
+                        [class.feeds__option--current]="option.current"
+                        [attr.data-feed-stop]="stop"
+                        [attr.data-test-id]="
+                            'channel-feed-' + option.channel.id
+                        "
+                        [attr.tabindex]="tabIndexOf(stop)"
+                        [attr.aria-current]="option.current ? 'true' : null"
+                        (click)="select(option)"
+                    >
+                        @if (logoOf(option); as logo) {
+                            <span
+                                class="feeds__plate feeds__option-logo"
+                                [class.feeds__plate--dark]="option.whiteIcon"
+                                aria-hidden="true"
+                            >
+                                <img
+                                    [src]="logo"
+                                    alt=""
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer"
+                                    draggable="false"
+                                    (error)="logoFailed(logo)"
+                                />
+                            </span>
+                        }
+                        <span class="feeds__option-text">
+                            <span class="feeds__option-label">
+                                @if (option.current) {
+                                    <span
+                                        class="feeds__live"
+                                        aria-hidden="true"
+                                    ></span>
+                                }
+                                {{ option.label }}
+                            </span>
+                            @if (option.copy > 1) {
+                                <span class="feeds__option-copy">{{
+                                    'CHANNELS.FEEDS.OPTION'
+                                        | translate: { number: option.copy }
+                                }}</span>
+                            }
+                        </span>
+                    </button>
+                }
+            }
+        }
+    </div>
+</div>

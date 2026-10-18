@@ -1008,6 +1008,13 @@
             "SEARCH_PLACEHOLDER": "Search groups...",
             "NO_RESULTS": "No matching groups found",
             "SAVE": "Save"
+        },
+        "FEEDS": {
+            "TITLE": "Other {{name}} feeds",
+            "HINT": "If one doesn't load, try another",
+            "OPTION": "Option {{number}}",
+            "REGION_LABEL": "{{country}}, {{count}} feeds",
+            "OTHER_REGION": "Other"
         }
     },
     "TOP_MENU": {
@@ -2187,6 +2194,7 @@
             "TODAY": "Today's matches",
             "LIVE": "Live",
             "LIVE_COUNT": "{{count}} live",
+            "WATCH_ON": "Watch on {{channels}}",
             "MATCHES": "Live and later today",
             "CHANNELS": "Channels",
             "LIVE_CHANNELS": "Live channels",
