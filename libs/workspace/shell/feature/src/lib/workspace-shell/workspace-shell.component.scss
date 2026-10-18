@@ -315,6 +315,15 @@ app-workspace-shell-context-sidebar {
         --workspace-window-inset: 14px;
         --workspace-window-radius: 26px;
     }
+
+    // macOS glass: the folded rail sits under the traffic lights, so it is
+    // as wide as they need with the same 16pt either side, which centres
+    // its icons under them. 76px put the green light on the divider.
+    :host-context(.native-glass:not(.window-fullscreen)) .workspace-shell {
+        --workspace-sidebar-width: calc(
+            var(--traffic-lights-clear-x, 84px) + 8px
+        );
+    }
 }
 
 @media (max-width: 640px) {
