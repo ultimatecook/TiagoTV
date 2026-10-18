@@ -1,4 +1,5 @@
 import { isSpanishOrEnglishCategory } from '@iptvnator/shared/interfaces';
+import { isMatchOver } from './match-clock';
 import {
     isIdleEventChannel,
     isStaleSlot,
@@ -151,11 +152,12 @@ export function buildSportsCatalog(
 
 /**
  * The Home's "today" row: matches on now, then today's (local) upcoming
- * kick-offs, across every section.
+ * kick-offs, across every section; none that is over (see match-clock).
  */
 export function todaysMatches(
     catalog: SportsCatalog,
-    now = new Date()
+    now = new Date(),
+    kickOffOf: (match: SportMatch) => Date | null = () => null
 ): SportMatch[] {
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
@@ -163,11 +165,12 @@ export function todaysMatches(
     for (const content of Object.values(catalog) as SportSectionContent[]) {
         for (const match of content.matches) {
             const start = match.event.start;
+            if (isMatchOver(match, kickOffOf(match), now)) {
+                continue;
+            }
             if (
                 match.event.status === 'live' ||
-                (start !== null &&
-                    start <= endOfDay &&
-                    start.getTime() > now.getTime() - 3 * 3600_000)
+                (start !== null && start <= endOfDay)
             ) {
                 matches.push(match);
             }

@@ -579,7 +579,7 @@ export class WorkspaceDashboardRailsComponent {
         const genres = splitCatalogGenres(item.genre, 2);
         return {
             id: `added-${item.id}-${item.playlist_id}-${item.added_at}`,
-            title: item.title,
+            title: cardTitle(item),
             // Genres when the catalog lists them. TiagoTV follows one
             // source: its name says nothing on a card.
             subtitle: genres.length > 0 ? genres.join(' • ') : undefined,
