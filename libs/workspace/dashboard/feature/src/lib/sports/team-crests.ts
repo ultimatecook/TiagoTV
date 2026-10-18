@@ -9,7 +9,12 @@ import type { SportSectionId } from './sport-sections';
  * cached so a Home visit costs no requests once its teams are known.
  */
 const API = 'https://www.thesportsdb.com/api/v1/json/123/';
-const CACHE_KEY = 'tiagotv:team-crests:v1';
+// v2: v1 kept failed lookups (the API's rate limit) as "no crest".
+const CACHE_KEY = 'tiagotv:team-crests:v2';
+/** The free API answers about 30 requests a minute: one every 2.2s. */
+const REQUEST_GAP_MS = 2200;
+/** A refused request is tried once more after this pause. */
+const RETRY_AFTER_MS = 20_000;
 const HIT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MISS_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -56,9 +61,11 @@ interface CacheEntry {
 }
 
 export interface TeamCrestDeps {
+    /** Rejects when the API refuses or fails: that is not a missing crest. */
     readonly fetchJson: (url: string) => Promise<unknown>;
     readonly storage: Pick<Storage, 'getItem' | 'setItem'> | null;
     readonly now?: () => number;
+    readonly wait?: (ms: number) => Promise<void>;
 }
 
 export function crestSearchNames(name: string): string[] {
@@ -102,6 +109,7 @@ export class TeamCrestResolver {
     private readonly cache: Record<string, CacheEntry>;
     private readonly pending = new Map<string, Promise<string | null>>();
     private queue: Promise<unknown> = Promise.resolve();
+    private lastRequestAt = 0;
 
     constructor(private readonly deps: TeamCrestDeps) {
         this.cache = readCache(deps.storage);
@@ -124,18 +132,40 @@ export class TeamCrestResolver {
         let request = this.pending.get(key);
         if (!request) {
             // One lookup at a time keeps within the free API's rate limit.
-            request = this.queue.then(() => this.lookup(team, section));
-            this.queue = request.catch(() => null);
-            this.pending.set(key, request);
-            void request
+            const lookup = this.queue.then(() => this.lookup(team, section));
+            this.queue = lookup.catch(() => null);
+            // Only an answer is kept; a failed lookup is tried again on the
+            // next visit, the card showing initials meanwhile.
+            request = lookup
                 .then((url) => {
                     this.cache[key] = { url, at: now };
                     writeCache(this.deps.storage, this.cache);
+                    return url;
                 })
-                .catch(() => undefined)
+                .catch(() => null)
                 .finally(() => this.pending.delete(key));
+            this.pending.set(key, request);
         }
         return request;
+    }
+
+    /** One API request, spaced from the last; a refusal is retried once. */
+    private async get(url: string): Promise<unknown> {
+        const wait =
+            this.deps.wait ??
+            ((ms: number) => new Promise<void>((done) => setTimeout(done, ms)));
+        const gap = this.lastRequestAt + REQUEST_GAP_MS - Date.now();
+        if (gap > 0) {
+            await wait(gap);
+        }
+        this.lastRequestAt = Date.now();
+        try {
+            return await this.deps.fetchJson(url);
+        } catch {
+            await wait(RETRY_AFTER_MS);
+            this.lastRequestAt = Date.now();
+            return this.deps.fetchJson(url);
+        }
     }
 
     private async lookup(
@@ -146,14 +176,14 @@ export class TeamCrestResolver {
         // answer from elsewhere.
         const alias = ALIASES[team.trim().toLowerCase()];
         if (alias?.id) {
-            const body = (await this.deps.fetchJson(
+            const body = (await this.get(
                 `${API}lookupteam.php?id=${alias.id}`
             )) as { teams?: TheSportsDbTeam[] | null } | null;
             return body?.teams?.[0]?.strBadge ?? null;
         }
         let fallback: string | null = null;
         for (const name of crestSearchNames(alias?.name ?? team)) {
-            const body = (await this.deps.fetchJson(
+            const body = (await this.get(
                 `${API}searchteams.php?t=${encodeURIComponent(name.replace(/\s+/g, '_'))}`
             )) as { teams?: TheSportsDbTeam[] | null } | null;
             const crest = pickCrest(body?.teams ?? [], section);

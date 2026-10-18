@@ -44,7 +44,10 @@ export class SportsCatalogService {
     readonly crests = new TeamCrestResolver({
         fetchJson: async (url) => {
             const response = await fetch(url);
-            return response.ok ? response.json() : null;
+            if (!response.ok) {
+                throw new Error(`Crest lookup answered ${response.status}`);
+            }
+            return response.json();
         },
         storage: browserStorage(),
     });

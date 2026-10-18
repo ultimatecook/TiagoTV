@@ -50,6 +50,7 @@ describe('team crests', () => {
                     getItem: (key) => storage.get(key) ?? null,
                     setItem: (key, value) => void storage.set(key, value),
                 },
+                wait: async () => undefined,
             });
 
         await expect(resolver().resolve('RC Celta', 'laliga')).resolves.toBe(
@@ -74,11 +75,58 @@ describe('team crests', () => {
                 };
             },
             storage: null,
+            wait: async () => undefined,
         });
 
         await expect(
             resolver.resolve('Nottingham Forest', 'premier-league')
         ).resolves.toBe('https://crests.test/forest.png');
         expect(requests[0]).toContain('lookupteam.php?id=133720');
+    });
+
+    it('retries a refused request once', async () => {
+        let calls = 0;
+        const resolver = new TeamCrestResolver({
+            fetchJson: async () => {
+                calls += 1;
+                if (calls === 1) {
+                    throw new Error('429');
+                }
+                return { teams: [CELTA] };
+            },
+            storage: null,
+            wait: async () => undefined,
+        });
+
+        await expect(resolver.resolve('Celta', 'laliga')).resolves.toBe(
+            CELTA.strBadge
+        );
+        expect(calls).toBe(2);
+    });
+
+    it('keeps no "no crest" answer for a lookup that failed', async () => {
+        const storage = new Map<string, string>();
+        let down = true;
+        const resolver = new TeamCrestResolver({
+            fetchJson: async () => {
+                if (down) {
+                    throw new Error('429');
+                }
+                return { teams: [CELTA] };
+            },
+            storage: {
+                getItem: (key) => storage.get(key) ?? null,
+                setItem: (key, value) => void storage.set(key, value),
+            },
+            wait: async () => undefined,
+        });
+
+        await expect(resolver.resolve('Celta', 'laliga')).resolves.toBeNull();
+        expect(storage.size).toBe(0);
+
+        down = false;
+        await expect(resolver.resolve('Celta', 'laliga')).resolves.toBe(
+            CELTA.strBadge
+        );
     });
 });
