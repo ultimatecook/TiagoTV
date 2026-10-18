@@ -1,0 +1,91 @@
+<section
+    class="hero"
+    [attr.aria-label]="platform().name"
+    (mouseenter)="setPaused(true)"
+    (mouseleave)="setPaused(false)"
+    (focusin)="setPaused(true)"
+    (focusout)="setPaused(false)"
+>
+    <!-- Every slide's artwork stays mounted so a turn crossfades. -->
+    <div class="hero__stage" aria-hidden="true">
+        @for (slide of slides(); track slide.key) {
+            <div
+                class="hero__backdrop"
+                [class.hero__backdrop--active]="$index === activeIndex()"
+            >
+                @if (slide.backdrop; as backdrop) {
+                    <img
+                        class="hero__image"
+                        [src]="backdrop"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                    />
+                } @else if (slide.title.poster; as poster) {
+                    <img
+                        class="hero__image hero__image--wash"
+                        [src]="poster"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                    />
+                    <img
+                        class="hero__keyart"
+                        [src]="poster"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                    />
+                }
+            </div>
+        }
+        <span class="hero__scrim"></span>
+    </div>
+
+    @for (slide of current(); track slide.key) {
+        <div class="hero__content">
+            <p class="hero__eyebrow">
+                <lib-platform-logo class="hero__mark" [platform]="platform()" />
+                <span>{{ typeKey(slide.title) | translate }}</span>
+                <span class="hero__sep" aria-hidden="true">·</span>
+                <span>{{ 'WORKSPACE.PLATFORMS.RECOMMENDED' | translate }}</span>
+            </p>
+            <h2 class="hero__title">{{ slide.title.title }}</h2>
+            <p class="hero__meta">
+                @if (slide.match) {
+                    <span class="hero__match">{{
+                        'WORKSPACE.DASHBOARD.MATCH'
+                            | translate: { value: slide.match }
+                    }}</span>
+                }
+                @for (genre of slide.genres; track genre) {
+                    <span>{{ genre }}</span>
+                }
+                <span class="hero__language">{{ slide.title.language }}</span>
+            </p>
+            @if (slide.plot) {
+                <p class="hero__description">{{ slide.plot }}</p>
+            }
+            <button
+                type="button"
+                class="hero__button"
+                (click)="open(slide.title)"
+            >
+                <mat-icon aria-hidden="true">info</mat-icon>
+                <span>{{ 'WORKSPACE.PLATFORMS.MORE_INFO' | translate }}</span>
+            </button>
+        </div>
+    }
+
+    @if (slides().length > 1) {
+        <div class="hero__dots">
+            @for (slide of slides(); track slide.key) {
+                <button
+                    type="button"
+                    class="hero__dot"
+                    [class.hero__dot--active]="$index === activeIndex()"
+                    [attr.aria-label]="slide.title.title"
+                    [attr.aria-current]="$index === activeIndex()"
+                    (click)="show($index)"
+                ></button>
+            }
+        </div>
+    }
+</section>

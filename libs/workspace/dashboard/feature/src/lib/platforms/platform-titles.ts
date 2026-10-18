@@ -16,6 +16,11 @@ export interface PlatformTitle {
     /** Seconds since the epoch the provider added (or updated) it. */
     readonly added: number;
     readonly genres: readonly PlatformGenre[];
+    /** The provider's 0–10 rating, when it gives one. */
+    readonly rating: number | null;
+    /** Series lists carry their synopsis and backdrop; movies' come later. */
+    readonly plot: string | null;
+    readonly backdrop: string | null;
 }
 
 /** A VOD or series entry of a platform category, as the page shows it. */
@@ -29,6 +34,9 @@ export interface PlatformCatalogItem {
     readonly last_modified?: string;
     readonly genre?: string | null;
     readonly category_ids?: readonly (number | string)[] | null;
+    readonly rating?: number | string | null;
+    readonly plot?: string | null;
+    readonly backdrop_path?: readonly string[] | string | null;
 }
 
 export function toPlatformTitles(
@@ -64,6 +72,9 @@ export function toPlatformTitles(
                     category.kind === 'movie' ? item.added : item.last_modified
                 ) || 0,
             genres: [...genres],
+            rating: readRating(item.rating),
+            plot: item.plot?.trim() || null,
+            backdrop: firstImage(item.backdrop_path),
         });
     }
     return titles;
@@ -141,4 +152,19 @@ export function buildPlatformRows(
             push(`genre-${genre}`, genreLabelKey(genre), list)
         );
     return rows;
+}
+
+function readRating(value: number | string | null | undefined): number | null {
+    const rating = typeof value === 'number' ? value : parseFloat(value ?? '');
+    return Number.isFinite(rating) && rating > 0 && rating <= 10
+        ? rating
+        : null;
+}
+
+/** The first web image of a backdrop list (or of a single URL). */
+export function firstImage(
+    value: readonly string[] | string | null | undefined
+): string | null {
+    const list = typeof value === 'string' ? [value] : (value ?? []);
+    return list.find((url) => /^https?:\/\//.test(url ?? '')) ?? null;
 }

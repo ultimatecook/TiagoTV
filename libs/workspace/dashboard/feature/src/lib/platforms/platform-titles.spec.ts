@@ -50,6 +50,9 @@ describe('platform titles', () => {
                 language: 'ES',
                 added: 200,
                 genres: ['drama', 'crime'],
+                rating: null,
+                plot: null,
+                backdrop: null,
             },
             {
                 id: 7,
@@ -60,6 +63,9 @@ describe('platform titles', () => {
                 language: 'ES',
                 added: 100,
                 genres: ['horror'],
+                rating: null,
+                plot: null,
+                backdrop: null,
             },
         ]);
     });
@@ -78,6 +84,9 @@ describe('platform titles', () => {
             language: 'EN',
             added: 1000 - id,
             genres,
+            rating: null,
+            plot: null,
+            backdrop: null,
         });
         const titles = [
             ...Array.from({ length: 8 }, (_, i) =>

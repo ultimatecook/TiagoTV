@@ -2108,6 +2108,8 @@
         },
         "PLATFORMS": {
             "TITLE": "Plataformas",
+            "RECOMMENDED": "Recomendada",
+            "MORE_INFO": "Más info",
             "NEWEST": "Lo más nuevo",
             "MOVIES": "Películas",
             "SERIES": "Series",

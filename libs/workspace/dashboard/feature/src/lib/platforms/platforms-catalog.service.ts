@@ -6,6 +6,7 @@ import { buildXtreamNavigationTarget } from '@iptvnator/portal/shared/util';
 import { XtreamApiService } from '@iptvnator/portal/xtream/data-access';
 import { primaryXtreamSource, xtreamSourceCredentials } from '../xtream-source';
 import type { PlatformGenre } from './platform-genres';
+import { titleExtras, type PlatformTitleExtras } from './platform-hero';
 import {
     mergePlatformTitles,
     toPlatformTitles,
@@ -51,6 +52,10 @@ export class PlatformsCatalogService {
     private readonly loadedTitles = signal<
         ReadonlyMap<StreamingPlatformId, Loaded<readonly PlatformTitle[]>>
     >(new Map());
+    private readonly loadedExtras = signal<
+        ReadonlyMap<string, PlatformTitleExtras>
+    >(new Map());
+    private readonly extrasRequested = new Set<string>();
     private catalogRequest: Promise<void> | null = null;
     private readonly titleRequests = new Map<
         StreamingPlatformId,
@@ -158,6 +163,44 @@ export class PlatformsCatalogService {
         return request;
     }
 
+    /** The synopsis and backdrop of a hero title, once fetched. */
+    extrasOf(title: PlatformTitle): PlatformTitleExtras | null {
+        const source = this.source();
+        return source
+            ? (this.loadedExtras().get(extrasKey(source._id, title)) ?? null)
+            : null;
+    }
+
+    /**
+     * Fetches the hero titles' own pages for their synopsis and backdrop
+     * (a movie list carries neither), once per title.
+     */
+    loadExtras(titles: readonly PlatformTitle[]): void {
+        const source = this.source();
+        if (!source) {
+            return;
+        }
+        const credentials = xtreamSourceCredentials(source);
+        for (const title of titles) {
+            const key = extrasKey(source._id, title);
+            if (this.extrasRequested.has(key)) {
+                continue;
+            }
+            this.extrasRequested.add(key);
+            const details =
+                title.kind === 'movie'
+                    ? this.api.getVodInfo(credentials, title.id, OPTIONS)
+                    : this.api.getSeriesInfo(credentials, title.id, OPTIONS);
+            void details
+                .then((answer) =>
+                    this.loadedExtras.update((state) =>
+                        new Map(state).set(key, titleExtras(answer?.info))
+                    )
+                )
+                .catch(() => undefined);
+        }
+    }
+
     /** Opens the title's page, as the catalog's own grid does. */
     open(title: PlatformTitle): void {
         const source = this.source();
@@ -174,6 +217,10 @@ export class PlatformsCatalogService {
         });
         void this.router.navigate(target.link, { state: target.state });
     }
+}
+
+function extrasKey(playlistId: string, title: PlatformTitle): string {
+    return `${playlistId}:${title.kind}:${title.id}`;
 }
 
 function isFresh(loaded: Loaded<unknown> | null, playlistId: string): boolean {

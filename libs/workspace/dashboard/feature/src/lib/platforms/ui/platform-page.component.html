@@ -1,8 +1,14 @@
 @if (platform(); as platform) {
     <article class="page">
-        <header class="banner" [style.background]="platform.background">
-            <lib-platform-logo class="banner__logo" [platform]="platform" />
-        </header>
+        @if (titles(); as titles) {
+            <lib-platform-hero [platform]="platform" [titles]="titles" />
+        } @else {
+            <!-- While the catalog loads, the platform's logo holds the
+                 hero's place. -->
+            <header class="banner" [style.background]="platform.background">
+                <lib-platform-logo class="banner__logo" [platform]="platform" />
+            </header>
+        }
 
         @if (rows(); as rows) {
             @if (openRow(); as row) {

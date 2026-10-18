@@ -17,6 +17,7 @@ import {
     findStreamingPlatform,
     type StreamingPlatform,
 } from '../streaming-platforms';
+import { PlatformHeroComponent } from './platform-hero.component';
 import { PlatformLogoComponent } from './platform-logo.component';
 import { PlatformRowComponent } from './platform-row.component';
 import { PlatformTitleCardComponent } from './platform-title-card.component';
@@ -26,12 +27,14 @@ const PAGE = 60;
 
 /**
  * A platform's page (/workspace/platforms/:platformId), laid out like the
- * platform's own: what is new, its movies, its series and its genres, one
- * row each. A row's title opens all of it.
+ * platform's own: a card of recommended titles, then what is new, its
+ * movies, its series and its genres, one row each. A row's title opens
+ * all of it.
  */
 @Component({
     selector: 'lib-platform-page',
     imports: [
+        PlatformHeroComponent,
         PlatformLogoComponent,
         PlatformRowComponent,
         PlatformTitleCardComponent,
@@ -49,9 +52,12 @@ export class PlatformPageComponent {
     readonly platform = computed(() =>
         findStreamingPlatform(this.platformId())
     );
-    readonly rows = computed(() => {
+    readonly titles = computed(() => {
         const platform = this.platform();
-        const titles = platform ? this.catalog.titlesOf(platform.id) : null;
+        return platform ? this.catalog.titlesOf(platform.id) : null;
+    });
+    readonly rows = computed(() => {
+        const titles = this.titles();
         return titles ? buildPlatformRows(titles) : null;
     });
 
