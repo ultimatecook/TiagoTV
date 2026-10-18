@@ -29,8 +29,6 @@ jobs:
             # Embedded MPV needs a vendored libmpv build; the app falls back
             # to the built-in players and external MPV/VLC without it.
             IPTVNATOR_REQUIRE_EMBEDDED_MPV: '0'
-            # No Developer ID certificate: electron-builder ad-hoc signs.
-            CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         steps:
             - name: Checkout code
               uses: actions/checkout@v7
@@ -50,27 +48,51 @@ jobs:
             - name: Build
               run: pnpm run build:backend
 
+            # The targets' own arch lists win over `--arch`, and with no
+            # Developer ID certificate electron-builder would leave the app
+            # unsigned, which Apple Silicon refuses to launch: build arm64
+            # only and sign ad hoc (identity "-").
+            - name: Configure an ad-hoc signed Apple Silicon build
+              run: |
+                  node -e "
+                    const fs = require('fs');
+                    const config = JSON.parse(fs.readFileSync('electron-builder.json', 'utf8'));
+                    for (const target of [].concat(config.mac.target)) {
+                      if (target && typeof target === 'object') {
+                        target.arch = ['arm64'];
+                      }
+                    }
+                    config.mac.identity = '-';
+                    fs.writeFileSync('electron-builder.json', JSON.stringify(config, null, 4) + '\\n');
+                  "
+
             - name: Package the .dmg
-              run: pnpm run make:app -- --publishPolicy=never --arch=arm64
+              run: pnpm run make:app -- --publishPolicy=never
 
             - name: Check the app bundle
               shell: bash
               run: |
                   set -euo pipefail
                   ls -la dist/executables
-                  APP_PATH="$(find dist/executables -maxdepth 3 -name 'TiagoTV.app' -type d | head -n 1)"
-                  if [ -z "${APP_PATH}" ]; then
-                      echo "::error::TiagoTV.app not found"
+                  APP_PATH="dist/executables/mac-arm64/TiagoTV.app"
+                  if [ ! -d "${APP_PATH}" ]; then
+                      echo "::error::Expected app bundle not found at ${APP_PATH}"
                       exit 1
                   fi
                   codesign --verify --deep --strict --verbose=2 "${APP_PATH}"
-                  codesign -dv "${APP_PATH}" 2>&1 | sed -n '1,12p'
+                  SIGNATURE_INFO="$(codesign -dv --verbose=4 "${APP_PATH}" 2>&1)"
+                  printf '%s\n' "${SIGNATURE_INFO}" | sed -n '1,16p'
+                  if ! printf '%s\n' "${SIGNATURE_INFO}" | grep -q 'Signature=adhoc'; then
+                      echo "::error::TiagoTV.app is not ad-hoc signed"
+                      exit 1
+                  fi
+                  for binary in "${APP_PATH}"/Contents/MacOS/*; do lipo -archs "${binary}"; done
 
             - name: Upload the installer
               uses: actions/upload-artifact@v7
               with:
                   name: TiagoTV-macos-arm64
-                  path: dist/executables/*.dmg
+                  path: dist/executables/*-mac-arm64.dmg
                   if-no-files-found: error
                   retention-days: 30
 
@@ -86,7 +108,7 @@ jobs:
                   else
                       TAG="tiagotv-v${VERSION}-build.${GITHUB_RUN_NUMBER}"
                   fi
-                  gh release create "${TAG}" dist/executables/*.dmg \
+                  gh release create "${TAG}" dist/executables/*-mac-arm64.dmg \
                       --target "${GITHUB_SHA}" \
                       --title "TiagoTV ${VERSION} (build ${GITHUB_RUN_NUMBER})" \
                       --notes "Instalador para Mac con chip Apple. Abrí el .dmg, arrastrá TiagoTV a Aplicaciones y seguí README → Instalar en Mac." \
