@@ -84,9 +84,18 @@ export function isIdleEventChannel(name: string): boolean {
 const MONTHS = 'jan feb mar apr may jun jul aug sep oct nov dec'.split(' ');
 /** A US pay-per-view slot's game: "Lakers vs Nuggets @ Oct 16 10:30 PM". */
 const PPV_DATE = /@\s*([a-z]{3})\s+(\d{1,2})\s+\d{1,2}:\d{2}\s*[ap]m/i;
-/** A numbered slot with nothing on it: "NBA 13 :", ":NBA 13", "UEFA | 15 -". */
+/**
+ * Or day first: "… // UK Sat 30 Mar 7:35pm // ET Sat 30 Mar" ("UK 30 Mar"
+ * once the title lost its "Sat" with the quality tags).
+ */
+const DAY_DATE =
+    /\b(?:mon|tue|wed|thu|fri|sat|sun|uk|et)\s+(\d{1,2})\s+([a-z]{3})\b/i;
+/**
+ * A numbered slot with nothing on it: "NBA 13 :", ":NBA 13", "UEFA | 15 -",
+ * "MLS 19 |".
+ */
 const EMPTY_SLOT =
-    /^\s*(:\s*[a-z]{2,6}\s*\d{1,2}|[a-z]{2,6}\s*\d{1,2}\s*:|[a-z]{2,6}\s*\|\s*\d{1,2}\s*-?)\s*$/i;
+    /^\s*(:\s*[a-z]{2,6}\s*\d{1,2}|[a-z]{2,6}\s*\d{1,2}\s*[:|]|[a-z]{2,6}\s*\|\s*\d{1,2}\s*-?)\s*$/i;
 
 /**
  * A channel slot that names nothing to watch: an empty numbered slot, or a
@@ -97,8 +106,12 @@ export function isStaleSlot(title: string, now = new Date()): boolean {
     if (EMPTY_SLOT.test(title)) {
         return true;
     }
-    const date = PPV_DATE.exec(title);
-    const month = date ? MONTHS.indexOf(date[1].toLowerCase()) : -1;
+    const ppv = PPV_DATE.exec(title);
+    const day = ppv ? null : DAY_DATE.exec(title);
+    const date = ppv
+        ? { month: ppv[1], day: ppv[2] }
+        : day && { month: day[2], day: day[1] };
+    const month = date ? MONTHS.indexOf(date.month.toLowerCase()) : -1;
     if (!date || month < 0) {
         return false;
     }
@@ -107,10 +120,10 @@ export function isStaleSlot(title: string, now = new Date()): boolean {
         now.getMonth(),
         now.getDate() - 1
     );
-    let game = new Date(now.getFullYear(), month, Number(date[2]));
+    let game = new Date(now.getFullYear(), month, Number(date.day));
     // A December game seen in January belongs to last year.
     if (game.getTime() - now.getTime() > 180 * 24 * 60 * 60 * 1000) {
-        game = new Date(now.getFullYear() - 1, month, Number(date[2]));
+        game = new Date(now.getFullYear() - 1, month, Number(date.day));
     }
     return game < yesterday;
 }

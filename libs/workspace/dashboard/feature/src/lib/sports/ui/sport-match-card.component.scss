@@ -62,8 +62,21 @@
     text-transform: uppercase;
 }
 
+// "Resto del mundo" names the match's own competition, at times a long
+// one ("FDH Bank Premiership - Malawi").
 .match__competition {
+    min-width: 0;
+    overflow: hidden;
     color: rgba(255, 255, 255, 0.72);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// The badges keep their size beside a long competition name.
+.match__live,
+.match__time {
+    flex: none;
+    white-space: nowrap;
 }
 
 .match__live {

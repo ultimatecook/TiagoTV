@@ -8,6 +8,7 @@ import {
     findSportSection,
     sectionForCompetition,
 } from './sport-sections';
+import { cleanChannelTitle } from './sports-catalog';
 
 describe('parseSportEvent', () => {
     it('reads a live match', () => {
@@ -77,6 +78,27 @@ describe('parseSportEvent', () => {
         );
         expect(isStaleSlot('DAZN 1', now)).toBe(false);
         expect(isStaleSlot('NBA TV 3', now)).toBe(false);
+        expect(isStaleSlot('MLS 19 |', now)).toBe(true);
+        expect(
+            isStaleSlot(
+                'MLS Live 10: Colorado Rapids vs. Los Angeles Football Club // UK Sat 30 Mar 7:35pm // ET Sat 30 Mar 2:35pm',
+                now
+            )
+        ).toBe(true);
+        expect(
+            isStaleSlot(
+                cleanChannelTitle(
+                    'MLS Live 1: Atlanta United vs. Chicago Fire FC // UK Sat 30 Mar 7:20pm'
+                ),
+                now
+            )
+        ).toBe(true);
+        expect(
+            isStaleSlot(
+                'MLS Live 2: LA Galaxy vs. Seattle Sounders FC // UK Sun 18 Oct 2:05am',
+                now
+            )
+        ).toBe(false);
         expect(
             isStaleSlot(
                 'Philadelphia 76ers vs Boston Celtics @ Oct 16 7:00 PM :NBA 01',
@@ -102,12 +124,12 @@ describe('sport sections', () => {
             sectionForCompetition(competition)?.id ?? null;
 
         expect(id('Premier League')).toBe('premier-league');
-        expect(id('Premier League - Lebanon')).toBeNull();
+        expect(id('Premier League - Lebanon')).toBe('rest-of-world');
         expect(id('LALIGA EA SPORTS')).toBe('laliga');
         expect(id('Serie A Enilive')).toBe('serie-a');
         expect(id('Serie A Women')).toBeNull();
         expect(id('Ligue 1+')).toBe('ligue-1');
-        expect(id('Ligue 1 - Burkina Faso')).toBeNull();
+        expect(id('Ligue 1 - Burkina Faso')).toBe('rest-of-world');
         expect(id('Bundesliga')).toBe('bundesliga');
         expect(id('Google Pixel Frauen-Bundesliga')).toBeNull();
         expect(id('FIA World Endurance')).toBe('motor');

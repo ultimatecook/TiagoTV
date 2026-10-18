@@ -24,17 +24,31 @@ import {
     type SportChannel,
     type SportMatch,
     type SportsCatalog,
+    type SportsCatalogCategory,
+    type SportsCatalogStream,
 } from './sports-catalog';
 
-/** Event channels rename themselves through the day: a short cache. */
-const FRESH_MS = 3 * 60 * 1000;
+/**
+ * Event channels rename themselves through the day, but the list is the
+ * provider's whole line-up (tens of thousands of channels): fetching it
+ * often can get the account throttled. Finished matches leave "today" by
+ * the clock (match-clock), not by a refetch.
+ */
+const FRESH_MS = 10 * 60 * 1000;
 /** How often an open sports view checks the clock (and the cache's age). */
 const TICK_MS = 60 * 1000;
+
+/** The source's live categories and channels, as the panel lists them. */
+export interface LiveCatalog {
+    readonly categories: readonly SportsCatalogCategory[];
+    readonly streams: readonly SportsCatalogStream[];
+}
 
 interface LoadedCatalog {
     readonly playlistId: string;
     readonly catalog: SportsCatalog;
     readonly liveChannels: readonly LiveChannelTile[];
+    readonly live: LiveCatalog;
     readonly at: number;
 }
 
@@ -92,6 +106,13 @@ export class SportsCatalogService {
         return loaded && loaded.playlistId === this.source()?._id
             ? loaded.liveChannels
             : [];
+    });
+    /** The fresh live catalog itself, for the other views built on it. */
+    readonly liveCatalog = computed(() => {
+        const loaded = this.loaded();
+        return loaded && loaded.playlistId === this.source()?._id
+            ? loaded.live
+            : null;
     });
 
     /** Whether a match listed as live or upcoming is in fact over. */
@@ -175,6 +196,7 @@ export class SportsCatalogService {
                 playlistId,
                 catalog,
                 liveChannels: buildLiveChannels(categories, streams),
+                live: { categories, streams },
                 at: Date.now(),
             });
         } catch {

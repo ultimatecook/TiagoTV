@@ -19,9 +19,17 @@ const RETRIES = 2;
 const HIT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MISS_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 
+/**
+ * The competition's league on TheSportsDB, to tell same-named clubs apart;
+ * the cups (Europa League, Libertadores) and "Resto del mundo" have none.
+ */
 const LEAGUE_HINTS: Partial<Record<SportSectionId, RegExp>> = {
     'premier-league': /english premier league/i,
-    laliga: /spanish la liga/i,
+    laliga: /spanish la liga$/i,
+    hypermotion: /spanish la liga 2|segunda/i,
+    'liga-argentina': /argentin/i,
+    mls: /major league soccer|\bmls\b/i,
+    eredivisie: /dutch eredivisie/i,
     'serie-a': /italian serie a/i,
     'ligue-1': /french ligue 1/i,
     bundesliga: /german bundesliga/i,

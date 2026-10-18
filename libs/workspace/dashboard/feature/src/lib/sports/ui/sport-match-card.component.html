@@ -6,7 +6,7 @@
     (click)="play()"
 >
     <span class="match__top">
-        <span class="match__competition">{{ section()?.title }}</span>
+        <span class="match__competition">{{ competition() }}</span>
         @if (live()) {
             <span class="match__live">{{
                 'WORKSPACE.SPORTS.LIVE' | translate

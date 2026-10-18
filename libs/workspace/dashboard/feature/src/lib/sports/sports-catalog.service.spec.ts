@@ -89,7 +89,8 @@ describe('SportsCatalogService', () => {
             'dazn',
         ]);
 
-        await jest.advanceTimersByTimeAsync(2 * MINUTE);
+        // The whole line-up is heavy for the provider: every 10 minutes.
+        await jest.advanceTimersByTimeAsync(9 * MINUTE);
         expect(getLiveStreams).toHaveBeenCalledTimes(1);
 
         await jest.advanceTimersByTimeAsync(2 * MINUTE);
@@ -109,7 +110,7 @@ describe('SportsCatalogService', () => {
         expect(getLiveStreams).toHaveBeenCalledTimes(1);
 
         home.destroy();
-        await jest.advanceTimersByTimeAsync(4 * MINUTE);
+        await jest.advanceTimersByTimeAsync(11 * MINUTE);
         expect(getLiveStreams).toHaveBeenCalledTimes(2);
 
         page.destroy();
@@ -128,5 +129,16 @@ describe('SportsCatalogService', () => {
 
         expect(service.today()).toEqual([]);
         expect(service.isOver(match)).toBe(true);
+    });
+
+    it('shares the live catalog it loaded with the other views', async () => {
+        expect(service.liveCatalog()).toBeNull();
+
+        await service.load();
+
+        expect(
+            service.liveCatalog()?.categories.map((c) => c.category_name)
+        ).toEqual(['|ES| ✪ DEPORTES']);
+        expect(service.liveCatalog()?.streams).toHaveLength(2);
     });
 });

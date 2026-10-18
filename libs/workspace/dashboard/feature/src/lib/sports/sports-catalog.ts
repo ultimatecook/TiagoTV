@@ -102,7 +102,7 @@ export function buildSportsCatalog(
             const section =
                 event.status === 'end'
                     ? null
-                    : sectionForCompetition(event.competition);
+                    : sectionForCompetition(event.competition, event.title);
             // Football sections show matches; their studio shows ("El Post
             // · Jornada 9") have no two sides.
             if (section && !INDIVIDUAL_SPORTS.has(section.id) && !event.home) {
@@ -127,18 +127,21 @@ export function buildSportsCatalog(
         ) {
             continue;
         }
-        for (const section of SPORT_SECTIONS) {
-            const sectionChannels = channels.get(section.id)!;
-            // HD and SD copies of one channel share a cleaned title: the
-            // first one stays, unless a later one has the logo it lacks.
-            const key = channel.title.toLowerCase();
-            const kept = sectionChannels.get(key);
-            if (
-                (!kept || (!kept.icon && channel.icon)) &&
+        // "Resto del mundo" takes the football channels no card claims.
+        const claimed = SPORT_SECTIONS.filter(
+            (section) =>
+                !section.catchAll &&
                 channelInSection(section, stream.name, categoryName)
-            ) {
-                sectionChannels.set(key, channel);
-            }
+        );
+        const owners = claimed.length
+            ? claimed
+            : SPORT_SECTIONS.filter(
+                  (section) =>
+                      section.catchAll &&
+                      channelInSection(section, stream.name, categoryName)
+              );
+        for (const section of owners) {
+            keepChannel(channels.get(section.id)!, channel);
         }
     }
 
@@ -153,8 +156,24 @@ export function buildSportsCatalog(
 }
 
 /**
+ * HD and SD copies of one channel share a cleaned title: the first one
+ * stays, unless a later one has the logo it lacks.
+ */
+function keepChannel(
+    sectionChannels: Map<string, SportChannel>,
+    channel: SportChannel
+): void {
+    const key = channel.title.toLowerCase();
+    const kept = sectionChannels.get(key);
+    if (!kept || (!kept.icon && channel.icon)) {
+        sectionChannels.set(key, channel);
+    }
+}
+
+/**
  * The Home's "today" row: matches on now, then today's (local) upcoming
- * kick-offs, across every section; none that is over (see match-clock).
+ * kick-offs, across every section but "Resto del mundo"; none that is over
+ * (see match-clock).
  */
 export function todaysMatches(
     catalog: SportsCatalog,
@@ -164,8 +183,13 @@ export function todaysMatches(
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
     const matches: SportMatch[] = [];
-    for (const content of Object.values(catalog) as SportSectionContent[]) {
-        for (const match of content.matches) {
+    for (const section of SPORT_SECTIONS) {
+        // "Resto del mundo" keeps its many matches (Burundi's league,
+        // Malawi's…) on its own page.
+        if (section.catchAll) {
+            continue;
+        }
+        for (const match of catalog[section.id]?.matches ?? []) {
             const start = match.event.start;
             if (isMatchOver(match, kickOffOf(match), now)) {
                 continue;

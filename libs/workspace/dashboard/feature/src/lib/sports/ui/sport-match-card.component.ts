@@ -28,6 +28,13 @@ export class SportMatchCardComponent {
 
     readonly match = input.required<SportMatch>();
     readonly section = computed(() => findSportSection(this.match().sectionId));
+    /** The card's name, or the match's own competition on "Resto del mundo". */
+    readonly competition = computed(() => {
+        const section = this.section();
+        return section?.catchAll
+            ? this.match().event.competition
+            : (section?.title ?? '');
+    });
     readonly live = computed(() => this.match().event.status === 'live');
     readonly kickOff = computed(() => {
         const start = this.match().event.start;
