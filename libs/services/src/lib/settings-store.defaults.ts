@@ -22,7 +22,9 @@ export const DEFAULT_SETTINGS: Settings = {
     fullscreenChannelPanel: true,
     vodAutoFailover: false,
     m3uVodDetails: true,
-    streamFormat: StreamFormat.AutoStreamFormat,
+    // TiagoTV: MPEG-TS. Its one-connection provider stalls HLS sessions,
+    // which it keeps counting after they close.
+    streamFormat: StreamFormat.TsStreamFormat,
     openStreamOnDoubleClick: false,
     language: Language.ENGLISH,
     showCaptions: false,

@@ -244,7 +244,7 @@ describe('SettingsStore dashboard rail settings', () => {
 
         await store.loadSettings();
 
-        expect(store.getSettings().streamFormat).toBe('auto');
+        expect(store.getSettings().streamFormat).toBe('ts');
         expect(store.getSettings().dashboardRails).toEqual(
             expectedDashboardRails()
         );

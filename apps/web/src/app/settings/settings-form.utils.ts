@@ -73,7 +73,7 @@ export function createSettingsForm(
         ...(supportsEpg
             ? { epgUrl: new FormArray<FormControl<string | null>>([]) }
             : {}),
-        streamFormat: StreamFormat.AutoStreamFormat,
+        streamFormat: StreamFormat.TsStreamFormat,
         openStreamOnDoubleClick: false,
         language: Language.ENGLISH,
         showCaptions: false,
@@ -183,7 +183,7 @@ export function createSettingsFromFormValue(
         fullscreenChannelPanel: value.fullscreenChannelPanel ?? true,
         vodAutoFailover: value.vodAutoFailover ?? false,
         m3uVodDetails: value.m3uVodDetails ?? true,
-        streamFormat: value.streamFormat ?? StreamFormat.AutoStreamFormat,
+        streamFormat: value.streamFormat ?? StreamFormat.TsStreamFormat,
         openStreamOnDoubleClick: value.openStreamOnDoubleClick ?? false,
         language: value.language ?? Language.ENGLISH,
         showCaptions: value.showCaptions ?? false,
