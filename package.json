@@ -44,6 +44,7 @@
         "styles:font-weights:check": "node tools/nx/check-font-weights.mjs",
         "styles:font-weights:validate": "pnpm run styles:font-weights:test && pnpm run styles:font-weights:check",
         "styles:inputs:test": "node --test tools/nx/check-stylesheet-inputs.test.mjs",
+        "tiagotv:ui-bundle:test": "node --test tools/tiagotv/ui-bundle.test.mjs",
         "styles:inputs:check": "node tools/nx/check-stylesheet-inputs.mjs",
         "styles:inputs:validate": "pnpm run styles:inputs:test && pnpm run styles:inputs:check",
         "styles:material-tokens:test": "node --test tools/nx/check-material-token-overrides.test.mjs",

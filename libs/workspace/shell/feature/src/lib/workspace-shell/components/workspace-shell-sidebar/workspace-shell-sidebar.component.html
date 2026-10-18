@@ -54,19 +54,24 @@
                                 #rla="routerLinkActive"
                                 class="sidebar__link"
                                 [routerLink]="item.link"
-                                routerLinkActive="is-active"
+                                routerLinkActive
                                 [routerLinkActiveOptions]="{
                                     exact: item.exact,
                                 }"
+                                [class.is-active]="
+                                    item.highlights && rla.isActive
+                                "
                                 [attr.aria-current]="
-                                    rla.isActive ? 'page' : null
+                                    item.highlights && rla.isActive
+                                        ? 'page'
+                                        : null
                                 "
                                 [attr.title]="item.labelKey | translate"
                                 [attr.data-test-id]="'sidebar-link-' + item.id"
                             >
                                 <app-workspace-shell-sidebar-icon
                                     [name]="item.icon"
-                                    [filled]="rla.isActive"
+                                    [filled]="item.highlights && rla.isActive"
                                 />
                                 <span class="sidebar__link-label">{{
                                     item.labelKey | translate

@@ -9,6 +9,12 @@ export interface WorkspaceSidebarItem {
     readonly link: readonly string[];
     /** Active only on the exact URL (Home), not on its descendants. */
     readonly exact: boolean;
+    /**
+     * Lights up on its page. A fallback link (a catalog entry with no source
+     * yet) shares its page with the entry that owns it, so only the owner
+     * lights up there.
+     */
+    readonly highlights: boolean;
 }
 
 export interface WorkspaceSidebarGroup {
@@ -61,56 +67,61 @@ const GLOBAL_RECENT_PATH = ['/workspace', 'global-recent'];
 export function buildWorkspaceSidebarGroups(
     context: WorkspacePortalContext | null
 ): WorkspaceSidebarGroup[] {
-    const sourceLink = (section: SourceSection): string[] =>
+    const sourceItem = (
+        id: string,
+        labelKey: string,
+        icon: WorkspaceSidebarIconName,
+        section: SourceSection
+    ): WorkspaceSidebarItem =>
         context
-            ? [
+            ? item(id, labelKey, icon, [
                   '/workspace',
                   context.provider,
                   context.playlistId,
                   SOURCE_SECTION_PATHS[context.provider][section],
-              ]
-            : SOURCES_PATH;
-    const recentlyAddedLink =
+              ])
+            : item(id, labelKey, icon, SOURCES_PATH, { highlights: false });
+    const recentlyAdded =
         context?.provider === 'xtreams'
-            ? ['/workspace', 'xtreams', context.playlistId, 'recently-added']
-            : GLOBAL_RECENT_PATH;
+            ? item('recently-added', 'RECENTLY_ADDED', 'clock', [
+                  '/workspace',
+                  'xtreams',
+                  context.playlistId,
+                  'recently-added',
+              ])
+            : item(
+                  'recently-added',
+                  'RECENTLY_ADDED',
+                  'clock',
+                  GLOBAL_RECENT_PATH,
+                  {
+                      highlights: false,
+                  }
+              );
 
     return [
         {
             id: 'home',
             labelKey: 'WORKSPACE.SIDEBAR.GROUP_HOME',
             items: [
-                item('home', 'HOME', 'home', ['/workspace', 'dashboard'], true),
-                item(
-                    'new-popular',
-                    'NEW_POPULAR',
-                    'flame',
-                    sourceLink('newPopular')
-                ),
-                item('tv-shows', 'TV_SHOWS', 'tv', sourceLink('tvShows')),
-                item('movies', 'MOVIES', 'film', sourceLink('movies')),
+                item('home', 'HOME', 'home', ['/workspace', 'dashboard'], {
+                    exact: true,
+                }),
+                sourceItem('new-popular', 'NEW_POPULAR', 'flame', 'newPopular'),
+                sourceItem('tv-shows', 'TV_SHOWS', 'tv', 'tvShows'),
+                sourceItem('movies', 'MOVIES', 'film', 'movies'),
                 item('my-list', 'MY_LIST', 'plus', [
                     '/workspace',
                     'global-favorites',
                 ]),
-                item(
-                    'languages',
-                    'LANGUAGES',
-                    'globe',
-                    sourceLink('languages')
-                ),
+                sourceItem('languages', 'LANGUAGES', 'globe', 'languages'),
             ],
         },
         {
             id: 'library',
             labelKey: 'WORKSPACE.SIDEBAR.GROUP_LIBRARY',
             items: [
-                item(
-                    'recently-added',
-                    'RECENTLY_ADDED',
-                    'clock',
-                    recentlyAddedLink
-                ),
+                recentlyAdded,
                 item(
                     'watch-later',
                     'WATCH_LATER',
@@ -132,7 +143,7 @@ function item(
     labelKey: string,
     icon: WorkspaceSidebarIconName,
     link: string[],
-    exact = false
+    { exact = false, highlights = true } = {}
 ): WorkspaceSidebarItem {
     return {
         id,
@@ -140,5 +151,6 @@ function item(
         icon,
         link,
         exact,
+        highlights,
     };
 }

@@ -7,7 +7,10 @@
     width: 100%;
     box-sizing: border-box;
     padding: clamp(16px, 3vh, 36px) clamp(12px, 3vw, 32px);
-    overflow: hidden;
+    // Clipped, but lifted cards keep their shadows: a hidden overflow cut
+    // them off in a straight line under the cards.
+    overflow: clip;
+    overflow-clip-margin: 32px;
     gap: clamp(16px, 3vh, 28px);
     animation: fadeIn 0.5s ease-out;
     min-width: 0;
@@ -95,8 +98,7 @@
 
         &:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 28px
-                color-mix(in srgb, var(--app-selection-color) 22%, transparent);
+            box-shadow: 0 16px 30px -14px var(--app-selection-glow);
             border-color: color-mix(
                 in srgb,
                 var(--app-selection-color) 40%,
@@ -175,8 +177,7 @@
         font-size: 0.875rem;
         padding: 8px 18px;
         border-radius: 10px;
-        box-shadow: 0 4px 12px
-            color-mix(in srgb, var(--app-selection-color) 25%, transparent);
+        box-shadow: 0 6px 14px -8px var(--app-selection-glow);
         transition:
             transform 0.2s ease,
             box-shadow 0.2s ease;
@@ -191,8 +192,7 @@
 
         &:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 18px
-                color-mix(in srgb, var(--app-selection-color) 35%, transparent);
+            box-shadow: 0 10px 20px -10px var(--app-selection-glow);
         }
     }
 }

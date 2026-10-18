@@ -48,6 +48,7 @@ import { PlaylistOpenRequestService } from './services/playlist-open-request.ser
 import { AppUpdateNotificationPanelComponent } from './app-update-notification-panel.component';
 import { AppStartupStatusComponent } from './app-startup-status.component';
 import { syncDocumentLanguage } from './services/document-language';
+import { startWindowChrome } from './services/native-glass';
 
 const debugAppComponent = createDevLogger('AppComponent');
 
@@ -101,6 +102,10 @@ export class AppComponent implements OnInit {
         if (this.runtime.usesCustomWindowControls) {
             document.body.classList.add('frameless-platform');
         }
+        startWindowChrome(
+            document,
+            this.runtime.isElectron && this.runtime.isMacOS
+        );
 
         // Playlist files the OS asked us to open (command line argument, file
         // association, macOS `open-file`) are resolved in the main process and

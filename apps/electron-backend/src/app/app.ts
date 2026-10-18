@@ -46,6 +46,14 @@ import {
     trackNativeFullScreen,
 } from './services/native-fullscreen-transitions';
 import { attachWindowBackGestures } from './services/window-back-gestures';
+import {
+    applyNativeGlassAppearance,
+    getNativeGlassWindowOptions,
+} from './services/native-glass-window';
+import {
+    packagedRendererIndexPath,
+    startUiUpdates,
+} from './services/ui-updates';
 
 const externalBrowserProtocols = new Set(['http:', 'https:']);
 const trustedDevRendererHosts = new Set([
@@ -63,8 +71,13 @@ function parseUrl(url: string): URL | null {
     }
 }
 
-function getPackagedRendererIndexPath(): string {
+function getBundledRendererIndexPath(): string {
     return resolve(__dirname, '..', rendererAppName, 'index.html');
+}
+
+/** The packaged renderer, or a newer interface update installed over it. */
+function getPackagedRendererIndexPath(): string {
+    return packagedRendererIndexPath(getBundledRendererIndexPath());
 }
 
 function getFilePathFromUrl(url: URL): string | null {
@@ -512,6 +525,8 @@ export default class App {
         });
         App.launchFullscreenSwitchConsumed = true;
 
+        applyNativeGlassAppearance();
+
         // Create the browser window.
         App.mainWindow = new BrowserWindow({
             title: 'TiagoTV',
@@ -532,6 +547,7 @@ export default class App {
             minHeight: 600,
             minWidth: 900,
             ...App.getPlatformTitleBarOptions(),
+            ...getNativeGlassWindowOptions(),
         });
         App.mainWindow.setMenu(null);
         attachMainWindowPerformanceCounters(
@@ -566,6 +582,7 @@ export default class App {
                 mainWindow.maximize();
             }
             mainWindow.show();
+            startUiUpdates(mainWindow, getBundledRendererIndexPath());
             // macOS ignores the constructor's `fullscreen` while the window
             // is hidden — an NSWindow can only toggle fullscreen once it is
             // on screen — so the request is repeated after show() wherever

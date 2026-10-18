@@ -48,6 +48,11 @@ jobs:
             - name: Build
               run: pnpm run build:backend
 
+            # The packaged interface's build number: the app takes interface
+            # updates newer than it (tiagotv-ui-update.yml).
+            - name: Stamp the interface build
+              run: node tools/tiagotv/ui-bundle.mjs stamp dist/apps/web
+
             # The targets' own arch lists win over `--arch`, and with no
             # Developer ID certificate electron-builder would leave the app
             # unsigned, which Apple Silicon refuses to launch: build arm64

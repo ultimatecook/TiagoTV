@@ -71,10 +71,36 @@ app con `IPTVNATOR_ALLOW_PRIVATE_NETWORK_URLS=1`.
     **Configuración del Sistema → Privacidad y seguridad** tocá
     **Abrir de todos modos**.)
 
-**Nueva versión:** en GitHub, **Actions → TiagoTV installer (macOS) → Run
-workflow**. En unos 20–30 minutos aparece un release nuevo con el `.dmg`;
+**Nuevo instalador:** en GitHub, **Actions → TiagoTV installer (macOS) → Run
+workflow**. En unos 6 minutos aparece un release nuevo con el `.dmg`;
 reemplazá la app en Aplicaciones (tus fuentes y favoritos se conservan) y
-repetí el paso 3.
+repetí el paso 3. Solo hace falta cuando cambia el motor de la app; la
+interfaz se actualiza sola (abajo).
+
+## Actualizaciones automáticas
+
+Cada push a `main` que toca la interfaz la publica en el repo público
+[`ultimatecook/TiagoTV-updates`](https://github.com/ultimatecook/TiagoTV-updates)
+(workflow **TiagoTV interface update**). La app de Mac se fija cada unas
+horas, baja la interfaz nueva en segundo plano, avisa con una notificación
+y la usa desde la próxima vez que la abrís. Si una versión no arranca, la
+app vuelve sola a la que trae instalada.
+
+Solo se publica la interfaz compilada: ni el código ni tus listas. Una vez,
+para activarlo:
+
+1. Creá el repo **público** `TiagoTV-updates` en tu cuenta, marcando
+   **Add a README file**.
+2. En **Settings → Developer settings → Personal access tokens →
+   Fine-grained tokens**, creá un token con acceso solo a
+   `TiagoTV-updates` y el permiso **Contents: Read and write**.
+3. En el repo `TiagoTV`, **Settings → Secrets and variables → Actions →
+   New repository secret**: nombre `TIAGOTV_UPDATES_TOKEN`, valor el token.
+
+Cuando un cambio del motor rompe la compatibilidad con interfaces viejas,
+se sube `TIAGOTV_UI_SHELL_LEVEL`
+(`apps/electron-backend/src/app/services/ui-update-state.ts`): las apps
+instaladas ignoran esas interfaces hasta que instales el `.dmg` nuevo.
 
 ## Desarrollo
 

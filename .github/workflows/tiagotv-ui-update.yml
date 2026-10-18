@@ -1,0 +1,108 @@
+name: TiagoTV interface update
+
+# Publishes the interface (the renderer) to the public
+# ultimatecook/TiagoTV-updates repository on every push to main that
+# touches it. The Mac app downloads it in the background and uses it from
+# its next launch, so interface changes need no new installer (see
+# apps/electron-backend/src/app/services/ui-update-state.ts).
+#
+# Needs the TIAGOTV_UPDATES_TOKEN secret: a fine-grained token with
+# Contents: read and write on TiagoTV-updates only (README → "Actualizaciones
+# automáticas"). Without it the run only warns.
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - 'apps/web/**'
+            - 'libs/**'
+            - 'package.json'
+            - 'pnpm-lock.yaml'
+            - 'tools/tiagotv/**'
+            - 'apps/electron-backend/src/app/services/ui-update-state.ts'
+            - '.github/workflows/tiagotv-ui-update.yml'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: tiagotv-ui-update
+    cancel-in-progress: true
+
+jobs:
+    publish:
+        name: Publish the interface
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        env:
+            UPDATES_REPO: ultimatecook/TiagoTV-updates
+        steps:
+            - name: Check the updates token
+              id: token
+              env:
+                  TOKEN: ${{ secrets.TIAGOTV_UPDATES_TOKEN }}
+              run: |
+                  if [ -z "${TOKEN}" ]; then
+                      echo "::warning::TIAGOTV_UPDATES_TOKEN is not set, so the interface is not published (README → Actualizaciones automáticas)."
+                      echo "ready=false" >> "${GITHUB_OUTPUT}"
+                  else
+                      echo "ready=true" >> "${GITHUB_OUTPUT}"
+                  fi
+
+            - name: Checkout code
+              if: steps.token.outputs.ready == 'true'
+              uses: actions/checkout@v7
+
+            - name: Install pnpm
+              if: steps.token.outputs.ready == 'true'
+              uses: pnpm/action-setup@v6.1.0
+
+            - name: Setup Node.js
+              if: steps.token.outputs.ready == 'true'
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              if: steps.token.outputs.ready == 'true'
+              run: pnpm install --frozen-lockfile
+
+            - name: Build the interface
+              if: steps.token.outputs.ready == 'true'
+              run: pnpm nx run web:build:production
+
+            - name: Package the interface
+              if: steps.token.outputs.ready == 'true'
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  node tools/tiagotv/ui-bundle.mjs stamp dist/apps/web
+                  BUILD="$(node -p "require('./dist/apps/web/tiagotv-ui.json').build")"
+                  TAG="ui-${BUILD}"
+                  ZIP="tiagotv-ui-${BUILD}.zip"
+                  (cd dist/apps/web && zip -qrX "${GITHUB_WORKSPACE}/${ZIP}" . -x '*.map')
+                  node tools/tiagotv/ui-bundle.mjs manifest dist/apps/web "${ZIP}" \
+                      "https://github.com/${UPDATES_REPO}/releases/download/${TAG}/${ZIP}" \
+                      ui-manifest.json
+                  echo "TAG=${TAG}" >> "${GITHUB_ENV}"
+                  echo "ZIP=${ZIP}" >> "${GITHUB_ENV}"
+
+            - name: Publish to TiagoTV-updates
+              if: steps.token.outputs.ready == 'true'
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ secrets.TIAGOTV_UPDATES_TOKEN }}
+              run: |
+                  set -euo pipefail
+                  if gh release view "${TAG}" --repo "${UPDATES_REPO}" >/dev/null 2>&1; then
+                      echo "${TAG} is already published."
+                      exit 0
+                  fi
+                  gh release create "${TAG}" "${ZIP}" ui-manifest.json \
+                      --repo "${UPDATES_REPO}" \
+                      --title "Interfaz ${TAG}" \
+                      --notes "Interfaz de TiagoTV del commit ${GITHUB_SHA::7}. La app de Mac la baja sola y la usa desde la próxima vez que la abrís." \
+                      --latest

@@ -247,25 +247,32 @@ html {
         @include mat.system-level-colors($dark-theme);
 
         // ── TiagoTV cinematic glass theme ─────────────────────────────────
-        // A warm olive-charcoal glass window floating over an ambient room
-        // backdrop. Surfaces are translucent warm greys; text is warm white;
+        // A neutral graphite glass window: its colour comes from whatever
+        // is behind it (the macOS desktop through native glass, the ambient
+        // room in a browser), never a tint of its own. Text is warm white;
         // the brand red is the accent for progress, live and primary fills.
 
         // App shell & navigation. The glass window paints the shell; the
         // rail, header and body are transparent so the glass shows through.
-        --app-shell-bg: #12120e;
+        --app-shell-bg: #121212;
         --app-glass-bg: linear-gradient(
             168deg,
-            rgba(74, 76, 58, 0.94) 0%,
-            rgba(48, 50, 39, 0.95) 38%,
-            rgba(33, 34, 27, 0.97) 100%
+            rgba(64, 64, 62, 0.94) 0%,
+            rgba(42, 42, 41, 0.95) 38%,
+            rgba(28, 28, 27, 0.97) 100%
+        );
+        // Floating pills over the glass (now playing).
+        --app-glass-pill-bg: linear-gradient(
+            180deg,
+            rgba(60, 60, 58, 0.96) 0%,
+            rgba(34, 34, 33, 0.97) 100%
         );
         --app-glass-border: rgba(255, 255, 255, 0.11);
         --app-glass-highlight: rgba(255, 255, 255, 0.07);
         --app-rail-bg: transparent;
         --app-header-bg: transparent;
         // Opaque fallback for sticky bars and panels that sit over content.
-        --app-content-bg: #292b22;
+        --app-content-bg: #262625;
         --app-rail-border: transparent;
         --app-on-surface: #f2efe8;
         --app-hover-overlay: rgba(255, 255, 255, 0.07);
@@ -274,11 +281,13 @@ html {
         --app-brand-red: #e8262b;
         --app-match-color: #46d369;
         --app-selection-color: #f2efe8;
-        --app-selection-on-color: #17170f;
+        --app-selection-on-color: #141414;
         --app-selection-surface: rgba(255, 255, 255, 0.12);
         --app-selection-surface-strong: rgba(255, 255, 255, 0.18);
         --app-selection-border: rgba(255, 255, 255, 0.28);
-        --app-selection-glow: rgba(255, 255, 255, 0.2);
+        // A shadow under lifted and active elements: a white glow here
+        // drew halos around them on the dark glass.
+        --app-selection-glow: rgba(0, 0, 0, 0.45);
         --app-progress-color: var(--app-brand-red);
         // Keyboard focus ring: warm white reads on every glass surface.
         --app-focus-ring: #fbf7ee;
@@ -293,15 +302,15 @@ html {
         --app-content-shadow: none;
 
         // Widget surfaces: menus, dialogs, cards on glass
-        --app-widget-bg: #2e3026;
-        --app-widget-header-bg: #34362b;
+        --app-widget-bg: #2b2b2a;
+        --app-widget-header-bg: #323231;
         --app-widget-border: transparent;
         --app-widget-shadow: none;
         --app-widget-header-border: rgba(255, 255, 255, 0.06);
         --app-card-hover-bg: rgba(255, 255, 255, 0.08);
         --app-separator: rgba(255, 255, 255, 0.1);
 
-        // Typography: warm whites over olive glass
+        // Typography: warm whites over graphite glass
         --app-heading-color: #f4f1ea;
         --app-body-color: #bdb9ad;
         --app-muted-color: #8c887b;
@@ -348,6 +357,14 @@ html {
         --app-popover-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
         --app-popover-backdrop: rgba(6, 6, 4, 0.5);
     }
+}
+
+// ─── TiagoTV native glass (macOS app) ────────────────────────────────────────
+// The window itself is glass (vibrancy): the shell only shades it, so the
+// desktop's colours come through, and the pills turn translucent too.
+html.native-glass .dark-theme {
+    --app-glass-bg: rgba(12, 12, 11, 0.3);
+    --app-glass-pill-bg: rgba(28, 28, 27, 0.72);
 }
 
 // ─── Global refined outlined inputs ──────────────────────────────────────────

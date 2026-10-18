@@ -80,6 +80,34 @@ describe('buildWorkspaceSidebarGroups', () => {
         expect(links['recently-added']).toBe('/workspace/global-recent');
     });
 
+    it('lights up only the entry that owns a shared page', () => {
+        const highlighting = (
+            groups: ReturnType<typeof buildWorkspaceSidebarGroups>
+        ) =>
+            groups
+                .flatMap((group) => group.items)
+                .filter((item) => item.highlights)
+                .map((item) => item.id);
+
+        // Without a source, the catalog entries all open the sources page
+        // (My Account's) and Recently Added opens Watch Later's.
+        expect(highlighting(buildWorkspaceSidebarGroups(null))).toEqual([
+            'home',
+            'my-list',
+            'watch-later',
+            'downloads',
+            'account',
+        ]);
+        expect(
+            highlighting(
+                buildWorkspaceSidebarGroups({
+                    provider: 'xtreams',
+                    playlistId: 'p1',
+                })
+            )
+        ).toHaveLength(10);
+    });
+
     it('marks only Home as an exact match', () => {
         const exact = buildWorkspaceSidebarGroups(null)
             .flatMap((group) => group.items)

@@ -240,6 +240,12 @@ textarea {
 // TiagoTV: the dark app host is a softly lit room the glass window floats
 // in — foliage green above, a warm lamp glow on the right and a wooden floor
 // below. Pure CSS so it costs no image decode and never repaints.
+// On macOS the window is native glass: the page paints no room of its own.
+html.native-glass,
+html.native-glass body.dark-theme {
+    background: transparent !important;
+}
+
 body.dark-theme {
     background:
         radial-gradient(

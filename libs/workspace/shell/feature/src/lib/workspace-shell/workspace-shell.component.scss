@@ -167,11 +167,16 @@ app-workspace-shell-context-sidebar {
         gap: 18px;
         border: 1px solid var(--app-glass-border, rgba(255, 255, 255, 0.12));
         border-radius: 999px;
-        background: linear-gradient(
-            180deg,
-            rgba(62, 64, 50, 0.97) 0%,
-            rgba(38, 39, 31, 0.98) 100%
+        background: var(
+            --app-glass-pill-bg,
+            linear-gradient(
+                180deg,
+                rgba(60, 60, 58, 0.96),
+                rgba(34, 34, 33, 0.97)
+            )
         );
+        -webkit-backdrop-filter: blur(28px) saturate(1.4);
+        backdrop-filter: blur(28px) saturate(1.4);
         box-shadow:
             inset 0 1px 0 var(--app-glass-highlight, rgba(255, 255, 255, 0.07)),
             0 26px 60px rgba(0, 0, 0, 0.55);
@@ -191,6 +196,34 @@ app-workspace-shell-context-sidebar {
     ::ng-deep .external-playback-dock__button {
         border-radius: 999px;
     }
+}
+
+// TiagoTV: on macOS the window itself is the glass (native vibrancy, rounded
+// by the system), and a fullscreen window has no corners at all: in both,
+// the glass window fills the native one, with no inset, frame or radius.
+:host-context(.native-glass) .workspace-shell,
+:host-context(.window-fullscreen) .workspace-shell {
+    --workspace-window-inset: 0px;
+    padding: 0;
+}
+
+:host-context(.native-glass) .workspace-window,
+:host-context(.window-fullscreen) .workspace-window {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+// The pill floats inside the window's lower edge there, clear of the last
+// row once it is scrolled up.
+:host-context(.native-glass) .has-now-playing .workspace-content,
+:host-context(.window-fullscreen) .has-now-playing .workspace-content {
+    padding-bottom: 92px;
+}
+
+:host-context(.native-glass) .workspace-now-playing,
+:host-context(.window-fullscreen) .workspace-now-playing {
+    bottom: 18px;
 }
 
 // The content surface's rounded top-left corner is painted, not clipped.

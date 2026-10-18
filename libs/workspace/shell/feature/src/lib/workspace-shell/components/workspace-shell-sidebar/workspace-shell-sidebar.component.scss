@@ -23,6 +23,22 @@
     }
 }
 
+// macOS glass window: the sidebar runs up under the traffic lights, so it
+// starts below them, and the strip they sit in moves the window like a
+// title bar. A fullscreen window hides them.
+:host-context(.native-glass:not(.window-fullscreen)) .sidebar {
+    position: relative;
+    padding-top: calc(var(--traffic-lights-clear-y, 48px) + 8px);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto;
+        height: var(--traffic-lights-clear-y, 48px);
+        app-region: drag;
+    }
+}
+
 .sidebar__brand {
     display: inline-flex;
     align-self: flex-start;
