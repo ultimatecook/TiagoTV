@@ -1,30 +1,29 @@
 /**
- * TiagoTV keeps Spanish and English content only. Providers tag each
- * category with a country or language code: "|ES| ✪ DAZN LA LIGA",
- * "|LAT|  ✪ ARGENTINA", "|EN| ✪ ACTION". The codes that read as Spanish
- * or English are kept; inside them, the Portuguese (Brazil) and French
- * (Quebec) groups are not.
+ * TiagoTV keeps the content its owner watches: live channels from Spain,
+ * the USA, the UK and Argentina, and movies and series in Spanish or
+ * English. Providers tag each category with a country or language code:
+ * "|ES| ✪ DAZN LA LIGA", "|LAT|  ✪ ARGENTINA", "|EN| ✪ ACTION".
  *
  * Careful: on these panels |AR| is Arabic, not Argentina (which sits in
- * |LAT|).
+ * |LAT|, next to the rest of Latin America).
  */
 export type ContentKind = 'live' | 'vod' | 'series';
 
 const KEPT_CODES: Record<ContentKind, ReadonlySet<string>> = {
-    live: new Set(['ES', 'LAT', 'UK', 'US', 'CA', 'EN']),
-    vod: new Set(['ES', 'EN', 'LAT', 'CA']),
-    series: new Set(['ES', 'EN', 'LAT', 'MULTI']),
+    live: new Set(['ES', 'UK', 'US', 'EN']),
+    vod: new Set(['ES', 'EN']),
+    series: new Set(['ES', 'EN']),
 };
 
+/** From Latin America, only Argentina's live channels. */
+const ARGENTINA = /\bargentin/i;
+
 /**
- * Groups in another language inside otherwise kept codes: Portuguese
- * (Brazil), French (Quebec), and the Arabic and Asian packs some panels
- * file under |UK|.
+ * Groups in another language inside otherwise kept codes: Portuguese,
+ * French, and the Arabic and Asian packs some panels file under |UK|.
  */
 const OTHER_LANGUAGE =
     /\b(brazil|brasil|quebec\w*|portug\w*|arabic|asia)\b|\bbr\s/i;
-/** Inside MULTI, only the English groups. */
-const ENGLISH = /\benglish\b/i;
 
 /** The leading "|XX|" code of a category name, upper-cased. */
 export function categoryLanguageCode(name: string): string | null {
@@ -37,13 +36,14 @@ export function isSpanishOrEnglishCategory(
     kind: ContentKind
 ): boolean {
     const code = categoryLanguageCode(name);
-    if (!code || !KEPT_CODES[kind].has(code)) {
-        return false;
+    if (code === 'LAT') {
+        return kind === 'live' && ARGENTINA.test(name);
     }
-    if (OTHER_LANGUAGE.test(name)) {
-        return false;
-    }
-    return code !== 'MULTI' || ENGLISH.test(name);
+    return (
+        code !== null &&
+        KEPT_CODES[kind].has(code) &&
+        !OTHER_LANGUAGE.test(name)
+    );
 }
 
 /** The provider's code in front of a name: "|ES| ", "|LAT|  ". */

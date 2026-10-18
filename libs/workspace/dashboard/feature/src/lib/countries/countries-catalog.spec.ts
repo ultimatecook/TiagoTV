@@ -57,11 +57,11 @@ describe('buildCountriesCatalog', () => {
         countries: region.countries.map((country) => country.definition.id),
     }));
 
-    it('files the Spanish and English groups by country and region', () => {
+    it('files the kept groups by country: Latin America is Argentina', () => {
         expect(ids).toEqual([
             { region: 'europe', countries: ['es'] },
             { region: 'north-america', countries: ['us'] },
-            { region: 'latam', countries: ['ar', 'mx', 'latam'] },
+            { region: 'latam', countries: ['ar'] },
         ]);
     });
 

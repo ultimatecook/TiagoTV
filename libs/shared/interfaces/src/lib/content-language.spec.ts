@@ -7,26 +7,26 @@ import {
 } from './content-language';
 
 describe('isSpanishOrEnglishCategory', () => {
-    it('keeps Spain, Latin America, the UK, the US and English Canada live', () => {
+    it('keeps Spain, Argentina, the UK and the US live', () => {
         for (const name of [
             '|ES| ✪ DAZN LA LIGA',
             '|LAT|  ✪ ARGENTINA',
-            '|LAT| ✪ MEXICO',
+            '|LAT|  ✪ ARGENTINA LIGA PROFESIONAL FOT',
             '|UK| ✪ SPORTS',
             '|US| ✪ LATINO NETWORK',
-            '|CA| ✪ ENGLISH CH',
         ]) {
             expect(isSpanishOrEnglishCategory(name, 'live')).toBe(true);
         }
     });
 
-    it('drops other languages, including those filed under kept codes', () => {
+    it('drops the rest, including other countries filed under kept codes', () => {
         for (const name of [
             '|AR| ✪ BEIN SPORT HD', // Arabic, not Argentina
             '|FR| ✪ DAZN LALIGA ES',
+            '|LAT| ✪ MEXICO',
+            '|LAT|  ✪ GENERAL',
             '|LAT|  ✪ BR SPORTS',
-            '|LAT| ✪ BRAZIL',
-            '|CA| ✪ QUEBEC SPORT',
+            '|CA| ✪ ENGLISH CH',
             '|UK| ✪ ARABIC TV',
             '|UK| ✪ ASIA EU',
             '✪ NORDIC MULTI',
@@ -40,15 +40,15 @@ describe('isSpanishOrEnglishCategory', () => {
             true
         );
         expect(isSpanishOrEnglishCategory('|EN| ✪ ACTION', 'vod')).toBe(true);
-        expect(
-            isSpanishOrEnglishCategory('|IT| ✪ AZIONE-AVENTURA', 'vod')
-        ).toBe(false);
-        expect(
-            isSpanishOrEnglishCategory('|MULTI| ✪ ENGLISH MULTISUB', 'series')
-        ).toBe(true);
-        expect(isSpanishOrEnglishCategory('|TR| ✪ NETFLIX', 'series')).toBe(
-            false
-        );
+        for (const [name, kind] of [
+            ['|IT| ✪ AZIONE-AVENTURA', 'vod'],
+            ['|LAT|  ✪ ARGENTINA', 'vod'],
+            ['|CA| ✪ CRAVE', 'vod'],
+            ['|MULTI| ✪ ENGLISH MULTISUB', 'series'],
+            ['|TR| ✪ NETFLIX', 'series'],
+        ] as const) {
+            expect(isSpanishOrEnglishCategory(name, kind)).toBe(false);
+        }
         expect(categoryLanguageCode('|LAT|  ✪ CHILE')).toBe('LAT');
     });
 });
