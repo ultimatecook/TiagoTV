@@ -16,6 +16,7 @@ import { mergePlatformTitles } from './platform-versions';
 import {
     buildGenreCategories,
     buildPlatformShelves,
+    type PlatformCatalogCategory,
     type PlatformShelf,
     type StreamingPlatformId,
 } from './streaming-platforms';
@@ -23,6 +24,20 @@ import {
 /** Category lists change with the provider's line-up, not by the minute. */
 const FRESH_MS = 30 * 60 * 1000;
 const OPTIONS = { suppressErrorLog: true };
+/**
+ * The last category lists that loaded, per playlist: a busy provider (it
+ * refuses requests while the app imports its catalog) must not make the
+ * platforms vanish until the next visit.
+ */
+const STORAGE_KEY = 'tiagotv:platform-categories:v1';
+/** After a failed load, one more try this soon. */
+const RETRY_MS = 20_000;
+
+interface StoredCategories {
+    readonly playlistId: string;
+    readonly vod: readonly PlatformCatalogCategory[];
+    readonly series: readonly PlatformCatalogCategory[];
+}
 
 interface Loaded<T> {
     readonly playlistId: string;
@@ -58,6 +73,7 @@ export class PlatformsCatalogService {
     >(new Map());
     private readonly extrasRequested = new Set<string>();
     private catalogRequest: Promise<void> | null = null;
+    private retry: ReturnType<typeof setTimeout> | null = null;
     private readonly titleRequests = new Map<
         StreamingPlatformId,
         Promise<void>
@@ -89,6 +105,17 @@ export class PlatformsCatalogService {
         if (!source || isFresh(this.loadedCatalog(), source._id)) {
             return Promise.resolve();
         }
+        if (this.loadedCatalog()?.playlistId !== source._id) {
+            // The last lists that loaded show at once (stale: reloaded now).
+            const stored = readStored(source._id);
+            if (stored) {
+                this.loadedCatalog.set({
+                    playlistId: source._id,
+                    value: toCatalog(stored.vod, stored.series),
+                    at: 0,
+                });
+            }
+        }
         const credentials = xtreamSourceCredentials(source);
         this.catalogRequest ??= Promise.all([
             this.api.getCategories(credentials, 'vod', OPTIONS),
@@ -98,17 +125,18 @@ export class PlatformsCatalogService {
                 this.failed.set(false);
                 this.loadedCatalog.set({
                     playlistId: source._id,
-                    value: {
-                        shelves: buildPlatformShelves(vod, series),
-                        genreCategories: buildGenreCategories([
-                            ...vod,
-                            ...series,
-                        ]),
-                    },
+                    value: toCatalog(vod, series),
                     at: Date.now(),
                 });
+                writeStored({ playlistId: source._id, vod, series });
             })
-            .catch(() => this.failed.set(true))
+            .catch(() => {
+                this.failed.set(true);
+                this.retry ??= setTimeout(() => {
+                    this.retry = null;
+                    void this.loadShelves();
+                }, RETRY_MS);
+            })
             .finally(() => (this.catalogRequest = null));
         return this.catalogRequest;
     }
@@ -237,4 +265,50 @@ function isFresh(loaded: Loaded<unknown> | null, playlistId: string): boolean {
     return (
         loaded?.playlistId === playlistId && Date.now() - loaded.at < FRESH_MS
     );
+}
+
+function toCatalog(
+    vod: readonly PlatformCatalogCategory[],
+    series: readonly PlatformCatalogCategory[]
+): PlatformCatalog {
+    return {
+        shelves: buildPlatformShelves(vod, series),
+        genreCategories: buildGenreCategories([...vod, ...series]),
+    };
+}
+
+const onlyNames = (categories: readonly PlatformCatalogCategory[]) =>
+    categories.map(({ category_id, category_name }) => ({
+        category_id,
+        category_name,
+    }));
+
+function readStored(playlistId: string): StoredCategories | null {
+    try {
+        const stored = JSON.parse(
+            localStorage.getItem(STORAGE_KEY) ?? 'null'
+        ) as StoredCategories | null;
+        return stored?.playlistId === playlistId &&
+            Array.isArray(stored.vod) &&
+            Array.isArray(stored.series)
+            ? stored
+            : null;
+    } catch {
+        return null;
+    }
+}
+
+function writeStored(stored: StoredCategories): void {
+    try {
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+                playlistId: stored.playlistId,
+                vod: onlyNames(stored.vod),
+                series: onlyNames(stored.series),
+            })
+        );
+    } catch {
+        // A full or blocked storage only costs the head start.
+    }
 }
