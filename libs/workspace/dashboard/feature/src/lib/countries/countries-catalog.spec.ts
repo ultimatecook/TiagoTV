@@ -1,27 +1,16 @@
-import {
-    buildCountriesCatalog,
-    categoryLabel,
-    defaultCategory,
-    findCountry,
-    type CountriesCatalogStream,
-    type Country,
-} from './countries-catalog';
 import { findCountryDefinition, type CountryDefinition } from './countries';
+import {
+    buildCountriesTv,
+    categoryLabel,
+    type CountriesCatalogStream,
+    type TvCountry,
+} from './countries-catalog';
+import {
+    SNAPSHOT_CATEGORIES,
+    SNAPSHOT_STREAMS,
+} from './countries-snapshot.spec-data';
 
 const NOW = new Date('2026-10-18T18:00:00Z');
-
-const CATEGORIES = [
-    { category_id: 1, category_name: '|ES| ✪ SPAIN ᵁᴴᴰ/ᴴᴰ' },
-    { category_id: 2, category_name: '|ES| ✪ DAZN LA LIGA' },
-    { category_id: 3, category_name: '|LAT| ✪ MEXICO' },
-    { category_id: 4, category_name: '|LAT|  ✪ ARGENTINA' },
-    { category_id: 5, category_name: '|LAT|  ✪ GENERAL' },
-    { category_id: 6, category_name: '|LAT| ✪ BRAZIL' },
-    { category_id: 7, category_name: '|AR| ✪ MBC' },
-    { category_id: 8, category_name: '|CA| ✪ QUEBEC' },
-    { category_id: 9, category_name: '|UK| ✪ NEWS' },
-    { category_id: 10, category_name: '|US| ✪ SPORTS' },
-];
 
 function stream(
     stream_id: number,
@@ -32,58 +21,63 @@ function stream(
     return { stream_id, category_id, name, stream_icon: '', ...extra };
 }
 
-const STREAMS = [
-    stream(1, 1, '|ES| La 1 ᵁᴴᴰ'),
-    stream(2, 1, '|ES| La 1 ᴴᴰ'),
-    stream(3, 1, '|ES| Antena 3 ᵁᴴᴰ'),
-    stream(4, 2, '|ES| DAZN LALIGA ᴴᴰ'),
-    stream(5, 2, 'ES | No Event'),
-    stream(6, 3, '|MX| CANAL 5 ᵁᴴᴰ'),
-    stream(7, 4, '|ARG| TELEFE'),
-    stream(8, 4, '|ARG| TELEFE ᴴᴰ'),
-    stream(9, 4, '|ARG| C5N'),
-    stream(10, 5, '|LAM| AXN'),
-    stream(11, 6, '|BR| GLOBO'),
-    stream(12, 7, '|AR| MBC 1'),
-    stream(13, 8, '|CA| TVA'),
-    stream(14, 9, '|UK| SKY NEWS', { is_adult: 1 }),
-    stream(15, 10, '|US| ESPN', { stream_icon: 'espn.png' }),
-];
+function rowsOf(country: TvCountry | undefined) {
+    return (country?.rows ?? []).map((row) => [
+        row.label.key?.split('.').pop() ?? row.label.text,
+        row.channels.map((channel) => channel.title),
+    ]);
+}
 
-describe('buildCountriesCatalog', () => {
-    const regions = buildCountriesCatalog(CATEGORIES, STREAMS, NOW);
-    const ids = regions.map((region) => ({
-        region: region.definition.id,
-        countries: region.countries.map((country) => country.definition.id),
-    }));
+describe('buildCountriesTv', () => {
+    const countries = buildCountriesTv(
+        [
+            { category_id: 1, category_name: '|ES| ✪ SPAIN ᵁᴴᴰ/ᴴᴰ' },
+            { category_id: 2, category_name: '|ES| ✪ LALIGA+ PPV' },
+            { category_id: 3, category_name: '|LAT| ✪ MEXICO' },
+            { category_id: 4, category_name: '|LAT|  ✪ ARGENTINA' },
+            { category_id: 6, category_name: '|LAT| ✪ BRAZIL' },
+            { category_id: 7, category_name: '|AR| ✪ MBC' },
+            { category_id: 9, category_name: '|UK| ✪ NEWS' },
+            { category_id: 10, category_name: '|US| ✪ SPORTS' },
+            { category_id: 11, category_name: '|IT| ✪ SPORT' },
+        ],
+        [
+            stream(1, 1, '|ES| La 1 ᵁᴴᴰ'),
+            stream(2, 1, '|ES| La 1 ᴴᴰ'),
+            stream(3, 1, '|ES| Antena 3 ᵁᴴᴰ'),
+            stream(4, 2, '|ES| LALIGA+ PPV 1'),
+            stream(5, 2, 'ES | No Event'),
+            stream(6, 3, '|MX| CANAL 5 ᵁᴴᴰ'),
+            stream(7, 4, '|ARG| TELEFE'),
+            stream(8, 4, '|ARG| TELEFE ᴴᴰ'),
+            stream(9, 4, '|ARG| C5N'),
+            stream(11, 6, '|BR| GLOBO'),
+            stream(12, 7, '|AR| MBC 1'),
+            stream(14, 9, '|UK| SKY NEWS', { is_adult: 1 }),
+            stream(15, 10, '|US| ESPN', { stream_icon: 'espn.png' }),
+            stream(16, 11, '|IT| RAI SPORT'),
+        ],
+        NOW
+    );
 
-    it('files the kept groups by country: Latin America is Argentina', () => {
-        expect(ids).toEqual([
-            { region: 'europe', countries: ['es'] },
-            { region: 'north-america', countries: ['us'] },
-            { region: 'latam', countries: ['ar'] },
+    it('lists the kept countries in the page’s order', () => {
+        expect(countries.map((country) => country.definition.id)).toEqual([
+            'ar',
+            'es',
+            'us',
         ]);
     });
 
-    it('counts a channel’s copies once and drops idle event slots', () => {
-        const spain = findCountry(regions, 'es') as Country;
-        expect(spain.channelCount).toBe(3);
-        expect(
-            spain.categories.map((category) => [
-                category.label,
-                category.channels.map((channel) => channel.title),
-            ])
-        ).toEqual([
-            [null, ['La 1', 'Antena 3']],
-            ['DAZN La Liga', ['DAZN LALIGA']],
-        ]);
-        expect(findCountry(regions, 'ar')?.channelCount).toBe(2);
+    it('counts a channel’s copies once and drops empty slots', () => {
+        const [argentina, spain] = countries;
+        expect(rowsOf(spain)).toEqual([['MAIN', ['La 1', 'Antena 3']]]);
+        expect(spain.channelCount).toBe(2);
+        expect(rowsOf(argentina)).toEqual([['MAIN', ['Telefe', 'C5N']]]);
+        expect(argentina.rows[0].channels[0].copies).toHaveLength(2);
     });
 
     it('keeps the logo and the category a copy plays from', () => {
-        const [channel] =
-            findCountry(regions, 'us')?.categories[0].channels ?? [];
-        expect(channel.copies[0]).toEqual({
+        expect(countries[2].rows[0].channels[0].copies[0]).toEqual({
             streamId: 15,
             categoryId: '10',
             title: 'ESPN',
@@ -92,39 +86,117 @@ describe('buildCountriesCatalog', () => {
         });
     });
 
-    it('puts the group a country opens on first', () => {
-        const uk = findCountry(
-            buildCountriesCatalog(
-                [
-                    { category_id: 1, category_name: '|UK| ✪ UK ᵁᴴᴰ/ᴴᴰ' },
-                    { category_id: 2, category_name: '|UK| ✪ NEWS' },
-                    { category_id: 3, category_name: '|UK| ✪ ENTERTAINMENT' },
-                ],
-                [
-                    stream(1, 1, '|UK| CRIME INVESTIGATION'),
-                    stream(2, 2, '|UK| SKY NEWS'),
-                    stream(3, 3, '|UK| ITV 1'),
-                ],
-                NOW
-            ),
-            'gb'
-        ) as Country;
-        expect(uk.categories.map((category) => category.label)).toEqual([
-            'Entertainment',
-            null,
-            'News',
-        ]);
-    });
-
     it('lists nothing for a catalog without Spanish or English groups', () => {
         expect(
-            buildCountriesCatalog(
+            buildCountriesTv(
                 [{ category_id: 1, category_name: '|IT| ✪ SPORT' }],
                 [stream(1, 1, '|IT| RAI 1')],
                 NOW
             )
         ).toEqual([]);
-        expect(findCountry([], 'es')).toBeNull();
+    });
+});
+
+describe('buildCountriesTv on a real panel', () => {
+    const countries = buildCountriesTv(
+        SNAPSHOT_CATEGORIES.map(([category_id, category_name]) => ({
+            category_id,
+            category_name,
+        })),
+        SNAPSHOT_STREAMS.map(([stream_id, category_id, name, logo]) => ({
+            stream_id,
+            category_id,
+            name,
+            stream_icon: logo ? `logo-${stream_id}.png` : null,
+        })),
+        NOW
+    );
+    const byId = (id: string) =>
+        countries.find((country) => country.definition.id === id);
+    const rowIds = (id: string) => byId(id)?.rows.map((row) => row.id);
+
+    it('starts with Argentina, then Spain, the UK and the US', () => {
+        expect(countries.map((country) => country.definition.id)).toEqual([
+            'ar',
+            'es',
+            'gb',
+            'us',
+        ]);
+    });
+
+    it('opens Argentina on its flagships, its kinds in rows', () => {
+        const rows = rowsOf(byId('ar'));
+        expect(rows.map(([label]) => label)).toEqual([
+            'MAIN',
+            'SPORTS',
+            'Liga Profesional',
+            'NEWS',
+            'MOVIES',
+            'KIDS',
+            'DOCUMENTARY',
+            'MUSIC',
+        ]);
+        expect(rows[0][1].slice(0, 4)).toEqual([
+            'Telefe',
+            'America TV',
+            'TV Publica',
+            'Net TV',
+        ]);
+        expect(rows[1][1]).toEqual(
+            expect.arrayContaining(['ESPN', 'TyC Sports', 'FOX Sports 1'])
+        );
+        expect(rows[3][1]).toEqual(
+            expect.arrayContaining(['C5N', 'TN', 'A24'])
+        );
+    });
+
+    it('drops Spain’s nameless pay-per-view slots and its repeats', () => {
+        const ids = rowIds('es') ?? [];
+        // LaLiga+ PPV 1…30 name no match: the row is gone.
+        expect(ids).not.toContain('es:1922');
+        const spain = byId('es') as TvCountry;
+        const titles = spain.rows.reduce<string[]>(
+            (all, row) => all.concat(row.channels.map((entry) => entry.key)),
+            []
+        );
+        expect(new Set(titles).size).toBe(titles.length);
+        const la1 = spain.rows[0].channels.find(
+            (entry) => entry.title === 'La 1'
+        );
+        // Its UHD and HD copies, and the 4K group's copies.
+        expect(la1?.copies.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('folds Ireland into the United Kingdom', () => {
+        const rows = byId('gb')?.rows ?? [];
+        expect(rows.map((row) => row.id)).toContain('gb:1089');
+        expect(rows.find((row) => row.id === 'gb:1089')?.label.key).toBe(
+            'WORKSPACE.COUNTRIES.ROWS.IRELAND'
+        );
+    });
+
+    it('names the US local stations by network', () => {
+        const pbs = byId('us')?.rows.find((row) => row.id === 'us:778');
+        expect(pbs?.label).toEqual({
+            key: 'WORKSPACE.COUNTRIES.ROWS.LOCAL',
+            text: '',
+            params: { network: 'PBS' },
+        });
+    });
+
+    it('leaves out the other languages and Latin America', () => {
+        const names = countries.reduce<string[]>(
+            (all, country) =>
+                all.concat(
+                    country.rows.reduce<string[]>(
+                        (titles, row) =>
+                            titles.concat(row.channels.map((c) => c.title)),
+                        []
+                    )
+                ),
+            []
+        );
+        expect(names.some((name) => /^\|?(MX|AR|IT)\b/.test(name))).toBe(false);
     });
 });
 
@@ -141,12 +213,9 @@ describe('categoryLabel', () => {
         ['|ES| ✪ BEIN SPORT', 'es', 'beIN Sport'],
         ['|US| ✪ BOX OFFICE 24/7', 'us', 'Box Office 24/7'],
         ['|US| ✪ LOCAL - FOX', 'us', 'Local - FOX'],
-        ['|CA| ✪ ENGLISH CH', 'ca', 'English Channels'],
-        ['|CA| ✪ CANADA SD', 'ca', 'SD'],
         ['|UK| ✪ OXING EVENT', 'gb', 'Boxing Event'],
-        ['|UK| ✪ IRELAND SPORT EVENT', 'ie', 'Sport Event'],
+        ['|UK| ✪ IRELAND', 'gb', 'Ireland'],
         ['|LAT|  ✪ ARGENTINA LIGA PROFESIONAL FOT', 'ar', 'Liga Profesional'],
-        ['|LAT|  ✪ CARRIBEAN', 'latam', 'Caribbean'],
     ])('reads "%s" as "%s"', (name, id, label) => {
         expect(categoryLabel(name, country(id))).toBe(label);
     });
@@ -154,51 +223,8 @@ describe('categoryLabel', () => {
     it.each([
         ['|ES| ✪ SPAIN ᵁᴴᴰ/ᴴᴰ', 'es'],
         ['|UK| ✪ UK ᵁᴴᴰ/ᴴᴰ', 'gb'],
-        ['|LAT|  ✪ CHILE', 'cl'],
-        ['|LAT|  ✪ GENERAL', 'latam'],
-    ])('reads "%s" as the general group', (name, id) => {
+        ['|LAT|  ✪ ARGENTINA', 'ar'],
+    ])('reads "%s" as the country’s own group', (name, id) => {
         expect(categoryLabel(name, country(id))).toBeNull();
-    });
-});
-
-describe('defaultCategory', () => {
-    const category = (id: string, label: string | null, size: number) => ({
-        id,
-        label,
-        channels: Array.from({ length: size }, (_, index) => ({
-            key: `${id}-${index}`,
-            title: `${id} ${index}`,
-            subtitle: null,
-            icons: [],
-            copies: [],
-        })),
-    });
-    it('opens on the general group', () => {
-        expect(
-            defaultCategory([
-                category('1', null, 80),
-                category('2', 'News', 90),
-            ])?.id
-        ).toBe('1');
-    });
-
-    it('skips a leftover general group for the main channels', () => {
-        expect(
-            defaultCategory([
-                category('1', null, 1),
-                category('2', 'Premier League PPV', 5),
-                category('3', 'Entertainment', 95),
-            ])?.id
-        ).toBe('3');
-    });
-
-    it('falls back to the largest group', () => {
-        expect(
-            defaultCategory([
-                category('1', 'WWE', 3),
-                category('2', 'News', 94),
-            ])?.id
-        ).toBe('2');
-        expect(defaultCategory([])).toBeNull();
     });
 });

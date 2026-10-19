@@ -3,7 +3,6 @@ export { PlatformPageComponent } from './lib/platforms/ui/platform-page.componen
 export { PlatformThemeService } from './lib/platforms/platform-theme.service';
 export { SportSectionPageComponent } from './lib/sports/ui/sport-section-page.component';
 export { CountriesPageComponent } from './lib/countries/ui/countries-page.component';
-export { CountryPageComponent } from './lib/countries/ui/country-page.component';
 // The shell sidebar's Plataformas / Deportes / Canales en vivo sections.
 export { PlatformsCatalogService } from './lib/platforms/platforms-catalog.service';
 export type { StreamingPlatform } from './lib/platforms/streaming-platforms';

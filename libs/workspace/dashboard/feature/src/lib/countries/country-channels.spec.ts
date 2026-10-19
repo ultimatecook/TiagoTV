@@ -3,7 +3,7 @@ import {
     copyLabels,
     countryChannelName,
     groupCountryChannels,
-    plateHue,
+    mergeChannelGroups,
     type CountryChannel,
 } from './country-channels';
 
@@ -102,6 +102,24 @@ describe('groupCountryChannels', () => {
         expect(groups[1].icons).toEqual([]);
     });
 
+    it('writes a name given in capitals as by hand', () => {
+        const [group] = groupCountryChannels(
+            [input(1, '|ARG| AMERICA TV ᴴᴰ', null)],
+            ['ARG']
+        );
+        expect(group.title).toBe('America TV');
+        expect(group.copies[0].title).toBe('America TV');
+    });
+
+    it('drops a slot’s broadcast window from its name', () => {
+        expect(
+            countryChannelName(
+                'UFC 03 : CAGE WARRIORS 211 start:2026-10-17 20:25:00 stop:2026-10-18 00:30:00',
+                ['USA', 'US']
+            ).title
+        ).toBe('UFC 03 : CAGE WARRIORS 211');
+    });
+
     it('prefers a copy with a logo among equals', () => {
         const [group] = groupCountryChannels(
             [
@@ -138,9 +156,43 @@ describe('copyLabels', () => {
     });
 });
 
-describe('plateHue', () => {
-    it('gives a name the same colour every time', () => {
-        expect(plateHue('Telefe')).toBe(plateHue('Telefe'));
-        expect(typeof plateHue('')).toBe('number');
+describe('mergeChannelGroups', () => {
+    it('adds the other listing’s copies, the best first, once each', () => {
+        const [main] = groupCountryChannels(
+            [
+                {
+                    streamId: 1,
+                    categoryId: '1',
+                    name: '|ES| La 1 ᴴᴰ',
+                    icon: 'a.png',
+                },
+            ],
+            ['ES']
+        );
+        const [uhd] = groupCountryChannels(
+            [
+                {
+                    streamId: 2,
+                    categoryId: '2',
+                    name: '|ES| LA 1 4K',
+                    icon: null,
+                },
+                {
+                    streamId: 1,
+                    categoryId: '1',
+                    name: '|ES| La 1 ᴴᴰ',
+                    icon: 'a.png',
+                },
+            ],
+            ['ES']
+        );
+        const merged = mergeChannelGroups(main, uhd);
+        expect(merged.title).toBe('La 1');
+        expect(merged.copies.map((copy) => copy.streamId)).toEqual([2, 1]);
+        expect(merged.copies.map((copy) => copy.title)).toEqual([
+            'La 1',
+            'La 1',
+        ]);
+        expect(merged.icons).toEqual(['a.png']);
     });
 });

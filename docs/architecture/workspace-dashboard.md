@@ -223,12 +223,13 @@ all, and none inside the hero.
    they reach the track's clipping edge and no card strip shows beyond them.
    The TiagoTV Home and the platform pages set `--rail-bleed` to their
    gutter, so every sideways row (these rails, the platforms, sports,
-   matches and live channels rows, a platform page's rows) runs on through
-   both gutters to the content's edges: scrolled cards slide out at the
-   window's edge with the sidebar hidden and at the sidebar's edge
-   otherwise, while the first card rests on the gutter under the title. The
-   custom rows take their start bleed as `--rail-bleed-start` (the page's
-   `--rail-bleed`, at least 12px) and snap to it (`row-edges.spec.ts`).
+   matches and live channels rows, a platform page's rows, the by-country
+   rows) runs on through both gutters to the content's edges: scrolled
+   cards slide out at the window's edge with the sidebar hidden and at the
+   sidebar's edge otherwise, while the first card rests on the gutter under
+   the title. The custom rows take their start bleed as `--rail-bleed-start`
+   (the page's `--rail-bleed`, at least 12px) and snap to it
+   (`row-edges.spec.ts`).
 4. Cards are keyboard-focusable router links; `scroll-snap-align: start`
    means arrow-key nav lands on card boundaries. A card that receives
    keyboard or script focus scrolls fully into the viewport: Chromium skips
@@ -544,6 +545,76 @@ categories (`PlatformsCatalogService`):
    different titles. A genre row holds only titles of its genre and needs six
    not shown above it. A row shows 40 titles; "See all" opens its whole list
    (`PlatformRow.all`).
+4. Rows are laid out as each platform's own app lays them out (2025–26),
+   from `platformDesign` (`platform-design.ts`): the tile shape (Apple TV's
+   and Disney+'s posters, the others' 16:9), rows drawn with the other shape
+   (`otherTileRows`), one larger featured row (`featuredRow`: Prime Video's
+   poster "super carousel", Apple TV's and Hulu's large 16:9 tiles), names on
+   the artwork or under it, and facts that open on a tile (`tileInfo`).
+   `tileDress` turns that into each row's `TileDress`. A row's tiles share
+   out its width (`--across-*` per look, container units), the fraction left
+   over showing the next tile cut by the edge; a tile never shrinks under
+   `--row-min`. The facts (rating, kind, year, genre, synopsis) come from
+   the list already loaded: a tile fetches nothing. They open after a short
+   rest of the pointer (`--card-info-delay`) or at once on keyboard focus,
+   and reduced motion drops their slide.
+
+## By-Country Page (TiagoTV)
+
+"Por países" (`/workspace/countries`, `lib/countries/`; the sidebar's By
+country link) is a TV page: the live player on top, the channel's panel beside
+it, and under them every kept country's channels in sideways rows. The rows
+scroll in their own pane, so the player stays in view; a phone or a window
+under 560px tall scrolls the page as one. `/workspace/countries/:countryId`
+renders the same page opened on that country (`ie` opens the United Kingdom).
+
+1. **Data.** `CountriesCatalogService` builds on `SportsCatalogService`'s live
+   catalog (the stored copy, its event categories kept fresh while the page is
+   open): it downloads no line-up of its own. Only categories the language
+   filter keeps (`isSpanishOrEnglishCategory`) count, in this order: Argentina
+   (|LAT| groups naming it), Spain, the United Kingdom with Ireland's groups
+   folded in, the United States. Adult streams and empty slots are left out
+   (`country-slots.ts`): "No Event" slots, ended matches, a broadcast window
+   that closed, and in a category of slots (PPV, events, a league's games) a
+   numbered slot that names no event ("LALIGA+ PPV 3").
+2. **Rows** (`buildCountryRows`). Copies of a channel share a tile (quality
+   badges, country codes, capitals tidied: `country-channels.ts`,
+   `country-titles.ts`); a channel listed in several categories of a country
+   shows once, in its first row, with every copy. Kinds run main channels,
+   sports, live events, news, movies and series, kids, documentaries, music,
+   the rest, other versions (4K, SD, +1) (`country-genres.ts`). A country's
+   main groups are split by channel name into those kinds (ESPN, TN and
+   Cartoon Network leave Argentina's main row) unless a kind would get a single
+   channel; a category of three channels or fewer joins its kind's own row;
+   every other category is a row under its cleaned name ("DAZN La Liga",
+   "NBC locales"). The main row opens on the country's flagship channels
+   (`CountryDefinition.leading`). A row shows 30 tiles, then "See all" (rows of
+   up to 36 show whole).
+3. **Rendering.** A row renders its tiles once it comes within 600px of its
+   scroller (`NearViewportDirective`); logos are lazy, a failing logo tries the
+   channel's next one, then its name. Each row is one tab stop (a
+   `role="toolbar"`): arrows, Home and End move along it, Up and Down move to
+   the nearest tile of the next row; the keys are consumed there. Rows bleed
+   through the page's 36px gutter like the Home's (`row-edges.spec.ts`).
+4. **Playback** (`CountryTvPlayback`). A tile plays in the player above; nothing
+   navigates. The playback is built as the Xtream live view builds it:
+   `XtreamUrlService` with the source's credentials and the stream format
+   setting, the Auto TS fallback when the live view already learned the
+   account's formats, the source's headers, and the live view's session key.
+   `WebPlayerViewComponent` brings the one-connection rules, the live start
+   guard and the mini-player hand-over. The page opens on the last channel
+   watched there (`tiagotv:countries-last-channel` in local storage), else on
+   Argentina's first, and plays it unless the mini-player is playing another
+   page's stream (then the screen offers Play). With MPV or VLC as the player a
+   tile launches it and nothing plays on opening. A channel joins Recently
+   viewed once it has played (`PlaybackHistoryGate`); a relock that withholds
+   its category stops it. "Open in Live TV" opens the channel in the Xtream
+   live view without a mini-player hand-over.
+5. **Guide.** Now and next come the way the live view loads a channel's guide
+   (`StreamResolverService.loadEpgItems`: uploaded XMLTV, the manual mapping,
+   then the provider's guide for that channel), asked for once a channel has
+   stayed picked for 0.9 s and at most every ten minutes per channel, and only
+   where the app reads guides.
 
 ## Empty State
 

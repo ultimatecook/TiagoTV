@@ -1,10 +1,13 @@
 import { displayChannelName } from '@iptvnator/shared/interfaces';
+import { stripWindow } from './country-slots';
+import { tidyTitle } from './country-titles';
 
 /**
- * A country's channels, one card per channel: providers list a channel
+ * A country's channels, one tile per channel: providers list a channel
  * several times over ("|ARG| C5N", "|ARG| C5N ᴴᴰ", "|ES| La 1 ᵁᴴᴰ",
- * "|ES| La 1 ᴴᴰ"). The copies share a card, the best one plays and the
- * others sit behind a chip each, named by their quality.
+ * "|ES| La 1 ᴴᴰ"). The copies share a tile, the best one plays and the
+ * others sit behind a chip each in the player's panel, named by their
+ * quality.
  */
 export type ChannelQuality = 'UHD' | 'FHD' | 'HD' | 'SD';
 
@@ -72,7 +75,7 @@ export function countryChannelName(
 ): { title: string; subtitle: string | null } {
     const { title, subtitle } = displayChannelName(raw);
     const { leading, trailing } = codePatterns(codes);
-    const cleaned = title
+    const cleaned = stripWindow(title)
         .replace(SUPERSCRIPTS, ' ')
         .replace(CODE_WITH_NOTE, '')
         // "DAZN LIGA 1 HD B": the backup's badge.
@@ -110,19 +113,45 @@ export function groupCountryChannels(
 
     const result: CountryChannelGroup[] = [];
     groups.forEach((group, key) => {
-        const copies = [...group.copies].sort(
-            (a, b) => rank(a) - rank(b) || Number(!a.icon) - Number(!b.icon)
-        );
-        const title = tidiest(group.names);
-        result.push({
-            key,
-            title,
-            subtitle: group.subtitle,
-            icons: byFrequency(copies.map((copy) => copy.icon)),
-            copies: copies.map((copy) => ({ ...copy, title })),
-        });
+        const title = tidyTitle(tidiest(group.names));
+        const subtitle = group.subtitle && tidyTitle(group.subtitle);
+        result.push(withCopies(key, title, subtitle, group.copies));
     });
     return result;
+}
+
+/**
+ * One channel listed in two categories of a country ("La 1" in "SPAIN"
+ * and in "4K"): the first keeps its name and gains the other's copies.
+ */
+export function mergeChannelGroups(
+    first: CountryChannelGroup,
+    other: CountryChannelGroup
+): CountryChannelGroup {
+    const streams = new Set(first.copies.map((copy) => copy.streamId));
+    const added = other.copies.filter((copy) => !streams.has(copy.streamId));
+    return withCopies(first.key, first.title, first.subtitle, [
+        ...first.copies,
+        ...added,
+    ]);
+}
+
+function withCopies(
+    key: string,
+    title: string,
+    subtitle: string | null,
+    copies: readonly CountryChannel[]
+): CountryChannelGroup {
+    const sorted = [...copies].sort(
+        (a, b) => rank(a) - rank(b) || Number(!a.icon) - Number(!b.icon)
+    );
+    return {
+        key,
+        title,
+        subtitle,
+        icons: byFrequency(sorted.map((copy) => copy.icon)),
+        copies: sorted.map((copy) => ({ ...copy, title })),
+    };
 }
 
 /**
@@ -190,19 +219,4 @@ function byFrequency(values: readonly (string | null)[]): string[] {
     return [...counts.keys()].sort(
         (a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0)
     );
-}
-
-/** Hues for the plates of channels without a logo: blues, violets, teals, reds. */
-const PLATE_HUES = [212, 232, 262, 292, 338, 8, 28, 168, 188];
-
-/**
- * A card without a logo shows the channel's name on a plate of its own
- * colour, the same for the same name.
- */
-export function plateHue(title: string): number {
-    let hash = 0;
-    for (let index = 0; index < title.length; index++) {
-        hash = (hash * 31 + title.charCodeAt(index)) >>> 0;
-    }
-    return PLATE_HUES[hash % PLATE_HUES.length];
 }

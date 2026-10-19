@@ -2,25 +2,27 @@ import {
     categoryLanguageCode,
     isSpanishOrEnglishCategory,
 } from '@iptvnator/shared/interfaces';
-import { isIdleEventChannel, isStaleSlot } from '../sports/sport-events';
-import { cleanChannelTitle } from '../sports/sports-catalog';
 import {
     COUNTRIES,
-    COUNTRY_REGIONS,
     countryOfCategory,
     normalizeName,
     type CountryDefinition,
-    type CountryRegionDefinition,
 } from './countries';
 import {
     groupCountryChannels,
-    type CountryChannelGroup,
     type CountryChannelInput,
 } from './country-channels';
+import {
+    buildCountryRows,
+    type FiledCategory,
+    type TvRow,
+} from './country-rows';
+import { isEmptySlot } from './country-slots';
 
 /**
- * The source's live catalog by country (see countries): each country with
- * its categories, each category with its channels (copies together).
+ * The source's live catalog as "Por países" shows it: Argentina, Spain,
+ * the United Kingdom and the United States, each with its rows (see
+ * country-rows), each row with its channels (copies together).
  */
 export interface CountriesCatalogCategory {
     readonly category_id: string | number;
@@ -35,51 +37,35 @@ export interface CountriesCatalogStream {
     readonly is_adult?: number | string | null;
 }
 
-export interface CountryCategory {
-    readonly id: string;
-    /** A readable name; null for the country's general group. */
-    readonly label: string | null;
-    readonly channels: readonly CountryChannelGroup[];
-}
-
-export interface Country {
+export interface TvCountry {
     readonly definition: CountryDefinition;
-    /**
-     * The group its page opens on first (see defaultCategory), then the
-     * general group, then the provider's order.
-     */
-    readonly categories: readonly CountryCategory[];
+    readonly rows: readonly TvRow[];
     readonly channelCount: number;
 }
 
-export interface CountryRegion {
-    readonly definition: CountryRegionDefinition;
-    readonly countries: readonly Country[];
+interface FilingCategory {
+    readonly country: CountryDefinition;
+    readonly irish: boolean;
+    readonly label: string | null;
+    readonly inputs: CountryChannelInput[];
 }
 
-export function buildCountriesCatalog(
+export function buildCountriesTv(
     categories: readonly CountriesCatalogCategory[],
     streams: readonly CountriesCatalogStream[],
     now = new Date()
-): CountryRegion[] {
-    const filed = new Map<
-        string,
-        {
-            country: CountryDefinition;
-            name: string;
-            inputs: CountryChannelInput[];
-        }
-    >();
+): TvCountry[] {
+    const filed = new Map<string, FilingCategory>();
     for (const category of categories) {
         const name = category.category_name;
         if (!isSpanishOrEnglishCategory(name, 'live')) {
             continue;
         }
-        const country = countryOfCategory(categoryLanguageCode(name), name);
-        if (country) {
+        const place = countryOfCategory(categoryLanguageCode(name), name);
+        if (place) {
             filed.set(String(category.category_id), {
-                country,
-                name,
+                ...place,
+                label: categoryLabel(name, place.country),
                 inputs: [],
             });
         }
@@ -93,8 +79,7 @@ export function buildCountriesCatalog(
             !category ||
             !Number.isFinite(streamId) ||
             Number(stream.is_adult) === 1 ||
-            isIdleEventChannel(stream.name) ||
-            isStaleSlot(cleanChannelTitle(stream.name), now)
+            isEmptySlot(stream.name, category.label, now)
         ) {
             continue;
         }
@@ -106,7 +91,7 @@ export function buildCountriesCatalog(
         });
     }
 
-    const byCountry = new Map<string, CountryCategory[]>();
+    const byCountry = new Map<string, FiledCategory[]>();
     filed.forEach((category, id) => {
         const channels = groupCountryChannels(
             category.inputs,
@@ -118,47 +103,31 @@ export function buildCountriesCatalog(
         const list = byCountry.get(category.country.id) ?? [];
         list.push({
             id,
-            label: categoryLabel(category.name, category.country),
+            label: category.label,
+            irish: category.irish,
             channels,
         });
         byCountry.set(category.country.id, list);
     });
 
-    return COUNTRY_REGIONS.map((region) => ({
-        definition: region,
-        countries: COUNTRIES.filter(
-            (country) =>
-                country.region === region.id && byCountry.has(country.id)
-        ).map((country) => {
-            const list = byCountry.get(country.id) as CountryCategory[];
-            return {
-                definition: country,
-                categories: openingFirst([
-                    ...list.filter((category) => category.label === null),
-                    ...list.filter((category) => category.label !== null),
-                ]),
-                channelCount: list.reduce(
-                    (sum, category) => sum + category.channels.length,
+    const countries: TvCountry[] = [];
+    for (const definition of COUNTRIES) {
+        const rows = buildCountryRows(
+            definition,
+            byCountry.get(definition.id) ?? []
+        );
+        if (rows.length > 0) {
+            countries.push({
+                definition,
+                rows,
+                channelCount: rows.reduce(
+                    (sum, row) => sum + row.channels.length,
                     0
                 ),
-            };
-        }),
-    })).filter((region) => region.countries.length > 0);
-}
-
-export function findCountry(
-    regions: readonly CountryRegion[],
-    id: string
-): Country | null {
-    for (const region of regions) {
-        const found = region.countries.find(
-            (country) => country.definition.id === id
-        );
-        if (found) {
-            return found;
+            });
         }
     }
-    return null;
+    return countries;
 }
 
 /** "ᵁᴴᴰ/ᴴᴰ": quality badges, alone or paired. */
@@ -194,7 +163,7 @@ const SMALL_WORDS = /^(DE|DEL|Y|EN|OF|THE|AND|OR)$/;
 /**
  * "|ES| ✪ DAZN LA LIGA" → "DAZN La Liga"; "|LAT|  ✪ ARGENTINA LIGA
  * PROFESIONAL FOT" → "Liga Profesional"; the country's own group
- * ("|LAT| ✪ CHILE", "|ES| ✪ SPAIN ᵁᴴᴰ/ᴴᴰ", "|LAT| ✪ GENERAL") → null.
+ * ("|LAT|  ✪ ARGENTINA", "|ES| ✪ SPAIN ᵁᴴᴰ/ᴴᴰ", "|UK| ✪ UK ᵁᴴᴰ/ᴴᴰ") → null.
  */
 export function categoryLabel(
     name: string,
@@ -230,38 +199,4 @@ export function categoryLabel(
                 : lower.charAt(0).toUpperCase() + lower.slice(1);
         })
         .join(' ');
-}
-
-/** A general group this small is a leftover, not the country's channels. */
-const MIN_GENERAL = 8;
-const MAIN_CHANNELS = /\b(entertainment|entretenimiento|english)\b/i;
-
-/**
- * The group a country's page opens on: its general group, else its main
- * channels ("Entertainment", "English Channels"), else its largest.
- */
-export function defaultCategory(
-    categories: readonly CountryCategory[]
-): CountryCategory | null {
-    const general = categories.find((category) => category.label === null);
-    if (general && general.channels.length >= MIN_GENERAL) {
-        return general;
-    }
-    return (
-        categories.find((category) =>
-            MAIN_CHANNELS.test(category.label ?? '')
-        ) ??
-        [...categories].sort(
-            (a, b) => b.channels.length - a.channels.length
-        )[0] ??
-        null
-    );
-}
-
-/** The group a page opens on first, the rest in the provider's order. */
-function openingFirst(categories: CountryCategory[]): CountryCategory[] {
-    const opening = defaultCategory(categories);
-    return opening
-        ? [opening, ...categories.filter((category) => category !== opening)]
-        : categories;
 }

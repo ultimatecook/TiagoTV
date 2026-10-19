@@ -1,100 +1,108 @@
-<article class="page" data-test-id="countries-page">
-    <header class="intro">
-        <span class="intro__eyebrow">{{
-            'WORKSPACE.COUNTRIES.EYEBROW' | translate
-        }}</span>
-        <h1 class="intro__title">
-            {{ 'WORKSPACE.COUNTRIES.TITLE' | translate }}
-        </h1>
-        @if (summary(); as summary) {
-            <p class="intro__meta">
-                {{ 'WORKSPACE.COUNTRIES.SUMMARY' | translate: summary }}
-            </p>
-        }
-    </header>
+<h1 class="visually-hidden">{{ 'WORKSPACE.COUNTRIES.TITLE' | translate }}</h1>
 
-    @if (countries.regions(); as regions) {
-        @if (regions.length > 0) {
-            <div class="regions">
-                @for (region of regions; track region.definition.id) {
-                    <section
-                        class="region"
-                        [class.region--wide]="region.definition.id === 'latam'"
-                        [style.--region-span]="region.countries.length"
-                        [attr.aria-label]="
-                            region.definition.titleKey | translate
-                        "
-                    >
-                        <h2 class="region__title">
-                            {{ region.definition.titleKey | translate }}
-                        </h2>
-                        @for (
-                            country of region.countries;
-                            track country.definition.id
-                        ) {
-                            <a
-                                class="country"
-                                [routerLink]="[
-                                    '/workspace',
-                                    'countries',
-                                    country.definition.id,
-                                ]"
-                                [attr.data-test-id]="
-                                    'country-card-' + country.definition.id
-                                "
-                            >
-                                <lib-country-flag
-                                    class="country__glow"
-                                    [definition]="country.definition"
-                                />
-                                <lib-country-flag
-                                    class="country__flag"
-                                    [definition]="country.definition"
-                                />
-                                <span class="country__name">{{
-                                    country.definition.nameKey | translate
-                                }}</span>
-                                <span class="country__count">{{
-                                    (country.channelCount === 1
-                                        ? 'WORKSPACE.COUNTRIES.CHANNELS_ONE'
-                                        : 'WORKSPACE.COUNTRIES.CHANNELS'
-                                    )
-                                        | translate
-                                            : { count: country.channelCount }
-                                }}</span>
-                            </a>
-                        }
-                    </section>
-                }
-            </div>
-        } @else {
-            <p class="state">
-                {{ 'WORKSPACE.COUNTRIES.EMPTY' | translate }}
-            </p>
-        }
-    } @else if (!countries.hasSource()) {
-        <p class="state">
-            {{ 'WORKSPACE.COUNTRIES.NO_SOURCE' | translate }}
-        </p>
-    } @else if (countries.failed() && !countries.loading()) {
-        <div class="state">
-            <p>{{ 'WORKSPACE.COUNTRIES.FAILED' | translate }}</p>
-            <button type="button" class="state__retry" (click)="retry()">
-                <mat-icon aria-hidden="true">refresh</mat-icon>
-                {{ 'RETRY' | translate }}
-            </button>
+@if (countries(); as countries) {
+    @if (countries.length > 0) {
+        <lib-country-tv-stage
+            class="tv__stage"
+            (openLiveView)="openLiveView()"
+        />
+
+        <nav
+            class="tv__jump"
+            [attr.aria-label]="'WORKSPACE.COUNTRIES.JUMP' | translate"
+        >
+            @for (country of countries; track country.definition.id) {
+                @let id = country.definition.id;
+                <button
+                    type="button"
+                    class="jump"
+                    [class.jump--on]="activeCountry() === id"
+                    [attr.aria-current]="activeCountry() === id ? 'true' : null"
+                    [attr.data-test-id]="'countries-jump-' + id"
+                    (click)="jumpTo(id)"
+                >
+                    <img
+                        class="jump__flag"
+                        [src]="country.definition.flag"
+                        alt=""
+                        draggable="false"
+                    />
+                    {{ country.definition.nameKey | translate }}
+                </button>
+            }
+        </nav>
+
+        <div #lanes class="tv__lanes" (scroll)="onLanesScroll()">
+            @for (country of countries; track country.definition.id) {
+                @let id = country.definition.id;
+                <section
+                    class="country"
+                    [attr.data-country]="id"
+                    [attr.data-test-id]="'countries-section-' + id"
+                    [attr.aria-labelledby]="'country-title-' + id"
+                >
+                    <h2 class="country__title" [id]="'country-title-' + id">
+                        <img
+                            class="country__flag"
+                            [src]="country.definition.flag"
+                            alt=""
+                            draggable="false"
+                        />
+                        {{ country.definition.nameKey | translate }}
+                        <span class="country__count">{{
+                            (country.channelCount === 1
+                                ? 'WORKSPACE.COUNTRIES.CHANNELS_ONE'
+                                : 'WORKSPACE.COUNTRIES.CHANNELS'
+                            ) | translate: { count: country.channelCount }
+                        }}</span>
+                    </h2>
+                    @for (row of country.rows; track row.id) {
+                        <lib-country-tv-row
+                            #tvRow
+                            [row]="row"
+                            [playingStreamId]="selectedStreamId()"
+                            [live]="!!tv.playback()"
+                            (picked)="play(country, row, $event)"
+                            (crossed)="cross(tvRow, $event)"
+                        />
+                    }
+                </section>
+            }
         </div>
     } @else {
-        <div
-            class="regions"
-            role="status"
-            [attr.aria-label]="'WORKSPACE.COUNTRIES.LOADING' | translate"
-        >
-            <div class="region region--wide">
-                @for (card of skeletons; track card) {
-                    <span class="country country--skeleton"></span>
-                }
-            </div>
-        </div>
+        <p class="state">{{ 'WORKSPACE.COUNTRIES.EMPTY' | translate }}</p>
     }
-</article>
+} @else if (!catalog.hasSource()) {
+    <p class="state">{{ 'WORKSPACE.COUNTRIES.NO_SOURCE' | translate }}</p>
+} @else if (catalog.failed() && !catalog.loading()) {
+    <div class="state">
+        <p>{{ 'WORKSPACE.COUNTRIES.FAILED' | translate }}</p>
+        <button type="button" class="state__retry" (click)="retry()">
+            <mat-icon aria-hidden="true">refresh</mat-icon>
+            {{ 'RETRY' | translate }}
+        </button>
+    </div>
+} @else {
+    <div
+        class="skeleton"
+        role="status"
+        [attr.aria-label]="'WORKSPACE.COUNTRIES.LOADING' | translate"
+    >
+        <div class="skeleton__stage">
+            <span class="skeleton__screen"></span>
+            <span class="skeleton__info">
+                <span class="skeleton__block skeleton__block--plate"></span>
+                <span class="skeleton__block skeleton__block--line"></span>
+                <span class="skeleton__block skeleton__block--title"></span>
+            </span>
+        </div>
+        @for (row of skeletonRows; track row) {
+            <span class="skeleton__block skeleton__block--label"></span>
+            <span class="skeleton__row">
+                @for (tile of [1, 2, 3, 4, 5, 6, 7, 8]; track tile) {
+                    <span class="skeleton__block skeleton__block--tile"></span>
+                }
+            </span>
+        }
+    </div>
+}

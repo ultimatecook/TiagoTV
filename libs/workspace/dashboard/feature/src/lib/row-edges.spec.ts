@@ -15,6 +15,7 @@ const ROWS: ReadonlyArray<readonly [file: string, selector: string]> = [
     ['sports/ui/sports-rail.component.scss', '.sports__row {'],
     ['sports/ui/live-channels-rail.component.scss', '.channels__row {'],
     ['sports/ui/live-matches-rail.component.ts', '.matches__row {'],
+    ['countries/ui/country-tv-row.component.scss', '.row__track {'],
 ];
 
 /** The row's declarations up to its scrolling, whitespace collapsed. */

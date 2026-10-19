@@ -1,12 +1,12 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, type DestroyRef } from '@angular/core';
 import { SportsCatalogService } from '../sports/sports-catalog.service';
-import { buildCountriesCatalog } from './countries-catalog';
-import type { CountryChannel } from './country-channels';
+import { buildCountriesTv } from './countries-catalog';
 
 /**
- * "Por países" reads the live catalog the sports views keep (the Home
- * loads it, so the page usually opens on it at once) and plays a channel
- * the same way.
+ * "Por países" reads the live catalog the sports views keep: the stored
+ * copy of the source's line-up (the Home loads it, so the page usually
+ * opens on it at once), its event categories kept fresh. Nothing here
+ * downloads the line-up again.
  */
 @Injectable({ providedIn: 'root' })
 export class CountriesCatalogService {
@@ -14,25 +14,19 @@ export class CountriesCatalogService {
 
     readonly loading = this.sports.loading;
     readonly failed = this.sports.failed;
+    readonly source = this.sports.source;
     readonly hasSource = computed(() => this.sports.source() !== null);
-    readonly regions = computed(() => {
+    readonly countries = computed(() => {
         const live = this.sports.liveCatalog();
-        return live
-            ? buildCountriesCatalog(live.categories, live.streams)
-            : null;
+        return live ? buildCountriesTv(live.categories, live.streams) : null;
     });
 
-    /** Loads the catalog unless a fresh one is held. */
-    load(): void {
-        void this.sports.load();
+    /** Loads the catalog and keeps its events fresh while the page is open. */
+    keepFresh(destroyRef: DestroyRef): void {
+        this.sports.keepFresh(destroyRef);
     }
 
-    play(channel: CountryChannel): void {
-        this.sports.play({
-            streamId: channel.streamId,
-            categoryId: channel.categoryId,
-            title: channel.title,
-            icon: channel.icon,
-        });
+    retry(): void {
+        void this.sports.load();
     }
 }

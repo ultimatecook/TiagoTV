@@ -135,10 +135,11 @@ export const routes: Routes = [
                     ),
             },
             {
+                // The same page, opened on one country.
                 path: 'countries/:countryId',
                 loadComponent: () =>
                     import('@iptvnator/workspace/dashboard/feature').then(
-                        (c) => c.CountryPageComponent
+                        (c) => c.CountriesPageComponent
                     ),
             },
             {

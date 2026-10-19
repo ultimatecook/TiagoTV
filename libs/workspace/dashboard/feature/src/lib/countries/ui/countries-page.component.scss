@@ -1,221 +1,237 @@
+@use '../../../../../../../ui/styles/app-controls' as controls;
 @use '../../../../../../../ui/styles/focus-ring';
 @use '../../../../../../../ui/styles/skeleton-shimmer' as shimmer;
-@use './country-states' as states;
 
 @include shimmer.keyframes;
 
+// "Por países" as a TV: the player fixed on top, the rows scrolling in
+// their own pane under it. The page keeps the Home's side gutter, and the
+// rows run on through it to the content's edges, as the Home's do. On a
+// phone or a short window the page scrolls as one.
 :host {
-    display: block;
-    min-width: 0;
-}
-
-.page {
+    --tv-gutter: 36px;
+    --tv-screen-height: clamp(220px, 47vh, 600px);
+    --tile-width: clamp(132px, 11cqw, 184px);
     display: flex;
     flex-direction: column;
-    gap: 30px;
-    padding: 8px 28px 40px;
+    height: 100%;
+    min-height: 0;
+    container: countries-tv / inline-size;
 }
 
-.intro {
+.tv__stage {
+    flex: none;
+    padding: 16px var(--tv-gutter) 0;
+}
+
+// ── The jump bar: one segment per country ─────────────────────────────────
+.tv__jump {
+    @include controls.segmented-track;
+    flex: none;
+    align-self: flex-start;
+    margin: 22px var(--tv-gutter) 0;
+}
+
+.jump {
+    @include controls.segment(30px);
+    padding: 0 12px 0 10px;
+}
+
+.jump--on {
+    @include controls.segment-selected;
+}
+
+.jump__flag,
+.country__flag {
+    flex: none;
+    border-radius: 3px;
+    object-fit: cover;
+    box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--app-on-surface) 16%, transparent);
+}
+
+.jump__flag {
+    width: 18px;
+    height: 13.5px;
+}
+
+// ── The rows' pane ────────────────────────────────────────────────────────
+.tv__lanes {
+    // The rows run on through the gutters to the content's edges.
+    --rail-bleed: var(--tv-gutter);
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 18px 0 calc(32px + var(--workspace-now-playing-clearance, 0px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.country {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding-top: 6px;
-}
+    gap: 26px;
+    padding: 0 var(--tv-gutter);
 
-.intro__eyebrow {
-    color: var(--app-eyebrow-color);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-}
-
-.intro__title {
-    margin: 0;
-    color: var(--app-heading-color);
-    font-family: var(--app-display-font);
-    font-size: clamp(52px, 5.6vw, 80px);
-    font-weight: 400;
-    line-height: 0.9;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
-}
-
-.intro__meta {
-    margin: 2px 0 0;
-    color: var(--app-body-color);
-    font-size: 14px;
-}
-
-// One grid of equal cards: each region spans as many columns as it has
-// countries (Europe and North America share a row where they fit), Latin
-// America the whole width. Narrow, every region takes its own rows.
-.regions {
-    container-type: inline-size;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
-    gap: 34px 16px;
-}
-
-.region {
-    display: grid;
-    grid-column: span var(--region-span, 1);
-    grid-template-columns: subgrid;
-    align-content: start;
-    row-gap: 16px;
-}
-
-.region--wide {
-    grid-column: 1 / -1;
-}
-
-// Under three columns a three-country region would overflow the grid.
-@container (max-width: 600px) {
-    .region {
-        grid-column: 1 / -1;
+    & + & {
+        margin-top: 48px;
     }
 }
 
-.region__title {
-    grid-column: 1 / -1;
+.country__title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     margin: 0;
     color: var(--app-heading-color);
     font-size: 22px;
     font-weight: 500;
-    letter-spacing: 0.005em;
-}
-
-// The country: its flag held up on dark glass, lit by its own colours
-// (the flag again, blurred, behind the glass), the name below in the
-// display face.
-.country {
-    --flag-radius: 10px;
-    position: relative;
-    isolation: isolate;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    min-width: 0;
-    padding: 26px 14px 20px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.04);
-    box-shadow: 0 18px 34px -24px rgba(0, 0, 0, 0.85);
-    text-decoration: none;
-    transition:
-        transform 200ms ease,
-        border-color 200ms ease,
-        box-shadow 200ms ease;
-
-    // A floor of shade, so the name sits on the same dark whatever the
-    // flag's colours.
-    &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        background: linear-gradient(
-            180deg,
-            transparent 30%,
-            rgba(5, 6, 10, 0.5) 100%
-        );
-        pointer-events: none;
-    }
-
-    // The hover frame: a brighter edge (the keyboard's focus draws the
-    // app's ring instead).
-    &:hover {
-        border-color: rgba(255, 255, 255, 0.22);
-        box-shadow: 0 26px 40px -22px rgba(0, 0, 0, 0.9);
-    }
-
-    &:hover,
-    &:focus-visible {
-        transform: translateY(-4px);
-
-        .country__flag {
-            transform: scale(1.05) rotate(-1.5deg);
-        }
-
-        .country__glow {
-            opacity: 0.6;
-        }
-    }
-
-    &:focus-visible {
-        @include focus-ring.focus-ring-declarations($offset: 3px);
-    }
-}
-
-.country__glow {
-    position: absolute;
-    top: -12%;
-    left: 50%;
-    z-index: -1;
-    width: 130%;
-    opacity: 0.38;
-    filter: blur(34px) saturate(1.5);
-    transform: translateX(-50%);
-    transition: opacity 240ms ease;
+    letter-spacing: -0.01em;
 }
 
 .country__flag {
-    width: 66%;
-    margin-bottom: 14px;
-    box-shadow:
-        0 16px 26px -12px rgba(0, 0, 0, 0.75),
-        0 2px 6px rgba(0, 0, 0, 0.3);
-    transition: transform 260ms ease;
-}
-
-.country__name {
-    max-width: 100%;
-    color: var(--app-heading-color);
-    font-family: var(--app-display-font);
-    font-size: clamp(24px, 2vw, 30px);
-    font-weight: 400;
-    line-height: 1;
-    letter-spacing: 0.03em;
-    text-align: center;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
-    text-transform: uppercase;
-    overflow-wrap: anywhere;
+    width: 28px;
+    height: 21px;
 }
 
 .country__count {
-    color: var(--app-body-color);
-    font-size: 13px;
-    font-variant-numeric: tabular-nums;
+    color: var(--app-muted-color);
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
 }
 
-.country--skeleton {
-    @include shimmer.block(16px);
-    aspect-ratio: 1 / 1.02;
-    border: 0;
-    box-shadow: none;
-}
-
+// ── Messages ──────────────────────────────────────────────────────────────
 .state {
-    @include states.state;
-}
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0;
+    padding: 24px var(--tv-gutter);
+    color: var(--app-body-color);
+    font-size: 14px;
 
-.state__retry {
-    @include states.action;
-}
-
-@media (max-width: 760px) {
-    .page {
-        padding: 8px 14px 32px;
+    p {
+        margin: 0;
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .country,
-    .country__glow,
-    .country__flag {
-        transition: none;
+.state__retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px 0 10px;
+    border: 0;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--app-on-surface) 10%, transparent);
+    color: var(--app-heading-color);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+        background: color-mix(in srgb, var(--app-on-surface) 16%, transparent);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+
+    mat-icon {
+        width: 16px;
+        height: 16px;
+        font-size: 16px;
+    }
+}
+
+// ── Loading: the stage and two rows ───────────────────────────────────────
+.skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px var(--tv-gutter) 0;
+    overflow: hidden;
+}
+
+.skeleton__stage {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 40px;
+}
+
+.skeleton__screen {
+    flex: none;
+    width: min(calc(var(--tv-screen-height) * 16 / 9), calc(100% - 300px));
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    background: #000;
+}
+
+.skeleton__info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.skeleton__block {
+    @include shimmer.block(10px);
+}
+
+.skeleton__block--plate {
+    width: 132px;
+    aspect-ratio: 16 / 10;
+}
+
+.skeleton__block--line {
+    width: 40%;
+    height: 12px;
+}
+
+.skeleton__block--title {
+    width: 60%;
+    height: 40px;
+}
+
+.skeleton__block--label {
+    width: 140px;
+    height: 16px;
+}
+
+.skeleton__row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.skeleton__block--tile {
+    flex: none;
+    width: var(--tile-width);
+    aspect-ratio: 16 / 10;
+}
+
+// ── A phone, or a window too short for a fixed player ─────────────────────
+@media (max-width: 640px), (max-height: 560px) {
+    :host {
+        --tv-gutter: 16px;
+        --tv-screen-height: 60vw;
+        --tile-width: clamp(118px, 34cqw, 160px);
+        height: auto;
+    }
+
+    .tv__lanes {
+        overflow: visible;
+    }
+
+    .skeleton__stage {
+        flex-direction: column;
+    }
+
+    .skeleton__screen {
+        width: 100%;
     }
 }
