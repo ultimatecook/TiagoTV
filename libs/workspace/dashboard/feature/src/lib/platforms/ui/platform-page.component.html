@@ -61,15 +61,20 @@
                             openTitles().length
                         }}</span>
                     </header>
-                    <div class="all__grid">
-                        @for (title of visible(); track title.kind + title.id) {
-                            <lib-platform-title-card
-                                [title]="title"
-                                [look]="look"
-                                [tile]="gridTile()"
-                            />
-                        }
-                    </div>
+                    @if (gridDress(); as dress) {
+                        <div class="all__grid" [attr.data-tile]="dress.tile">
+                            @for (
+                                title of visible();
+                                track title.kind + title.id
+                            ) {
+                                <lib-platform-title-card
+                                    [title]="title"
+                                    [look]="look"
+                                    [dress]="dress"
+                                />
+                            }
+                        </div>
+                    }
                     @if (hasMore()) {
                         <button type="button" class="more" (click)="showMore()">
                             {{ 'WORKSPACE.PLATFORMS.MORE' | translate }}

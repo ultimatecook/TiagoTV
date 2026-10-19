@@ -1,5 +1,12 @@
-@let netflixTile = look() === 'netflix' && tile() === 'landscape';
-<button type="button" class="card" [attr.aria-label]="label()" (click)="open()">
+@let dressed = dress();
+@let netflix = look() === 'netflix';
+<button
+    type="button"
+    class="card"
+    [class.card--info]="dressed.info"
+    [attr.aria-label]="label()"
+    (click)="open()"
+>
     <span class="card__art">
         @if (art(); as art) {
             <img
@@ -7,6 +14,7 @@
                 [class.card__img--cropped]="art.cropped"
                 alt=""
                 loading="lazy"
+                decoding="async"
                 referrerpolicy="no-referrer"
                 draggable="false"
                 (error)="artFailed(art.url)"
@@ -14,27 +22,64 @@
         } @else {
             <span class="card__fallback">{{ title().title }}</span>
         }
-        @if (look() === 'netflix') {
+        @if (netflix) {
             <span class="card__n" aria-hidden="true">N</span>
         } @else if (look() === 'prime') {
             <span class="card__check" aria-hidden="true"></span>
         }
         <span class="card__language">{{ languages() }}</span>
-        @if (netflixTile) {
-            <span class="card__caption" aria-hidden="true">{{
-                title().title
-            }}</span>
+        @if (dressed.caption) {
+            <span class="card__caption" aria-hidden="true">
+                <span class="card__caption-name">{{ title().title }}</span>
+                @if (dressed.sub) {
+                    <ng-container *ngTemplateOutlet="sub" />
+                }
+            </span>
+        }
+        @if (dressed.info) {
+            <!-- What the pointer or the keyboard opens on the tile, as the
+                 platforms open a preview: its facts and synopsis. -->
+            <span class="card__info" aria-hidden="true">
+                <span class="card__play"></span>
+                <span class="card__info-name">{{ title().title }}</span>
+                <span class="card__facts">
+                    @if (match(); as match) {
+                        @if (netflix) {
+                            <span class="card__match">{{
+                                'WORKSPACE.DASHBOARD.MATCH'
+                                    | translate: { value: match }
+                            }}</span>
+                        } @else {
+                            <span class="card__rating">★ {{ stars() }}</span>
+                        }
+                    }
+                    <span>{{ typeKey() | translate }}</span>
+                    @if (title().year; as year) {
+                        <span>{{ year }}</span>
+                    }
+                    @if (genreKey(); as genre) {
+                        <span>{{ genre | translate }}</span>
+                    }
+                </span>
+                @if (plot(); as plot) {
+                    <span class="card__plot">{{ plot }}</span>
+                }
+            </span>
         }
     </span>
-    @if (!netflixTile && !rank()) {
+    @if (!dressed.caption && !rank()) {
         <span class="card__name">{{ title().title }}</span>
-    }
-    @if (look() === 'apple' || look() === 'hulu') {
-        <span class="card__sub"
-            >{{ typeKey() | translate }}
-            @if (genreKey(); as genre) {
-                · {{ genre | translate }}
-            }
-        </span>
+        @if (dressed.sub) {
+            <ng-container *ngTemplateOutlet="sub" />
+        }
     }
 </button>
+
+<ng-template #sub>
+    <span class="card__sub"
+        >{{ typeKey() | translate }}
+        @if (genreKey(); as genre) {
+            · {{ genre | translate }}
+        }
+    </span>
+</ng-template>

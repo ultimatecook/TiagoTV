@@ -8,7 +8,11 @@ import {
     viewChild,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { rowTile, type PlatformDesign } from '../platform-design';
+import {
+    RANKED_DRESS,
+    tileDress,
+    type PlatformDesign,
+} from '../platform-design';
 import type { PlatformRow } from '../platform-rows';
 import { PlatformTitleCardComponent } from './platform-title-card.component';
 
@@ -18,8 +22,10 @@ const ROW_LIMIT = 40;
 /**
  * One row of a platform's page, as the platforms draw theirs: a title
  * that opens the whole list, then tiles scrolling sideways, with arrows
- * at the edges for a mouse. A ranked row (Netflix's Top 10) sets each
- * poster beside its big outlined number.
+ * at the edges for a mouse. The tiles share out the row's width, the
+ * last one cut by the edge to show there is more; the featured row's
+ * are a size up. A ranked row (Netflix's Top 10) sets each poster beside
+ * its big outlined number.
  */
 @Component({
     selector: 'lib-platform-row',
@@ -30,6 +36,7 @@ const ROW_LIMIT = 40;
     host: {
         '[attr.data-look]': 'design().look',
         '[attr.data-tile]': 'tile()',
+        '[attr.data-size]': "dress().large ? 'large' : null",
     },
 })
 export class PlatformRowComponent {
@@ -38,10 +45,14 @@ export class PlatformRowComponent {
     readonly seeAll = output<void>();
 
     readonly titles = computed(() => this.row().titles.slice(0, ROW_LIMIT));
-    /** The cards' shape: the design's, or Paramount+'s posters. */
-    readonly cardTile = computed(() => rowTile(this.design(), this.row().id));
+    /** The cards' shape, size and dress: the design's, for this row. */
+    readonly dress = computed(() =>
+        this.row().ranked
+            ? RANKED_DRESS
+            : tileDress(this.design(), this.row().id)
+    );
     readonly tile = computed(() =>
-        this.row().ranked ? 'ranked' : this.cardTile()
+        this.row().ranked ? 'ranked' : this.dress().tile
     );
     private readonly track =
         viewChild.required<ElementRef<HTMLElement>>('track');

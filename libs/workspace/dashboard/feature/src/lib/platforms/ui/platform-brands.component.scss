@@ -8,10 +8,16 @@
     min-width: 0;
 }
 
+// Five across at most, as Disney+ sets them: one brand alone keeps a
+// tile's size instead of filling the row.
 .brands {
+    --brands-gap: clamp(12px, 1.6vw, 24px);
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
-    gap: clamp(12px, 1.6vw, 24px);
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(max(128px, (100% - 4 * var(--brands-gap)) / 5), 1fr)
+    );
+    gap: var(--brands-gap);
 }
 
 .brand {

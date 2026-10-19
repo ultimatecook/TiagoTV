@@ -30,7 +30,7 @@
                             class="row__ranked-card"
                             [title]="title"
                             [look]="look"
-                            tile="poster"
+                            [dress]="dress()"
                             [rank]="$index + 1"
                         />
                     </div>
@@ -39,7 +39,7 @@
                         class="row__item"
                         [title]="title"
                         [look]="look"
-                        [tile]="cardTile()"
+                        [dress]="dress()"
                     />
                 }
             }

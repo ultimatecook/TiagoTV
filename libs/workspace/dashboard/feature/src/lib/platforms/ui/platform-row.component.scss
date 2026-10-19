@@ -1,24 +1,53 @@
 @use '../../../../../../../ui/styles/focus-ring';
 
-// A row as each platform draws it: the heading's weight and colours, the
-// tile's width and the gap between tiles. The default is TiagoTV's.
+// A row as each platform draws it: the heading's weight and colours, how
+// many tiles it shows across and the gap between them. The tiles share out
+// the row's width (`100cqi`, the viewport's): a fraction left over is the
+// next tile, cut by the edge, inviting a scroll. Each shape has its count,
+// the featured row's (`data-size='large'`) its own, fewer and larger; a
+// tile never shrinks under `--row-min`, so a narrow window shows fewer.
+// The default is TiagoTV's.
 :host {
-    --row-tile: clamp(124px, 10.6vw, 176px);
+    --across-landscape: 4.8;
+    --across-poster: 7.2;
+    --across-large-landscape: 2.7;
+    --across-large-poster: 5.2;
+    --row-across: var(--across-poster);
+    --row-min: 112px;
     --row-gap: 14px;
+    --row-tile: max(
+        var(--row-min),
+        (100cqi - (var(--row-across) - 1) * var(--row-gap)) / var(--row-across)
+    );
     --row-lift: 8px;
     --row-arrow-bottom: 48px;
     --row-title-size: 20px;
     --row-title-weight: 500;
     --row-title-color: var(--app-heading-color);
     --row-see-all-color: var(--app-body-color);
-    // The Top 10's posters; each number takes about as much again.
-    --rank-poster: clamp(112px, 8.6vw, 152px);
+    // The Top 10's posters, a 16:9 tile's width with their numbers.
+    --rank-poster: max(
+        104px,
+        0.52 * (100cqi - (var(--across-landscape) - 1) * var(--row-gap)) /
+            var(--across-landscape)
+    );
     display: block;
     min-width: 0;
 }
 
 :host([data-tile='landscape']) {
-    --row-tile: clamp(200px, 16vw, 300px);
+    --row-across: var(--across-landscape);
+    --row-min: 200px;
+}
+
+:host([data-size='large']) {
+    --row-across: var(--across-large-poster);
+    --row-min: 150px;
+}
+
+:host([data-size='large'][data-tile='landscape']) {
+    --row-across: var(--across-large-landscape);
+    --row-min: 260px;
 }
 
 // Each place is as wide as its number and poster ("10" takes more).
@@ -67,8 +96,10 @@
         transform 160ms ease;
 }
 
+// The query container the tiles' widths read (`cqi`).
 .row__viewport {
     position: relative;
+    container-type: inline-size;
 
     &:hover .row__arrow {
         opacity: 1;
@@ -172,7 +203,8 @@
 
 // ─── Netflix: bold grey titles, "Explore all" in teal, tight tiles ──────
 :host([data-look='netflix']) {
-    --row-gap: 6px;
+    --across-landscape: 4.6;
+    --row-gap: 8px;
     --row-lift: 18px;
     --row-title-size: clamp(17px, 1.45vw, 22px);
     --row-title-weight: 700;
@@ -198,11 +230,14 @@
 
 :host([data-look='netflix'][data-tile='landscape']) {
     --row-arrow-bottom: 12px;
-    --row-tile: clamp(200px, 15.6vw, 290px);
 }
 
-// ─── Prime Video: bold white titles, "See more" always there ────────────
+// ─── Prime Video: bold white titles, "See more" always there, the large
+// posters of its "super carousel" ──────────────────────────────────────
 :host([data-look='prime']) {
+    --across-landscape: 4.5;
+    --across-large-poster: 5.4;
+    --row-gap: 16px;
     --row-title-weight: 700;
     --row-title-color: #fff;
     --row-see-all-color: #8197a4;
@@ -219,21 +254,26 @@
 }
 
 :host([data-look='prime'][data-tile='landscape']) {
-    --row-tile: clamp(220px, 17.6vw, 320px);
     --row-arrow-bottom: 40px;
 }
 
-// ─── HBO Max: clean bold white titles over posters ──────────────────────
+// ─── HBO Max: clean bold white titles, 16:9 tiles and a poster row ──────
 :host([data-look='hbo']) {
-    --row-tile: clamp(140px, 11vw, 188px);
+    --across-landscape: 4.6;
+    --across-poster: 6.6;
+    --row-gap: 12px;
+    --row-arrow-bottom: 40px;
     --row-title-weight: 700;
     --row-title-color: #fff;
     --row-see-all-color: #9fa6ff;
     --row-lift: 12px;
 }
 
-// ─── Apple TV: "See all" at the far end, roomy rounded cards ────────────
+// ─── Apple TV: "See all" at the far end, cinematic posters after a row of
+// large rounded 16:9 cards ───────────────────────────────────────────────
 :host([data-look='apple']) {
+    --across-poster: 6.4;
+    --across-large-landscape: 3.3;
     --row-gap: 22px;
     --row-lift: 16px;
     --row-arrow-bottom: 60px;
@@ -261,10 +301,6 @@
     .row__heading:hover .row__see-all {
         color: #f5f5f7;
     }
-}
-
-:host([data-look='apple'][data-tile='landscape']) {
-    --row-tile: clamp(270px, 23vw, 400px);
 }
 
 @media (hover: none) {

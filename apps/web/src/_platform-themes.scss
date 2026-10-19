@@ -1383,12 +1383,22 @@ $clean-font: 'Helvetica Neue', 'DM Sans', Helvetica, sans-serif;
     }
 }
 
-// The page's ground, its side margin and the open list's tile width.
-@mixin page-ground($look, $bg, $gutter, $grid-min, $gap: 30px, $top: 8px) {
+// The page's ground, its side margin and the open list's tile width (a
+// poster's, `$grid-poster`, where the list is of posters).
+@mixin page-ground(
+    $look,
+    $bg,
+    $gutter,
+    $grid-min,
+    $gap: 30px,
+    $top: 8px,
+    $grid-poster: 160px
+) {
     @include look('page', $look) {
         --page-bg: #{$bg};
         --page-gutter: #{$gutter};
         --grid-min: #{$grid-min};
+        --grid-poster: #{$grid-poster};
 
         .page {
             gap: $gap;
@@ -1470,19 +1480,22 @@ $clean-font: 'Helvetica Neue', 'DM Sans', Helvetica, sans-serif;
     text-transform: uppercase;
 }
 
-// A row look: the heading's size, weight and colours, the tiles' width
-// for each shape and the gap between them.
+// A row look: the heading's size, weight and colours, how many tiles of
+// each shape the row shows across (the fraction is the next one's peek;
+// the featured row's tiles go a size up) and the gap between them.
 @mixin row-look(
     $look,
     $title-color,
     $see-all,
     $landscape,
-    $poster: clamp(140px, 11vw, 188px),
+    $poster: 6.6,
     $gap: 14px,
     $weight: 700,
     $size: clamp(17px, 1.45vw, 21px)
 ) {
     @include look('row', $look) {
+        --across-landscape: #{$landscape};
+        --across-poster: #{$poster};
         --row-gap: #{$gap};
         --row-lift: 16px;
         --row-title-size: #{$size};
@@ -1494,12 +1507,7 @@ $clean-font: 'Helvetica Neue', 'DM Sans', Helvetica, sans-serif;
     }
 
     lib-platform-row[data-look='#{$look}'][data-tile='landscape'] {
-        --row-tile: #{$landscape};
         --row-arrow-bottom: 40px;
-    }
-
-    lib-platform-row[data-look='#{$look}'][data-tile='poster'] {
-        --row-tile: #{$poster};
     }
 }
 
@@ -1536,8 +1544,9 @@ $clean-font: 'Helvetica Neue', 'DM Sans', Helvetica, sans-serif;
 
 // ─── Disney+ ────────────────────────────────────────────────────────────────
 // Navy deepening to #040714 under a blue glow; the large rounded carousel
-// with "REPRODUCIR" in white capitals; brand tiles; 16:9 tiles with the
-// faint edge that turns white as they lift.
+// with "REPRODUCIR" in white capitals; brand tiles; what is new in 16:9,
+// the rest in the cinematic posters of its November 2025 redesign, each
+// with the faint edge that turns white as it lifts.
 $disney-bg:
     radial-gradient(
         90% 60% at 50% 0%,
@@ -1552,7 +1561,8 @@ $disney-bg:
     clamp(20px, 3.6vw, 56px),
     240px,
     34px,
-    20px
+    20px,
+    170px
 );
 
 @include look('carousel', 'disney') {
@@ -1628,7 +1638,8 @@ $disney-bg:
     'disney',
     #f9f9f9,
     #cacaca,
-    clamp(220px, 18vw, 330px),
+    4.5,
+    6.4,
     $gap: 20px,
     $weight: 600
 ) {
@@ -1685,7 +1696,7 @@ $disney-bg:
     }
 }
 
-@include row-look('paramount', #fff, #6ea1ff, clamp(220px, 17vw, 310px));
+@include row-look('paramount', #fff, #6ea1ff, 4.8);
 
 @include tile-look(
     'paramount',
@@ -1700,7 +1711,8 @@ $disney-bg:
 // ─── Hulu ───────────────────────────────────────────────────────────────────
 // Black #0B0C0F with green accents: the green eyebrow, a white "PLAY" in
 // capitals, "View all" at the row's far end, large 16:9 tiles with the
-// title and its kind below.
+// title and its kind below, and a row of larger ones still with the title
+// on the artwork, Hulu's large template that stops a scroll.
 @include page-ground('hulu', #0b0c0f, clamp(20px, 3.4vw, 52px), 280px, 32px);
 
 @include billboard-look(
@@ -1740,14 +1752,9 @@ $disney-bg:
     }
 }
 
-@include row-look(
-    'hulu',
-    #fff,
-    #a3a6ac,
-    clamp(260px, 22vw, 380px),
-    $gap: 16px,
-    $weight: 600
-) {
+@include row-look('hulu', #fff, #a3a6ac, 3.9, $gap: 16px, $weight: 600) {
+    --across-large-landscape: 2.6;
+
     .row__heading {
         display: flex;
         width: 100%;
@@ -1818,7 +1825,7 @@ $disney-bg:
     }
 }
 
-@include row-look('movistar', #fff, #019df4, clamp(230px, 18vw, 330px)) {
+@include row-look('movistar', #fff, #019df4, 4.7) {
     .row__title::before {
         content: '+';
         margin-right: 8px;
@@ -1882,7 +1889,7 @@ $disney-bg:
     }
 }
 
-@include row-look('atres', #fff, #ff6a00, clamp(220px, 17vw, 310px));
+@include row-look('atres', #fff, #ff6a00, 4.8);
 
 @include tile-look(
     'atres',
@@ -2006,7 +2013,7 @@ $disney-bg:
     'mitele',
     #fff,
     #e46bb5,
-    clamp(220px, 17vw, 310px),
+    4.8,
     $size: clamp(18px, 1.6vw, 23px)
 ) {
     .row__title {
@@ -2082,14 +2089,7 @@ $disney-bg:
     }
 }
 
-@include row-look(
-    'crave',
-    #fff,
-    #6f9dff,
-    clamp(260px, 21vw, 360px),
-    $gap: 18px,
-    $weight: 600
-) {
+@include row-look('crave', #fff, #6f9dff, 4.1, $gap: 18px, $weight: 600) {
     font-family: $clean-font;
 }
 

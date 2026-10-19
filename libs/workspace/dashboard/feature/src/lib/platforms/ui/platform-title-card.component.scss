@@ -2,9 +2,15 @@
 
 // The tile as each platform draws it. The default is TiagoTV's poster
 // with its name below; the looks change the artwork's shape and corners,
-// the hover and what sits on and under the artwork.
+// the hover and what sits on and under the artwork. Where the design opens
+// a tile's facts (`.card--info`), the pointer resting on it (after
+// `--card-info-delay`, so a sweep along the row opens nothing) or the
+// keyboard's focus brings them up over the artwork's foot.
 :host {
     --card-radius: 12px;
+    --card-info-delay: 280ms;
+    --card-play-bg: #fff;
+    --card-play-fg: #000;
     --card-aspect: 2 / 3;
     --card-hover: translateY(-3px) scale(1.03);
     --card-shadow: 0 14px 26px -20px rgba(0, 0, 0, 0.85);
@@ -36,7 +42,20 @@
 
     &:hover .card__art,
     &:focus-visible .card__art {
+        z-index: 1;
         transform: var(--card-hover);
+    }
+
+    &:hover .card__info,
+    &:focus-visible .card__info {
+        opacity: 1;
+        transform: none;
+    }
+
+    // The name on the artwork gives way to the facts.
+    &.card--info:hover .card__caption,
+    &.card--info:focus-visible .card__caption {
+        opacity: 0;
     }
 
     // The pointer's lift and edge; the keyboard gets the app's ring.
@@ -53,8 +72,11 @@
     }
 }
 
+// A query container: the facts leave the synopsis out on a small tile.
 .card__art {
     position: relative;
+    z-index: 0;
+    container-type: inline-size;
     display: grid;
     place-items: center;
     aspect-ratio: var(--card-aspect);
@@ -127,20 +149,14 @@
 // ─── Netflix: 4px corners, the red N, the title on the artwork ──────────
 :host([data-look='netflix']) {
     --card-radius: 4px;
-    --card-hover: scale(1.08);
+    --card-hover: scale(1.1);
     --card-shadow: none;
     --card-hover-shadow: 0 14px 28px rgba(0, 0, 0, 0.75);
 
     .card__art {
-        z-index: 0;
         background: #2f2f2f;
         box-shadow: none;
         transition-duration: 300ms;
-    }
-
-    .card:hover .card__art,
-    .card:focus-visible .card__art {
-        z-index: 1;
     }
 
     .card__language {
@@ -166,32 +182,169 @@
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
+// The name on the artwork (Netflix's 16:9 tiles, Hulu's large ones).
 .card__caption {
     position: absolute;
     right: 0;
     bottom: 0;
     left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
     padding: 28px 10px 8px;
-    overflow: hidden;
     background: linear-gradient(
         180deg,
         transparent 0%,
         rgba(0, 0, 0, 0.82) 100%
     );
     color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    transition: opacity 160ms ease;
+}
+
+.card:hover .card__caption {
+    transition-delay: var(--card-info-delay);
+}
+
+.card__caption-name {
+    overflow: hidden;
     font-size: 15px;
     font-weight: 700;
     line-height: 1.15;
     letter-spacing: -0.01em;
     text-overflow: ellipsis;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
     white-space: nowrap;
+}
+
+:host([data-size='large']) .card__caption {
+    padding: 64px 18px 16px;
+
+    .card__caption-name {
+        font-size: clamp(18px, 1.7vw, 26px);
+    }
+}
+
+.card__caption .card__sub {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+// The facts over the artwork's foot: a play disc and the name, the
+// rating (Netflix's "% Match"), kind, year and genre, then the synopsis
+// where the tile has the room.
+.card__info {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 5px 8px;
+    padding: 34px 11px 10px;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.72) 38%,
+        rgba(0, 0, 0, 0.92) 100%
+    );
+    color: #fff;
+    text-align: left;
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+        opacity 180ms ease,
+        transform 220ms ease;
+}
+
+.card:hover .card__info {
+    transition-delay: var(--card-info-delay);
+}
+
+.card__play {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--card-play-bg);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 10px;
+        border-style: solid;
+        border-width: 5px 0 5px 8px;
+        border-color: transparent transparent transparent var(--card-play-fg);
+    }
+}
+
+.card__info-name {
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// One line, cut where the tile ends.
+.card__facts {
+    grid-column: 1 / -1;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    > span + span::before {
+        content: '·';
+        margin: 0 6px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+}
+
+.card__match {
+    color: #46d369;
+    font-weight: 700;
+}
+
+.card__rating {
+    font-weight: 600;
+}
+
+.card__plot {
+    display: -webkit-box;
+    grid-column: 1 / -1;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 12px;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+@container (max-width: 299px) {
+    .card__plot {
+        display: none;
+    }
+}
+
+// A poster has the height for three lines of it.
+:host([data-tile='poster']) .card__plot {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
 }
 
 // ─── Prime Video: 8px corners, the blue "included" check ───────────────
 :host([data-look='prime']) {
     --card-radius: 8px;
-    --card-hover: scale(1.05);
+    --card-hover: scale(1.06);
+    --card-play-bg: #00a8e1;
+    --card-play-fg: #fff;
     --card-hover-shadow:
         inset 0 0 0 2px #fff, 0 18px 30px -12px rgba(0, 0, 0, 0.8);
     --card-name-color: #fff;
@@ -236,10 +389,10 @@
     }
 }
 
-// ─── HBO Max: 6px posters on black ──────────────────────────────────────
+// ─── HBO Max: 6px corners on black, an indigo glow under the pointer ────
 :host([data-look='hbo']) {
     --card-radius: 6px;
-    --card-hover: translateY(-4px) scale(1.04);
+    --card-hover: translateY(-4px) scale(1.05);
     --card-hover-shadow:
         inset 0 0 0 2px rgba(255, 255, 255, 0.9),
         0 20px 32px -16px rgba(0, 43, 231, 0.55);
@@ -287,7 +440,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .card__art {
+    .card__art,
+    .card__caption,
+    .card__info {
         transition: none;
+    }
+
+    .card__info {
+        transform: none;
     }
 }

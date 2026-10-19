@@ -1,4 +1,9 @@
-import { platformDesign, rowTile } from './platform-design';
+import {
+    platformDesign,
+    RANKED_DRESS,
+    rowTile,
+    tileDress,
+} from './platform-design';
 import { platformOfRoute, readPlatformRoute } from './platform-theme';
 import { cssString } from './platform-theme.service';
 import { buildPlatformShelves } from './streaming-platforms';
@@ -103,15 +108,20 @@ describe('platform theme', () => {
             top10: true,
         });
         expect(platformDesign('prime-video').hero).toBe('carousel');
-        expect(platformDesign('hbo-max').tiles).toBe('poster');
-        expect(platformDesign('apple-tv').look).toBe('apple');
+        // HBO Max's 16:9 tiles since June 2025, Apple TV's posters since
+        // tvOS 26.
+        expect(platformDesign('hbo-max').tiles).toBe('landscape');
+        expect(platformDesign('apple-tv')).toMatchObject({
+            look: 'apple',
+            tiles: 'poster',
+        });
     });
 
     it('draws the other seven platforms their own way too', () => {
         expect(platformDesign('disney-plus')).toMatchObject({
             look: 'disney',
             hero: 'carousel',
-            tiles: 'landscape',
+            tiles: 'poster',
             brands: true,
             playKey: 'WORKSPACE.PLATFORMS.PLAY',
         });
@@ -145,6 +155,68 @@ describe('platform theme', () => {
         expect(rowTile(paramount, 'genre-drama')).toBe('landscape');
         expect(rowTile(platformDesign('hbo-max'), 'series')).toBe('poster');
         expect(rowTile(platformDesign('netflix'), 'series')).toBe('landscape');
+    });
+
+    it('dresses each row as the platform does', () => {
+        const netflix = platformDesign('netflix');
+        expect(tileDress(netflix, 'movies')).toEqual({
+            tile: 'landscape',
+            large: false,
+            caption: true,
+            sub: false,
+            info: true,
+        });
+        // Prime Video's "super carousel": its series in large posters.
+        expect(tileDress(platformDesign('prime-video'), 'series')).toEqual({
+            tile: 'poster',
+            large: true,
+            caption: false,
+            sub: false,
+            info: true,
+        });
+        // Apple TV's large 16:9 cards first, then its posters.
+        const apple = platformDesign('apple-tv');
+        expect(tileDress(apple, 'newest')).toMatchObject({
+            tile: 'landscape',
+            large: true,
+            caption: false,
+            sub: true,
+        });
+        expect(tileDress(apple, 'movies')).toMatchObject({
+            tile: 'poster',
+            large: false,
+        });
+        // Hulu's large tiles carry their names on the artwork.
+        const hulu = platformDesign('hulu');
+        expect(tileDress(hulu, 'series')).toMatchObject({
+            large: true,
+            caption: true,
+        });
+        expect(tileDress(hulu, 'movies')).toMatchObject({
+            large: false,
+            caption: false,
+            sub: true,
+        });
+        expect(tileDress(platformDesign('disney-plus'), 'newest').tile).toBe(
+            'landscape'
+        );
+        expect(tileDress(platformDesign('disney-plus'), 'series').tile).toBe(
+            'poster'
+        );
+    });
+
+    it('lays the open list out one size, its names under the art', () => {
+        const hulu = platformDesign('hulu');
+
+        expect(tileDress(hulu, 'series', true)).toMatchObject({
+            tile: 'landscape',
+            large: false,
+            caption: false,
+        });
+        expect(
+            tileDress(platformDesign('netflix'), 'series', true).caption
+        ).toBe(true);
+        expect(RANKED_DRESS).toMatchObject({ tile: 'poster', info: false });
     });
 
     it('quotes a label for a CSS content', () => {

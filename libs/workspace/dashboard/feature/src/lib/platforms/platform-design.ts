@@ -1,17 +1,21 @@
 import type { StreamingPlatformId } from './streaming-platforms';
 
 /**
- * How a platform's page is drawn, after the platform's own app: Netflix's
- * black billboard and 16:9 tiles with a Top 10, Prime Video's navy
- * carousel, HBO Max's posters on black and indigo, Apple TV's large
- * rounded cards, Disney+'s navy carousel and brand tiles, Paramount+'s
- * blue billboard, Hulu's green-lit hub, Movistar Plus+'s navy with the
- * "+", atresplayer's orange, mitele's magenta and Crave's electric blue.
+ * How a platform's page is drawn, after the platform's own app (2025–26):
+ * Netflix's black billboard, large 16:9 tiles that open their facts under
+ * the pointer and a Top 10; Prime Video's navy carousel with a poster
+ * "super carousel"; HBO Max's 16:9 tiles (since June 2025) with a poster
+ * row; Apple TV's cinematic posters (tvOS 26) after a row of large 16:9
+ * cards; Disney+'s navy carousel, brand tiles and poster rows (its
+ * November 2025 redesign); Paramount+'s blue billboard with poster rows;
+ * Hulu's green-lit hub with a row of large tiles; Movistar Plus+'s navy
+ * with the "+", atresplayer's orange, mitele's magenta and Crave's blue.
  *
- * The first four looks are styled in their components; the newer seven
- * in the global platform stylesheet (apps/web/src/_platform-themes.scss),
- * keyed on the components' `data-look`, to keep each component's styles
- * within its budget.
+ * How many tiles a row shows across, and so their size, is each look's
+ * (`--across-*` in the row's styles). The first four looks are styled in
+ * their components; the newer seven in the global platform stylesheet
+ * (apps/web/src/_platform-themes.scss), keyed on the components'
+ * `data-look`, to keep each component's styles within its budget.
  */
 export type PlatformLook =
     | 'netflix'
@@ -37,6 +41,17 @@ export interface PlatformDesign {
     readonly tiles: PlatformTile;
     /** Rows drawn with the other tile, Paramount+'s poster rows. */
     readonly otherTileRows?: readonly string[];
+    /**
+     * The row drawn a size up, fewer tiles across: Prime Video's poster
+     * "super carousel", Apple TV's and Hulu's large 16:9 tiles.
+     */
+    readonly featuredRow?: string;
+    /** The names on the artwork: every 16:9 tile's, or the featured row's. */
+    readonly namesOnArt?: 'landscape' | 'featured';
+    /** "Series · Drama" under (or with) the name: Apple TV, Hulu. */
+    readonly tileSub?: boolean;
+    /** The pointer or the keyboard opens a tile's facts on it. */
+    readonly tileInfo?: boolean;
     /** Netflix's "Top 10" row, with the big outlined numbers. */
     readonly top10: boolean;
     /** Disney+'s brand tiles (Disney, Pixar, Marvel…) under the hero. */
@@ -45,6 +60,17 @@ export interface PlatformDesign {
     readonly seeAllKey: string;
     /** The hero's play button: "Ver ahora", or "Reproducir". */
     readonly playKey: string;
+}
+
+/** How a row (or the open list) dresses its tiles. */
+export interface TileDress {
+    readonly tile: PlatformTile;
+    /** The featured row's larger tiles. */
+    readonly large: boolean;
+    /** The name written on the artwork instead of under it. */
+    readonly caption: boolean;
+    readonly sub: boolean;
+    readonly info: boolean;
 }
 
 const SEE_ALL = 'WORKSPACE.PLATFORMS.SEE_ALL';
@@ -69,6 +95,8 @@ const DESIGNS: Partial<Record<StreamingPlatformId, PlatformDesign>> = {
     netflix: {
         ...billboard('netflix'),
         top10: true,
+        namesOnArt: 'landscape',
+        tileInfo: true,
         seeAllKey: 'WORKSPACE.PLATFORMS.EXPLORE_ALL',
     },
     'prime-video': {
@@ -76,15 +104,29 @@ const DESIGNS: Partial<Record<StreamingPlatformId, PlatformDesign>> = {
         look: 'prime',
         hero: 'carousel',
         tiles: 'landscape',
+        otherTileRows: ['series'],
+        featuredRow: 'series',
+        tileInfo: true,
         seeAllKey: 'WORKSPACE.PLATFORMS.SEE_MORE',
     },
-    'hbo-max': { ...billboard('hbo'), tiles: 'poster' },
-    'apple-tv': billboard('apple'),
+    'hbo-max': {
+        ...billboard('hbo'),
+        otherTileRows: ['series'],
+        tileInfo: true,
+    },
+    'apple-tv': {
+        ...billboard('apple'),
+        tiles: 'poster',
+        otherTileRows: ['newest'],
+        featuredRow: 'newest',
+        tileSub: true,
+    },
     'disney-plus': {
         ...DEFAULT_DESIGN,
         look: 'disney',
         hero: 'carousel',
-        tiles: 'landscape',
+        tiles: 'poster',
+        otherTileRows: ['newest'],
         brands: true,
         playKey: PLAY,
     },
@@ -92,7 +134,13 @@ const DESIGNS: Partial<Record<StreamingPlatformId, PlatformDesign>> = {
         ...billboard('paramount'),
         otherTileRows: ['series', 'movies'],
     },
-    hulu: { ...billboard('hulu'), playKey: PLAY },
+    hulu: {
+        ...billboard('hulu'),
+        featuredRow: 'series',
+        namesOnArt: 'featured',
+        tileSub: true,
+        playKey: PLAY,
+    },
     'movistar-plus': billboard('movistar'),
     atresplayer: billboard('atres'),
     mitele: {
@@ -116,3 +164,37 @@ export function rowTile(design: PlatformDesign, rowId: string): PlatformTile {
     }
     return design.tiles === 'landscape' ? 'poster' : 'landscape';
 }
+
+/**
+ * How a row of the design dresses its tiles: their shape, the featured
+ * row's larger size, the name on the artwork or under it, the facts the
+ * pointer opens. The open list (`inGrid`) lays every tile out one size.
+ */
+export function tileDress(
+    design: PlatformDesign,
+    rowId: string,
+    inGrid = false
+): TileDress {
+    const tile = rowTile(design, rowId);
+    const large = !inGrid && design.featuredRow === rowId;
+    const caption =
+        tile === 'landscape' &&
+        (design.namesOnArt === 'landscape' ||
+            (design.namesOnArt === 'featured' && large));
+    return {
+        tile,
+        large,
+        caption,
+        sub: !!design.tileSub,
+        info: !!design.tileInfo,
+    };
+}
+
+/** A Top 10 place's poster: no name under it, nothing over it. */
+export const RANKED_DRESS: TileDress = {
+    tile: 'poster',
+    large: false,
+    caption: false,
+    sub: false,
+    info: false,
+};

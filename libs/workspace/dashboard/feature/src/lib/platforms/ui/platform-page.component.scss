@@ -3,11 +3,13 @@
 // The page paints the platform's own ground under its rows (Netflix's
 // #141414, Prime's navy, HBO Max's black into indigo, Apple's black); the
 // default look stays on the glass. `--page-gutter` is the side margin the
-// rows, the billboard's text and the hero's arrows line up on.
+// rows, the billboard's text and the hero's arrows line up on; the open
+// list's tiles are at least `--grid-min` wide, `--grid-poster` for posters.
 :host {
     --page-gutter: 28px;
     --page-bg: transparent;
     --grid-min: 150px;
+    --grid-poster: 150px;
     display: block;
     min-width: 0;
     min-height: 100%;
@@ -113,6 +115,10 @@
     gap: 22px 16px;
 }
 
+.all__grid[data-tile='poster'] {
+    --grid-min: var(--grid-poster);
+}
+
 .more {
     align-self: center;
     height: 40px;
@@ -173,6 +179,7 @@
 
 // ─── HBO Max: black, lit deep blue from below ───────────────────────────
 :host([data-look='hbo']) {
+    --grid-poster: 170px;
     --page-bg:
         radial-gradient(
             110% 60% at 50% 100%,
@@ -181,7 +188,7 @@
         ),
         #05050f;
     --page-gutter: clamp(20px, 3.4vw, 52px);
-    --grid-min: 150px;
+    --grid-min: 250px;
 
     .page {
         gap: 30px;
@@ -193,6 +200,7 @@
     --page-bg: #000;
     --page-gutter: clamp(20px, 3.4vw, 52px);
     --grid-min: 270px;
+    --grid-poster: 180px;
 
     .page {
         gap: 34px;
@@ -207,13 +215,8 @@
     :host,
     :host([data-look]) {
         --page-gutter: 14px;
-        --grid-min: 118px;
-    }
-
-    :host([data-look='netflix']),
-    :host([data-look='prime']),
-    :host([data-look='apple']) {
         --grid-min: 200px;
+        --grid-poster: 118px;
     }
 
     .page {

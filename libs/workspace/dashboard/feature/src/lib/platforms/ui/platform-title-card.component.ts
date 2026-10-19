@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -8,26 +9,38 @@ import {
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
-import type { PlatformLook } from '../platform-design';
+import type { PlatformLook, TileDress } from '../platform-design';
 import { genreLabelKey } from '../platform-genres';
 import { languagesLabel, type PlatformTitle } from '../platform-titles';
 import { titleTypeKey } from './platform-hero-slides';
 
+/** TiagoTV's own tile: a poster with its name under it. */
+const POSTER: TileDress = {
+    tile: 'poster',
+    large: false,
+    caption: false,
+    sub: false,
+    info: false,
+};
+
 /**
  * A platform title's tile: opens the title's page (its Spanish version,
  * where it has one). A 2:3 poster, or the 16:9 artwork of Netflix, Prime
- * Video, Apple TV, Disney+… (the backdrop where the catalog has one, else
- * the poster cropped), dressed as the platform dresses its own.
+ * Video, HBO Max… (the backdrop where the catalog has one, else the poster
+ * cropped), dressed as the platform dresses its own (`TileDress`): the
+ * name on the artwork or under it, the kind and genre, and the facts
+ * (rating, year, synopsis) the pointer or the keyboard opens on it.
  */
 @Component({
     selector: 'lib-platform-title-card',
-    imports: [TranslatePipe],
+    imports: [NgTemplateOutlet, TranslatePipe],
     templateUrl: './platform-title-card.component.html',
     styleUrl: './platform-title-card.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '[attr.data-look]': 'look()',
-        '[attr.data-tile]': 'tile()',
+        '[attr.data-tile]': 'dress().tile',
+        '[attr.data-size]': "dress().large ? 'large' : null",
     },
 })
 export class PlatformTitleCardComponent {
@@ -35,7 +48,7 @@ export class PlatformTitleCardComponent {
 
     readonly title = input.required<PlatformTitle>();
     readonly look = input<PlatformLook>('default');
-    readonly tile = input<'landscape' | 'poster'>('poster');
+    readonly dress = input<TileDress>(POSTER);
     /** Its place in a Top 10, read out with the title. */
     readonly rank = input<number | null>(null);
 
@@ -43,20 +56,15 @@ export class PlatformTitleCardComponent {
     /** The artwork to show, skipping any that failed to load. */
     readonly art = computed(() => {
         const title = this.title();
+        const landscape = this.dress().tile === 'landscape';
         const backdrop =
             title.backdrop ?? this.catalog.extrasOf(title)?.backdrop ?? null;
-        const candidates =
-            this.tile() === 'landscape'
-                ? [backdrop, title.poster]
-                : [title.poster, backdrop];
+        const candidates = landscape
+            ? [backdrop, title.poster]
+            : [title.poster, backdrop];
         const failed = this.failed();
         const url = candidates.find((item) => !!item && !failed.has(item));
-        return url
-            ? {
-                  url,
-                  cropped: url === title.poster && this.tile() === 'landscape',
-              }
-            : null;
+        return url ? { url, cropped: url === title.poster && landscape } : null;
     });
     readonly label = computed(() => {
         const rank = this.rank();
@@ -70,6 +78,17 @@ export class PlatformTitleCardComponent {
         const genre = this.title().genres[0];
         return genre ? genreLabelKey(genre) : null;
     });
+    /** The rating as Netflix's "% Match", 0–100. */
+    readonly match = computed(() => {
+        const rating = this.title().rating;
+        return rating ? Math.round(rating * 10) : null;
+    });
+    /** The other looks' "★ 8.0". */
+    readonly stars = computed(() => this.title().rating?.toFixed(1) ?? '');
+    /** The synopsis the list or the title's page gave, never fetched here. */
+    readonly plot = computed(
+        () => this.title().plot ?? this.catalog.extrasOf(this.title())?.plot
+    );
 
     open(): void {
         this.catalog.open(this.title());

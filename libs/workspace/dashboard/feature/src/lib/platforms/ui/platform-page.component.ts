@@ -11,7 +11,7 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
 import { buildBrandRows } from '../platform-brands';
-import { platformDesign, rowTile } from '../platform-design';
+import { platformDesign, tileDress } from '../platform-design';
 import { pickRecommendations } from '../platform-hero';
 import { buildPlatformRows } from '../platform-rows';
 import { daySeed } from '../platform-seed';
@@ -113,9 +113,9 @@ export class PlatformPageComponent {
         computation: () => PAGE,
     });
     /** The open row's tiles, Paramount+'s posters among its 16:9 rows. */
-    readonly gridTile = computed(() => {
+    readonly gridDress = computed(() => {
         const design = this.design();
-        return design ? rowTile(design, this.openRowId() ?? '') : 'poster';
+        return design ? tileDress(design, this.openRowId() ?? '', true) : null;
     });
     /** Everything the open row holds, more than its strip shows. */
     readonly openTitles = computed(() => {
