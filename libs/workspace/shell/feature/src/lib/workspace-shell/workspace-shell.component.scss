@@ -28,6 +28,9 @@
     // from its left edge: the macOS traffic lights while the sidebar is
     // hidden. The Home starts its heading after them.
     --workspace-corner-inset: 0px;
+    // The room the now-playing pill takes at the foot of a page scrolled to
+    // its end: none without the pill.
+    --workspace-now-playing-clearance: 0px;
     // Room around the glass window: the ambient room shows through it.
     --workspace-window-inset: 22px;
     --workspace-window-radius: 34px;
@@ -52,6 +55,7 @@
     app-region: drag;
 
     &.has-now-playing {
+        --workspace-now-playing-clearance: 56px;
         padding-bottom: calc(var(--workspace-window-inset) + 30px);
     }
 
@@ -252,6 +256,16 @@ app-workspace-shell-context-sidebar {
     app-workspace-shell-context-sidebar {
         display: none;
     }
+
+    // The platform's ground runs to the window's right edge and under the
+    // pill: the scroller draws no bar (its gutter would leave a strip of
+    // glass beside the ground) and keeps no room at its foot. The platform
+    // page and the title page keep the pill's room inside their own ground
+    // (`--workspace-now-playing-clearance`).
+    .workspace-content {
+        padding-bottom: 0;
+        scrollbar-width: none;
+    }
 }
 
 // Scrim behind the phone context drawer. Rendered only while the drawer is
@@ -347,8 +361,11 @@ app-workspace-shell-context-sidebar {
 }
 
 // A fullscreen window has no corners at all: the content runs to its
-// bottom edge too, the sidebar with it.
-:host-context(.window-fullscreen) {
+// bottom edge too, the sidebar with it. So does a streaming platform's
+// page (and its titles') in the macOS window, whose rounded corners the
+// system clips: its ground reaches the edges, as on the platform's app.
+:host-context(.window-fullscreen),
+:host-context(.native-glass[data-platform-theme]) {
     .workspace-window {
         padding-bottom: 0;
     }
@@ -358,8 +375,6 @@ app-workspace-shell-context-sidebar {
     }
 }
 
-// The pill floats inside the window's lower edge there, clear of the last
-// row once it is scrolled up.
 // No corner to keep clear there: the content runs to the window's edges.
 :host-context(.native-glass) .workspace-content,
 :host-context(.window-fullscreen) .workspace-content {
@@ -367,9 +382,11 @@ app-workspace-shell-context-sidebar {
     margin-left: 0;
 }
 
-:host-context(.native-glass) .has-now-playing .workspace-content,
-:host-context(.window-fullscreen) .has-now-playing .workspace-content {
-    padding-bottom: 92px;
+// The pill floats inside the window's lower edge there, clear of the last
+// row once it is scrolled up.
+:host-context(.native-glass) .workspace-shell.has-now-playing,
+:host-context(.window-fullscreen) .workspace-shell.has-now-playing {
+    --workspace-now-playing-clearance: 92px;
 }
 
 :host-context(.native-glass) .workspace-now-playing,
@@ -409,17 +426,14 @@ app-workspace-shell-context-sidebar {
     }
 }
 
-// The now-playing pill overlaps the window's lower edge: the last row can
-// still scroll up clear of it.
-.has-now-playing .workspace-content {
-    padding-bottom: 56px;
-}
-
 .workspace-content {
     position: relative;
     z-index: 0;
     min-width: 0;
     min-height: 0;
+    // The now-playing pill overlaps the window's lower edge: the last row
+    // can still scroll up clear of it.
+    padding-bottom: var(--workspace-now-playing-clearance);
     // 2px off the window's right edge: with the body stopping 22px above
     // the bottom, nothing scrolled reaches into the rounded corner.
     margin-right: 2px;

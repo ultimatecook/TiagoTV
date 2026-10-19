@@ -1,10 +1,15 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import type { PlatformLook } from '../platform-design';
 import type { PlatformTitle } from '../platform-titles';
 import type { StreamingPlatform } from '../streaming-platforms';
-import { PlatformHeroSlides, titleTypeKey } from './platform-hero-slides';
+import {
+    languageNameKey,
+    PlatformHeroSlides,
+    titleTypeKey,
+} from './platform-hero-slides';
 
 /**
  * The rounded hero carousel of Prime Video, Disney+ and mitele: a slide
@@ -15,7 +20,7 @@ import { PlatformHeroSlides, titleTypeKey } from './platform-hero-slides';
  */
 @Component({
     selector: 'lib-platform-carousel',
-    imports: [MatIcon, TranslatePipe],
+    imports: [MatIcon, MatTooltip, TranslatePipe],
     templateUrl: './platform-carousel.component.html',
     styleUrl: './platform-carousel.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,10 +28,12 @@ import { PlatformHeroSlides, titleTypeKey } from './platform-hero-slides';
 })
 export class PlatformCarouselComponent {
     readonly platform = input.required<StreamingPlatform>();
+    /** What the page recommends (`pickRecommendations`), in turn. */
     readonly titles = input.required<readonly PlatformTitle[]>();
     readonly look = input<PlatformLook>('prime');
     readonly playKey = input('WORKSPACE.PLATFORMS.WATCH');
 
     readonly hero = new PlatformHeroSlides(this.titles);
     readonly typeKey = titleTypeKey;
+    readonly languageKey = languageNameKey;
 }

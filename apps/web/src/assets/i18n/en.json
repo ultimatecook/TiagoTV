@@ -2152,6 +2152,11 @@
             "MORE_INFO": "More info",
             "WATCH": "Watch now",
             "PLAY": "Play",
+            "WATCH_IN": "Watch in {{language}}",
+            "LANGUAGE": {
+                "ES": "Spanish",
+                "EN": "English"
+            },
             "BRANDS": "Brands",
             "BRAND_ROW": "{{brand}} on {{platform}}",
             "TOP10": "Top 10 on {{platform}}",

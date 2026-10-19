@@ -20,6 +20,9 @@ function title(
         rating: null,
         plot: null,
         backdrop: null,
+        tmdb: null,
+        year: null,
+        versions: [],
     };
 }
 

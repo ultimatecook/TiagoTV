@@ -2,7 +2,7 @@
     @let look = design()?.look ?? 'default';
     @let playKey = design()?.playKey ?? 'WORKSPACE.PLATFORMS.WATCH';
     <article class="page">
-        @if (titles(); as titles) {
+        @if (titles()) {
             @switch (design()?.hero) {
                 @case ('billboard') {
                     <lib-platform-billboard
@@ -10,7 +10,7 @@
                         [platform]="platform"
                         [look]="look"
                         [playKey]="playKey"
-                        [titles]="titles"
+                        [titles]="hero()"
                     />
                 }
                 @case ('carousel') {
@@ -18,13 +18,13 @@
                         [platform]="platform"
                         [look]="look"
                         [playKey]="playKey"
-                        [titles]="titles"
+                        [titles]="hero()"
                     />
                 }
                 @default {
                     <lib-platform-hero
                         [platform]="platform"
-                        [titles]="titles"
+                        [titles]="hero()"
                     />
                 }
             }
@@ -57,7 +57,9 @@
                         <h2 class="all__title">
                             {{ row.labelKey | translate: row.labelParams }}
                         </h2>
-                        <span class="all__count">{{ row.titles.length }}</span>
+                        <span class="all__count">{{
+                            openTitles().length
+                        }}</span>
                     </header>
                     <div class="all__grid">
                         @for (title of visible(); track title.kind + title.id) {

@@ -1,10 +1,18 @@
 import { displayTitle } from '@iptvnator/shared/interfaces';
-import { genreLabelKey, genresIn, type PlatformGenre } from './platform-genres';
+import { genresIn, type PlatformGenre } from './platform-genres';
 import type {
     PlatformCategory,
     PlatformLanguage,
     PlatformTitleKind,
 } from './streaming-platforms';
+
+/** One language version of a title: its own stream, name and category. */
+export interface PlatformTitleVersion {
+    readonly id: number;
+    readonly categoryId: string;
+    readonly language: PlatformLanguage;
+    readonly title: string;
+}
 
 export interface PlatformTitle {
     readonly id: number;
@@ -21,6 +29,15 @@ export interface PlatformTitle {
     /** Series lists carry their synopsis and backdrop; movies' come later. */
     readonly plot: string | null;
     readonly backdrop: string | null;
+    /** The TMDB id the provider's list gives (`tmdb` or `tmdb_id`). */
+    readonly tmdb: number | null;
+    readonly year: number | null;
+    /**
+     * The title in each language the provider files it in ("MUERTOS S.L."
+     * in Spanish, "DEATH INC." in English), the one shown first; the
+     * title's own fields are that version's.
+     */
+    readonly versions: readonly PlatformTitleVersion[];
 }
 
 /** A VOD or series entry of a platform category, as the page shows it. */
@@ -37,6 +54,11 @@ export interface PlatformCatalogItem {
     readonly rating?: number | string | null;
     readonly plot?: string | null;
     readonly backdrop_path?: readonly string[] | string | null;
+    readonly tmdb?: number | string | null;
+    readonly tmdb_id?: number | string | null;
+    readonly year?: number | string | null;
+    readonly releaseDate?: string | null;
+    readonly release_date?: string | null;
 }
 
 export function toPlatformTitles(
@@ -58,11 +80,12 @@ export function toPlatformTitles(
                 genres.add(genre);
             }
         }
+        const title = displayTitle(item.name);
         titles.push({
             id,
             kind: category.kind,
             categoryId: category.id,
-            title: displayTitle(item.name),
+            title,
             poster:
                 (category.kind === 'movie' ? item.stream_icon : item.cover) ||
                 null,
@@ -75,120 +98,44 @@ export function toPlatformTitles(
             rating: readRating(item.rating),
             plot: item.plot?.trim() || null,
             backdrop: firstImage(item.backdrop_path),
+            tmdb: readTmdbId(item.tmdb ?? item.tmdb_id),
+            year: readYear(item),
+            versions: [
+                {
+                    id,
+                    categoryId: category.id,
+                    language: category.language,
+                    title,
+                },
+            ],
         });
     }
     return titles;
 }
 
-/** Newest first; a title filed in two of the platform's categories once. */
-export function mergePlatformTitles(
-    lists: readonly (readonly PlatformTitle[])[]
-): PlatformTitle[] {
-    const seen = new Set<string>();
-    const merged: PlatformTitle[] = [];
-    for (const list of lists) {
-        for (const title of list) {
-            const key = `${title.kind}:${title.id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                merged.push(title);
-            }
+/** The same title on a page: its kind and the id of its first version. */
+export function titleKey(title: PlatformTitle): string {
+    return `${title.kind}:${title.id}`;
+}
+
+/** One version per language, in the title's order ("ES", then "EN"). */
+export function languageVersions(title: PlatformTitle): PlatformTitleVersion[] {
+    const seen = new Set<PlatformLanguage>();
+    return title.versions.filter((version) => {
+        if (seen.has(version.language)) {
+            return false;
         }
-    }
-    return merged.sort((a, b) => b.added - a.added);
+        seen.add(version.language);
+        return true;
+    });
 }
 
-export interface PlatformRow {
-    readonly id: string;
-    readonly labelKey: string;
-    readonly labelParams?: Readonly<Record<string, string>>;
-    /** Newest first, or by rank in a ranked row. */
-    readonly titles: readonly PlatformTitle[];
-    /** A "Top 10": each title carries its place, the best first. */
-    readonly ranked?: boolean;
-}
-
-export interface PlatformRowOptions {
-    /** Adds Netflix's "Top 10 on Netflix" row after what is new. */
-    readonly top10Of?: string;
-}
-
-/** The newest-titles row shows the latest additions only. */
-const NEWEST_LIMIT = 30;
-/** A genre needs this many titles for a row of its own. */
-const GENRE_MIN_TITLES = 6;
-const GENRE_ROW_LIMIT = 10;
-/** The Top 10 ranks the best rated of the platform's recent titles. */
-const TOP_POOL = 150;
-const TOP_COUNT = 10;
-
-/**
- * The platform page's rows, as the platforms lay out their own: what is
- * new, its movies, its series, then its genres, the largest first.
- */
-export function buildPlatformRows(
-    titles: readonly PlatformTitle[],
-    options: PlatformRowOptions = {}
-): PlatformRow[] {
-    const rows: PlatformRow[] = [];
-    const push = (id: string, labelKey: string, list: PlatformTitle[]) => {
-        if (list.length > 0) {
-            rows.push({ id, labelKey, titles: list });
-        }
-    };
-    push('newest', 'WORKSPACE.PLATFORMS.NEWEST', titles.slice(0, NEWEST_LIMIT));
-    const top = options.top10Of ? topRated(titles) : [];
-    if (options.top10Of && top.length >= 3) {
-        rows.push({
-            id: 'top10',
-            labelKey: 'WORKSPACE.PLATFORMS.TOP10',
-            labelParams: { platform: options.top10Of },
-            titles: top,
-            ranked: true,
-        });
-    }
-    push(
-        'movies',
-        'WORKSPACE.PLATFORMS.MOVIES',
-        titles.filter((title) => title.kind === 'movie')
-    );
-    push(
-        'series',
-        'WORKSPACE.PLATFORMS.SERIES',
-        titles.filter((title) => title.kind === 'series')
-    );
-
-    const byGenre = new Map<PlatformGenre, PlatformTitle[]>();
-    for (const title of titles) {
-        for (const genre of title.genres) {
-            const list = byGenre.get(genre) ?? [];
-            list.push(title);
-            byGenre.set(genre, list);
-        }
-    }
-    [...byGenre.entries()]
-        .filter(([, list]) => list.length >= GENRE_MIN_TITLES)
-        .sort((a, b) => b[1].length - a[1].length)
-        .slice(0, GENRE_ROW_LIMIT)
-        .forEach(([genre, list]) =>
-            push(`genre-${genre}`, genreLabelKey(genre), list)
-        );
-    return rows;
-}
-
-/** The best rated of the recent titles with a poster, newest on a tie. */
-export function topRated(titles: readonly PlatformTitle[]): PlatformTitle[] {
-    return titles
-        .slice(0, TOP_POOL)
-        .filter((title) => title.poster && (title.rating ?? 0) > 0)
-        .map((title, index) => ({ title, index }))
-        .sort(
-            (a, b) =>
-                (b.title.rating ?? 0) - (a.title.rating ?? 0) ||
-                a.index - b.index
-        )
-        .slice(0, TOP_COUNT)
-        .map(({ title }) => title);
+/** "ES · EN": the languages a title is available in. */
+export function languagesLabel(title: PlatformTitle): string {
+    const versions = languageVersions(title);
+    return versions.length > 0
+        ? versions.map((version) => version.language).join(' · ')
+        : title.language;
 }
 
 function readRating(value: number | string | null | undefined): number | null {
@@ -196,6 +143,29 @@ function readRating(value: number | string | null | undefined): number | null {
     return Number.isFinite(rating) && rating > 0 && rating <= 10
         ? rating
         : null;
+}
+
+/** Providers send the id as a number, a numeric string, "" or "0". */
+function readTmdbId(value: number | string | null | undefined): number | null {
+    const id = Number(value);
+    return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+const YEAR = /^\s*((?:19|20)\d{2})/;
+/** "MUERTOS S.L. (2024) ES", "Fauda [2015]", "EN - TONY - 2026". */
+const NAMED_YEAR =
+    /[([]\s*((?:19|20)\d{2})\s*[)\]]|\s[-–]\s((?:19|20)\d{2})\s*$/;
+
+/** The release year: the list's own field, else the one in the name. */
+function readYear(item: PlatformCatalogItem): number | null {
+    for (const value of [item.year, item.releaseDate, item.release_date]) {
+        const match = YEAR.exec(String(value ?? ''));
+        if (match) {
+            return Number(match[1]);
+        }
+    }
+    const named = NAMED_YEAR.exec(item.name ?? '');
+    return named ? Number(named[1] ?? named[2]) : null;
 }
 
 /** The first web image of a backdrop list (or of a single URL). */

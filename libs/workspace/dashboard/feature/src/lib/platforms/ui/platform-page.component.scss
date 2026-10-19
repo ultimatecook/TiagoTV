@@ -17,10 +17,13 @@
 .page {
     // The rows run on through the right gutter to the window's edge.
     --rail-bleed: var(--page-gutter);
+    // The shell's scroller keeps no room at its foot here: the page keeps
+    // the now-playing pill's room on its own ground (the shell's variable).
+    --page-foot: calc(40px + var(--workspace-now-playing-clearance, 0px));
     display: flex;
     flex-direction: column;
     gap: 26px;
-    padding: 8px var(--page-gutter) 40px;
+    padding: 8px var(--page-gutter) var(--page-foot);
 }
 
 // The billboard runs edge to edge; the rows after it paint over its foot.
@@ -214,6 +217,6 @@
     }
 
     .page {
-        padding-bottom: 32px;
+        --page-foot: calc(32px + var(--workspace-now-playing-clearance, 0px));
     }
 }

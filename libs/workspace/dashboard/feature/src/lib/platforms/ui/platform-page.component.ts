@@ -12,8 +12,10 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
 import { buildBrandRows } from '../platform-brands';
 import { platformDesign, rowTile } from '../platform-design';
+import { pickRecommendations } from '../platform-hero';
+import { buildPlatformRows } from '../platform-rows';
+import { daySeed } from '../platform-seed';
 import { PlatformThemeService } from '../platform-theme.service';
-import { buildPlatformRows } from '../platform-titles';
 import { findStreamingPlatform } from '../streaming-platforms';
 import { PlatformBillboardComponent } from './platform-billboard.component';
 import { PlatformBrandsComponent } from './platform-brands.component';
@@ -25,6 +27,8 @@ import { PlatformTitleCardComponent } from './platform-title-card.component';
 
 /** Posters per page of a row's full list; "Show more" adds another. */
 const PAGE = 60;
+/** Titles the hero shows in turn. */
+const HERO_COUNT = 6;
 
 /**
  * A platform's page (/workspace/platforms/:platformId), laid out like the
@@ -32,6 +36,8 @@ const PAGE = 60;
  * and Top 10, Prime Video's carousel, HBO Max's posters, Apple TV's large
  * cards, Disney+'s carousel and brand tiles… Then what is new, its movies,
  * its series and its genres, one row each; a row's title opens all of it.
+ * The hero's picks and the rows' mix are the day's (`daySeed`), taken once
+ * so they hold still while the page is open.
  */
 @Component({
     selector: 'lib-platform-page',
@@ -66,12 +72,19 @@ export class PlatformPageComponent {
         const platform = this.platform();
         return platform ? this.catalog.titlesOf(platform.id) : null;
     });
+    private readonly seed = daySeed();
+    /** The titles the hero recommends, which the rows beside it leave out. */
+    readonly hero = computed(() =>
+        pickRecommendations(this.titles() ?? [], HERO_COUNT, this.seed)
+    );
     readonly rows = computed(() => {
         const titles = this.titles();
         const platform = this.platform();
         return titles && platform
             ? buildPlatformRows(titles, {
                   top10Of: this.design()?.top10 ? platform.name : undefined,
+                  hero: this.hero(),
+                  seed: this.seed,
               })
             : null;
     });
@@ -104,12 +117,13 @@ export class PlatformPageComponent {
         const design = this.design();
         return design ? rowTile(design, this.openRowId() ?? '') : 'poster';
     });
-    readonly visible = computed(
-        () => this.openRow()?.titles.slice(0, this.shown()) ?? []
-    );
-    readonly hasMore = computed(
-        () => (this.openRow()?.titles.length ?? 0) > this.shown()
-    );
+    /** Everything the open row holds, more than its strip shows. */
+    readonly openTitles = computed(() => {
+        const row = this.openRow();
+        return row ? (row.all ?? row.titles) : [];
+    });
+    readonly visible = computed(() => this.openTitles().slice(0, this.shown()));
+    readonly hasMore = computed(() => this.openTitles().length > this.shown());
 
     constructor() {
         effect(() => {

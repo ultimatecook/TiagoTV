@@ -1,7 +1,11 @@
 import { computed, effect, inject, signal } from '@angular/core';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
-import { pickRecommendations } from '../platform-hero';
-import type { PlatformTitle } from '../platform-titles';
+import {
+    languagesLabel,
+    languageVersions,
+    type PlatformTitle,
+    type PlatformTitleVersion,
+} from '../platform-titles';
 
 const ROTATE_MS = 8000;
 
@@ -13,11 +17,16 @@ export interface PlatformHeroSlide {
     readonly genres: readonly string[];
     /** The rating as a "% Match", Netflix's way. */
     readonly match: number | null;
+    /** "ES · EN", the languages it comes in. */
+    readonly languages: string;
+    /** One version per language, each one's own button when it has two. */
+    readonly versions: readonly PlatformTitleVersion[];
 }
 
 /**
  * The recommended titles a platform page's hero shows in turn, every
- * look's (card, billboard, carousel): their artwork and synopsis (fetched
+ * look's (card, billboard, carousel), as the page picks them
+ * (`pickRecommendations`): their artwork and synopsis (fetched
  * from each title's page), which one is showing, and the turning, paused
  * while the pointer or the keyboard is on the hero and under reduced
  * motion. Create it in an injection context.
@@ -28,7 +37,7 @@ export class PlatformHeroSlides {
     private readonly paused = signal(false);
 
     readonly slides = computed(() =>
-        pickRecommendations(this.titles()).map((title): PlatformHeroSlide => {
+        this.titles().map((title): PlatformHeroSlide => {
             const extras = this.catalog.extrasOf(title);
             return {
                 title,
@@ -40,6 +49,8 @@ export class PlatformHeroSlides {
                     title.rating !== null
                         ? Math.round(title.rating * 10)
                         : null,
+                languages: languagesLabel(title),
+                versions: languageVersions(title),
             };
         })
     );
@@ -85,9 +96,15 @@ export class PlatformHeroSlides {
         this.paused.set(paused);
     }
 
-    open(title: PlatformTitle): void {
-        this.catalog.open(title);
+    /** The title's page: its first version's, or the one picked. */
+    open(title: PlatformTitle, version?: PlatformTitleVersion): void {
+        this.catalog.open(title, version);
     }
+}
+
+/** "Ver en inglés": the key of a version button's language. */
+export function languageNameKey(version: PlatformTitleVersion): string {
+    return `WORKSPACE.PLATFORMS.LANGUAGE.${version.language}`;
 }
 
 /** The "Movie" / "Series" label of a title. */

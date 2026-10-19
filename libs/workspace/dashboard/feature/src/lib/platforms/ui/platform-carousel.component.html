@@ -52,9 +52,35 @@
                     @for (genre of slide.genres; track genre) {
                         <span>{{ genre }}</span>
                     }
-                    <span class="carousel__language">{{
-                        slide.title.language
-                    }}</span>
+                    @if (slide.versions.length > 1) {
+                        <!-- One button per language version: the title's page in it. -->
+                        @for (
+                            version of slide.versions;
+                            track version.language
+                        ) {
+                            @let watchIn =
+                                'WORKSPACE.PLATFORMS.WATCH_IN'
+                                    | translate
+                                        : {
+                                              language:
+                                                  (languageKey(version)
+                                                  | translate),
+                                          };
+                            <button
+                                type="button"
+                                class="carousel__language"
+                                [attr.aria-label]="watchIn"
+                                [matTooltip]="watchIn"
+                                (click)="hero.open(slide.title, version)"
+                            >
+                                {{ version.language }}
+                            </button>
+                        }
+                    } @else {
+                        <span class="carousel__language">{{
+                            slide.languages
+                        }}</span>
+                    }
                 </p>
                 @if (slide.plot) {
                     <p class="carousel__plot">{{ slide.plot }}</p>

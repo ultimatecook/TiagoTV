@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { rowTile, type PlatformDesign } from '../platform-design';
-import type { PlatformRow } from '../platform-titles';
+import type { PlatformRow } from '../platform-rows';
 import { PlatformTitleCardComponent } from './platform-title-card.component';
 
 /** Posters a row lays out; "See all" opens the rest. */

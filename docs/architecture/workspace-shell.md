@@ -658,6 +658,16 @@ The Electron window hides the native title bar on all desktop platforms
    which precedes the content, leaves it clickable); a billboard runs under
    them. A fullscreen window has no lights, strip or corners: the content
    runs to all four edges (the glass window drops its bottom inset too).
+   A streaming platform's page and its titles' pages (`data-platform-theme`
+   on `<html>`) paint their own opaque ground, beside which any strip of
+   glass would show: in the macOS window, whose rounded corners the system clips, they run to
+   the bottom edge as in fullscreen, and on every window their scroller
+   draws no scrollbar (its gutter would leave a strip at the right edge) and
+   keeps no room at its foot. The now-playing pill's room
+   (`--workspace-now-playing-clearance`: 56 px, 92 px on the macOS glass and
+   in fullscreen, none without the pill) is then kept inside those pages'
+   own ground: the platform page's bottom padding and the title page's
+   (`app-portal-detail-shell`, in `apps/web/src/_platform-themes.scss`).
 
    App zoom (see "Zoom level") scales CSS pixels but not the lights. On
    macOS, `TrafficLightsClearanceDirective` on `.workspace-shell` reads the

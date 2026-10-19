@@ -184,6 +184,24 @@
     letter-spacing: 0.06em;
 }
 
+// A language version's own button ("ES", "EN"), when the title comes in
+// two: it opens the title's page in that language.
+button.hero__language {
+    background: none;
+    color: inherit;
+    font-family: inherit;
+    line-height: inherit;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
 .hero__description {
     display: -webkit-box;
     margin: 0;

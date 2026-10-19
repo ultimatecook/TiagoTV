@@ -8,10 +8,11 @@ import { primaryXtreamSource, xtreamSourceCredentials } from '../xtream-source';
 import type { PlatformGenre } from './platform-genres';
 import { titleExtras, type PlatformTitleExtras } from './platform-hero';
 import {
-    mergePlatformTitles,
     toPlatformTitles,
     type PlatformTitle,
+    type PlatformTitleVersion,
 } from './platform-titles';
+import { mergePlatformTitles } from './platform-versions';
 import {
     buildGenreCategories,
     buildPlatformShelves,
@@ -72,7 +73,10 @@ export class PlatformsCatalogService {
     readonly shelves = computed(() => this.catalog()?.shelves ?? null);
     readonly failed = signal(false);
 
-    /** The platform's titles, newest first, once loaded. */
+    /**
+     * The platform's titles, newest first, once loaded: one per show, its
+     * Spanish and English versions together.
+     */
     titlesOf(id: StreamingPlatformId): readonly PlatformTitle[] | null {
         const loaded = this.loadedTitles().get(id);
         return loaded && loaded.playlistId === this.source()?._id
@@ -201,8 +205,14 @@ export class PlatformsCatalogService {
         }
     }
 
-    /** Opens the title's page, as the catalog's own grid does. */
-    open(title: PlatformTitle): void {
+    /**
+     * Opens the title's page, as the catalog's own grid does: its first
+     * version's (Spanish where there is one), or the version asked for.
+     */
+    open(
+        title: PlatformTitle,
+        version: PlatformTitleVersion = title.versions[0] ?? title
+    ): void {
         const source = this.source();
         if (!source) {
             return;
@@ -210,9 +220,9 @@ export class PlatformsCatalogService {
         const target = buildXtreamNavigationTarget({
             playlistId: source._id,
             type: title.kind,
-            categoryId: title.categoryId,
-            itemId: title.id,
-            title: title.title,
+            categoryId: version.categoryId,
+            itemId: version.id,
+            title: version.title,
             imageUrl: title.poster,
         });
         void this.router.navigate(target.link, { state: target.state });

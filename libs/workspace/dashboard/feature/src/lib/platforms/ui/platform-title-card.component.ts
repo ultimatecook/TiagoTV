@@ -10,14 +10,14 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
 import type { PlatformLook } from '../platform-design';
 import { genreLabelKey } from '../platform-genres';
-import type { PlatformTitle } from '../platform-titles';
+import { languagesLabel, type PlatformTitle } from '../platform-titles';
 import { titleTypeKey } from './platform-hero-slides';
 
 /**
- * A platform title's tile: opens the title's page. A 2:3 poster, or the
- * 16:9 artwork of Netflix, Prime Video, Apple TV, Disney+… (the backdrop
- * where the catalog has one, else the poster cropped), dressed as the
- * platform dresses its own.
+ * A platform title's tile: opens the title's page (its Spanish version,
+ * where it has one). A 2:3 poster, or the 16:9 artwork of Netflix, Prime
+ * Video, Apple TV, Disney+… (the backdrop where the catalog has one, else
+ * the poster cropped), dressed as the platform dresses its own.
  */
 @Component({
     selector: 'lib-platform-title-card',
@@ -62,6 +62,8 @@ export class PlatformTitleCardComponent {
         const rank = this.rank();
         return rank ? `${rank}. ${this.title().title}` : this.title().title;
     });
+    /** "ES · EN": one card for a title in both languages. */
+    readonly languages = computed(() => languagesLabel(this.title()));
     /** "Series · Drama", under Apple TV's and Hulu's cards. */
     readonly typeKey = computed(() => titleTypeKey(this.title()));
     readonly genreKey = computed(() => {

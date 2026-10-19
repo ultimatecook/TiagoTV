@@ -5,11 +5,16 @@ import {
     input,
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import type { PlatformLook } from '../platform-design';
 import type { PlatformTitle } from '../platform-titles';
 import type { StreamingPlatform } from '../streaming-platforms';
-import { PlatformHeroSlides, titleTypeKey } from './platform-hero-slides';
+import {
+    languageNameKey,
+    PlatformHeroSlides,
+    titleTypeKey,
+} from './platform-hero-slides';
 import { PlatformLogoComponent } from './platform-logo.component';
 
 /** The looks whose "More info" is a labelled button, not a round one. */
@@ -29,7 +34,7 @@ const TEXT_INFO: ReadonlySet<PlatformLook> = new Set<PlatformLook>([
  */
 @Component({
     selector: 'lib-platform-billboard',
-    imports: [MatIcon, PlatformLogoComponent, TranslatePipe],
+    imports: [MatIcon, MatTooltip, PlatformLogoComponent, TranslatePipe],
     templateUrl: './platform-billboard.component.html',
     styleUrl: './platform-billboard.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,6 +43,7 @@ const TEXT_INFO: ReadonlySet<PlatformLook> = new Set<PlatformLook>([
 export class PlatformBillboardComponent {
     readonly platform = input.required<StreamingPlatform>();
     readonly look = input.required<PlatformLook>();
+    /** What the page recommends (`pickRecommendations`), in turn. */
     readonly titles = input.required<readonly PlatformTitle[]>();
     readonly playKey = input('WORKSPACE.PLATFORMS.WATCH');
 
@@ -45,4 +51,5 @@ export class PlatformBillboardComponent {
 
     readonly hero = new PlatformHeroSlides(this.titles);
     readonly typeKey = titleTypeKey;
+    readonly languageKey = languageNameKey;
 }

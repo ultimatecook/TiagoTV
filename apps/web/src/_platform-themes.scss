@@ -85,6 +85,18 @@ $apple-font:
 // The primary "Play" button, leaving its launching and stop tints alone.
 $primary: '.play-btn:not(.play-btn--secondary):not(.play-btn--launching):not(.play-btn--stop)';
 
+// Every platform's title page runs to the window's right edge and under
+// the now-playing pill, as the platform's page does: the page, its own
+// scroller, draws no bar (its gutter would leave a strip of glass beside
+// the page) and keeps the pill's room inside its ground (the shell's
+// scroller keeps none on a platform's pages).
+html[data-platform-theme] app-portal-detail-shell {
+    box-sizing: border-box;
+    padding-bottom: var(--workspace-now-playing-clearance, 0px);
+    scrollbar-gutter: auto;
+    scrollbar-width: none;
+}
+
 // ─── Netflix ────────────────────────────────────────────────────────────────
 @include title-page('netflix') {
     --app-content-bg: #181818;

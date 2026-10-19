@@ -1,5 +1,6 @@
 import type { PlatformGenre } from './platform-genres';
-import type { PlatformRow, PlatformTitle } from './platform-titles';
+import type { PlatformRow } from './platform-rows';
+import type { PlatformTitle } from './platform-titles';
 
 /**
  * Disney+'s brand tiles under its hero: Disney, Pixar, Marvel, Star Wars

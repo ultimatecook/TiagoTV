@@ -64,9 +64,30 @@
                 @for (genre of slide.genres; track genre) {
                     <span class="billboard__genre">{{ genre }}</span>
                 }
-                @if (!netflix) {
+                @if (slide.versions.length > 1) {
+                    <!-- One button per language version: the title's page in it. -->
+                    @for (version of slide.versions; track version.language) {
+                        @let watchIn =
+                            'WORKSPACE.PLATFORMS.WATCH_IN'
+                                | translate
+                                    : {
+                                          language:
+                                              (languageKey(version)
+                                              | translate),
+                                      };
+                        <button
+                            type="button"
+                            class="billboard__language"
+                            [attr.aria-label]="watchIn"
+                            [matTooltip]="watchIn"
+                            (click)="hero.open(slide.title, version)"
+                        >
+                            {{ version.language }}
+                        </button>
+                    }
+                } @else if (!netflix) {
                     <span class="billboard__language">{{
-                        slide.title.language
+                        slide.languages
                     }}</span>
                 }
             </p>
@@ -109,7 +130,7 @@
         </div>
         @if (netflix) {
             <!-- Netflix's maturity band, carrying the title's language. -->
-            <span class="billboard__band">{{ slide.title.language }}</span>
+            <span class="billboard__band">{{ slide.languages }}</span>
         }
     }
 

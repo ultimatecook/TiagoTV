@@ -2152,6 +2152,11 @@
             "MORE_INFO": "Más información",
             "WATCH": "Ver ahora",
             "PLAY": "Reproducir",
+            "WATCH_IN": "Ver en {{language}}",
+            "LANGUAGE": {
+                "ES": "español",
+                "EN": "inglés"
+            },
             "BRANDS": "Marcas",
             "BRAND_ROW": "{{brand}} en {{platform}}",
             "TOP10": "Top 10 en {{platform}}",

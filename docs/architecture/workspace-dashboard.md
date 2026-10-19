@@ -509,6 +509,42 @@ all, and none inside the hero.
     connection fields. Workflows that need channel payloads still call
     `getPlaylistById()`.
 
+## Streaming Platform Pages
+
+TiagoTV's platform pages (`/workspace/platforms/:platformId`,
+`lib/platforms/`) gather a platform's ES and EN Xtream VOD and series
+categories (`PlatformsCatalogService`):
+
+1. One card per show. The provider files a show once per language, under each
+   language's name ("MUERTOS S.L." / "DEATH INC."), and sometimes in two
+   categories. `mergePlatformTitles` (`platform-versions.ts`) joins entries
+   of one kind that share the list's TMDB id (`tmdb` or `tmdb_id`), else the
+   same normalized name with agreeing years (a missing year agrees, one year
+   apart is tolerated), else the same poster (a TMDB image by its file name,
+   whatever its size). A poster shared by more than six entries is a
+   placeholder and joins nothing; entries whose TMDB ids or years disagree are
+   never joined, not even through a third one. The card shows the Spanish
+   version (its id, name and category; the other versions fill in a missing
+   poster, rating, synopsis or backdrop), carries every version in
+   `versions`, the union of their genres and the newest `added`, and labels
+   its languages ("ES · EN"). A card and the hero's Play open the Spanish
+   version's page; on the hero each language is a button of its own that
+   opens that version's page.
+2. The hero recommends six well-rated recent titles with artwork, movies and
+   series in turn (`pickRecommendations`), drawn by the local day's seed
+   (`daySeed`): different picks from one day to the next, the same all day.
+   The page takes the seed once, so nothing reshuffles while it is open.
+3. Rows (`buildPlatformRows`): what is new (by date, the newest 30), Netflix's
+   Top 10 (the best rated with a poster among the newest 150), movies, series,
+   then up to ten genres, the largest first. The hero's titles are left out of
+   the new and Top 10 rows; a title takes two places on the page at most (the
+   hero counts as one); every unranked row shows the titles the page has not
+   shown yet first. Movies, series and genres go by rating, each title moved
+   by up to two points by the row's own draw of the day, so the rows open on
+   different titles. A genre row holds only titles of its genre and needs six
+   not shown above it. A row shows 40 titles; "See all" opens its whole list
+   (`PlatformRow.all`).
+
 ## Empty State
 
 The welcome state is rendered via the existing
