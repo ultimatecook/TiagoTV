@@ -787,6 +787,19 @@ export interface ElectronBridgeApi {
         callback: (state: ElectronBridgeWindowState) => void
     ) => () => void;
     /**
+     * The window's fullscreen state (OS-level or HTML-element) on every
+     * platform: called at once with the current state when it is known,
+     * then on every change. The preload keeps the state the main process
+     * sends when the document is ready, so a late subscriber misses
+     * nothing. Absent from builds whose main process pushed window state
+     * on Windows/Linux only; see
+     * `RuntimeCapabilitiesService.windowFullScreenSource`. Returns the
+     * unsubscribe.
+     */
+    onWindowFullScreenChange?: (
+        callback: (isFullScreen: boolean) => void
+    ) => () => void;
+    /**
      * Platform Back gestures the window receives, forwarded from the main
      * process. Subscribe-only: the renderer runs the workspace Back (or
      * ignores the request) and sends nothing back. Returns the unsubscribe.

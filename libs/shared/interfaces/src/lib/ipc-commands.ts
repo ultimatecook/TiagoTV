@@ -139,6 +139,9 @@ export const WINDOW_TOGGLE_MAXIMIZE = 'WINDOW:TOGGLE_MAXIMIZE';
 export const WINDOW_TOGGLE_FULLSCREEN = 'WINDOW:TOGGLE_FULLSCREEN';
 export const WINDOW_CLOSE = 'WINDOW:CLOSE';
 export const WINDOW_GET_STATE = 'WINDOW:GET_STATE';
+// Main → renderer on every platform: the window's maximize/fullscreen state
+// after each change and once each document is ready. It also drives the
+// `window-fullscreen` class, which macOS needs too.
 export const WINDOW_STATE_CHANGED = 'WINDOW:STATE_CHANGED';
 // Main → renderer only: the window received a platform Back gesture (Windows
 // and Linux `app-command` `browser-backward`, macOS trackpad `swipe` left),

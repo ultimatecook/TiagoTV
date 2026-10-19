@@ -66,7 +66,7 @@ type MockMainWindow = {
     center: jest.Mock<void, []>;
     getNormalBounds: jest.Mock<object, []>;
     // Read once by attachWindowStateEvents to seed the tracked window
-    // state; only reached off macOS, where the custom controls exist.
+    // state, on every platform.
     isDestroyed: jest.Mock<boolean, []>;
     isFullScreen: jest.Mock<boolean, []>;
     isMaximized: jest.Mock<boolean, []>;
@@ -83,6 +83,7 @@ type MockMainWindow = {
         on: jest.Mock<void, [string, (...args: unknown[]) => void]>;
         once: jest.Mock<void, [string, (...args: unknown[]) => void]>;
         removeListener: jest.Mock<void, [string, (...args: unknown[]) => void]>;
+        send: jest.Mock<void, [string, unknown]>;
         openDevTools: jest.Mock<void, []>;
         setWindowOpenHandler: jest.Mock<void, [unknown]>;
         getZoomLevel: jest.Mock<number, []>;
@@ -113,6 +114,7 @@ function createMockMainWindow(): MockMainWindow {
                 void,
                 [string, (...args: unknown[]) => void]
             >(),
+            send: jest.fn<void, [string, unknown]>(),
             openDevTools: jest.fn<void, []>(),
             setWindowOpenHandler: jest.fn<void, [unknown]>(),
             getZoomLevel: jest.fn<number, []>().mockReturnValue(0),
@@ -659,6 +661,7 @@ describe('Electron app security helpers', () => {
             path.join(rendererRoot, 'workspace', 'sources')
         ).href;
 
+        /** Runs every listener the app registered for the event. */
         function fireWebContentsEvent(
             win: MockMainWindow,
             eventName: string,
@@ -668,8 +671,8 @@ describe('Electron app security helpers', () => {
                 .filter(([name]) => name === eventName)
                 .map(([, handler]) => handler);
 
-            expect(handlers).toHaveLength(1);
-            handlers[0](...args);
+            expect(handlers.length).toBeGreaterThan(0);
+            handlers.forEach((handler) => handler(...args));
         }
 
         function createPackagedWindow(): MockMainWindow {

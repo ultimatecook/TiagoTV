@@ -325,6 +325,42 @@ describe('RuntimeCapabilitiesService', () => {
         expect(service.supportsStartupWindowMode).toBe(true);
     });
 
+    it('follows window fullscreen through the pushes, else the macOS query, else the size', () => {
+        const service = new RuntimeCapabilitiesService();
+
+        testWindow.electron = undefined;
+        expect(service.windowFullScreenSource).toBe('size');
+
+        // A main process that pushes the state on every platform.
+        for (const platform of ['darwin', 'win32', 'linux']) {
+            testWindow.electron = {
+                platform,
+                getWindowState: jest.fn(),
+                onWindowStateChange: jest.fn(),
+                onWindowFullScreenChange: jest.fn(),
+            };
+            expect(service.windowFullScreenSource).toBe('events');
+        }
+
+        // An installed macOS main process from before the pushes, running a
+        // newer interface build: its getWindowState still answers.
+        const olderBridge = {
+            getWindowState: jest.fn(),
+            onWindowStateChange: jest.fn(),
+        };
+        testWindow.electron = { platform: 'darwin', ...olderBridge };
+        expect(service.windowFullScreenSource).toBe('query');
+
+        // Older Windows/Linux main processes keep the size comparison: their
+        // getter can answer the pre-transition state.
+        testWindow.electron = { platform: 'win32', ...olderBridge };
+        expect(service.windowFullScreenSource).toBe('size');
+        testWindow.electron = { platform: 'linux', ...olderBridge };
+        expect(service.windowFullScreenSource).toBe('size');
+        testWindow.electron = { platform: 'darwin' };
+        expect(service.windowFullScreenSource).toBe('size');
+    });
+
     it('offers window Back gestures only with their push subscription', () => {
         const service = new RuntimeCapabilitiesService();
 

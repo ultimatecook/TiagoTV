@@ -13,6 +13,7 @@ import {
     ANNOUNCE_PLAYLIST_OPEN_LISTENER,
     OPEN_FILE,
     WINDOW_BACK_REQUESTED,
+    WINDOW_STATE_CHANGED,
 } from '@iptvnator/shared/interfaces';
 import type {
     DownloadMetadataSnapshot,
@@ -334,6 +335,28 @@ describe('main preload DB IPC contract', () => {
         );
     });
 
+    it('keeps the window state pushed before the renderer subscribes to fullscreen changes', () => {
+        // Registered while the preload runs, before any page script: the
+        // main process sends the state at dom-ready, often before the app
+        // has booted far enough to subscribe.
+        const stateHandlers = mockIpcRenderer.on.mock.calls.filter(
+            ([channel]) => channel === WINDOW_STATE_CHANGED
+        );
+        expect(stateHandlers).toHaveLength(1);
+        const pushState = stateHandlers[0][1];
+        pushState({}, { isMaximized: false, isFullScreen: true });
+
+        const callback = jest.fn();
+        const unsubscribe =
+            getExposedApi().onWindowFullScreenChange?.(callback);
+        pushState({}, { isMaximized: true, isFullScreen: true });
+        pushState({}, { isMaximized: true, isFullScreen: false });
+        unsubscribe?.();
+        pushState({}, { isMaximized: true, isFullScreen: true });
+
+        expect(callback.mock.calls).toEqual([[true], [false]]);
+    });
+
     it('forwards request-scoped DB operation events and unregisters the listener', () => {
         const api = getExposedApi();
         const callback = jest.fn();
@@ -346,7 +369,7 @@ describe('main preload DB IPC contract', () => {
         };
 
         const unsubscribe = api.onDbOperationEvent(callback) as () => void;
-        const handler = mockIpcRenderer.on.mock.calls[0][1];
+        const handler = mockIpcRenderer.on.mock.calls.at(-1)?.[1];
 
         handler({}, event);
 
@@ -410,7 +433,7 @@ describe('main preload DB IPC contract', () => {
         const callback = jest.fn();
 
         api.onDbSaveContentProgress(callback);
-        const handler = mockIpcRenderer.on.mock.calls[0][1];
+        const handler = mockIpcRenderer.on.mock.calls.at(-1)?.[1];
 
         handler({}, { operation: 'delete-playlist', status: 'progress' });
         handler({}, { operation: 'save-content', status: 'started' });

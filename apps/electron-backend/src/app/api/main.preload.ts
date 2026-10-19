@@ -31,6 +31,7 @@ import {
     adjustFrameZoomLevel,
     applyPersistedZoomLevel,
 } from './preload-zoom-level';
+import { createWindowFullScreenFeed } from './preload-window-fullscreen';
 import {
     createXtreamPreloadPerformanceCapture,
     isXtreamPreloadPerformanceCaptureEnabled,
@@ -294,6 +295,15 @@ const frameZoomPorts = {
     setZoomLevel: (level: number) => webFrame.setZoomLevel(level),
 };
 
+// Listens from here, before any page script: the main process sends the
+// window state once the document is ready, usually before the app has
+// booted far enough to subscribe (see preload-window-fullscreen.ts).
+const subscribeToWindowFullScreen = createWindowFullScreenFeed((onState) =>
+    ipcRenderer.on(WINDOW_STATE_CHANGED, (_event, state: unknown) =>
+        onState(state)
+    )
+);
+
 const electronApi: ElectronBridgeApi = {
     // Remote control channel change listener
     onChannelChange: (
@@ -449,6 +459,8 @@ const electronApi: ElectronBridgeApi = {
         ipcRenderer.on(WINDOW_STATE_CHANGED, handler);
         return () => ipcRenderer.off(WINDOW_STATE_CHANGED, handler);
     },
+    onWindowFullScreenChange: (callback: (isFullScreen: boolean) => void) =>
+        subscribeToWindowFullScreen(callback),
     onWindowBackRequested: (
         callback: (source: ElectronBridgeBackGestureSource) => void
     ) => {

@@ -144,6 +144,56 @@ describe('TrafficLightsClearanceDirective', () => {
         removeListener.mockRestore();
     });
 
+    describe('in fullscreen', () => {
+        const root = document.documentElement;
+        /** Lets the MutationObserver deliver its records, then renders. */
+        const settle = async () => {
+            await new Promise((resolve) => setTimeout(resolve));
+            fixture.detectChanges();
+        };
+
+        afterEach(() => root.classList.remove('window-fullscreen'));
+
+        it('clears nothing while the window is fullscreen: the lights are hidden', async () => {
+            render();
+            expect(clearance()).toEqual({ x: '84px', y: '48px' });
+
+            root.classList.add('window-fullscreen');
+            await settle();
+            expect(clearance()).toEqual({ x: '0px', y: '0px' });
+
+            root.classList.remove('window-fullscreen');
+            await settle();
+            expect(clearance()).toEqual({ x: '84px', y: '48px' });
+        });
+
+        it('starts at zero in a window that is already fullscreen', () => {
+            root.classList.add('window-fullscreen');
+            fixture = TestBed.createComponent(HostComponent);
+            fixture.detectChanges();
+            expect(clearance()).toEqual({ x: '0px', y: '0px' });
+        });
+
+        it('publishes nothing off macOS, fullscreen or not', async () => {
+            fixture.componentInstance.enabled.set(false);
+            render();
+            root.classList.add('window-fullscreen');
+            await settle();
+            expect(clearance()).toEqual({ x: '', y: '' });
+        });
+
+        it('stops watching the window once destroyed', () => {
+            const disconnect = jest.spyOn(
+                MutationObserver.prototype,
+                'disconnect'
+            );
+            render();
+            fixture.destroy();
+            expect(disconnect).toHaveBeenCalled();
+            disconnect.mockRestore();
+        });
+    });
+
     it('stops listening when destroyed', () => {
         render();
         const removeListener = jest.spyOn(window, 'removeEventListener');

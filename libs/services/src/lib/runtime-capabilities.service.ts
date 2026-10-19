@@ -3,6 +3,9 @@ import { ElectronBridgeApi } from '@iptvnator/shared/interfaces';
 
 export type RuntimeEnvironment = 'electron' | 'pwa';
 
+/** See `RuntimeCapabilitiesService.windowFullScreenSource`. */
+export type WindowFullScreenSource = 'events' | 'query' | 'size';
+
 type RuntimeElectronBridge = Partial<ElectronBridgeApi>;
 
 // Ordinary playback methods include season batches, so partial bridges use
@@ -68,6 +71,31 @@ export class RuntimeCapabilitiesService {
                 'onWindowStateChange',
             ].every((methodName) => this.hasElectronMethod(methodName))
         );
+    }
+
+    /**
+     * How the renderer learns whether the window is fullscreen (the
+     * `window-fullscreen` class on `<html>`):
+     *
+     * - `events`: the main process pushes it on every platform and the
+     *   preload hands it to `onWindowFullScreenChange`.
+     * - `query`: macOS with a main process from before those pushes, which
+     *   interface updates still run on. Its `getWindowState` answers the
+     *   window's real state, so the renderer asks again as the window
+     *   resizes. Not on Windows/Linux: their getter can answer the
+     *   pre-transition state.
+     * - `size`: no usable bridge (browser, PWA, older Windows/Linux
+     *   builds): a window as large as the screen is fullscreen. A notched
+     *   Mac's fullscreen window sits below the notch, which this misses.
+     */
+    get windowFullScreenSource(): WindowFullScreenSource {
+        if (this.hasElectronMethod('onWindowFullScreenChange')) {
+            return 'events';
+        }
+        if (this.isMacOS && this.hasElectronMethod('getWindowState')) {
+            return 'query';
+        }
+        return 'size';
     }
 
     /**

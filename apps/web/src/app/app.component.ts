@@ -102,10 +102,11 @@ export class AppComponent implements OnInit {
         if (this.runtime.usesCustomWindowControls) {
             document.body.classList.add('frameless-platform');
         }
-        startWindowChrome(
-            document,
-            this.runtime.isElectron && this.runtime.isMacOS
-        );
+        startWindowChrome(document, {
+            nativeGlass: this.runtime.isElectron && this.runtime.isMacOS,
+            fullScreenSource: this.runtime.windowFullScreenSource,
+            bridge: window.electron,
+        });
 
         // Playlist files the OS asked us to open (command line argument, file
         // association, macOS `open-file`) are resolved in the main process and

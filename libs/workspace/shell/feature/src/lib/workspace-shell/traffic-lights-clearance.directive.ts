@@ -30,6 +30,15 @@ export interface TrafficLightsClearance {
     readonly y: number;
 }
 
+/** A fullscreen window hides the lights: there is nothing to clear. */
+const FULLSCREEN_CLEARANCE: TrafficLightsClearance = { x: 0, y: 0 };
+
+/**
+ * Set on `<html>` while the window is fullscreen (the web app's
+ * `startWindowChrome`, from the main process's window state).
+ */
+const WINDOW_FULLSCREEN_CLASS = 'window-fullscreen';
+
 /**
  * The page zoom factor. Chromium reports the window in window pixels and the
  * viewport in CSS pixels, so their ratio is the app zoom.
@@ -60,7 +69,8 @@ export function trafficLightsClearance(
  * `--traffic-lights-clear-x` and `--traffic-lights-clear-y`, refreshed on
  * `resize` (Chromium fires it when the zoom changes). The shell grid, the
  * rail and the header read them; without them (off macOS) they fall back to
- * their default layout.
+ * their default layout. In fullscreen (`window-fullscreen` on `<html>`)
+ * macOS hides the lights, so both are `0px`.
  */
 @Directive({
     selector: '[appTrafficLightsClearance]',
@@ -73,13 +83,18 @@ export class TrafficLightsClearanceDirective {
     /** True where the native traffic lights overlay the window (macOS). */
     readonly enabled = input(false, { alias: 'appTrafficLightsClearance' });
 
-    private readonly view = inject(DOCUMENT).defaultView;
+    private readonly document = inject(DOCUMENT);
+    private readonly view = this.document.defaultView;
     private readonly zoomFactor = signal(
         this.view ? pageZoomFactor(this.view) : 1
     );
-    private readonly clearance = computed(() =>
-        this.enabled() ? trafficLightsClearance(this.zoomFactor()) : null
-    );
+    private readonly fullScreen = signal(this.isWindowFullScreen());
+    private readonly clearance = computed(() => {
+        if (!this.enabled()) return null;
+        return this.fullScreen()
+            ? FULLSCREEN_CLEARANCE
+            : trafficLightsClearance(this.zoomFactor());
+    });
     protected readonly clearX = computed(() => toPx(this.clearance()?.x));
     protected readonly clearY = computed(() => toPx(this.clearance()?.y));
 
@@ -92,6 +107,25 @@ export class TrafficLightsClearanceDirective {
             view.addEventListener('resize', update);
             onCleanup(() => view.removeEventListener('resize', update));
         });
+        effect((onCleanup) => {
+            if (!this.enabled() || typeof MutationObserver === 'undefined') {
+                return;
+            }
+            const update = () => this.fullScreen.set(this.isWindowFullScreen());
+            update();
+            const observer = new MutationObserver(update);
+            observer.observe(this.document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class'],
+            });
+            onCleanup(() => observer.disconnect());
+        });
+    }
+
+    private isWindowFullScreen(): boolean {
+        return this.document.documentElement.classList.contains(
+            WINDOW_FULLSCREEN_CLASS
+        );
     }
 }
 

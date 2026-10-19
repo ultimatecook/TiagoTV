@@ -675,9 +675,22 @@ The Electron window hides the native title bar on all desktop platforms
    publishes the clearance in CSS pixels as `--traffic-lights-clear-x` (84
    window pixels) and `--traffic-lights-clear-y` (48: the lights' bottom
    plus a gap), which the sidebar's top padding and the hidden-sidebar band
-   read. Off macOS nothing is published and the defaults apply.
+   read. Off macOS nothing is published and the defaults apply. In
+   fullscreen macOS hides the lights, so both are `0px` there.
    `window-controls.e2e.ts` ("macOS traffic lights") was written for the
    header band and needs updating to this layout.
+
+   Fullscreen is `window-fullscreen` on `<html>`, set by
+   `startWindowChrome` (`apps/web/src/app/services/native-glass.ts`) from
+   the source `RuntimeCapabilitiesService.windowFullScreenSource` names:
+   `events`, the main process's push through the preload's
+   `onWindowFullScreenChange` (below), on every platform; `query`, for an
+   installed macOS main process from before that push (interface updates
+   run on it), `getWindowState` asked at start, after every resize and once
+   more a second after the last; `size`, everywhere else (browser, PWA,
+   older Windows/Linux builds), a window at least as large as the screen.
+   The size cannot be trusted on macOS: a notched Mac's fullscreen window
+   sits below the notch, exactly as large as a zoomed window.
 2. Windows and Linux use renderer-drawn window controls
    (`app-window-controls`, `libs/ui/components/src/lib/window-controls/`).
    `frame` is intentionally left untouched so native resize borders and
@@ -703,14 +716,24 @@ handlers in `apps/electron-backend/src/app/events/window.events.ts`):
    `WINDOW:GET_STATE` are `ipcMain.handle` channels resolved from the sender
    WebContents. Close goes through `win.close()` so the existing
    window-bounds persistence in `app.ts` still runs.
-2. `WINDOW:STATE_CHANGED` is pushed main → renderer on
+2. `WINDOW:STATE_CHANGED` is pushed main → renderer on every platform
+   (`apps/electron-backend/src/app/services/window-state-events.ts`) on
    maximize/unmaximize and on the fullscreen events —
    `enter/leave-full-screen` plus the `enter/leave-html-full-screen`
    variants emitted for HTML-element fullscreen (video player
    fullscreen) — so the maximize/restore glyph stays correct for
    externally triggered changes (double-click on a drag region, OS
    snap, F11). The controls hide themselves while the window is
-   fullscreen.
+   fullscreen. The tracked state is sent again at each `dom-ready` (first
+   load, reload, an interface update's build), so a new document learns a
+   fullscreen launch or a reload in fullscreen. The preload listens from
+   before the page's scripts and hands the latest `isFullScreen` to
+   `onWindowFullScreenChange` subscribers at once, then each change: the
+   renderer's `window-fullscreen` class (above) follows it. Earlier main
+   processes skipped the push on macOS; `onWindowFullScreenChange` came
+   with it, so its presence tells a renderer the push arrives. Earlier
+   renderers ignore the macOS push: they subscribe only for the
+   Windows/Linux controls.
 
     Window state is **never re-read at event time**. `attachWindowStateEvents`
     seeds `{ isMaximized, isFullScreen }` once at window creation and each
@@ -722,7 +745,9 @@ handlers in `apps/electron-backend/src/app/events/window.events.ts`):
     both flags on every push and no later event corrects a stale one,
     polling left the controls hidden forever after leaving fullscreen and
     stuck the maximize/restore glyph on the wrong icon. Regression coverage:
-    `app-window-state.spec.ts` and `window-controls.e2e.ts`.
+    `window-state-events.spec.ts`, `window-controls.e2e.ts` and, for the
+    fullscreen mark, `preload-window-fullscreen.spec.ts`,
+    `native-glass.spec.ts` and `window-fullscreen.e2e.ts`.
 
     The pushed `isFullScreen` is the OR of two flags tracked apart: native
     (OS-level, fed by `enter/leave-full-screen`) and HTML-element (fed by

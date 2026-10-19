@@ -1,6 +1,7 @@
 /**
  * Regression coverage for the WINDOW:STATE_CHANGED pushes that drive the
- * renderer-drawn window controls on Windows/Linux.
+ * renderer-drawn window controls on Windows/Linux and the renderer's
+ * `window-fullscreen` class on every platform.
  *
  * The handlers must never re-read window state at event time: on Windows,
  * isFullScreen() can still report true while 'leave-full-screen' fires for
@@ -10,50 +11,24 @@
  * forever — and cleared the companion `isMaximized`, sticking the
  * maximize/restore glyph on the wrong icon. Instead the state is seeded once
  * at attach time and each event patches only the flag it names.
+ *
+ * macOS gets the same pushes: a fullscreen window on a notched Mac sits
+ * below the notch, so the renderer's window-versus-screen size comparison
+ * missed it and kept the windowed layout.
  */
 
-jest.mock('electron', () => ({
-    app: {
-        getPath: jest.fn(() => '/tmp'),
-        isPackaged: false,
-        isReady: jest.fn(() => false),
-        on: jest.fn(),
-    },
-    BrowserWindow: jest.fn(),
-    Menu: {
-        buildFromTemplate: jest.fn(),
-    },
-    screen: {
-        getPrimaryDisplay: jest.fn(),
-    },
-    session: {
-        defaultSession: {
-            clearStorageData: jest.fn(),
-        },
-    },
-    shell: {
-        openExternal: jest.fn(),
-    },
-}));
-
-jest.mock('./services/store.service', () => ({
-    store: {
-        get: jest.fn(),
-        set: jest.fn(),
-    },
-    WINDOW_BOUNDS: 'windowBounds',
-    ZOOM_LEVEL: 'zoomLevel',
-}));
-
 import { WINDOW_STATE_CHANGED } from '@iptvnator/shared/interfaces';
-import App from './app';
+import { attachWindowStateEvents as attach } from './window-state-events';
+
+type Listener = jest.Mock<void, [string, () => void]>;
 
 type MockStateWindow = {
     isDestroyed: jest.Mock<boolean, []>;
     isFullScreen: jest.Mock<boolean, []>;
     isMaximized: jest.Mock<boolean, []>;
-    on: jest.Mock<void, [string, () => void]>;
+    on: Listener;
     webContents: {
+        on: Listener;
         send: jest.Mock<void, [string, unknown]>;
     };
 };
@@ -65,26 +40,32 @@ function createMockStateWindow(): MockStateWindow {
         isMaximized: jest.fn<boolean, []>().mockReturnValue(false),
         on: jest.fn<void, [string, () => void]>(),
         webContents: {
+            on: jest.fn<void, [string, () => void]>(),
             send: jest.fn<void, [string, unknown]>(),
         },
     };
 }
 
 function attachWindowStateEvents(win: MockStateWindow): void {
-    (
-        App as unknown as {
-            attachWindowStateEvents: (win: MockStateWindow) => void;
-        }
-    ).attachWindowStateEvents(win);
+    attach(win as unknown as Electron.BrowserWindow);
 }
 
-function fireWindowEvent(win: MockStateWindow, eventName: string): void {
-    const handlers = win.on.mock.calls
+function fireEvent(on: Listener, eventName: string): void {
+    const handlers = on.mock.calls
         .filter(([name]) => name === eventName)
         .map(([, handler]) => handler);
 
     expect(handlers).toHaveLength(1);
     handlers[0]();
+}
+
+function fireWindowEvent(win: MockStateWindow, eventName: string): void {
+    fireEvent(win.on, eventName);
+}
+
+/** A document finished parsing in the window: first load or a reload. */
+function fireDomReady(win: MockStateWindow): void {
+    fireEvent(win.webContents.on, 'dom-ready');
 }
 
 describe('window state change pushes', () => {
@@ -93,30 +74,66 @@ describe('window state change pushes', () => {
         'platform'
     );
 
-    function setProcessPlatform(platform: NodeJS.Platform): void {
-        Object.defineProperty(process, 'platform', {
-            configurable: true,
-            value: platform,
-        });
-    }
-
-    beforeEach(() => {
-        setProcessPlatform('win32');
-    });
-
     afterEach(() => {
         if (originalPlatform) {
             Object.defineProperty(process, 'platform', originalPlatform);
         }
     });
 
-    it('registers no window-state listeners on macOS', () => {
-        setProcessPlatform('darwin');
+    it('pushes native fullscreen changes on macOS too', () => {
+        Object.defineProperty(process, 'platform', {
+            configurable: true,
+            value: 'darwin',
+        });
         const win = createMockStateWindow();
-
         attachWindowStateEvents(win);
 
-        expect(win.on).not.toHaveBeenCalled();
+        fireWindowEvent(win, 'enter-full-screen');
+        expect(win.webContents.send).toHaveBeenLastCalledWith(
+            WINDOW_STATE_CHANGED,
+            { isMaximized: false, isFullScreen: true }
+        );
+
+        fireWindowEvent(win, 'leave-full-screen');
+        expect(win.webContents.send).toHaveBeenLastCalledWith(
+            WINDOW_STATE_CHANGED,
+            { isMaximized: false, isFullScreen: false }
+        );
+    });
+
+    it('sends the tracked state to every document once it is ready', () => {
+        // A fullscreen launch: the window is fullscreen at attach time.
+        const win = createMockStateWindow();
+        win.isFullScreen.mockReturnValue(true);
+        attachWindowStateEvents(win);
+        expect(win.webContents.send).not.toHaveBeenCalled();
+
+        fireDomReady(win);
+        expect(win.webContents.send).toHaveBeenLastCalledWith(
+            WINDOW_STATE_CHANGED,
+            { isMaximized: false, isFullScreen: true }
+        );
+
+        // Left before a reload: the reloaded document learns it from the
+        // tracked state, never from the getter, which may still lag.
+        fireWindowEvent(win, 'leave-full-screen');
+        win.isFullScreen.mockReturnValue(true);
+        fireDomReady(win);
+        expect(win.webContents.send).toHaveBeenCalledTimes(3);
+        expect(win.webContents.send).toHaveBeenLastCalledWith(
+            WINDOW_STATE_CHANGED,
+            { isMaximized: false, isFullScreen: false }
+        );
+    });
+
+    it('sends nothing to a destroyed window when a document is ready', () => {
+        const win = createMockStateWindow();
+        attachWindowStateEvents(win);
+        win.isDestroyed.mockReturnValue(true);
+
+        fireDomReady(win);
+
+        expect(win.webContents.send).not.toHaveBeenCalled();
     });
 
     it('pushes isFullScreen=false on leave-full-screen even while the window still reports fullscreen', () => {
