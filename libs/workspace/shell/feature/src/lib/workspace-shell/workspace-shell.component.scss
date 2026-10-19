@@ -22,6 +22,8 @@
     // The floating page controls (Back, the page's shortcuts).
     --page-controls-top: calc(var(--workspace-body-top) + 14px);
     --page-controls-start: 16px;
+    // The round Back and page buttons.
+    --page-control-size: 38px;
     // How far a context panel's content moves down under them.
     --workspace-leading-clearance: 48px;
     // How far the window's own controls reach over the content's top row
@@ -189,13 +191,17 @@ app-workspace-shell-page-controls {
     --workspace-drag-strip: 18px;
 
     &.nav-hidden {
-        --page-controls-start: var(--traffic-lights-clear-x, 84px);
+        // Back sits in the lights' row, a lights-sized step after them.
+        --page-controls-start: calc(var(--traffic-lights-clear-x, 84px) + 6px);
+        --page-control-size: 30px;
         --workspace-lights-band: var(--traffic-lights-clear-y, 48px);
         --workspace-drag-strip: var(--traffic-lights-clear-y, 48px);
         --workspace-leading-clearance: 0px;
         --workspace-corner-inset: var(--traffic-lights-clear-x, 84px);
-        // Level with the lights.
-        --page-controls-top: calc(var(--traffic-lights-clear-y, 48px) - 40px);
+        // Centred on the lights.
+        --page-controls-top: calc(
+            var(--traffic-lights-clear-y, 48px) / 2 - 13px
+        );
     }
 }
 
@@ -351,6 +357,12 @@ app-workspace-shell-context-sidebar {
     --workspace-window-inset: 0px;
     --workspace-body-top: 0px;
     padding: 0;
+}
+
+// Fullscreen has no lights: Back holds the top-left corner.
+:host-context(.window-fullscreen) .workspace-shell {
+    --page-controls-start: 20px;
+    --page-controls-top: 20px;
 }
 
 :host-context(.native-glass) .workspace-window,
