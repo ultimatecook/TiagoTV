@@ -1,4 +1,8 @@
-import { type VideoJsPlayer, getVideoJsTechVideo } from './vjs-player.types';
+import {
+    type VideoJsPlayer,
+    getVideoJsTechVideo,
+    hasVideoJsTech,
+} from './vjs-player.types';
 import * as playerTypes from './vjs-player.types';
 
 describe('getVideoJsTechVideo', () => {
@@ -94,6 +98,24 @@ describe('hasActiveVhsSourceHandler', () => {
                     throw new Error('Tech unavailable');
                 },
             } as unknown as VideoJsPlayer)
+        ).toBe(false);
+    });
+});
+
+describe('hasVideoJsTech', () => {
+    it('is false until Video.js has loaded a tech for the source', () => {
+        const withTech = (tech: () => unknown) =>
+            hasVideoJsTech({ tech } as unknown as VideoJsPlayer);
+
+        expect(withTech(() => ({ el: () => null }))).toBe(true);
+        // `tech_` is unset before the first load and when no tech accepted
+        // the source, and `false` while unloading one.
+        expect(withTech(() => undefined)).toBe(false);
+        expect(withTech(() => false)).toBe(false);
+        expect(
+            withTech(() => {
+                throw new Error('disposed');
+            })
         ).toBe(false);
     });
 });

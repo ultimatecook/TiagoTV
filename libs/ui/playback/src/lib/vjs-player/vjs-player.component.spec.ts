@@ -209,6 +209,37 @@ describe('VjsPlayerComponent', () => {
         expect(harness.volume).toHaveBeenLastCalledWith(0.35);
     });
 
+    it('waits for a tech when Video.js is ready without one', () => {
+        // Without H.264 MSE support mpegts.js is unavailable and Video.js gets
+        // the raw TS source. No tech accepts video/mp2t, so Video.js reports
+        // the source unsupported and still runs the ready callbacks, with no
+        // tech behind any call.
+        harness.techLoaded = false;
+        fixture.componentRef.setInput('volume', 0.4);
+
+        expect(() =>
+            render({
+                sources: [
+                    {
+                        src: 'https://example.test/live/1.ts',
+                        type: 'video/mp2t',
+                    },
+                ],
+            })
+        ).not.toThrow();
+        fixture.componentRef.setInput('volume', 0.6);
+        expect(() => fixture.detectChanges()).not.toThrow();
+        expect(harness.volume).not.toHaveBeenCalled();
+
+        // A later source or reset loads a tech; Video.js is ready again.
+        harness.techLoaded = true;
+        harness.emit('ready');
+
+        expect(harness.volume).toHaveBeenCalledWith(0.6);
+        harness.emit('ready');
+        expect(harness.volume).toHaveBeenCalledTimes(1);
+    });
+
     it('emits a diagnostic for a Video.js unsupported-source error', () => {
         const issues: Array<PlaybackDiagnostic | null> = [];
         component.playbackIssue.subscribe((issue) => issues.push(issue));
@@ -444,6 +475,8 @@ function createPlayerHarness() {
         currentVideo: document.createElement('video'),
         currentError: null as NativePlaybackErrorInput | null,
         vhsActive: false,
+        /** False: Video.js found no tech for the source (`tech_` unset). */
+        techLoaded: true,
         paused: true,
         pauseCompletesImmediately: true,
         ready: (): void => undefined,
@@ -457,6 +490,12 @@ function createPlayerHarness() {
         src: jest.fn(),
         volume: jest.fn((value?: number) => {
             if (value !== undefined) {
+                if (!harness.techLoaded) {
+                    // As Video.js's setter middleware with no tech.
+                    throw new TypeError(
+                        "Cannot read properties of undefined (reading 'setVolume')"
+                    );
+                }
                 volumeValue = value;
             }
             return volumeValue;
@@ -468,11 +507,18 @@ function createPlayerHarness() {
             return mutedValue;
         }),
         emit(event: string) {
-            for (const listener of listeners.get(event) ?? []) {
+            // A snapshot, as Video.js dispatches: listeners added meanwhile
+            // wait for the next event.
+            for (const listener of [...(listeners.get(event) ?? [])]) {
                 listener();
             }
         },
         player: null as unknown as VideoJsPlayer,
+    };
+    const on = (event: string, listener: () => void): void => {
+        const eventListeners = listeners.get(event) ?? new Set<() => void>();
+        eventListeners.add(listener);
+        listeners.set(event, eventListeners);
     };
     harness.player = {
         audioTracks: jest.fn(() => null),
@@ -481,11 +527,13 @@ function createPlayerHarness() {
         duration: jest.fn(() => 0),
         error: jest.fn(() => harness.currentError),
         getChild: jest.fn(() => null),
-        on: jest.fn((event: string, listener: () => void) => {
-            const eventListeners =
-                listeners.get(event) ?? new Set<() => void>();
-            eventListeners.add(listener);
-            listeners.set(event, eventListeners);
+        on: jest.fn(on),
+        one: jest.fn((event: string, listener: () => void) => {
+            const once = () => {
+                listeners.get(event)?.delete(once);
+                listener();
+            };
+            on(event, once);
         }),
         off: jest.fn((event: string, listener: () => void) => {
             listeners.get(event)?.delete(listener);
@@ -499,10 +547,14 @@ function createPlayerHarness() {
         exitFullscreen: jest.fn(),
         reset: harness.reset,
         src: harness.src,
-        tech: jest.fn(() => ({
-            el: () => harness.currentVideo,
-            ...(harness.vhsActive ? { vhs: {} } : {}),
-        })),
+        tech: jest.fn(() =>
+            harness.techLoaded
+                ? {
+                      el: () => harness.currentVideo,
+                      ...(harness.vhsActive ? { vhs: {} } : {}),
+                  }
+                : undefined
+        ),
         volume: harness.volume,
         dispose: jest.fn(),
         qualitySelectorHls: jest.fn(),

@@ -118,6 +118,19 @@ export function getVideoJsTechVideo(
     }
 }
 
+/**
+ * False while Video.js has no playback tech: before the first one loads, and
+ * after no tech accepted the source. Video.js still runs its ready callbacks
+ * then (reporting the source unsupported), and every tech call would throw.
+ */
+export function hasVideoJsTech(player: Pick<VideoJsPlayer, 'tech'>): boolean {
+    try {
+        return Boolean(player.tech({ IWillNotUseThisInPlugins: true }));
+    } catch {
+        return false;
+    }
+}
+
 export function hasActiveVhsSourceHandler(
     player: Pick<VideoJsPlayer, 'tech'>
 ): boolean {

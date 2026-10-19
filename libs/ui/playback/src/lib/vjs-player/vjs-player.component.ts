@@ -50,6 +50,7 @@ import {
     type VideoPlayerOptions,
     type VideoPlayerSource,
     getVideoJsTechVideo,
+    hasVideoJsTech,
 } from './vjs-player.types';
 import { VjsVideoElementSession } from './vjs-video-element-session';
 import type { PlayerTimeUpdate } from '../playback-history/player-time-update';
@@ -200,7 +201,13 @@ export class VjsPlayerComponent implements OnInit, OnChanges, OnDestroy {
                     )
             );
         }
-        if (changes['volume']?.currentValue !== undefined && this.player) {
+        // With no tech the setter throws; the ready handler applies the
+        // volume input once a tech loads.
+        if (
+            changes['volume']?.currentValue !== undefined &&
+            this.player &&
+            hasVideoJsTech(this.player)
+        ) {
             debugVjsPlayer(
                 'Setting VideoJS player volume to:',
                 changes['volume'].currentValue
@@ -234,6 +241,12 @@ export class VjsPlayerComponent implements OnInit, OnChanges, OnDestroy {
         }
         if (!this.player) {
             queueVjsTask(this.handlePlayerReady);
+            return;
+        }
+        if (!hasVideoJsTech(this.player)) {
+            // No tech accepted the source: set up once a later source or
+            // reset loads one (Video.js reports ready again then).
+            this.player.one('ready', this.handlePlayerReady);
             return;
         }
         this.readyHandled = true;
