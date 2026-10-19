@@ -1,6 +1,6 @@
 import { isSpanishOrEnglishCategory } from '@iptvnator/shared/interfaces';
 import type { MatchChannel } from './match-channels';
-import { isMatchOn, isMatchOver } from './match-clock';
+import { isMatchOn, isMatchOver, startOf } from './match-clock';
 import { buildMatches, type EventSlot } from './match-fixtures';
 import {
     isIdleEventChannel,
@@ -32,6 +32,8 @@ export interface SportsCatalogStream {
     readonly name: string;
     readonly stream_icon?: string | null;
     readonly category_id: string | number | null;
+    /** When the panel last named it (epoch seconds): an event slot's "Live" since. */
+    readonly added?: string | number | null;
 }
 
 export interface SportChannel {
@@ -53,6 +55,11 @@ export interface SportMatch extends SportChannel {
     readonly keys: readonly string[];
     readonly event: SportEvent;
     readonly sectionId: SportSectionId;
+    /**
+     * When the first feed calling it "Live" was so named (the panel's
+     * `added`): a "Live" the provider never renamed is as old as that.
+     */
+    readonly liveSince?: Date | null;
     /**
      * No kept feed names it: the competition's channels that may show it
      * ("M+ LaLiga TV", "DAZN LaLiga"). Empty when it has a feed of its own.
@@ -124,6 +131,7 @@ export function buildSportsCatalog(
                 event,
                 kept: kept.has(categoryId),
                 categoryName,
+                namedAt: namedAt(stream.added),
             };
             const sectionId = slotSection(slot);
             if (sectionId) {
@@ -243,7 +251,7 @@ export function todaysMatches(
             continue;
         }
         for (const match of catalog[section.id]?.matches ?? []) {
-            const kickOff = match.event.start ?? kickOffOf(match);
+            const kickOff = startOf(match, kickOffOf(match));
             if (isMatchOver(match, kickOff, now)) {
                 continue;
             }
@@ -270,11 +278,11 @@ export function orderMatches(
     kickOffOf: (match: SportMatch) => Date | null = () => null
 ): SportMatch[] {
     const kickOff = (match: SportMatch) =>
-        (match.event.start ?? kickOffOf(match))?.getTime() ?? 0;
+        startOf(match, kickOffOf(match))?.getTime() ?? 0;
     const on = new Map(
         matches.map((match) => [
             match,
-            isMatchOn(match, match.event.start ?? kickOffOf(match), now),
+            isMatchOn(match, startOf(match, kickOffOf(match)), now),
         ])
     );
     return [...matches].sort((a, b) => {
@@ -293,4 +301,15 @@ function byKickOff(a: SportMatch, b: SportMatch): number {
         return a.event.status === 'live' ? -1 : 1;
     }
     return (a.event.start?.getTime() ?? 0) - (b.event.start?.getTime() ?? 0);
+}
+
+/** The panel's `added` (epoch seconds) in ms, or null. */
+function namedAt(added: string | number | null | undefined): number | null {
+    const seconds = Number(added);
+    return added !== null &&
+        added !== '' &&
+        Number.isFinite(seconds) &&
+        seconds > 0
+        ? seconds * 1000
+        : null;
 }

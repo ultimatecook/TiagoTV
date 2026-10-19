@@ -9,7 +9,9 @@ import type { SportMatch } from './sports-catalog';
  * competition's matches ever do, whatever its name says. Its kick-off is
  * the time a feed announced ("Next | … | 19:00 (GMT)"), remembered across
  * loads and restarts under every spelling of the match; for one only ever
- * seen live, the first time any feed was seen showing it.
+ * seen live, the time the panel named its feed "Live" (its `added`), else
+ * the first time any feed was seen showing it. A "Live" the provider never
+ * renamed (Barça - Getafe, a week later) is as old as its name.
  */
 const HOUR = 3600_000;
 const LONGEST: Partial<Record<SportSectionId, number>> = {
@@ -40,16 +42,39 @@ export function longestMatch(section: SportSectionId | null): number {
     return (section && LONGEST[section]) || DEFAULT_LONGEST;
 }
 
+/** A race that says how long it runs ("6 horas de Barcelona", "24 Hours of Le Mans"). */
+const RACE_HOURS = /\b(\d{1,2})\s*(?:h|horas|hours|heures|stunden|ore)\b/i;
+
+function longestFor(match: SportMatch): number {
+    const hours = RACE_HOURS.exec(match.event.title);
+    const race = hours ? (Number(hours[1]) + 1) * HOUR : 0;
+    return Math.max(longestMatch(match.sectionId), race);
+}
+
+/**
+ * A match's kick-off: the one its feeds announce, else the earlier of the
+ * remembered one and the time its "Live" feed was named.
+ */
+export function startOf(match: SportMatch, kickOff: Date | null): Date | null {
+    if (match.event.start) {
+        return match.event.start;
+    }
+    const since = match.liveSince ?? null;
+    if (!kickOff || !since) {
+        return kickOff ?? since;
+    }
+    return since.getTime() < kickOff.getTime() ? since : kickOff;
+}
+
 /** Whether a match listed as live or upcoming is in fact over. */
 export function isMatchOver(
     match: SportMatch,
     kickOff: Date | null,
     now: Date
 ): boolean {
-    const start = match.event.start ?? kickOff;
+    const start = startOf(match, kickOff);
     return (
-        start !== null &&
-        now.getTime() - start.getTime() > longestMatch(match.sectionId)
+        start !== null && now.getTime() - start.getTime() > longestFor(match)
     );
 }
 
@@ -62,7 +87,7 @@ export function isMatchOn(
     kickOff: Date | null,
     now: Date
 ): boolean {
-    const start = match.event.start ?? kickOff;
+    const start = startOf(match, kickOff);
     return (
         !isMatchOver(match, kickOff, now) &&
         (match.event.status === 'live' ||
@@ -96,10 +121,14 @@ export class KickoffMemory {
         for (const match of matches) {
             const announced = match.event.start?.getTime();
             const known = this.earliest(match.keys);
+            const named = match.liveSince?.getTime();
             const start =
                 announced ??
-                known ??
-                (match.event.status === 'live' ? now : undefined);
+                (known !== undefined && named !== undefined
+                    ? Math.min(known, named)
+                    : (known ??
+                      named ??
+                      (match.event.status === 'live' ? now : undefined)));
             if (start !== undefined) {
                 match.keys.forEach((key) => set(key, start));
             }

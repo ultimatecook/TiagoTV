@@ -39,6 +39,7 @@ export interface StoredLiveStream {
     readonly poster_url?: string | null;
     readonly category_id?: number | string | null;
     readonly is_adult?: number | string | null;
+    readonly added?: number | string | null;
 }
 
 /** A channel that carries a match by name: "Live | …", "Next | …", "ES | No Event". */
@@ -86,6 +87,7 @@ export function toLiveCatalog(
             stream_icon: row.stream_icon || row.poster_url || null,
             category_id: categoryId,
             ...(row.is_adult !== undefined ? { is_adult: row.is_adult } : {}),
+            ...(row.added !== undefined ? { added: row.added } : {}),
         });
     }
     return { categories, streams };

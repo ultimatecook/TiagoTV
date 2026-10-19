@@ -1,5 +1,6 @@
 import type { SportEventStatus } from './sport-events';
 import { SPORT_SECTIONS, type SportSectionId } from './sport-sections';
+import { isMatchOver } from './match-clock';
 import {
     buildSportsCatalog,
     todaysMatches,
@@ -193,6 +194,65 @@ describe('todaysMatches', () => {
         });
 
         expect(ids(todaysMatches(catalog, NOW))).toEqual([3]);
+    });
+});
+
+describe('a "Live" the provider never renamed', () => {
+    // Its `added` says when the panel named it: real slots from the
+    // provider, seen on Monday morning (19 Oct, 9 am).
+    const MONDAY = new Date(Date.UTC(2026, 9, 19, 7, 0));
+    const seconds = (date: Date) => String(Math.floor(date.getTime() / 1000));
+    const categories = [
+        { category_id: 1, category_name: '|ES| ✪ DAZN EVENT' },
+        { category_id: 3, category_name: '|ES| ✪ LALIGA HYPERMOTION' },
+    ];
+    const slot = (stream_id: number, name: string, named: Date) => ({
+        stream_id,
+        name,
+        category_id: stream_id === 3 ? 3 : 1,
+        added: seconds(named),
+    });
+    const streams = [
+        slot(
+            1,
+            'Live | Superpole Race (WSBK) & Carrera 2 (Todas las categorías) | Pirelli Spanish Round | ',
+            new Date(Date.UTC(2026, 9, 18, 9, 6))
+        ),
+        slot(
+            2,
+            'Live | 6 horas de Barcelona | FIA World Endurance | ES',
+            new Date(Date.UTC(2026, 9, 18, 9, 29))
+        ),
+        slot(
+            3,
+            'Live | AD Ceuta FC - Real Oviedo | LALIGA HYPERMOTION | ES',
+            new Date(Date.UTC(2026, 9, 18, 11, 53))
+        ),
+    ];
+
+    it('takes the time its feed was named "Live" as its kick-off', () => {
+        const catalog = buildSportsCatalog(categories, streams, MONDAY);
+
+        expect(catalog.hypermotion.matches[0].liveSince?.toISOString()).toBe(
+            '2026-10-18T11:53:00.000Z'
+        );
+        expect(todaysMatches(catalog, MONDAY)).toEqual([]);
+    });
+
+    it('keeps a long race on for as long as its name says', () => {
+        const during = new Date(Date.UTC(2026, 9, 18, 14, 0));
+        const after = new Date(Date.UTC(2026, 9, 18, 16, 40));
+        const catalog = buildSportsCatalog(categories, streams, during);
+
+        expect(ids(todaysMatches(catalog, during))).toEqual([2, 3]);
+        expect(ids(todaysMatches(catalog, after))).toEqual([]);
+    });
+
+    it('lets a remembered first sighting yield to an older "Live" name', () => {
+        const ceuta = buildSportsCatalog(categories, streams, MONDAY)
+            .hypermotion.matches[0];
+        // Seen for the first time when the app opened, Monday 9 am.
+        expect(isMatchOver(ceuta, MONDAY, MONDAY)).toBe(true);
     });
 });
 

@@ -28,6 +28,8 @@ export interface EventSlot {
     readonly kept: boolean;
     /** Its category's name ("|ES| ✪ LALIGA PPV"), for which feed plays. */
     readonly categoryName: string;
+    /** When the panel named the slot (ms), if it says. */
+    readonly namedAt?: number | null;
 }
 
 interface Fixture {
@@ -204,6 +206,7 @@ function toMatch(
     const playing = own[0]?.channel ?? offers[0]?.channel;
     const start = latestStart(own) ?? latestStart(fixture.slots) ?? null;
     const live = fixture.slots.some((slot) => slot.event.status === 'live');
+    const liveSince = earliestLiveName(fixture.slots);
     // A fixture only another language names, with no time to show it by.
     if (!playing || (!own.length && !live && start === null)) {
         return null;
@@ -228,8 +231,21 @@ function toMatch(
             start: start === null ? null : new Date(start),
         },
         sectionId,
+        liveSince: liveSince === null ? null : new Date(liveSince),
         via: own.length ? [] : offers,
     };
+}
+
+/** When the first of its "Live" feeds was so named (ms), if the panel says. */
+function earliestLiveName(slots: readonly EventSlot[]): number | null {
+    let earliest: number | null = null;
+    for (const slot of slots) {
+        const at = slot.event.status === 'live' ? slot.namedAt : null;
+        if (at && (earliest === null || at < earliest)) {
+            earliest = at;
+        }
+    }
+    return earliest;
 }
 
 function isKept(slot: EventSlot): boolean {
