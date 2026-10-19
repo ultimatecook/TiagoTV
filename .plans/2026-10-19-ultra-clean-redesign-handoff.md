@@ -27,7 +27,8 @@ The HTML prototype itself is not in the repo.
 
 ## Branch state
 
-- `main` = `3671a9ef3` (nothing of the redesign is published).
+- Published: `main` was fast-forwarded to the redesign (`0b2c6c55d`) on
+  2026-10-19 with the user's OK; the UI update run #19 succeeded.
 - `preview/home-platforms` = `main` + 3 clean commits: `fix(playback)`
   (Video.js), `docs(plans)` (this file and the spec) and `feat(ui)` (the
   redesign). The WIP history is kept in the tag
@@ -121,8 +122,7 @@ Both are on the preview branch.
      on :4200, fixture data intercepted in the browser, provider blocked.
    - The old screenshot scripts and catalog snapshot lived in the previous
      session's scratchpad; they are not in the repo.
-4. Ask the user; publish only on their OK: fast-forward `main` to the squashed
-   preview, then confirm the `TiagoTV UI update` workflow run is green.
+4. **Done:** published with the user's OK (UI update run #19 green).
 5. Offer a new installer, for the centred traffic lights.
 
 ## Known issues and open items
