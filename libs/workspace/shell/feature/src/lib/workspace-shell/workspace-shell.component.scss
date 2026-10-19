@@ -372,12 +372,11 @@ app-workspace-shell-context-sidebar {
     box-shadow: none;
 }
 
-// A fullscreen window has no corners at all: the content runs to its
-// bottom edge too, the sidebar with it. So does a streaming platform's
-// page (and its titles') in the macOS window, whose rounded corners the
-// system clips: its ground reaches the edges, as on the platform's app.
+// A fullscreen window has no corners at all, and the macOS window's
+// rounded corners are clipped by the system: in both the content runs to
+// the bottom edge, the sidebar with it, as in the streaming apps.
 :host-context(.window-fullscreen),
-:host-context(.native-glass[data-platform-theme]) {
+:host-context(.native-glass) {
     .workspace-window {
         padding-bottom: 0;
     }
