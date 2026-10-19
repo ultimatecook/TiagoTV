@@ -25,8 +25,9 @@ Core implementation:
 
 1. `libs/workspace/dashboard/feature/src/lib/rails/workspace-dashboard-rails.component.ts`
    — the page-level facade.
-2. `libs/workspace/dashboard/feature/src/lib/rails/dashboard-rail.component.ts`
-   — the reusable horizontal rail.
+2. `libs/workspace/dashboard/feature/src/lib/rails/home-*.component.ts`
+   — the Home's sections (events, Top 10, series, last channels) and
+   `dashboard-rail-card.ts`, the card model the live-EPG presenters enrich.
 3. `libs/workspace/dashboard/data-access/src/lib/dashboard-data.service.ts`
    — data aggregation (recent items, favorites, playlist stats). Shared across
    rails.
@@ -35,45 +36,83 @@ Core implementation:
 
 ## Page Structure
 
+TiagoTV's Home follows the redesign handoff ("01 · Inicio"): one column of
+sections 44px (`--tv-section-gap`) apart under the shell's transparent top
+bar, the page padded `--tv-page-top --tv-page-x --tv-page-bottom`.
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Hero — rotating cinematic banner (resume · live · discovery)       │
+│  Seguir viendo — hero slider, bleeding up behind the top bar        │
 ├─────────────────────────────────────────────────────────────────────┤
-│  Continue Watching · See all →                                      │
-│  [poster][poster][poster][poster] →→                                │
+│  Plataformas      [logo card][logo card][logo card] →→              │
 ├─────────────────────────────────────────────────────────────────────┤
-│  Live now on your favorites · See all →                             │
+│  Deportes         [competition][competition] →→ (lib-sports-rail)   │
+├─────────────────────────────────────────────────────────────────────┤
+│  Eventos de hoy · N en vivo · N eventos                  Ver todo   │
+│  [one list card, 60px rows]                                         │
+├─────────────────────────────────────────────────────────────────────┤
+│  Top 10 películas hoy · En tus plataformas               Ver todo   │
+│  [1 poster][2 poster][3 poster] →→                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│  Series para vos                                         Ver todo   │
+│  [featured][stacked / stacked]                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│  Últimos canales vistos                                  Ver todo   │
 │  [channel][channel][channel][channel] →→                            │
-├─────────────────────────────────────────────────────────────────────┤
-│  Recently watched live TV · See all →                               │
-│  [channel][channel][channel][channel] →→                            │
-├─────────────────────────────────────────────────────────────────────┤
-│  Favorite movies & series · See all →                               │
-│  [poster][poster][poster][poster] →→                                │
-├─────────────────────────────────────────────────────────────────────┤
-│  Recently Used Sources · See all →                                  │
-│  [tile][tile][tile][tile] →→                                        │
-├─────────────────────────────────────────────────────────────────────┤
-│  Recently Added on Xtream (aggregated across providers)             │
-│  [poster][poster][poster] →→                                        │
-├─────────────────────────────────────────────────────────────────────┤
-│  Because you watched X (TMDB, opt-in, Electron-only)                │
-│  [poster][poster][poster] →→                                        │
-├─────────────────────────────────────────────────────────────────────┤
-│  Trending this week (TMDB, opt-in, Electron-only)                   │
-│  [poster][poster][poster] →→                                        │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
+
+1. Hero — `rails/dashboard-hero.component.*` over
+   `DashboardHeroSlidesPresenter` (see [Cinematic Hero](#cinematic-hero)):
+   up to five slides, every unfinished title first. A slide shows its
+   platform's logo when its catalog category belongs to one
+   (`platformOfCategory`, `rails/home-platform-titles.ts`). Gated by
+   `dashboardRails().hero`, and rendered only while it has slides or its
+   skeleton.
+2. Platforms — `platforms/ui/platforms-rail.component.*`
+   (`PlatformsCatalogService.shelves()`, from the stored category lists).
+3. Sports — `sports/ui/sports-rail.component.*` (the sports views' card row).
+4. "Eventos de hoy" — `rails/home-events.*`: `SportsCatalogService.today()`
+   in one list, the ones on now first, at most eight rows
+   (`selectHomeEvents`: a match of the owner's teams further down takes the
+   last other place). Scores and minutes are not in the provider's data: a
+   row says "En vivo" or its kick-off. The channel column names the
+   broadcaster from the event feed's category, or a match's first `via`
+   channel, which a click plays.
+5. "Top 10 películas hoy" and 6. "Series para vos" —
+   `rails/home-top-movies.*`, `rails/home-series.*` over
+   `HomePlatformTitlesService`: the platforms' aggregated catalog
+   (`CatalogService.titles`, the stored catalog first — no provider
+   request — and, only when nothing is stored, the platforms' own lists in
+   turn), ranked by `rankTopMovies` and `pickSeriesForYou` with the day's
+   seed. Nothing is read until a section comes within 400px of the
+   scroller's view (`HomeNearDirective`). Meta lines are the catalog's
+   (`posterMeta`, `heroMeta`); the featured show's page is asked once for
+   its seasons (`CatalogService.loadExtras`). Series badges come only from
+   the catalog entry (`seriesBadge`: "Estreno", "Temporada N" from a
+   season marker, "Nuevo episodio" for an older show updated this week).
+   "Mi lista" toggles the source's favourite when the title is in the
+   stored catalog (`HomeMyListService`), else opens the title's page.
+7. "Últimos canales vistos" — `rails/home-recent-channels.*`:
+   `globalRecentLiveItems()`, the programme and its progress from the
+   page's `DashboardLiveEpgPresenter` (asked for the cards in view once the
+   row comes near). Gated by `dashboardRails().recentlyWatchedLive`.
+
+A section with nothing to show renders nothing and the page's
+`> :empty { display: none }` leaves it out of the gap rhythm. The upstream
+rails (New & Popular, favourites, sources, TMDB trending and
+recommendations, their skeletons) and the old "Partidos de hoy" and
+"Canales en vivo" rows are no longer on the Home; the other Settings →
+Dashboard switches have no Home section to hide.
+
 Render rules:
 
-1. Dashboard rails render independently as their data sources resolve. The
-   page no longer uses `dashboardReady()` as a page-wide skeleton gate.
-   Initial hero/recent/favorites loading states render scoped skeletons so one
-   slow rail does not hide already available content. A rail skeleton is a
-   `lib-dashboard-rail-skeleton` with the layout of the rail it precedes,
-   sized from the rail's own geometry partial, so the rail replaces it at the
-   same height (UI guidelines, Loading States).
+1. Home sections render independently as their data sources resolve. The
+   page does not use `dashboardReady()` as a page-wide skeleton gate. The
+   hero shows its own skeleton (below); "Top 10" and "Series para vos" show
+   placeholder cards while the platforms' lists load for the first time.
 2. `hasPlaylists() === false` → render `<app-empty-state [type]="'welcome-dashboard'">`
    full-bleed. All rails and the hero are skipped.
 3. The hero (`lib-dashboard-hero`) renders when it has at least one slide;
@@ -89,123 +128,89 @@ Render rules:
    its stream has really played (see "Recently Viewed Confirmation" in
    `embedded-inline-playback.md`), so a channel that failed at once never
    becomes a hero slide.
-4. Each rail is emitted via `@if (cards.length > 0)`. Empty rails are hidden
-   — there is no "empty widget" placeholder.
+4. Each section is emitted via `@if` on its own data. Empty sections are
+   hidden — there is no "empty widget" placeholder.
 5. Hero slides prefer a stored `backdrop_url`, then the TMDB backdrop; when
-   both are missing the poster becomes a blurred wash plus key art on the
-   right instead of a flat panel.
-6. Live favorites are promoted into their own live rail; movie/series
-   favorites render in a separate `Favorite movies & series` rail
-   (`favoriteMoviesAndSeriesCards`, `data-test-id="dashboard-favorite-vod-rail"`,
-   mapped from `globalFavoriteItems()` filtered to movie/series). Full mixed
-   favorites management stays on `/workspace/global-favorites`.
-7. The live favorites rail keeps its scoped skeleton until the initial global
-   favorites load has completed for both Xtream-backed and playlist-backed
-   favorites. This avoids first-paint partial counts such as a single Stalker
-   favorite appearing before M3U favorites finish resolving.
+   both are missing a poster (or a channel logo) stands on the right of the
+   title-tinted gradient instead of a flat panel.
 
 ## Cinematic Hero
 
-`DashboardHeroComponent` renders a full-bleed banner: it cancels the page's
-`--dashboard-gutter`/top padding and the centred `--dashboard-max-width`
-(the page host is the `dashboard` inline-size container), keeps
-`clamp(320px, 42vh, 520px)` so the first rail starts above the fold, and uses
-`--app-content-bg` as its scrim so it dissolves into the page in both themes.
+`DashboardHeroComponent` is the Home's "Seguir viendo" slider (handoff
+"01 · Inicio", 1). Its host bleeds up behind the top bar and out to the
+window's edges (`margin: calc(-1 * (--tv-topbar-h + --tv-page-top))
+calc(-1 * --tv-page-x) -16px`), the banner is
+`clamp(460px, calc(100vh - 560px), 620px)` tall at least, and its whole
+background carries `mask-image` so it fades into the page instead of ending
+on an edge. Each slide's background is its backdrop, else a poster (or a
+channel logo) standing on the right of the gradient in the title's hue
+(`--hero-hue`), crossfading in 700ms under a left and a top veil.
 
 Height: that clamp is a floor, not a fixed height. Every slide's content is
 laid out in the same grid cell at the bottom of the banner, so it is as tall
-as its tallest slide whichever one is shown, and an unusually full slide or a
-long translation grows it instead of being cut. Only the active slide is
-shown; the others are `inert` and `visibility: hidden`. When only the shown
-slide was in flow, each automatic rotation between slides of different
-heights resized the banner and moved every rail below it, every 8 s on an idle
-dashboard. Late data (TMDB extras, the live slide's first EPG answer, the next
-programme) can still grow the tallest slide, once, when it arrives.
+as its tallest slide whichever one is shown, and a rotation never resizes it
+or moves the rows below. Only the active slide is shown; the others are
+`inert` and `visibility: hidden`.
 
-Slides (`pickDashboardHeroSources`, at most four, stable order, each title
+Slides (`pickDashboardHeroSources`, at most five, stable order, each title
 once):
 
-1. the newest unfinished movie/series (`continueWatchingItems()`, the rail's
-   list: a finished movie skips, a series features the episode it continues
-   with);
+1. every unfinished movie/series, most recent first
+   (`continueWatchingItems()`: a finished movie skips, a series features the
+   episode it continues with);
 2. a live channel with a programme on air — the first of
    `selectDashboardHeroLiveCandidates` (up to three favourites, then two
    recently watched channels) whose EPG answer has a title;
-3. one favourite movie/series and one Xtream recently-added title;
-4. remaining places round-robin over the next items of those lists;
-5. only when nothing qualifies, the newest history row of any kind (a
+3. remaining places round-robin over the favourite movies/series and the
+   Xtream recently-added titles;
+4. only when nothing qualifies, the newest history row of any kind (a
    detail action: it can be a finished title). It waits for
-   `continueWatchingSettled()`: before the positions load, that row may be
-   the title the resume slide is about to feature.
+   `continueWatchingSettled()`.
 
 While live candidates exist but none has answered yet, one place stays
 reserved for the live slide, so its late arrival never evicts a slide the
-user may be viewing.
+user may be viewing. The live candidates are derived and pinned by
+`DashboardLiveEpgPresenter` itself. TMDB extras (backdrop, rating, genres,
+overview, year) come from `DashboardHeroTmdbService` per featured title and
+vanish when TMDB is off.
 
-The live candidates are derived and pinned by `DashboardLiveEpgPresenter`
-itself (XMLTV lookup and portal queue), independent of the live rails, so the
-slide works with those rails hidden. Actions: a resume slide keeps the resume
-handoff and adds a detail-only "Details" when a series episode can resume;
-discovery slides open the detail page; live slides open the channel. TMDB
-extras (backdrop, rating, genres, overview, year) come from
-`DashboardHeroTmdbService` per featured title and vanish when TMDB is off.
+A slide reads, top to bottom: "SEGUIR VIENDO" over an unfinished title (its
+reason otherwise: favourite channel, recently added…), its platform's logo
+when its catalog category belongs to one, the title in Bebas Neue, the
+watch progress (`--app-progress-color`; a live programme's elapsed share in
+`--app-live-color`) beside "T2·E5 · Quedan 23 min" / "Película · …"
+(`heroMetaParts`), then Continue (the resume handoff, as before) and More
+info (detail only). Series titles drop their season marker
+(`splitSeasonSuffix`).
 
-Artwork: a title's backdrop, else its poster blurred and scaled past the
-edges (no second, sharp copy); a live channel's logo sits on the right as key
-art over its own wash. Series titles drop their season marker
-(`splitSeasonSuffix`) — the `S1·E1` chip names the season. Chips are
-`app-meta-chip`; the primary is the details pages' light primary
-(`light-primary-button` from `libs/ui/styles`). With no artwork at all the
-stage is a gradient in the title's hue (`--hero-hue`), light in the light
-theme and near-black in the dark one; a dark gradient under the light
-theme's page-coloured scrim read as a grey slab behind dark text.
+Semantics: the page has one stable, visually hidden `h1`
+(`dashboard-page-heading`); each slide title is an `h2`. Slide changes are
+announced by one polite live region (`dashboard-hero-announcement`) outside
+the slides, silent while the slides rotate on their own. A slide's progress
+bar is named after its title (a live slide: the programme).
 
-Legibility: slide text stays at 4.5:1 or more over any artwork. The side
-scrim holds 88% of the page colour up to the slide's right edge
-(`--hero-text-edge`: the inset plus `min(560px, 55%)`, the slide's own
-`max-width`) before it opens onto the art. In the narrow layout (`dashboard`
-container ≤ 720px) the slide spans the width, so a full-bleed scrim sits
-behind the text block (90%, fading in just above the eyebrow), the copy gets
-a scrim-coloured text shadow, and the slide enters without a fade so that
-scrim never flashes the art on a rotation. Body text is 85% of the heading
-colour; the rating chip uses `--app-rating-color`, set per theme in
-`m3-theme.scss`. Buttons end long labels in an ellipsis.
-`dashboard-hero-legibility.e2e.ts` replaces every image with a black-and-white
-checkerboard and measures each piece of slide text from the screen in both
-themes, at a wide and a narrow width, for a backdrop, a blurred-poster, a
-no-artwork and a live slide.
-
-Semantics: the page has one stable, visually hidden `h1` ("Dashboard",
-`dashboard-page-heading`); each slide title is an `h2`, like the rail titles.
-Slide changes are announced by one polite live region
-(`dashboard-hero-announcement`, position and title) that lives outside the
-slides and is silent while the slides rotate on their own. A
-slide's progress bar is named after its title (a live slide: the programme)
-and a title's reads "N% watched". The dots are 26 × 24px targets (WCAG 2.5.8)
-of one fixed width; the active pill is the same 18px bar with its
-`clip-path` opened, so a slide change moves no dot.
-
-Rotation is the active dot's CSS fill animation (8 s); its `animationend`
-advances. The fill animates `transform` only (a bar sliding in under the
-pill's rounded clip), so it runs on the compositor; animating `width` there
-cost a style, layout and paint pass on every frame of an idle dashboard.
-Hover, focus inside the hero, a hidden document and the pause button pause
-it; an explicit Play clears the hover/focus pause until they re-arm; under
-`prefers-reduced-motion` nothing auto-advances. The hero is a focusable
-region: ←/→ switch slides and Enter follows the primary action. The active slide is tracked
-by id, so a late live slide never moves the user off the current one. Test
-hooks: `dashboard-hero`, `dashboard-hero-slide` (`data-hero-kind`),
-`dashboard-hero-dot`, `dashboard-hero-pause`,
-`dashboard-hero-primary-action`, `dashboard-hero-secondary-action`. The
-slide hooks mark the shown slide only; the inert slides carry none.
-`dashboard-hero-rotation.e2e.ts` drives the real fill animation (with a
-shortened `--hero-rotation-ms`) to prove its `animationend` still advances
-and that pause holds the slide. `dashboard-hero-legibility.e2e.ts` sums the
-layout shifts of an unattended rotation, at the wide width and again at the
-narrow one once every slide carries a rating and an overview: under 0.001 in
-all, and none inside the hero.
+Rotation: every 6 s (`HERO_ROTATION_MS`). The indicators are 6px bars (the
+active one 28px and white, 300ms width transition) with a larger invisible
+hit area; the active one carries an invisible timer animation
+(`hero-slide-timer`, `transform` only) whose `animationend` advances, so
+picking a slide restarts the timer. The pointer or focus inside the hero
+and a hidden document pause it; under `prefers-reduced-motion` nothing
+auto-advances. The hero is a focusable region: ←/→ switch slides and Enter
+follows the primary action. The active slide is tracked by id, so a late
+live slide never moves the user off the current one. Test hooks:
+`dashboard-hero`, `dashboard-hero-slide` (`data-hero-kind`),
+`dashboard-hero-dot`, `dashboard-hero-primary-action`,
+`dashboard-hero-secondary-action`. `dashboard-hero-rotation.e2e.ts` drives
+the real timer animation (with a shortened `--hero-rotation-ms`).
+`dashboard-hero-legibility.e2e.ts` still measures the previous hero's
+light/dark and narrow layouts and needs rewriting for this one.
 
 ## Rail Contract
+
+TiagoTV: `DashboardRailComponent` (`lib-dashboard-rail`) and its geometry
+partial were removed once the Home stopped using them; its card model
+lives on in `rails/dashboard-rail-card.ts`. The contract below records the
+upstream rail.
 
 `DashboardRailComponent` is purely presentational:
 
@@ -246,6 +251,14 @@ all, and none inside the hero.
    selector surface; do not target internal CSS class names.
 
 ## Data Flow
+
+TiagoTV: the Home reads the history (hero, last channels), the favourites
+and Xtream recently-added titles (hero discovery slides only), the playback
+positions and the live EPG presenters below; the upstream rails' card
+builders, their skeleton gates (`dashboard-rail-skeletons.ts`,
+`dashboard-skeleton-grace.ts`), the TMDB rails' loader
+(`dashboard-tmdb-rails.ts`) and the sources' expiry clock were removed with
+those rails. The steps that describe them record the upstream design.
 
 1. `WorkspaceDashboardRailsComponent` injects `DashboardDataService`.
 2. It derives the dashboard surface via `computed()`:
@@ -561,60 +574,193 @@ categories (`PlatformsCatalogService`):
 
 ## By-Country Page (TiagoTV)
 
-"Por países" (`/workspace/countries`, `lib/countries/`; the sidebar's By
-country link) is a TV page: the live player on top, the channel's panel beside
-it, and under them every kept country's channels in sideways rows. The rows
-scroll in their own pane, so the player stays in view; a phone or a window
-under 560px tall scrolls the page as one. `/workspace/countries/:countryId`
-renders the same page opened on that country (`ie` opens the United Kingdom).
+"En vivo" (`/workspace/countries`, `lib/countries/`; the top bar's En vivo
+tab) is a TV: the live player fills the page, up behind the transparent top
+bar (`margin-top: calc(-1 * var(--tv-topbar-h))`, the scroller's full
+height, its top corners rounded with `--tv-window-radius`), with the
+country's button top right and an overlay at its foot. Nothing scrolls.
+`/workspace/countries/:countryId` opens the page on that country (`ie`
+opens the United Kingdom); another country's route while the page is open
+switches to it.
 
 1. **Data.** `CountriesCatalogService` builds on `SportsCatalogService`'s live
    catalog (the stored copy, its event categories kept fresh while the page is
    open): it downloads no line-up of its own. Only categories the language
-   filter keeps (`isSpanishOrEnglishCategory`) count, in this order: Argentina
-   (|LAT| groups naming it), Spain, the United Kingdom with Ireland's groups
-   folded in, the United States. Adult streams and empty slots are left out
+   filter keeps (`isSpanishOrEnglishCategory`) count: Argentina (|LAT| groups
+   naming it), Spain, the United Kingdom with Ireland's groups folded in, the
+   United States. Adult streams and empty slots are left out
    (`country-slots.ts`): "No Event" slots, ended matches, a broadcast window
    that closed, and in a category of slots (PPV, events, a league's games) a
    numbered slot that names no event ("LALIGA+ PPV 3").
-2. **Rows** (`buildCountryRows`). Copies of a channel share a tile (quality
-   badges, country codes, capitals tidied: `country-channels.ts`,
-   `country-titles.ts`); a channel listed in several categories of a country
-   shows once, in its first row, with every copy. Kinds run main channels,
-   sports, live events, news, movies and series, kids, documentaries, music,
-   the rest, other versions (4K, SD, +1) (`country-genres.ts`). A country's
-   main groups are split by channel name into those kinds (ESPN, TN and
-   Cartoon Network leave Argentina's main row) unless a kind would get a single
-   channel; a category of three channels or fewer joins its kind's own row;
-   every other category is a row under its cleaned name ("DAZN La Liga",
-   "NBC locales"). The main row opens on the country's flagship channels
-   (`CountryDefinition.leading`). A row shows 30 tiles, then "See all" (rows of
-   up to 36 show whole).
-3. **Rendering.** A row renders its tiles once it comes within 600px of its
-   scroller (`NearViewportDirective`); logos are lazy, a failing logo tries the
-   channel's next one, then its name. Each row is one tab stop (a
-   `role="toolbar"`): arrows, Home and End move along it, Up and Down move to
-   the nearest tile of the next row; the keys are consumed there. Rows bleed
-   through the page's 36px gutter like the Home's (`row-edges.spec.ts`).
-4. **Playback** (`CountryTvPlayback`). A tile plays in the player above; nothing
+2. **Rows, chips and cards.** `buildCountryRows` still groups a country's
+   channels: copies of a channel share one channel (quality badges, country
+   codes, capitals tidied: `country-channels.ts`, `country-titles.ts`); a
+   channel listed in several categories shows once, in its first row, with
+   every copy. Kinds run main channels, sports, live events, news, movies and
+   series, kids, documentaries, music, the rest, other versions (4K, SD, +1)
+   (`country-genres.ts`); a country's main groups are split by channel name
+   into those kinds, small categories join their kind's row, and the main
+   row opens on the country's flagship channels
+   (`CountryDefinition.leading`). The rows are not drawn as rows: they are
+   the data of the overlay's category chips (`country-tv-categories.ts`): All,
+   then one chip per kind the country has, with its channel count, in the
+   order sports, events, main ("Generalistas"), news, movies and series, kids,
+   documentaries, music, others, other versions. All runs through the kinds
+   in that order. A new country starts on All.
+3. **Overlay.** The channel's name (32px) and what it shows now, the
+   controls (play/pause, sound, Open in Live TV, full screen), the
+   programme's 3px progress, the chips and the channels in glass cards
+   (196px). A card shows the channel's logo (a failing logo tries the next,
+   then the name in Bebas on a plate tinted per channel), its name, what it
+   shows now and how far in when the guide says. The playing card says
+   "REPRODUCIENDO"; a card showing football now has a red "FÚTBOL" tag
+   (`country-tv-football.ts`): the sports catalog's live football matches,
+   on their event channel or on their competition's channels ("DAZN LaLiga"),
+   or a football programme in a guide already loaded. Unknown stays
+   unknown: no tag, and the row's name instead of a programme. A channel's
+   other feeds ("UHD", "HD") sit beside the controls. The row renders only
+   the cards in and near its view (`country-tv-window.ts`; "All" in the United
+   States is over 1,500 channels) and is one tab stop (`role="toolbar"`):
+   arrows, Page Up/Down, Home and End move along it, Enter plays.
+4. **Country button.** A 40px glass button with the flag and the country's
+   name; its menu (Spain, Argentina, the United States, the United Kingdom)
+   gives each country's channel count. Choosing one closes it and plays that
+   country's last channel watched, else its first (`countrySelection`).
+5. **Quiet overlay** (`OverlayIdle`). While a channel's picture moves (its
+   video said `playing`), the overlay slides away after four quiet seconds
+   (a transform: fading it would stop its glass reading the picture) and
+   the country button fades; a mouse move, a key, a press or keyboard focus
+   brings them back, and the pointer hides while they are away. They stay
+   while nothing plays, while keyboard focus or the pointer is on them, and
+   while the menu is open. A click on the picture sends them away or brings
+   them back; Esc closes the menu, else sends them away (focus moves to the
+   page). Space or K plays and pauses, M mutes, F goes full screen, an arrow
+   brings focus to the playing card (`country-tv-keys.ts`); keys a focused
+   control handles stay its own, and keys from a dialog or a field elsewhere
+   are left alone.
+6. **Playback** (`CountryTvPlayback`). A card plays in place; nothing
    navigates. The playback is built as the Xtream live view builds it:
    `XtreamUrlService` with the source's credentials and the stream format
    setting, the Auto TS fallback when the live view already learned the
    account's formats, the source's headers, and the live view's session key.
    `WebPlayerViewComponent` brings the one-connection rules, the live start
-   guard and the mini-player hand-over. The page opens on the last channel
-   watched there (`tiagotv:countries-last-channel` in local storage), else on
-   Argentina's first, and plays it unless the mini-player is playing another
-   page's stream (then the screen offers Play). With MPV or VLC as the player a
-   tile launches it and nothing plays on opening. A channel joins Recently
-   viewed once it has played (`PlaybackHistoryGate`); a relock that withholds
-   its category stops it. "Open in Live TV" opens the channel in the Xtream
-   live view without a mini-player hand-over.
-5. **Guide.** Now and next come the way the live view loads a channel's guide
+   guard and the mini-player hand-over. The page opens on the country chosen
+   last (`tiagotv:countries-country`) on its last channel
+   (`tiagotv:countries-channels`), else on the last channel watched
+   (`tiagotv:countries-last-channel`), else on Argentina's first, and plays it
+   unless the mini-player is playing another page's stream (then the white
+   button offers Play). With MPV or VLC as the player, Play launches it and
+   nothing plays on opening. A channel joins Recently viewed once it has
+   played (`PlaybackHistoryGate`); a relock that withholds its category stops
+   it. "Open in Live TV" opens the channel in the Xtream live view without a
+   mini-player hand-over.
+7. **Controls** (`CountryTvControls`). The player's own controls bar is
+   hidden on the page, its picture takes no clicks and its shortcuts are
+   suspended (`data-player-shortcuts-suspended` on the page): the overlay and
+   the page's keys drive it. Play/pause and mute go to the player's
+   controller as its own K and M (the suspension lifted for that one key),
+   else straight to its `<video>`, whose events give the overlay its state;
+   Embedded MPV has no `<video>` and counts as playing once mounted. Full
+   screen takes the whole page, overlay included. The player's diagnostic
+   (Retry, the external players) stays above the overlay's height.
+8. **Guide.** Now and next come the way the live view loads a channel's guide
    (`StreamResolverService.loadEpgItems`: uploaded XMLTV, the manual mapping,
    then the provider's guide for that channel), asked for once a channel has
-   stayed picked for 0.9 s and at most every ten minutes per channel, and only
-   where the app reads guides.
+   stayed playing for 0.9 s and at most every ten minutes per channel, and
+   only where the app reads guides. The cards reuse the guides already
+   loaded (`CountryTvGuide.nowOn`); the page asks for no other channel's.
+
+## Series and Movies Catalog (TiagoTV)
+
+Series (`/workspace/series`) and Películas (`/workspace/movies`) are one page,
+`CatalogPageComponent` (`lib/catalog/`), told its kind by the route's
+`data.kind` (`'series'` or `'movie'`). It shows every streaming platform's
+titles of that kind in one catalog, with no filters and no search of its own.
+
+1. **Data** (`CatalogService`). The titles come from the catalog the app
+   already stored (`StoredVodCatalog`): SQLite through the DB worker in
+   Electron once that kind's import completed, the data source's session
+   cache in the browser build once a view loaded it. Reading it asks the
+   provider nothing. Only the platforms' ES/EN categories count
+   (`buildPlatformShelves`). Where nothing is stored, the page uses
+   `PlatformsCatalogService.loadTitles`, one platform after the other (never
+   all at once), and those lists serve the platform pages too. A stored read
+   is kept ten minutes, and again until the parental lock changes.
+2. **One title per show** (`aggregateCatalog`). `mergePlatformTitles` joins
+   a show's language versions and its copies on other platforms. The card
+   shows the Spanish version and that version's platform logo; `platforms`
+   lists every platform that has a version. Newest first.
+3. **Genres.** A title takes the genres its list names (`genre`, genre
+   categories in `category_ids`). SQLite rows store no genres, so a stored
+   title also takes them from a same-named title in the source's genre
+   categories ("|ES| ✪ COMEDIA") or from the platform pages' loaded lists.
+   One row per genre with at least two titles, in a fixed order (Action,
+   Comedy, Drama, Thriller, Crime, Sci-fi, Horror…), showing its newest 40
+   titles. When no genre reaches two titles, the page shows one row per
+   platform instead.
+4. **Hero** (README 06). It rises behind the top bar. The featured title
+   shows its logo, name, kind · year · genres · running time or seasons,
+   Reproducir and Más info (both open the title's Xtream page). Under it
+   comes "Novedades": the ten newest titles with artwork, the platforms
+   taking turns (`pickNewReleases`). Picking one features it and the page
+   does not navigate. The featured title's own page (`get_vod_info` /
+   `get_series_info`) is fetched once per title, after it has stayed
+   featured 0.4 s, for its backdrop and length. Without a backdrop the hero
+   shows the poster at its right over the platform's colour.
+5. **Rendering.** A genre row renders its posters once it comes within
+   900px of the scroller, and posters load lazily. Each row is one tab stop
+   (arrows, Home and End move along it) with hover chevrons. Rows bleed
+   through the page's gutter (`--tv-page-x`).
+
+## Sports Hub and Competition Pages (TiagoTV)
+
+Deportes (`/workspace/sports`, `SportsHubPageComponent`) and a competition's
+page (`/workspace/sports/:sectionId`, `SportSectionPageComponent`) live in
+`lib/sports/`. Both read `SportsCatalogService` (the stored live catalog, its
+event categories reloaded one at a time) and ask the provider for nothing
+else but the playing channel and its guide.
+
+1. **League cards** (`ui/sports-rail.*`, the Home's row too). The order is
+   `SPORTS_ROW_ORDER` (README 01/02); Motor and the Eredivisie keep their
+   sections and pages without a card. Five and a half cards in view, the
+   player's head over the card in the row's top padding (a tenth of a card's
+   height, never under 44px). The glass pill counts the section's matches on
+   now (`SportsBoardService.liveCounts`).
+2. **Hub.** The day picker (yesterday … three days ahead) lists the matches
+   whose kick-off falls on that local day (`matchesOnDay`; the panel announces
+   kick-offs hours ahead and lists no results, so past and far days are mostly
+   empty). "Tus equipos" are `MY_TEAMS` (`my-teams.ts`, the one list the sports
+   views bold): each pill shows "En vivo" or its next kick-off. "En vivo ahora"
+   shows today's matches on now; "Más tarde" the day's others, in the same
+   60px rows as the Home's list. The provider names no score or minute, so a
+   card shows "vs" and "En vivo". No match reminder exists in the app, so the
+   rows carry Play, not a bell. A match opens its competition's page playing
+   its feed (`SportsBoardService.openMatch`, the channel in the navigation
+   state, `playRequest`).
+3. **Competition page.** A full-height stage (`ui/sport-stage.*`) rises behind
+   the top bar, as tall as the scroller shows, and plays the first signal, or
+   the one the way in asked for, through `SportTvPlayback` (built like "En
+   vivo"'s: `XtreamUrlService`, MPEG-TS by default, Auto TS, the mini-player
+   hand-over, one stream at a time). Its controls and keys are "En vivo"'s
+   (`CountryTvControls`). The signal row (`signal-cards.ts`) lists the live
+   matches' own feeds first, then every numbered feed of the section's
+   channel families, broadcasters first and pay-per-view passes last. Below:
+   the first match, the others (84px rows) and the standings.
+4. **Standings** (`league-tables.ts`, `league-table-sources.ts`). ESPN's
+   public site API (`<slug>/standings`: esp.1, eng.1, arg.1, uefa.champions,
+   uefa.europa, conmebol.libertadores, usa.1, esp.2, ita.1, ger.1, fra.1,
+   ned.1) gives the whole table and its zones, but no form. When ESPN fails or
+   has no table, TheSportsDB's `lookuptable.php` (its free key: the top five
+   rows, with form) stands in. Each API has one throttled client
+   (`SportsApiClient`; TheSportsDB one request every 3 s, shared with the
+   crests). Answers are kept in local storage for three hours (an empty answer
+   six); a fallback given while ESPN failed is kept for the session only.
+   Zones come from each row's note (Champions, the other continental cups,
+   promotion or direct qualification, playoffs, relegation). A table in
+   groups (Argentina, MLS, the Libertadores) shows the group holding a
+   followed team. ESPN refuses headless Chromium's user agent (403), not a
+   desktop one. "Resto del mundo", Tenis, Motor and Básquet have no table and
+   run their matches across the page.
 
 ## Empty State
 

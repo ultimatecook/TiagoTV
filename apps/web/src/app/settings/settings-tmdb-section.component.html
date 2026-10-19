@@ -44,11 +44,9 @@
                             appearance="outline"
                             subscriptSizing="dynamic"
                         >
-                            <mat-label>{{
-                                'SETTINGS.TMDB_API_KEY' | translate
-                            }}</mat-label>
                             <input
                                 matInput
+                                [attr.aria-label]="'SETTINGS.TMDB_API_KEY' | translate"
                                 type="text"
                                 autocomplete="off"
                                 formControlName="apiKey"

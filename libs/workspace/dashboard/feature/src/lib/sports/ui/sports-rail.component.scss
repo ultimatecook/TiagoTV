@@ -6,40 +6,51 @@
 }
 
 .sports__heading {
-    margin: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
 }
 
 .sports__title {
     margin: 0;
-    color: var(--app-heading-color);
-    font-size: 22px;
-    font-weight: 500;
-    letter-spacing: 0.005em;
+    color: var(--tv-text);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
-// One line of tall cards; it scrolls sideways where the window is narrower
-// than the eight of them. The top padding is the air the heads stand in.
+.sports__all {
+    color: var(--tv-text-3);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 160ms ease;
+
+    &:hover {
+        color: var(--tv-text);
+    }
+
+    &:focus-visible {
+        border-radius: 4px;
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+// One line of tall cards, five and a half in view; it runs on through
+// the page's gutters to the window's edges. The top padding is the air
+// the heads stand in: a tenth of a card's height (4.3 / 3 of its width),
+// never under the design's 44px.
 .sports__row {
-    // As wide as the right bleed (the page's gutter where the page sets
-    // `--rail-bleed`), never under the 12px the cards' lift needs.
-    --rail-bleed-start: max(12px, var(--rail-bleed, 4px));
-    --sport-width: clamp(150px, 12.2vw, 212px);
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: var(--sport-width);
+    grid-auto-columns: max(150px, calc((100% - 80px) / 5.5));
     gap: 16px;
-    // Room for the heads, a tenth of the card's height (4.3 / 3 of its
-    // width) above it, raised further by the lift on hover.
-    padding: calc(var(--sport-width) * 0.21 + 6px) var(--rail-bleed, 4px) 48px
-        var(--rail-bleed-start);
-    // The padding holds the cards' shadows (the scroller clips at its
-    // edge); the negative margins give the room back to the layout.
-    // The row runs on through the page's gutters to the content's edges,
-    // so scrolled cards are cut where the content ends (the window's edge
-    // with the sidebar hidden); the first one rests on the gutter.
-    margin: 0 calc(-1 * var(--rail-bleed, 4px)) -34px
-        calc(-1 * var(--rail-bleed-start));
-    scroll-padding-left: var(--rail-bleed-start);
+    // The bottom padding holds the cards' shadows (the scroller clips at
+    // its edge); the negative margin gives the room back to the layout.
+    margin: 0 calc(-1 * var(--tv-page-x)) -16px;
+    padding: max(44px, calc((100% - 80px) * 0.0261 + 8px)) var(--tv-page-x) 24px;
+    scroll-padding-left: var(--tv-page-x);
     overflow-x: auto;
     scroll-snap-type: x proximity;
     scrollbar-width: none;
@@ -75,19 +86,15 @@
     }
 
     &:hover::after {
-        box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.92);
+        box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
     }
 
     &:hover,
     &:focus-visible {
-        transform: translateY(-4px) scale(1.02);
+        transform: translateY(-4px);
 
         .sport__card {
             box-shadow: 0 26px 40px -22px rgba(0, 0, 0, 0.9);
-        }
-
-        .sport__art {
-            transform: translateX(-50%) scale(1.03);
         }
     }
 
@@ -111,7 +118,7 @@
             color-mix(in srgb, var(--sport-tint) 85%, black) 0%,
             #05060a 100%
         );
-    box-shadow: 0 18px 34px -22px rgba(0, 0, 0, 0.85);
+    box-shadow: var(--tv-shadow-card);
     transition: box-shadow 200ms ease;
 }
 
@@ -139,11 +146,9 @@
     width: auto;
     max-width: none;
     transform: translateX(-50%);
-    transform-origin: 50% 30%;
     object-fit: contain;
     object-position: 50% 0;
     filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.55));
-    transition: transform 260ms ease;
     -webkit-user-drag: none;
 }
 
@@ -191,11 +196,55 @@
     -webkit-user-drag: none;
 }
 
+// "N en vivo": glass, over the cut-out's shoulder.
+.sport__live {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 22px;
+    height: 22px;
+    box-sizing: border-box;
+    padding: 0 9px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.08) 100%
+    );
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 6px 16px -6px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(14px) saturate(160%);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.sport__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--tv-live-green);
+    box-shadow: 0 0 8px var(--tv-live-green);
+    animation: tv-pulse 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .sport,
     .sport::after,
-    .sport__card,
-    .sport__art {
+    .sport__card {
         transition: none;
+    }
+
+    .sport__dot {
+        animation: none;
     }
 }

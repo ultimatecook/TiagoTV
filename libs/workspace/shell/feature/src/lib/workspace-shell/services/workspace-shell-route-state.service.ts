@@ -178,7 +178,6 @@ export class WorkspaceShellRouteStateService {
                     this.currentContext() !== null &&
                     this.currentSection() !== null
                 );
-            case 'settings':
             case 'collection':
                 return true;
             default:
@@ -188,16 +187,10 @@ export class WorkspaceShellRouteStateService {
     /**
      * The phone drawer toggle must say what the drawer actually holds:
      * categories on portal routes, playlist-type filters on the sources and
-     * collection routes, and section navigation on the settings route.
+     * collection routes.
      */
     readonly contextDrawerLabelKeys = computed(() => {
         switch (this.contextPanel()) {
-            case 'settings':
-                return {
-                    aria: 'WORKSPACE.SHELL.CONTEXT_DRAWER_SETTINGS_TOGGLE',
-                    tooltip:
-                        'WORKSPACE.SHELL.CONTEXT_DRAWER_SETTINGS_TOOLTIP',
-                };
             case 'sources':
             case 'collection':
                 return {

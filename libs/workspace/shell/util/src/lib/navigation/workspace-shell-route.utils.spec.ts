@@ -27,7 +27,8 @@ describe('workspace-shell-route.utils', () => {
             expect.objectContaining({
                 kind: 'settings',
                 context: null,
-                contextPanel: 'settings',
+                // The settings page draws its own section rail.
+                contextPanel: 'none',
                 // Settings search filters rows and keeps its term in `q`.
                 searchMode: 'local-filter',
                 usesQuerySearch: true,

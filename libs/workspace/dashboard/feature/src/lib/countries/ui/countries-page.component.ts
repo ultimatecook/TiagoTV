@@ -7,52 +7,67 @@ import {
     effect,
     ElementRef,
     inject,
-    Injector,
     input,
+    linkedSignal,
     signal,
     untracked,
     viewChild,
-    viewChildren,
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
-import { SportsCatalogService } from '../../sports/sports-catalog.service';
 import { findCountryDefinition } from '../countries';
 import type { TvCountry } from '../countries-catalog';
 import { CountriesCatalogService } from '../countries-catalog.service';
-import type { CountryChannelGroup } from '../country-channels';
-import type { TvRow } from '../country-rows';
+import {
+    countryCards,
+    countryCategories,
+    hasCategory,
+    type TvCard,
+    type TvCategoryId,
+} from '../country-tv-categories';
+import { CountryTvControls } from '../country-tv-controls';
 import { CountryTvGuide } from '../country-tv-guide';
+import { OverlayIdle } from '../country-tv-idle';
+import { liveKeyAction, onLivePage } from '../country-tv-keys';
+import { CountryTvListings } from '../country-tv-listings';
 import { CountryTvPlayback } from '../country-tv-playback';
 import {
     browserStorage,
+    countrySelection,
     openingSelection,
-    readLastChannel,
+    readMemory,
+    rememberCountry,
     selectionOf,
 } from '../country-tv-start';
-import {
-    CountryTvRowComponent,
-    type RowCrossing,
-} from './country-tv-row.component';
+import { CountryPickerComponent } from './country-picker.component';
+import { CountryTvOverlayComponent } from './country-tv-overlay.component';
 import { CountryTvStageComponent } from './country-tv-stage.component';
 
 /**
- * "Por países" (/workspace/countries) as a TV: the live player on top,
- * and under it each country's channels in sideways rows by kind
- * (Argentina, Spain, the United Kingdom, the United States). A tile plays
- * its channel in the player; nothing navigates. The page opens on the last
- * channel watched here, else on Argentina's first. A country's route
- * (`/workspace/countries/es`) opens on that country, scrolled to it.
+ * "En vivo" (/workspace/countries), a TV: the live player fills the page,
+ * behind the top bar; the country's button sits top right, and at the
+ * foot an overlay holds the channel, its controls, the category chips and
+ * the channels in cards. A card plays in place; nothing navigates. The
+ * overlay goes after a few quiet seconds while a channel plays and comes
+ * back on a mouse move or a key (`OverlayIdle`). The page opens on the
+ * country chosen last, on its last channel (`openingSelection`); a
+ * country's route (`/workspace/countries/es`) opens on that country.
  */
 @Component({
     selector: 'lib-countries-page',
     imports: [
-        CountryTvRowComponent,
+        CountryPickerComponent,
+        CountryTvOverlayComponent,
         CountryTvStageComponent,
         MatIcon,
         TranslatePipe,
     ],
-    providers: [CountryTvPlayback, CountryTvGuide],
+    providers: [
+        CountryTvPlayback,
+        CountryTvGuide,
+        CountryTvListings,
+        CountryTvControls,
+    ],
     templateUrl: './countries-page.component.html',
     styleUrl: './countries-page.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,103 +75,162 @@ import { CountryTvStageComponent } from './country-tv-stage.component';
 export class CountriesPageComponent {
     readonly catalog = inject(CountriesCatalogService);
     readonly tv = inject(CountryTvPlayback);
-    private readonly sports = inject(SportsCatalogService);
-    private readonly injector = inject(Injector);
-    private readonly host: HTMLElement = inject(ElementRef).nativeElement;
-    private readonly lanes = viewChild<ElementRef<HTMLElement>>('lanes');
-    private readonly rows = viewChildren(CountryTvRowComponent);
+    readonly controls = inject(CountryTvControls);
+    private readonly live = viewChild<ElementRef<HTMLElement>>('live');
+    private readonly overlayElement = viewChild(CountryTvOverlayComponent, {
+        read: ElementRef,
+    });
+    private readonly overlay = viewChild(CountryTvOverlayComponent);
+    private readonly picker = viewChild(CountryPickerComponent);
 
     /** Bound from the route parameter, on a country's route. */
     readonly countryId = input<string>('');
     readonly countries = this.catalog.countries;
-    readonly skeletonRows = [1, 2];
-    /** The country the rows are scrolled to, lit in the jump bar. */
-    readonly activeCountry = signal<string | null>(null);
-    readonly selectedStreamId = computed(
-        () => this.tv.selection()?.copy.streamId ?? null
+    /** The country on the page. */
+    private readonly chosen = signal<string | null>(null);
+    readonly country = computed<TvCountry | null>(() => {
+        const countries = this.countries() ?? [];
+        return (
+            countries.find((entry) => entry.definition.id === this.chosen()) ??
+            countries[0] ??
+            null
+        );
+    });
+    readonly categories = computed(() => {
+        const country = this.country();
+        return country ? countryCategories(country) : [];
+    });
+    /** The chip picked; "All" again on another country. */
+    readonly category = linkedSignal<string | null, TvCategoryId>({
+        source: () => this.country()?.definition.id ?? null,
+        computation: () => 'all',
+    });
+    readonly activeCategory = computed<TvCategoryId>(() =>
+        hasCategory(this.categories(), this.category())
+            ? this.category()
+            : 'all'
     );
+    readonly cards = computed(() => {
+        const country = this.country();
+        return country ? countryCards(country, this.activeCategory()) : [];
+    });
+    readonly pickerOpen = signal(false);
+    /** Keyboard focus is on the page's controls: the overlay stays. */
+    private readonly pinned = signal(false);
+    private readonly hovering = signal(false);
+    readonly playing = computed(
+        () => !!this.tv.playback() && this.controls.playing()
+    );
+    readonly idle = new OverlayIdle(
+        () =>
+            this.playing() &&
+            !this.pinned() &&
+            !this.hovering() &&
+            !this.pickerOpen()
+    );
+    readonly skeletonCards = [1, 2, 3, 4, 5, 6, 7, 8];
     private opened = false;
-    private spyFrame = 0;
+    /** Whether the overlay showed when the picture was pressed. */
+    private shownOnPress = true;
 
     constructor() {
-        this.catalog.keepFresh(inject(DestroyRef));
+        const destroyRef = inject(DestroyRef);
+        this.catalog.keepFresh(destroyRef);
         effect(() => {
             const countries = this.countries();
             if (countries && countries.length > 0 && !this.opened) {
                 untracked(() => this.open(countries));
             }
         });
-        inject(DestroyRef).onDestroy(() => cancelAnimationFrame(this.spyFrame));
-    }
-
-    play(country: TvCountry, row: TvRow, channel: CountryChannelGroup): void {
-        this.tv.play(selectionOf(country, row, channel));
-    }
-
-    cross(from: CountryTvRowComponent, crossing: RowCrossing): void {
-        const rows = this.rows();
-        rows[rows.indexOf(from) + crossing.direction]?.focusNear(crossing.x);
-    }
-
-    /**
-     * At once, not smoothly: a smooth jump to the US would pass every row
-     * on the way, rendering each and loading its logos.
-     */
-    jumpTo(countryId: string): void {
-        this.activeCountry.set(countryId);
-        const section = this.host.querySelector<HTMLElement>(
-            `[data-country="${countryId}"]`
-        );
-        const lanes = this.lanes()?.nativeElement;
-        if (!section || !lanes) {
-            return;
-        }
-        if (scrolls(lanes)) {
-            const padding = parseFloat(getComputedStyle(lanes).paddingTop);
-            lanes.scrollTo({ top: section.offsetTop - (padding || 0) });
-        } else {
-            section.scrollIntoView({ block: 'start' });
-        }
-    }
-
-    /** The jump bar follows the rows: the country at the pane's top. */
-    onLanesScroll(): void {
-        cancelAnimationFrame(this.spyFrame);
-        this.spyFrame = requestAnimationFrame(() => {
-            const lanes = this.lanes()?.nativeElement;
-            if (!lanes) {
-                return;
+        // Another country's route while the page is open.
+        effect(() => {
+            const id = findCountryDefinition(this.countryId())?.id;
+            if (id && this.opened) {
+                untracked(() => this.chooseCountry(id));
             }
-            const sections = Array.from(
-                lanes.querySelectorAll<HTMLElement>('[data-country]')
-            );
-            const top = lanes.scrollTop + 48;
-            const current = sections
-                .filter((section) => section.offsetTop <= top)
-                .pop();
-            this.activeCountry.set(
-                current?.dataset['country'] ??
-                    sections[0]?.dataset['country'] ??
-                    null
-            );
         });
+        effect(() => {
+            this.playing();
+            this.pinned();
+            this.hovering();
+            this.pickerOpen();
+            untracked(() => this.idle.update());
+        });
+        effect(() => {
+            const live = this.live()?.nativeElement;
+            if (live) {
+                untracked(() => this.controls.attach(live));
+            }
+        });
+        afterNextRender(() => this.listen(destroyRef));
+        destroyRef.onDestroy(() => this.idle.destroy());
     }
 
-    /** "Open in Live TV": the playing channel in the Xtream live view. */
-    openLiveView(): void {
-        const selection = this.tv.selection();
-        if (!selection) {
+    /** A country from its button's menu, or from its route. */
+    chooseCountry(id: string): void {
+        const country = this.countries()?.find(
+            (entry) => entry.definition.id === id
+        );
+        if (!country || this.country()?.definition.id === id) {
             return;
         }
-        // The live view plays it next: no hand-over to the mini-player.
-        this.tv.leaving.set(true);
-        const { copy, channel } = selection;
-        this.sports.play({
-            streamId: copy.streamId,
-            categoryId: copy.categoryId,
-            title: channel.title,
-            icon: copy.icon,
-        });
+        this.chosen.set(id);
+        rememberCountry(browserStorage(), id);
+        const selection = countrySelection(
+            country,
+            readMemory(browserStorage())
+        );
+        if (selection) {
+            this.tv.open(selection);
+        }
+    }
+
+    play(card: TvCard): void {
+        const country = this.country();
+        if (country) {
+            this.tv.play(selectionOf(country, card.row, card.channel));
+        }
+    }
+
+    pickCategory(category: TvCategoryId): void {
+        this.category.set(category);
+    }
+
+    setHovering(hovering: boolean): void {
+        this.hovering.set(hovering);
+    }
+
+    openLiveView(): void {
+        this.tv.openLiveView();
+    }
+
+    /** A press on the picture: the overlay goes if it showed, else comes. */
+    onPicturePress(): void {
+        this.shownOnPress = this.idle.visible();
+    }
+
+    onPictureClick(): void {
+        if (this.shownOnPress) {
+            this.idle.hide();
+        } else {
+            this.idle.wake();
+        }
+    }
+
+    /** Keyboard focus on the page pins the overlay; a pointer's does not. */
+    onFocusIn(event: FocusEvent): void {
+        const target = event.target as HTMLElement;
+        this.pinned.set(
+            target !== this.live()?.nativeElement && keyboard(target)
+        );
+        this.idle.wake();
+    }
+
+    onFocusOut(event: FocusEvent): void {
+        const next = event.relatedTarget as Node | null;
+        if (!next || !this.live()?.nativeElement.contains(next)) {
+            this.pinned.set(false);
+        }
     }
 
     retry(): void {
@@ -165,49 +239,106 @@ export class CountriesPageComponent {
 
     private open(countries: readonly TvCountry[]): void {
         this.opened = true;
-        const countryId = findCountryDefinition(this.countryId())?.id ?? null;
+        const routeId = findCountryDefinition(this.countryId())?.id ?? null;
         const selection = openingSelection(
             countries,
-            readLastChannel(browserStorage()),
-            countryId
+            readMemory(browserStorage()),
+            routeId
         );
-        this.activeCountry.set(
-            countryId ?? countries[0]?.definition.id ?? null
+        this.chosen.set(
+            selection?.country.definition.id ?? countries[0].definition.id
         );
         if (selection) {
             this.tv.open(selection);
         }
-        afterNextRender(
-            () => {
-                if (countryId) {
-                    this.jumpTo(countryId);
-                } else if (selection) {
-                    this.reveal(selection.row.id);
-                }
-            },
-            { injector: this.injector }
-        );
     }
 
-    /** The opening channel's row in view, if it is further down. */
-    private reveal(rowId: string): void {
-        const lanes = this.lanes()?.nativeElement;
-        const row = this.host.querySelector<HTMLElement>(
-            `[data-test-id="country-tv-row-${rowId}"]`
-        );
-        if (!lanes || !row || !scrolls(lanes)) {
+    /**
+     * The page's own listeners, outside Angular's: a mouse move must not
+     * run change detection, only restart the overlay's quiet time.
+     */
+    private listen(destroyRef: DestroyRef): void {
+        const nudge = () => this.idle.nudge();
+        const key = (event: KeyboardEvent) => this.onKeydown(event);
+        // Bubbling, after the picture's own press (`onPicturePress`).
+        const press = (event: PointerEvent) => {
+            const overlay = this.overlayElement()?.nativeElement;
+            if (overlay?.contains(event.target as Node)) {
+                // A click in the overlay is not keyboard focus.
+                this.pinned.set(false);
+            }
+            this.idle.wake();
+        };
+        document.addEventListener('mousemove', nudge, { passive: true });
+        document.addEventListener('wheel', nudge, { passive: true });
+        document.addEventListener('pointerdown', press);
+        document.addEventListener('keydown', key);
+        destroyRef.onDestroy(() => {
+            document.removeEventListener('mousemove', nudge);
+            document.removeEventListener('wheel', nudge);
+            document.removeEventListener('pointerdown', press);
+            document.removeEventListener('keydown', key);
+        });
+    }
+
+    private onKeydown(event: KeyboardEvent): void {
+        const live = this.live()?.nativeElement;
+        // The player's own keys, forwarded by `CountryTvControls`, and
+        // keys meant for a dialog or a field elsewhere.
+        if (
+            !live ||
+            this.controls.isForwarded(event) ||
+            !onLivePage(event, live)
+        ) {
             return;
         }
-        const top = row.offsetTop;
-        if (top > lanes.clientHeight * 0.6) {
-            lanes.scrollTop = top - lanes.clientHeight / 3;
-            this.onLanesScroll();
+        this.idle.wake();
+        if (live.contains(event.target as Node) && event.target !== live) {
+            this.pinned.set(true);
         }
+        const action = liveKeyAction(event);
+        if (!action) {
+            return;
+        }
+        event.preventDefault();
+        switch (action) {
+            case 'collapse':
+                this.collapse(live);
+                break;
+            case 'play':
+                this.overlay()?.playPause();
+                break;
+            case 'mute':
+                this.controls.toggleMute();
+                break;
+            case 'fullscreen':
+                this.controls.toggleFullscreen();
+                break;
+            case 'cards':
+                this.overlay()?.focusCards();
+                break;
+        }
+    }
+
+    /** Esc: the country menu closes; else the overlay goes. */
+    private collapse(live: HTMLElement): void {
+        if (this.pickerOpen()) {
+            this.picker()?.close(true);
+            return;
+        }
+        if (live.contains(document.activeElement)) {
+            live.focus({ preventScroll: true });
+        }
+        this.pinned.set(false);
+        this.idle.hide();
     }
 }
 
-/** Whether the rows scroll in their own pane (not on a phone). */
-function scrolls(element: HTMLElement): boolean {
-    const overflow = getComputedStyle(element).overflowY;
-    return overflow === 'auto' || overflow === 'scroll';
+/** Focus a key moved, or a script after a key (`:focus-visible`). */
+function keyboard(element: HTMLElement): boolean {
+    try {
+        return element.matches(':focus-visible');
+    } catch {
+        return true;
+    }
 }

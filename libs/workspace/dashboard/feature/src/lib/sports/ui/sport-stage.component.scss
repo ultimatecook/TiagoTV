@@ -1,0 +1,398 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+:host {
+    // The stage fills the content area's height (the top bar over it).
+    --sport-stage-h: 100vh;
+    display: block;
+    min-width: 0;
+}
+
+.stage {
+    position: relative;
+    height: var(--sport-stage-h);
+    min-height: 640px;
+    overflow: hidden;
+    // It reaches the window's top edge: the browser window's corners.
+    border-radius: var(--tv-window-radius) var(--tv-window-radius) 0 0;
+    background: #050505;
+    color: var(--tv-text);
+
+    &:fullscreen {
+        height: 100vh;
+        min-height: 0;
+        border-radius: 0;
+    }
+}
+
+// At rest: the competition's colour, the signal's logo faint in the middle.
+.stage__rest {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding-bottom: 34vh;
+    background: radial-gradient(
+        70% 90% at 50% 38%,
+        color-mix(in srgb, var(--stage-tint, #1a1c1e) 55%, #1a1c1e) 0%,
+        #0a0b0c 72%,
+        #050505 100%
+    );
+}
+
+.stage__rest-logo {
+    max-width: 18%;
+    max-height: 26%;
+    object-fit: contain;
+    opacity: 0.22;
+    -webkit-user-drag: none;
+}
+
+.stage__screen {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+
+    > app-web-player-view {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+}
+
+// The page's overlay is the controls, as on "En vivo": the player's own
+// bar is hidden, and its picture takes no clicks. Its diagnostic, with
+// Retry and the external players, stays usable above the overlay.
+.stage__screen ::ng-deep {
+    app-player-controls,
+    .vjs-control-bar,
+    .vjs-big-play-button,
+    .art-bottom,
+    .art-mask {
+        display: none !important;
+    }
+
+    app-vjs-player,
+    app-html-video-player,
+    app-art-player,
+    app-embedded-mpv-player {
+        pointer-events: none;
+    }
+
+    app-playback-diagnostic-panel {
+        bottom: var(--sport-overlay-h, 0px);
+    }
+
+    // The resting ground shows through until the first frame.
+    .video-js,
+    video {
+        background-color: transparent !important;
+    }
+}
+
+// Nothing plays yet (the mini-player was busy, or MPV/VLC is the player).
+.stage__ready {
+    position: absolute;
+    inset: 0 0 34vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px;
+    border: 0;
+    background: transparent;
+    color: var(--tv-text);
+    font: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: -4px);
+    }
+
+    &:hover .stage__ready-icon {
+        transform: scale(1.06);
+    }
+}
+
+.stage__ready-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    color: #0b0b09;
+    transition: transform 160ms ease;
+
+    mat-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 34px;
+    }
+}
+
+.stage__ready-label {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.stage__pill {
+    position: absolute;
+    top: calc(var(--tv-topbar-h) + 20px);
+    right: var(--tv-page-x);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 14px 0 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 255, 255, 0.06) 100%
+    );
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px) saturate(160%);
+    transition: opacity 300ms ease;
+}
+
+.stage__pill-logo {
+    height: 22px;
+    max-width: 60px;
+    object-fit: contain;
+}
+
+.stage__pill-name {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.stage__pill-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 4px;
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.stage__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--tv-live-green);
+    box-shadow: 0 0 8px var(--tv-live-green);
+    animation: tv-pulse 1.6s ease-in-out infinite;
+}
+
+// The bottom of the stage: a veil, what plays, the controls and the row.
+// The veil lets the video's clicks through; only its controls take them.
+.stage__overlay {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 140px var(--tv-page-x) 32px;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.5) 30%,
+        rgba(0, 0, 0, 0.82) 100%
+    );
+    pointer-events: none;
+    transition: opacity 300ms ease;
+
+    button,
+    .stage__cards {
+        pointer-events: auto;
+    }
+}
+
+.stage--idle {
+    cursor: none;
+
+    .stage__overlay,
+    .stage__pill {
+        opacity: 0;
+    }
+
+    .stage__overlay button,
+    .stage__overlay .stage__cards {
+        pointer-events: none;
+    }
+}
+
+.stage__now {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.stage__info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.stage__channel {
+    margin: 0;
+    overflow: hidden;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stage__programme {
+    margin: 0;
+    overflow: hidden;
+    color: var(--tv-text-img-2);
+    font-size: 15px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stage__controls {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+}
+
+.stage__control {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tv-text);
+    cursor: pointer;
+    transition: background-color 160ms ease;
+
+    mat-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 22px;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 2px);
+    }
+}
+
+.stage__control--main {
+    background: #fff;
+    color: #0b0b09;
+
+    &:hover {
+        background: #e9e6df;
+    }
+}
+
+.stage__progress {
+    display: block;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+
+    i {
+        display: block;
+        height: 100%;
+        background: var(--tv-live-red);
+    }
+}
+
+.stage__row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.stage__row-title {
+    color: var(--tv-text-2);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.stage__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--tv-text-2);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+
+    mat-icon {
+        width: 16px;
+        height: 16px;
+        font-size: 16px;
+    }
+
+    &:hover {
+        color: var(--tv-text);
+    }
+
+    &:focus-visible {
+        border-radius: 4px;
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+// The signals run on through the page's gutters to the stage's edges.
+.stage__cards {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 196px;
+    gap: 16px;
+    margin: -8px calc(-1 * var(--tv-page-x)) 0;
+    padding: 6px var(--tv-page-x) 4px;
+    scroll-padding-left: var(--tv-page-x);
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stage__dot {
+        animation: none;
+    }
+
+    .stage__overlay,
+    .stage__pill,
+    .stage__ready-icon {
+        transition: none;
+    }
+}

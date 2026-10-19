@@ -16,9 +16,9 @@ import { MACOS_TRAFFIC_LIGHTS_POSITION } from '@iptvnator/shared/interfaces';
 const LIGHTS_WIDTH = 60;
 const LIGHTS_HEIGHT = 14;
 /**
- * Window points from the window's left edge to where header content may
- * start: the lights plus a gap. 84 is also where the header's content starts
- * at 100 % (the 60 px rail plus 24 px padding), so default zoom is unchanged.
+ * Window points from the window's left edge to where bar content may start:
+ * the lights plus a gap (90 at 22pt in). It also clears the lights of a main
+ * process that still places them 16pt in (they end at 76).
  */
 const CLEAR_X = MACOS_TRAFFIC_LIGHTS_POSITION.x + LIGHTS_WIDTH + 8;
 /** Window points from the top to where the content area may start. */
@@ -67,9 +67,9 @@ export function trafficLightsClearance(
 /**
  * Publishes the macOS traffic-light clearance on its host as
  * `--traffic-lights-clear-x` and `--traffic-lights-clear-y`, refreshed on
- * `resize` (Chromium fires it when the zoom changes). The shell grid, the
- * rail and the header read them; without them (off macOS) they fall back to
- * their default layout. In fullscreen (`window-fullscreen` on `<html>`)
+ * `resize` (Chromium fires it when the zoom changes). The top bar keeps its
+ * leading group clear of the lights with the first; without them (off macOS)
+ * it falls back to its default layout. In fullscreen (`window-fullscreen` on `<html>`)
  * macOS hides the lights, so both are `0px`.
  */
 @Directive({

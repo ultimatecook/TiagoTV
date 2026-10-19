@@ -5,7 +5,7 @@ import {
     type DashboardRailsSettings,
     type EpgProgram,
 } from '@iptvnator/shared/interfaces';
-import type { DashboardRailCard } from './dashboard-rail.component';
+import type { DashboardRailCard } from './dashboard-rail-card';
 
 // EPG "now" data ticks every 30s: short enough that the progress bar moves
 // visibly between long-tail program changes, long enough that we don't hammer

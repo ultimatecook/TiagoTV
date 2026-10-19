@@ -1,0 +1,52 @@
+@use '../../../../../../ui/styles/focus-ring';
+
+:host {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+}
+
+.heading__titles {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    min-width: 0;
+}
+
+.heading__title {
+    margin: 0;
+    color: var(--tv-text);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.heading__subtitle {
+    overflow: hidden;
+    color: var(--tv-meta);
+    font-size: 13px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.heading__link {
+    flex: none;
+    border-radius: 4px;
+    color: var(--tv-text-3);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 160ms ease;
+
+    &:hover {
+        color: var(--tv-text);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}

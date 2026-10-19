@@ -6,11 +6,11 @@ import type {
     PortalRecentItem,
 } from '@iptvnator/shared/interfaces';
 
-/** Slides the cinematic hero rotates through, at most. */
-export const HERO_SLIDE_LIMIT = 4;
+/** Slides the "Seguir viendo" hero rotates through, at most. */
+export const HERO_SLIDE_LIMIT = 5;
 
-/** Auto-advance interval; the active dot fills over the same duration. */
-export const HERO_ROTATION_MS = 8_000;
+/** Auto-advance interval (the active indicator's timer runs this long). */
+export const HERO_ROTATION_MS = 6_000;
 
 const HERO_LIVE_FAVORITE_CANDIDATES = 3;
 const HERO_LIVE_RECENT_CANDIDATES = 2;
@@ -94,13 +94,13 @@ export function selectDashboardHeroLiveCandidates(
 }
 
 /**
- * The rotation mix: the title to resume first, then a channel on air now,
- * then one favourite and one recent import; remaining places go to the next
- * unfinished title, favourite and import in turn. A title never appears
- * twice, and the order is stable so a slide arriving late (the live slide
- * waits for its EPG answer) slots in without reshuffling the rest. While
- * live candidates exist, one place stays reserved for the live slide, so
- * its arrival never evicts a slide the user may be viewing.
+ * The rotation mix of the Home's "Seguir viendo" hero: every unfinished
+ * title first, most recent first; then a channel on air now; remaining
+ * places go to a favourite and a recent import in turn. A title never
+ * appears twice, and the order is stable so a slide arriving late (the
+ * live slide waits for its EPG answer) slots in without reshuffling the
+ * rest. While live candidates exist, one place stays reserved for the
+ * live slide, so its arrival never evicts a slide the user may be viewing.
  */
 export function pickDashboardHeroSources(
     input: DashboardHeroSourceInput
@@ -122,10 +122,6 @@ export function pickDashboardHeroSources(
         seen.add(key);
         sources.push(source);
     };
-    const continueAt = (index: number) => {
-        const item = input.continueItems[index];
-        return item ? ({ kind: 'continue', item } as const) : null;
-    };
     const favoriteAt = (index: number) => {
         const item = input.favorites[index];
         return item ? ({ kind: 'favorite', item } as const) : null;
@@ -135,13 +131,11 @@ export function pickDashboardHeroSources(
         return item ? ({ kind: 'added', item } as const) : null;
     };
 
-    push(continueAt(0));
+    input.continueItems.forEach((item) => push({ kind: 'continue', item }));
     push(input.live ? { kind: 'live', ...input.live } : null);
-    push(favoriteAt(0));
-    push(addedAt(0));
-    // Ends once every list has run out; duplicates only skip a place.
-    for (let index = 1; sources.length < limit; index++) {
-        const next = [continueAt(index), favoriteAt(index), addedAt(index)];
+    // Ends once both lists have run out; duplicates only skip a place.
+    for (let index = 0; sources.length < limit; index++) {
+        const next = [favoriteAt(index), addedAt(index)];
         if (next.every((source) => source === null)) {
             break;
         }

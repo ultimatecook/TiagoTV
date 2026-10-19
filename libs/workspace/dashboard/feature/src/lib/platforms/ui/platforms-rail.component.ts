@@ -6,17 +6,24 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { HomeHeadingComponent } from '../../rails/home-heading.component';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
 import { PlatformLogoComponent } from './platform-logo.component';
 
 /**
- * The Home's platforms row, above "Deportes": one logo card per streaming
- * platform the source carries. A card opens the platform's movies and
- * series in Spanish and English.
+ * The Home's platforms row, under "Seguir viendo": one logo card per
+ * streaming platform the source carries (`PlatformsCatalogService`, whose
+ * last loaded categories show at once). A card opens the platform's
+ * movies and series in Spanish and English.
  */
 @Component({
     selector: 'lib-platforms-rail',
-    imports: [PlatformLogoComponent, RouterLink, TranslatePipe],
+    imports: [
+        HomeHeadingComponent,
+        PlatformLogoComponent,
+        RouterLink,
+        TranslatePipe,
+    ],
     templateUrl: './platforms-rail.component.html',
     styleUrl: './platforms-rail.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

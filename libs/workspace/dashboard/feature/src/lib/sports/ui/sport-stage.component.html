@@ -1,0 +1,179 @@
+@let current = tv.playback();
+@let selection = tv.selection();
+<section
+    #stage
+    class="stage"
+    [class.stage--idle]="idle()"
+    [style.--stage-tint]="section().tint"
+    (pointermove)="wake()"
+>
+    <div class="stage__rest" aria-hidden="true">
+        @if (restingLogo(); as logo) {
+            <img
+                class="stage__rest-logo"
+                [src]="logo"
+                alt=""
+                referrerpolicy="no-referrer"
+                draggable="false"
+                (error)="logoFailed()"
+            />
+        }
+    </div>
+
+    <div class="stage__screen" data-test-id="sport-player">
+        @if (current) {
+            <app-web-player-view
+                [playbackSessionKey]="tv.sessionKey()"
+                [streamUrl]="current.streamUrl"
+                [title]="current.title"
+                [playback]="current"
+                [dockable]="!tv.leaving()"
+                (externalFallbackRequested)="tv.openExternally($event)"
+            />
+        } @else if (selection) {
+            <button
+                type="button"
+                class="stage__ready"
+                data-test-id="sport-play"
+                (click)="playPause()"
+            >
+                <span class="stage__ready-icon" aria-hidden="true">
+                    <mat-icon>play_arrow</mat-icon>
+                </span>
+                <span class="stage__ready-label">{{
+                    (tv.embedded()
+                        ? 'WORKSPACE.SPORTS.WATCH_CHANNEL'
+                        : 'WORKSPACE.SPORTS.WATCH_EXTERNAL'
+                    ) | translate: { name: title() }
+                }}</span>
+            </button>
+        }
+    </div>
+
+    <div class="stage__pill" data-test-id="sport-stage-pill">
+        @if (section().logo; as logo) {
+            <img
+                class="stage__pill-logo"
+                [src]="logo"
+                alt=""
+                draggable="false"
+            />
+        }
+        <span class="stage__pill-name">{{ section().title }}</span>
+        @if (liveCount() > 0) {
+            <span class="stage__pill-live">
+                <i class="stage__dot" aria-hidden="true"></i>
+                {{
+                    'WORKSPACE.SPORTS.LIVE_COUNT'
+                        | translate: { count: liveCount() }
+                }}
+            </span>
+        }
+    </div>
+
+    <div #overlay class="stage__overlay">
+        <div class="stage__now">
+            <div class="stage__info" aria-live="polite">
+                <h2 class="stage__channel" data-test-id="sport-playing">
+                    {{ title() }}
+                </h2>
+                @if (programme()) {
+                    <p class="stage__programme">{{ programme() }}</p>
+                }
+            </div>
+            @if (current) {
+                <div class="stage__controls">
+                    <button
+                        type="button"
+                        class="stage__control stage__control--main"
+                        [attr.aria-label]="
+                            (controls.paused()
+                                ? 'WORKSPACE.SPORTS.PLAY'
+                                : 'WORKSPACE.SPORTS.PAUSE'
+                            ) | translate
+                        "
+                        (click)="playPause()"
+                    >
+                        <mat-icon aria-hidden="true">{{
+                            controls.paused() ? 'play_arrow' : 'pause'
+                        }}</mat-icon>
+                    </button>
+                    <button
+                        type="button"
+                        class="stage__control"
+                        [attr.aria-label]="
+                            (controls.muted()
+                                ? 'WORKSPACE.SPORTS.UNMUTE'
+                                : 'WORKSPACE.SPORTS.MUTE'
+                            ) | translate
+                        "
+                        (click)="controls.toggleMute()"
+                    >
+                        <mat-icon aria-hidden="true">{{
+                            controls.muted() ? 'volume_off' : 'volume_up'
+                        }}</mat-icon>
+                    </button>
+                    <button
+                        type="button"
+                        class="stage__control"
+                        [attr.aria-label]="
+                            (controls.fullscreen()
+                                ? 'WORKSPACE.SPORTS.EXIT_FULLSCREEN'
+                                : 'WORKSPACE.SPORTS.FULLSCREEN'
+                            ) | translate
+                        "
+                        (click)="controls.toggleFullscreen()"
+                    >
+                        <mat-icon aria-hidden="true">{{
+                            controls.fullscreen()
+                                ? 'fullscreen_exit'
+                                : 'fullscreen'
+                        }}</mat-icon>
+                    </button>
+                </div>
+            }
+        </div>
+        <span class="stage__progress" aria-hidden="true">
+            @if (progress() !== null) {
+                <i [style.width.%]="progress()"></i>
+            }
+        </span>
+        @if (cards().length > 0) {
+            <div class="stage__row-head">
+                <span class="stage__row-title">{{
+                    'WORKSPACE.SPORTS.CHANNELS' | translate
+                }}</span>
+                @if (!controls.fullscreen()) {
+                    <button
+                        type="button"
+                        class="stage__more"
+                        data-test-id="sport-stage-more"
+                        (click)="more.emit()"
+                    >
+                        {{ 'WORKSPACE.SPORTS.MATCHES_AND_TABLE' | translate }}
+                        <mat-icon aria-hidden="true">expand_more</mat-icon>
+                    </button>
+                }
+            </div>
+            <div
+                class="stage__cards"
+                role="group"
+                [attr.aria-label]="'WORKSPACE.SPORTS.CHANNELS' | translate"
+            >
+                @for (card of cards(); track card.key) {
+                    @let on = card.channel.streamId === selection?.streamId;
+                    <lib-sport-signal-card
+                        [card]="card"
+                        [active]="on"
+                        [subtitle]="
+                            on && programme() ? programme() : section().title
+                        "
+                        [progress]="on ? progress() : null"
+                        [fallbackLogo]="section().logo"
+                        (picked)="play($event)"
+                    />
+                }
+            </div>
+        }
+    </div>
+</section>

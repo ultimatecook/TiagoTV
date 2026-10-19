@@ -6,36 +6,11 @@
 }
 
 .workspace-shell {
-    --workspace-sidebar-width: 252px;
-    // The sidebar's column: none while it is hidden (⌃⌘S).
-    --workspace-nav-column: var(--workspace-sidebar-width);
-    // No header bar: the content starts at the window's top. A rounded
-    // window keeps a sliver so nothing scrolls into its top corner.
-    --workspace-body-top: 12px;
-    // The macOS traffic lights' band over the content while the sidebar is
-    // hidden: pages start below it, the Home and a platform's pages run on
-    // under it (they set it back to 0 on the body).
-    --workspace-lights-band: 0px;
-    // The macOS window's drag strip along the top edge (none elsewhere: the
-    // ambient margin moves a frameless window).
-    --workspace-drag-strip: 0px;
-    // The floating page controls (Back, the page's shortcuts).
-    --page-controls-top: calc(var(--workspace-body-top) + 14px);
-    --page-controls-start: 16px;
-    // The round Back and page buttons.
-    --page-control-size: 38px;
-    // How far a context panel's content moves down under them.
-    --workspace-leading-clearance: 48px;
-    // How far the window's own controls reach over the content's top row
-    // from its left edge: the macOS traffic lights while the sidebar is
-    // hidden. The Home starts its heading after them.
-    --workspace-corner-inset: 0px;
     // The room the now-playing pill takes at the foot of a page scrolled to
     // its end: none without the pill.
     --workspace-now-playing-clearance: 0px;
     // Room around the glass window: the ambient room shows through it.
     --workspace-window-inset: 22px;
-    --workspace-window-radius: 34px;
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -45,11 +20,6 @@
     min-height: 0;
     box-sizing: border-box;
     padding: var(--workspace-window-inset);
-    // macOS: the window starts below the traffic lights.
-    padding-top: max(
-        var(--workspace-window-inset),
-        var(--traffic-lights-clear-y, 0px)
-    );
     overflow: hidden;
     background: transparent;
     color: var(--mat-sys-on-surface);
@@ -60,34 +30,32 @@
         --workspace-now-playing-clearance: 56px;
         padding-bottom: calc(var(--workspace-window-inset) + 30px);
     }
-
-    &.nav-hidden {
-        --workspace-nav-column: 0px;
-    }
 }
 
-// The glass window. It never clips (`overflow` stays visible): a rounded
-// clip around the scroller would give every composited layer inside it a
-// mask layer (see the content frame below). Instead nothing scrolls under
-// its rounded corners: the body starts a sliver below the top corner and
-// stops above the bottom one.
+// The glass window (handoff "Ventana"). It never clips: a rounded clip
+// around the scroller gives every composited layer inside it a mask layer
+// the size of the content area (see "Content surface corner" in the shell
+// docs). The page runs to every edge; the rounded corners are painted over
+// it (`.workspace-corner`), and so is the rim.
 .workspace-window {
     position: relative;
     display: grid;
-    grid-template-columns: var(--workspace-nav-column) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    transition: grid-template-columns 220ms cubic-bezier(0.2, 0, 0, 1);
+    grid-template-columns: minmax(0, 1fr);
+    // The bar's row, then the page. A redesigned page runs up under the
+    // bar (the body spans both rows); a framed one starts below it.
+    grid-template-rows: var(--tv-topbar-h) minmax(0, 1fr);
     min-width: 0;
     min-height: 0;
-    padding-bottom: 22px;
-    border: 1px solid var(--app-glass-border, var(--app-separator));
-    border-radius: var(--workspace-window-radius);
+    border-radius: var(--tv-window-radius);
+    // No backdrop filter of its own (the handoff's blur(40px)): it would make
+    // the window the backdrop root of the bar's glass, which then no longer
+    // blurs the page scrolled under it; behind the window there is only the
+    // room's smooth gradient, where a blur shows nothing anyway.
     background: var(
         --app-glass-bg,
         var(--app-shell-bg, var(--mat-sys-surface))
     );
     box-shadow:
-        inset 0 1px 0 var(--app-glass-highlight, transparent),
         0 50px 120px rgba(0, 0, 0, 0.5),
         0 10px 34px rgba(0, 0, 0, 0.35);
     app-region: no-drag;
@@ -118,97 +86,95 @@
         transition: opacity 600ms ease;
         pointer-events: none;
     }
+
+    // The rim and its top highlight, over a hero that runs to the edge.
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        border: 1px solid var(--app-glass-border, var(--app-separator));
+        border-radius: inherit;
+        box-shadow: inset 0 1px 0 var(--app-glass-highlight, transparent);
+        pointer-events: none;
+    }
 }
 
 :host-context(.platform-ambient) .workspace-window::before {
     opacity: 1;
 }
 
-app-workspace-shell-sidebar {
-    grid-column: 1;
-    grid-row: 1;
-    min-height: 0;
-    // The sidebar runs into the bottom padding: its own padding keeps the
-    // links off the rounded corner.
-    margin-bottom: -22px;
-    // Hiding folds the column over it; it fades as it goes.
-    overflow: hidden;
-    transition:
-        opacity 220ms ease,
-        visibility 0s;
+// The window's corners outside its curve, painted in the room's own
+// colours over whatever scrolls into them: the room is fixed to the
+// viewport, as the body that paints it, so the pieces match it, darkened
+// like the window's drop shadow there. Each is the radius square; 0 where
+// the window has no corners (native glass, fullscreen, phones).
+.workspace-corner {
+    display: none;
 }
 
-.nav-hidden app-workspace-shell-sidebar {
-    opacity: 0;
-    visibility: hidden;
-    transition:
-        opacity 160ms ease,
-        visibility 0s 220ms;
-}
-
-// The sidebar's pull tab rides the content's left edge, half-way down: the
-// window's edge while the sidebar is hidden, the sidebar's otherwise. It
-// moves with the column as the sidebar folds.
-app-workspace-shell-nav-tab {
-    position: relative;
-    z-index: 4;
-    grid-column: 2;
-    grid-row: 1;
-    align-self: center;
-    justify-self: start;
-}
-
-// The page's floating controls lie over the body's top edge.
-app-workspace-shell-page-controls {
-    position: relative;
-    z-index: 3;
-    grid-column: 2;
-    grid-row: 1;
-    align-self: start;
-    min-width: 0;
-}
-
-.workspace-drag-strip {
+:host-context(body.dark-theme) .workspace-corner {
+    --corner-shade: rgba(0, 0, 0, 0.12);
     position: absolute;
     z-index: 2;
-    top: 0;
-    right: 0;
-    left: var(--workspace-nav-column);
-    height: var(--workspace-drag-strip);
-    app-region: drag;
+    display: block;
+    width: var(--tv-window-radius);
+    height: var(--tv-window-radius);
+    background:
+        linear-gradient(var(--corner-shade), var(--corner-shade)),
+        var(--app-room-bg);
+    background-attachment: fixed;
     pointer-events: none;
-}
+    -webkit-mask: radial-gradient(
+        circle at var(--corner-centre),
+        transparent calc(var(--tv-window-radius) - 0.75px),
+        #000 var(--tv-window-radius)
+    );
+    mask: radial-gradient(
+        circle at var(--corner-centre),
+        transparent calc(var(--tv-window-radius) - 0.75px),
+        #000 var(--tv-window-radius)
+    );
 
-// macOS glass: a strip along the top edge moves the window. Hidden, the
-// sidebar leaves the traffic lights over the content's top-left corner: a
-// page starts below them, and their band, holding Back after the lights
-// and level with them, moves the window like a title bar. The Home and a
-// platform's pages run on to the top under that transparent band: the
-// Home starts its heading after the lights (`--workspace-corner-inset`), a
-// billboard runs under them.
-:host-context(.native-glass:not(.window-fullscreen)) .workspace-shell {
-    --workspace-body-top: 0px;
-    --workspace-drag-strip: 18px;
+    &[data-corner='top-left'] {
+        --corner-centre: 100% 100%;
+        top: 0;
+        left: 0;
+    }
 
-    &.nav-hidden {
-        // Back sits in the lights' row, a lights-sized step after them.
-        --page-controls-start: calc(var(--traffic-lights-clear-x, 84px) + 6px);
-        --page-control-size: 30px;
-        --workspace-lights-band: var(--traffic-lights-clear-y, 48px);
-        --workspace-drag-strip: var(--traffic-lights-clear-y, 48px);
-        --workspace-leading-clearance: 0px;
-        --workspace-corner-inset: var(--traffic-lights-clear-x, 84px);
-        // Centred on the lights.
-        --page-controls-top: calc(
-            var(--traffic-lights-clear-y, 48px) / 2 - 13px
-        );
+    &[data-corner='top-right'] {
+        --corner-centre: 0 100%;
+        top: 0;
+        right: 0;
+    }
+
+    &[data-corner='bottom-left'] {
+        --corner-centre: 100% 0;
+        --corner-shade: rgba(0, 0, 0, 0.3);
+        bottom: 0;
+        left: 0;
+    }
+
+    &[data-corner='bottom-right'] {
+        --corner-centre: 0 0;
+        --corner-shade: rgba(0, 0, 0, 0.3);
+        bottom: 0;
+        right: 0;
     }
 }
 
-.workspace-body {
-    grid-column: 2;
+// The bar floats over the top of the window, above the page.
+app-workspace-shell-top-bar {
+    position: relative;
+    z-index: 3;
+    grid-column: 1;
     grid-row: 1;
-    padding-top: calc(var(--workspace-body-top) + var(--workspace-lights-band));
+    min-width: 0;
+}
+
+.workspace-body {
+    grid-column: 1;
+    grid-row: 1 / -1;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     min-height: 0;
@@ -221,56 +187,49 @@ app-workspace-shell-page-controls {
     }
 }
 
+// The bar's room at the top of the scroller (the page bleeds back up).
+.workspace-topbar-spacer {
+    height: var(--tv-topbar-h);
+}
+
+// Framed pages (portal lists with their category panel, players, sources)
+// keep their full-height layouts below the bar.
+.is-framed {
+    .workspace-body {
+        grid-row: 2;
+    }
+
+    .workspace-topbar-spacer {
+        display: none;
+    }
+}
+
 app-workspace-shell-context-sidebar {
     min-width: 0;
     min-height: 0;
 }
 
-// Back floats where the context panel's title starts: the panel's content
-// moves under it. Without a panel, the page starts under it and scrolls
-// beneath it.
-.has-leading-controls app-workspace-shell-context-sidebar,
-.has-leading-controls.single-pane .workspace-content {
-    padding-top: var(--workspace-leading-clearance);
-}
-
-// The Home's first row stays at the top under the macOS lights' band.
-.workspace-body.is-home {
-    --workspace-lights-band: 0px;
-}
-
-// Hidden, the sidebar leaves the content against the window's left edge:
-// it keeps the same 2px off it as off the right one, clear of the rounded
-// corners.
-.nav-hidden .workspace-content {
-    margin-left: 2px;
-}
-
-// TiagoTV: a title opened from a streaming platform reads like that
-// platform's own page, without the source's category list beside it; its
-// billboard runs to the top, under Back (and the macOS lights).
+// TiagoTV: a streaming platform's page, and a title opened from it, read
+// like the platform's own app: no category list beside the title, and the
+// billboard runs to the top under the bar.
 :host-context([data-platform-theme]) {
-    .workspace-shell {
-        --workspace-leading-clearance: 0px;
+    .workspace-body {
+        grid-row: 1 / -1;
+        grid-template-columns: minmax(0, 1fr);
     }
 
-    .workspace-body {
-        --workspace-lights-band: 0px;
-        grid-template-columns: minmax(0, 1fr);
+    .workspace-topbar-spacer {
+        display: none;
     }
 
     app-workspace-shell-context-sidebar {
         display: none;
     }
 
-    // The platform's ground runs to the window's right edge and under the
-    // pill: the scroller draws no bar (its gutter would leave a strip of
-    // glass beside the ground) and keeps no room at its foot. The platform
-    // page and the title page keep the pill's room inside their own ground
-    // (`--workspace-now-playing-clearance`).
+    // The platform page and the title page keep the pill's room inside
+    // their own ground (`--workspace-now-playing-clearance`).
     .workspace-content {
         padding-bottom: 0;
-        scrollbar-width: none;
     }
 }
 
@@ -286,9 +245,8 @@ app-workspace-shell-context-sidebar {
 .workspace-now-playing {
     position: absolute;
     z-index: 5;
-    left: calc(var(--workspace-window-inset) + var(--workspace-nav-column));
+    left: var(--workspace-window-inset);
     right: var(--workspace-window-inset);
-    transition: left 220ms cubic-bezier(0.2, 0, 0, 1);
     bottom: 10px;
     display: flex;
     justify-content: center;
@@ -351,46 +309,21 @@ app-workspace-shell-context-sidebar {
 
 // TiagoTV: on macOS the window itself is the glass (native vibrancy, rounded
 // by the system), and a fullscreen window has no corners at all: in both,
-// the glass window fills the native one, with no inset, frame or radius.
+// the glass window fills the native one, with no inset, frame or radius,
+// and the content runs to every edge.
 :host-context(.native-glass) .workspace-shell,
 :host-context(.window-fullscreen) .workspace-shell {
     --workspace-window-inset: 0px;
-    --workspace-body-top: 0px;
     padding: 0;
-}
-
-// Fullscreen has no lights: Back holds the top-left corner.
-:host-context(.window-fullscreen) .workspace-shell {
-    --page-controls-start: 20px;
-    --page-controls-top: 20px;
 }
 
 :host-context(.native-glass) .workspace-window,
 :host-context(.window-fullscreen) .workspace-window {
-    border: 0;
-    border-radius: 0;
     box-shadow: none;
-}
 
-// A fullscreen window has no corners at all, and the macOS window's
-// rounded corners are clipped by the system: in both the content runs to
-// the bottom edge, the sidebar with it, as in the streaming apps.
-:host-context(.window-fullscreen),
-:host-context(.native-glass) {
-    .workspace-window {
-        padding-bottom: 0;
+    &::after {
+        content: none;
     }
-
-    app-workspace-shell-sidebar {
-        margin-bottom: 0;
-    }
-}
-
-// No corner to keep clear there: the content runs to the window's edges.
-:host-context(.native-glass) .workspace-content,
-:host-context(.window-fullscreen) .workspace-content {
-    margin-right: 0;
-    margin-left: 0;
 }
 
 // The pill floats inside the window's lower edge there, clear of the last
@@ -405,20 +338,6 @@ app-workspace-shell-context-sidebar {
     bottom: 18px;
 }
 
-// The content surface's rounded top-left corner is painted, not clipped.
-//
-// A `border-radius` on the scroller itself clips every composited layer inside
-// it (backdrop filters, running transform animations, isolated groups) through
-// a mask layer Blink synthesizes per composited effect: its shader path for
-// rounded clips needs four equal radii on macOS and a translation-only
-// transform between the clip and the effect, and the fallback mask is the size
-// of the whole clipped area (about 24 MB of tile memory at 2x on a 16" display,
-// one per rail chevron and hero control). Twelve of them put the dashboard over
-// Chromium's 512 MB tile budget ("tile memory limits exceeded", blank tiles
-// while scrolling). The frame keeps the radius for the shadow only and never
-// clips; the scroller clips to a rectangle; the frame's corner piece covers the
-// 16px notch in the body colour. The scroller is a stacking context, so nothing
-// scrolled under the corner can paint over the piece.
 .workspace-content-frame {
     position: relative;
     display: grid;
@@ -428,15 +347,10 @@ app-workspace-shell-context-sidebar {
     grid-template-columns: minmax(0, 1fr);
     min-width: 0;
     min-height: 0;
-
-    // While the frame slides into place beside a context panel that appeared
-    // or left (LayoutSlideDirective), its old width is wider than the new
-    // one; the strip it moves away from stays transparent glass.
-    &.layout-slide-active::after {
-        content: none;
-    }
 }
 
+// The one vertical scroller of the redesigned pages. It clips to a
+// rectangle (never a radius, see above) and draws no scrollbar.
 .workspace-content {
     position: relative;
     z-index: 0;
@@ -445,11 +359,13 @@ app-workspace-shell-context-sidebar {
     // The now-playing pill overlaps the window's lower edge: the last row
     // can still scroll up clear of it.
     padding-bottom: var(--workspace-now-playing-clearance);
-    // 2px off the window's right edge: with the body stopping 22px above
-    // the bottom, nothing scrolled reaches into the rounded corner.
-    margin-right: 2px;
     overflow: auto;
     background: transparent;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 // The offline banner has no stylesheet of its own: a component stylesheet
@@ -487,64 +403,25 @@ app-workspace-shell-context-sidebar {
 
 @media (max-width: 1100px) {
     .workspace-shell {
-        --workspace-sidebar-width: 76px;
         --workspace-window-inset: 14px;
-        --workspace-window-radius: 26px;
-    }
-
-    // macOS glass: the folded rail sits under the traffic lights, so it is
-    // as wide as they need with the same 16pt either side, which centres
-    // its icons under them. 76px put the green light on the divider.
-    :host-context(.native-glass:not(.window-fullscreen)) .workspace-shell {
-        --workspace-sidebar-width: calc(
-            var(--traffic-lights-clear-x, 84px) + 8px
-        );
     }
 }
 
 @media (max-width: 640px) {
-    // Under the strip, a row for Back and the drawer toggle when the page
-    // has them: on a phone they would cover the list's first rows.
     .workspace-shell {
         --workspace-window-inset: 0px;
-        --workspace-body-top: 0px;
-        --page-controls-top: 8px;
-        --workspace-leading-clearance: 0px;
         padding: 0;
-
-        &.has-page-controls {
-            --workspace-body-top: 54px;
-        }
     }
 
     .workspace-window {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: 56px minmax(0, 1fr);
-        padding-bottom: 0;
-        border: 0;
-        border-radius: 0;
         box-shadow: none;
-    }
 
-    app-workspace-shell-sidebar {
-        grid-column: 1;
-        grid-row: 1;
-        margin-bottom: 0;
-    }
-
-    app-workspace-shell-page-controls {
-        grid-column: 1;
-        grid-row: 2;
-    }
-
-    // The strip never hides.
-    app-workspace-shell-nav-tab {
-        display: none;
+        &::after {
+            content: none;
+        }
     }
 
     .workspace-body {
-        grid-column: 1;
-        grid-row: 2;
         // Side by side there is no room for both: a 300px context panel on a
         // 375px screen leaves the content unusable. The context sidebar
         // becomes a position: fixed off-canvas drawer (its own stylesheet),
@@ -562,10 +439,6 @@ app-workspace-shell-context-sidebar {
         background: rgba(0, 0, 0, 0.4);
     }
 
-    .workspace-content {
-        margin-right: 0;
-    }
-
     .workspace-now-playing {
         left: 0;
         right: 0;
@@ -575,9 +448,7 @@ app-workspace-shell-context-sidebar {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .workspace-window,
-    .workspace-now-playing,
-    app-workspace-shell-sidebar {
+    .workspace-window::before {
         transition: none;
     }
 }

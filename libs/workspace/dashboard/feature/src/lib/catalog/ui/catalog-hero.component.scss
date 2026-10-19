@@ -1,0 +1,348 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+// Series / Películas' hero (README 06): it rises behind the top bar, its
+// artwork masked into the page, the featured title and "Novedades" on it.
+:host {
+    --hero-tint: #6b6455;
+    display: block;
+    margin-top: calc(-1 * var(--tv-topbar-h));
+}
+
+.hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    min-height: clamp(560px, calc(100vh - 340px), 780px);
+    // The section's name 20px under the top bar.
+    padding: calc(var(--tv-topbar-h) + 20px) 0 28px;
+    overflow: hidden;
+    color: var(--tv-text);
+}
+
+.hero__backdrop {
+    position: absolute;
+    inset: 0;
+    // The browser build's window rounds its corners without clipping: the
+    // artwork reaching its top edge rounds its own (0 in the macOS window).
+    border-radius: var(--tv-window-radius) var(--tv-window-radius) 0 0;
+    overflow: hidden;
+    background:
+        radial-gradient(
+            90% 110% at 72% 30%,
+            color-mix(in srgb, var(--hero-tint) 30%, #2a2721) 0%,
+            color-mix(in srgb, var(--hero-tint) 12%, #141311) 45%,
+            #0b0b0a 85%
+        ),
+        #050505;
+    -webkit-mask-image: linear-gradient(
+        180deg,
+        #000 0%,
+        #000 55%,
+        transparent 100%
+    );
+    mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+}
+
+.hero__art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    -webkit-user-drag: none;
+}
+
+// A poster (no backdrop known): standing at the right, faded in from the left.
+.hero__art--poster {
+    inset: 0 0 0 auto;
+    width: auto;
+    aspect-ratio: 2 / 3;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
+}
+
+.hero__veil {
+    position: absolute;
+    pointer-events: none;
+}
+
+.hero__veil--side {
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.78) 0%,
+        rgba(0, 0, 0, 0.35) 45%,
+        transparent 70%
+    );
+}
+
+.hero__veil--top {
+    inset: 0 0 auto;
+    height: 180px;
+    border-radius: var(--tv-window-radius) var(--tv-window-radius) 0 0;
+    overflow: hidden;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.5) 0%,
+        transparent 100%
+    );
+}
+
+.hero__veil--bottom {
+    inset: auto 0 0;
+    height: 62%;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(8, 8, 7, 0.55) 45%,
+        rgba(8, 8, 7, 0.35) 75%,
+        transparent 100%
+    );
+}
+
+.hero__heading {
+    position: relative;
+    z-index: 3;
+    margin: 0;
+    padding: 0 var(--tv-page-x);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.hero__spacer {
+    flex: 1;
+    min-height: 24px;
+    max-height: 120px;
+}
+
+.hero__info {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    max-width: 680px;
+    margin-bottom: 40px;
+    padding: 0 var(--tv-page-x);
+}
+
+.hero__logo {
+    --platform-wordmark-size: 18px;
+    width: 120px;
+    height: 20px;
+    justify-items: start;
+    // A definite cell, so the logo's max-height: 100% holds it to the slot.
+    grid-template: 100% / 100%;
+}
+
+.hero__title {
+    display: -webkit-box;
+    margin: 0;
+    padding-top: 0.08em;
+    overflow: hidden;
+    color: var(--tv-text-on-image);
+    font-family: var(--tv-font-display);
+    font-size: clamp(64px, 7.5vw, 112px);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 0.86;
+    text-transform: uppercase;
+    text-wrap: balance;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 6px;
+    margin: 0;
+    color: var(--tv-text-img-2);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.hero__actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.hero__play,
+.hero__more {
+    display: inline-flex;
+    align-items: center;
+    height: 46px;
+    border-radius: 999px;
+    font-family: var(--tv-font-ui);
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 160ms ease;
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+.hero__play {
+    gap: 8px;
+    padding: 0 24px 0 18px;
+    border: 0;
+    background: #fff;
+    color: #0b0b09;
+
+    mat-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 22px;
+    }
+
+    &:hover {
+        background: #e9e6df;
+    }
+}
+
+.hero__more {
+    padding: 0 22px;
+    border: 1px solid var(--tv-glass-border);
+    background: var(--tv-glass-bg);
+    color: #fff;
+    box-shadow: var(--tv-glass-highlight);
+    -webkit-backdrop-filter: var(--tv-glass-filter);
+    backdrop-filter: var(--tv-glass-filter);
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+}
+
+.hero__releases {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.hero__releases-title {
+    margin: 0;
+    padding: 0 var(--tv-page-x);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.hero__strip {
+    --strip-column: 300px;
+    // The middle of a 300px 16:9 card, under the track's 4px top padding.
+    --strip-chevron-top: 88px;
+    padding: 0 var(--tv-page-x);
+}
+
+.release {
+    --release-tint: #6b6455;
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    background: radial-gradient(
+        120% 120% at 70% 20%,
+        color-mix(in srgb, var(--release-tint) 32%, #22201c) 0%,
+        #0e0e0d 80%
+    );
+    color: var(--tv-text-on-image);
+    text-align: left;
+    cursor: pointer;
+    transition:
+        transform 200ms ease,
+        border-color 200ms ease;
+
+    &:hover {
+        transform: translateY(-3px);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.release--on {
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+.release__art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    -webkit-user-drag: none;
+}
+
+.release__shade {
+    position: absolute;
+    inset: 30% 0 0;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.85) 100%
+    );
+}
+
+.release__caption {
+    position: absolute;
+    right: 14px;
+    bottom: 12px;
+    left: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.release__logo {
+    --platform-wordmark-size: 11px;
+    width: 64px;
+    height: 12px;
+    justify-items: start;
+    // A definite cell, so the logo's max-height: 100% holds it to the slot.
+    grid-template: 100% / 100%;
+}
+
+.release__title {
+    display: -webkit-box;
+    max-width: 100%;
+    padding-top: 0.06em;
+    overflow: hidden;
+    font-family: var(--tv-font-display);
+    font-size: 26px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 0.92;
+    text-transform: uppercase;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .release {
+        transition: none;
+
+        &:hover {
+            transform: none;
+        }
+    }
+}

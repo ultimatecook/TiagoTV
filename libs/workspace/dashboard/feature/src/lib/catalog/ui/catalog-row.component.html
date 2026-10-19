@@ -1,0 +1,63 @@
+@let heading = label();
+<section
+    class="row"
+    [attr.aria-labelledby]="headingId"
+    [attr.data-test-id]="'catalog-row-' + row().id"
+>
+    <h2 class="row__title" [id]="headingId">
+        {{ heading.key | translate: heading.params }}
+    </h2>
+    @if (rendered()) {
+        <lib-catalog-strip class="row__strip" [labelledBy]="headingId">
+            @for (title of row().titles; track key(title); let first = $first) {
+                @let image = posterOf(title);
+                <button
+                    type="button"
+                    class="poster"
+                    data-stop
+                    [attr.tabindex]="first ? 0 : -1"
+                    [attr.data-test-id]="'catalog-poster-' + key(title)"
+                    [style.--poster-tint]="title.platform.ambient"
+                    (click)="open(title)"
+                >
+                    <span class="poster__art">
+                        @if (image) {
+                            <img
+                                class="poster__img"
+                                [src]="image"
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                referrerpolicy="no-referrer"
+                                draggable="false"
+                                (error)="artFailed(image)"
+                            />
+                        }
+                        <span class="poster__shade" aria-hidden="true"></span>
+                        <span class="poster__caption">
+                            <lib-platform-logo
+                                class="poster__logo"
+                                [platform]="title.platform"
+                            />
+                            <span class="poster__title">{{ title.title }}</span>
+                        </span>
+                    </span>
+                    <span class="poster__meta">
+                        @for (part of metaOf(title); track $index) {
+                            @if (!$first) {
+                                <span aria-hidden="true"> · </span>
+                            }
+                            <span>{{
+                                part[0].key
+                                    ? (part[0].key | translate: part[0].params)
+                                    : part[0].text
+                            }}</span>
+                        }
+                    </span>
+                </button>
+            }
+        </lib-catalog-strip>
+    } @else {
+        <div class="row__placeholder" aria-hidden="true"></div>
+    }
+</section>

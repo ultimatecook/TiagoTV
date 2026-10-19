@@ -4,8 +4,8 @@
         !!nowPlaying.session() ||
         (facade.showExternalPlaybackBar() && !!facade.externalPlaybackSession())
     "
-    [class.nav-hidden]="navSidebar.collapsed()"
-    [class.has-page-controls]="hasPageControls()"
+    [class.has-traffic-lights]="facade.isMacOS"
+    [class.is-framed]="topBarPage().layout === 'framed'"
     appPlaylistDropZone
     #dropZone="playlistDropZone"
     [appTrafficLightsClearance]="facade.isMacOS"
@@ -15,80 +15,66 @@
         <app-workspace-shell-import-overlay />
     }
 
-    <!-- While the drawer is open it is modal: `inert` removes the rail,
-         page controls, content and playback footer from BOTH the focus order and
-         the accessibility tree — CdkTrapFocus alone constrains Tab focus but
-         a screen reader's virtual cursor could still reach and activate the
+    <!-- While the drawer is open it is modal: `inert` removes the bar,
+         content and playback footer from BOTH the focus order and the
+         accessibility tree — CdkTrapFocus alone constrains Tab focus but a
+         screen reader's virtual cursor could still reach and activate the
          visually obscured controls behind the backdrop. isOpen can only be
          true at phone width (the toggle is CSS-hidden above it and the
          service closes on viewport growth), so desktop is never inerted. -->
-    <!-- The glass window: sidebar and content float over the
-         ambient room backdrop the dark host paints. The full-window player
-         covers it, modal: nothing behind is reachable. -->
+    <!-- The glass window floats over the ambient room the dark host paints.
+         The full-window player covers it, modal: nothing behind is
+         reachable. -->
     <div
         class="workspace-window"
         [attr.inert]="nowPlaying.expanded() ? '' : null"
     >
-        <!-- Hidden (⌃⌘S), the sidebar's column folds to nothing and it
-             leaves the focus order and accessibility tree. There is no
-             header bar: the sidebar holds search, the source switcher and
-             Ajustes; the page's own controls float over the content. -->
-        <app-workspace-shell-sidebar
-            #workspaceSidebar
-            id="workspace-nav-sidebar"
-            [attr.inert]="
-                contextDrawer.isOpen() || navSidebar.collapsed() ? '' : null
-            "
-            [context]="facade.railContext()"
-            [searchQuery]="facade.searchQuery()"
-            [canUseSearch]="facade.canUseSearch()"
-            [searchPlaceholder]="facade.searchPlaceholder()"
-            [hasNoPlaylists]="facade.hasNoPlaylists()"
-            [isSettingsRoute]="facade.isSettingsRoute()"
-            [activeDownloadsCount]="facade.activeDownloadsCount()"
-            [playlistTitle]="facade.playlistTitle()"
-            [playlistSubtitle]="facade.playlistSubtitle()"
-            [parentalLockState]="facade.parentalLockState()"
-            (searchChanged)="facade.onSearchInput($event)"
-            (searchSubmitted)="facade.onSearchEnter($event)"
-            (commandPaletteRequested)="facade.openCommandPalette()"
-            (addPlaylistRequested)="facade.openAddPlaylistDialog()"
-            (accountInfoForPlaylistRequested)="
-                facade.openAccountInfoFor($event)
-            "
-            (parentalLockToggleRequested)="facade.toggleParentalLock()"
-        />
+        <!-- The window's rounded corners, painted over the content (the
+             window does not clip; see the stylesheet). -->
+        @for (corner of windowCorners; track corner) {
+            <span
+                class="workspace-corner"
+                [attr.data-corner]="corner"
+                aria-hidden="true"
+            ></span>
+        }
 
-        <!-- The sidebar's pull tab, half-way down the content's left edge:
-             on the sidebar's edge it hides it, on the window's edge it
-             shows it again (not on a phone: the strip stays there). -->
-        <app-workspace-shell-nav-tab
-            #navTab
-            controls="workspace-nav-sidebar"
+        <!-- The transparent top bar over the window's top edge: tabs, Back,
+             Buscar, Ajustes and the source switcher. The redesigned pages
+             scroll under it; the others sit in a frame below it. -->
+        <app-workspace-shell-top-bar
+            #topBar
             [attr.inert]="contextDrawer.isOpen() ? '' : null"
-        />
-
-        <!-- macOS glass: with no title bar, a thin strip along the top edge
-             moves the window (the floating controls stay clickable). -->
-        <div class="workspace-drag-strip" aria-hidden="true"></div>
-
-        <!-- Back, the phone drawer toggle and the page's shortcuts, as round
-             glass buttons over the content's top edge. -->
-        <app-workspace-shell-page-controls
-            #pageControls
-            [attr.inert]="contextDrawer.isOpen() ? '' : null"
-            [backTarget]="facade.backTarget()"
-            [hideBack]="facade.isDashboardRoute()"
+            [page]="topBarPage()"
+            [activeTab]="activeTab()"
+            [back]="topBarBack()"
             [headerShortcut]="facade.headerShortcut()"
             [headerSidebarToggle]="facade.headerSidebarToggle()"
             [showContextDrawerToggle]="facade.hasContextPanelContent()"
             [isContextDrawerOpen]="contextDrawer.isOpen()"
             [contextDrawerToggleAriaKey]="facade.contextDrawerLabelKeys().aria"
             [contextDrawerTooltipKey]="facade.contextDrawerLabelKeys().tooltip"
+            [searchMode]="searchMode()"
+            [searchQuery]="facade.searchQuery()"
+            [searchPlaceholder]="facade.searchPlaceholder()"
+            [parentalLockState]="facade.parentalLockState()"
+            [activeDownloadsCount]="facade.activeDownloadsCount()"
+            [playlistTitle]="facade.playlistTitle()"
+            [playlistSubtitle]="facade.playlistSubtitle()"
+            (wheel)="onTopBarWheel($event)"
             (backRequested)="facade.goBack()"
             (contextDrawerToggleRequested)="contextDrawer.toggle()"
             (headerShortcutRequested)="facade.runHeaderShortcut()"
             (headerSidebarToggleRequested)="facade.toggleLiveSidebar()"
+            (searchChanged)="facade.onSearchInput($event)"
+            (searchSubmitted)="facade.onSearchEnter($event)"
+            (searchPageRequested)="openSearchPage()"
+            (downloadsRequested)="facade.openDownloadsShortcut()"
+            (parentalLockToggleRequested)="facade.toggleParentalLock()"
+            (addPlaylistRequested)="facade.openAddPlaylistDialog()"
+            (accountInfoForPlaylistRequested)="
+                facade.openAccountInfoFor($event)
+            "
         />
 
         <!-- The content frame slides to make room for the context panel
@@ -96,8 +82,6 @@
         <div
             class="workspace-body"
             [class.single-pane]="!facade.showContextPanel()"
-            [class.has-leading-controls]="hasLeadingControls()"
-            [class.is-home]="facade.isDashboardRoute()"
             [appLayoutSlide]="facade.showContextPanel()"
             layoutSlideTargets=".workspace-content-frame"
         >
@@ -139,9 +123,6 @@
                 />
             }
 
-            <!-- The frame carries the content surface's rounded corner and
-             shadow without clipping; the scroller inside clips to a
-             rectangle (see the stylesheet for why). -->
             <div class="workspace-content-frame">
                 <!-- Self-hosted server storage offline: a row of its own above
                  the scroller, so full-height pages keep their height. -->
@@ -155,6 +136,10 @@
                     tabindex="-1"
                     [attr.inert]="contextDrawer.isOpen() ? '' : null"
                 >
+                    <!-- The bar's room at the top of the scroller: a page
+                         starts below it, and a hero bleeds back up behind
+                         the bar (margin-top: -var(--tv-topbar-h)). -->
+                    <div class="workspace-topbar-spacer" aria-hidden="true"></div>
                     <router-outlet />
                 </main>
             </div>

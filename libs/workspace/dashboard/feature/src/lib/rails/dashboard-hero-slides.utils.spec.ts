@@ -59,7 +59,7 @@ const summary = (sources: ReturnType<typeof pickDashboardHeroSources>) =>
     sources.map((source) => `${source.kind}:${source.item.title}`);
 
 describe('pickDashboardHeroSources', () => {
-    it('leads with the title to resume, then live, a favourite and an import', () => {
+    it('leads with every title to resume, then live, a favourite and an import', () => {
         const live = favorite(50, 'live');
         expect(
             summary(
@@ -74,6 +74,7 @@ describe('pickDashboardHeroSources', () => {
             )
         ).toEqual([
             'continue:recent-1',
+            'continue:recent-2',
             'live:favorite-50',
             'favorite:favorite-10',
             'added:added-20',
@@ -83,18 +84,31 @@ describe('pickDashboardHeroSources', () => {
     it('fills the remaining places round-robin and never exceeds the limit', () => {
         const sources = pickDashboardHeroSources(
             input({
-                continueItems: [recent(1), recent(2), recent(3)],
-                favorites: [favorite(10)],
+                continueItems: [recent(1), recent(2)],
+                favorites: [favorite(10), favorite(11)],
+                recentlyAdded: [added(20), added(21)],
             })
         );
 
         expect(summary(sources)).toEqual([
             'continue:recent-1',
-            'favorite:favorite-10',
             'continue:recent-2',
-            'continue:recent-3',
+            'favorite:favorite-10',
+            'added:added-20',
+            'favorite:favorite-11',
         ]);
-        expect(sources.length).toBeLessThanOrEqual(HERO_SLIDE_LIMIT);
+        expect(sources).toHaveLength(HERO_SLIDE_LIMIT);
+    });
+
+    it('shows only titles to resume when there are enough of them', () => {
+        const continueItems = [1, 2, 3, 4, 5, 6].map((id) => recent(id));
+        expect(
+            summary(
+                pickDashboardHeroSources(
+                    input({ continueItems, favorites: [favorite(10)] })
+                )
+            )
+        ).toEqual([1, 2, 3, 4, 5].map((id) => `continue:recent-${id}`));
     });
 
     it('features a title once even when it is both unfinished and a favourite', () => {
@@ -141,7 +155,7 @@ describe('pickDashboardHeroSources', () => {
     it('keeps a place for a pending live slide so its arrival evicts nothing', () => {
         const lists = {
             continueItems: [recent(1), recent(2)],
-            favorites: [favorite(10)],
+            favorites: [favorite(10), favorite(11)],
             recentlyAdded: [added(20)],
         };
         const pending = summary(
@@ -159,12 +173,14 @@ describe('pickDashboardHeroSources', () => {
 
         expect(pending).toEqual([
             'continue:recent-1',
+            'continue:recent-2',
             'favorite:favorite-10',
             'added:added-20',
         ]);
         // Every slide shown before the live answer is still there after it.
         expect(arrived).toEqual([
             'continue:recent-1',
+            'continue:recent-2',
             'live:favorite-50',
             'favorite:favorite-10',
             'added:added-20',

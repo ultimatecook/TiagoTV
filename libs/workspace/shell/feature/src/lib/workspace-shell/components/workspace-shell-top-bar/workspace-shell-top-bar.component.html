@@ -1,0 +1,219 @@
+<!-- The band is transparent and lets the pointer through: only its groups
+     take clicks, so the page scrolled under it stays usable. -->
+<div class="topbar__group topbar__group--leading">
+    <!-- macOS: the native traffic lights sit here (none in the browser). -->
+    <span class="topbar__lights" aria-hidden="true"></span>
+
+    @if (page().isLeague) {
+        <a
+            class="topbar__pill"
+            data-test-id="topbar-sports-back"
+            [routerLink]="sportsHubLink"
+            [attr.aria-label]="'WORKSPACE.TOP_BAR.SPORTS_BACK' | translate"
+        >
+            <app-workspace-shell-top-bar-icon name="back" />
+            <span>{{ 'WORKSPACE.TOP_BAR.SPORTS' | translate }}</span>
+        </a>
+    } @else if (back(); as backTarget) {
+        <!-- A deep page's Back (a title, a platform, a channel list). The
+             mouse Back button, Alt+← / Cmd+[ and Esc (where the page offers
+             it) run the same action. -->
+        @let backLabel = backTarget.label() || ('BACK' | translate);
+        <button
+            type="button"
+            class="topbar__circle topbar__back"
+            [class.topbar__back--yields]="backYieldsToDrawerToggle()"
+            data-test-id="workspace-header-back"
+            (click)="backRequested.emit()"
+            (keydown.escape)="onBackEscape($event)"
+            [matTooltip]="
+                backTarget.escapeShortcut() ? backLabel + ' (Esc)' : backLabel
+            "
+            [attr.aria-label]="backLabel"
+            [attr.aria-keyshortcuts]="
+                backTarget.escapeShortcut() ? 'Escape' : null
+            "
+        >
+            <app-workspace-shell-top-bar-icon name="back" />
+        </button>
+    }
+
+    <!-- Phone only: the context panel is an off-canvas drawer there. -->
+    @if (showDrawerToggle()) {
+        <button
+            #contextDrawerToggle
+            type="button"
+            class="topbar__circle topbar__drawer-toggle"
+            data-test-id="context-drawer-toggle"
+            (click)="contextDrawerToggleRequested.emit()"
+            [matTooltip]="contextDrawerTooltipKey() | translate"
+            [attr.aria-label]="contextDrawerToggleAriaKey() | translate"
+            [attr.aria-expanded]="isContextDrawerOpen()"
+        >
+            <app-workspace-shell-top-bar-icon name="menu" />
+        </button>
+    }
+</div>
+
+<nav
+    class="topbar__tabs"
+    data-test-id="topbar-tabs"
+    [attr.aria-label]="'WORKSPACE.TOP_BAR.NAV_LABEL' | translate"
+>
+    @for (tab of tabs; track tab.id) {
+        @let active = activeTab() === tab.id;
+        <a
+            class="topbar__tab"
+            [class.is-active]="active"
+            [routerLink]="tab.link"
+            [attr.aria-current]="active ? 'page' : null"
+            [attr.data-test-id]="'topbar-tab-' + tab.id"
+            >{{ tab.labelKey | translate }}</a
+        >
+    }
+</nav>
+
+<div class="topbar__group topbar__group--trailing">
+    @if (headerSidebarToggle(); as sidebarToggle) {
+        <button
+            type="button"
+            class="topbar__circle topbar__page-control header-sidebar-toggle"
+            [class.is-active]="!sidebarToggle.expanded"
+            data-test-id="header-sidebar-toggle"
+            (click)="headerSidebarToggleRequested.emit()"
+            [matTooltip]="sidebarToggle.tooltip"
+            [attr.aria-label]="sidebarToggle.ariaLabel"
+            [attr.aria-pressed]="sidebarToggle.expanded"
+        >
+            <mat-icon>view_sidebar</mat-icon>
+        </button>
+    }
+    @if (headerShortcut(); as action) {
+        <button
+            type="button"
+            class="topbar__circle topbar__page-control header-shortcut"
+            data-test-id="header-shortcut"
+            [class.is-active]="action.active?.() ?? false"
+            [disabled]="action.disabled?.() ?? false"
+            [attr.aria-pressed]="action.active ? action.active() : null"
+            (click)="headerShortcutRequested.emit()"
+            [matTooltip]="action.tooltipKey | translate"
+            [attr.aria-label]="action.ariaLabelKey | translate"
+        >
+            <mat-icon>{{ action.icon }}</mat-icon>
+        </button>
+    }
+    @if (activeDownloadsCount() > 0) {
+        <button
+            type="button"
+            class="topbar__circle topbar__downloads"
+            data-test-id="topbar-downloads"
+            (click)="downloadsRequested.emit()"
+            [matTooltip]="'WORKSPACE.TOP_BAR.DOWNLOADS' | translate"
+            [attr.aria-label]="
+                ('WORKSPACE.TOP_BAR.DOWNLOADS' | translate) +
+                ' (' +
+                activeDownloadsCount() +
+                ')'
+            "
+        >
+            <app-workspace-shell-top-bar-icon name="download" />
+            <span class="topbar__badge" aria-hidden="true">{{
+                activeDownloadsCount()
+            }}</span>
+        </button>
+    }
+    @if (parentalLockState() !== 'off') {
+        @let lockKey =
+            parentalLockState() === 'locked'
+                ? 'PARENTAL_LOCK.HEADER_UNLOCK'
+                : 'PARENTAL_LOCK.HEADER_LOCK';
+        <button
+            type="button"
+            class="topbar__circle"
+            data-test-id="header-parental-lock"
+            [class.is-active]="parentalLockState() === 'locked'"
+            [attr.aria-pressed]="parentalLockState() === 'locked'"
+            [matTooltip]="lockKey | translate"
+            [attr.aria-label]="lockKey | translate"
+            (click)="parentalLockToggleRequested.emit()"
+        >
+            <app-workspace-shell-top-bar-icon
+                [name]="parentalLockState() === 'locked' ? 'lock' : 'lock-open'"
+            />
+        </button>
+    }
+
+    <!-- Buscar: a field that filters this page, or the search page. -->
+    <div
+        class="topbar__search"
+        [class.is-open]="searchOpen()"
+        role="search"
+        (focusout)="onSearchFocusOut($event)"
+    >
+        @if (searchOpen()) {
+            <label class="topbar__search-field" data-test-id="topbar-search">
+                <app-workspace-shell-top-bar-icon name="search" />
+                <input
+                    #searchInput
+                    type="search"
+                    spellcheck="false"
+                    data-test-id="topbar-search-input"
+                    [value]="searchQuery()"
+                    [placeholder]="searchPlaceholder() | translate"
+                    [attr.aria-label]="searchPlaceholder() | translate"
+                    (input)="onSearchInput($event)"
+                    (keydown.enter)="onSearchEnter($event)"
+                    (keydown.escape)="onSearchEscape($event)"
+                />
+                <button
+                    type="button"
+                    class="topbar__search-close"
+                    data-test-id="topbar-search-close"
+                    [attr.aria-label]="'WORKSPACE.TOP_BAR.SEARCH_CLOSE' | translate"
+                    (click)="closeSearch()"
+                >
+                    <app-workspace-shell-top-bar-icon name="close" />
+                </button>
+            </label>
+        } @else {
+            <button
+                #searchButton
+                type="button"
+                class="topbar__circle"
+                data-test-id="topbar-search-button"
+                [class.is-active]="searchActive()"
+                [attr.aria-current]="page().utility === 'search' ? 'page' : null"
+                [matTooltip]="'WORKSPACE.TOP_BAR.SEARCH' | translate"
+                [attr.aria-label]="'WORKSPACE.TOP_BAR.SEARCH' | translate"
+                (click)="onSearchButton()"
+            >
+                <app-workspace-shell-top-bar-icon name="search" />
+            </button>
+        }
+    </div>
+
+    <a
+        class="topbar__circle"
+        data-test-id="topbar-settings"
+        [routerLink]="settingsLink"
+        [class.is-active]="settingsActive()"
+        [attr.aria-current]="settingsActive() ? 'page' : null"
+        [matTooltip]="'WORKSPACE.TOP_BAR.SETTINGS' | translate"
+        [attr.aria-label]="'WORKSPACE.TOP_BAR.SETTINGS' | translate"
+    >
+        <app-workspace-shell-top-bar-icon name="settings" />
+    </a>
+
+    <!-- The profile circle is the source switcher (⌘P / Ctrl+P). -->
+    <app-playlist-switcher
+        class="topbar__profile"
+        [currentTitle]="playlistTitle()"
+        [subtitle]="playlistSubtitle()"
+        [matTooltip]="'WORKSPACE.TOP_BAR.PROFILE' | translate"
+        (accountInfoForPlaylistRequested)="
+            accountInfoForPlaylistRequested.emit($event)
+        "
+        (addPlaylistRequested)="addPlaylistRequested.emit()"
+    />
+</div>

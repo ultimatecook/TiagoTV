@@ -1,25 +1,30 @@
 @if (platforms().length > 0) {
-    <section class="platforms" data-test-id="dashboard-platforms-rail">
-        <header class="platforms__heading">
-            <h2 class="platforms__title">
-                {{ 'WORKSPACE.PLATFORMS.TITLE' | translate }}
-            </h2>
-        </header>
-        <div class="platforms__row">
+    <section
+        class="platforms"
+        aria-labelledby="home-platforms-title"
+        data-test-id="dashboard-platforms-rail"
+    >
+        <lib-home-heading
+            headingId="home-platforms-title"
+            [title]="'WORKSPACE.PLATFORMS.TITLE' | translate"
+        />
+        <ul class="platforms__row">
             @for (platform of platforms(); track platform.id) {
-                <a
-                    class="platform"
-                    [routerLink]="['/workspace', 'platforms', platform.id]"
-                    [style.background]="platform.background"
-                    [attr.aria-label]="platform.name"
-                    [attr.data-test-id]="'platform-card-' + platform.id"
-                >
-                    <lib-platform-logo
-                        class="platform__logo"
-                        [platform]="platform"
-                    />
-                </a>
+                <li class="platforms__item">
+                    <a
+                        class="platform"
+                        [routerLink]="['/workspace', 'platforms', platform.id]"
+                        [style.background]="platform.background"
+                        [attr.aria-label]="platform.name"
+                        [attr.data-test-id]="'platform-card-' + platform.id"
+                    >
+                        <lib-platform-logo
+                            class="platform__logo"
+                            [platform]="platform"
+                        />
+                    </a>
+                </li>
             }
-        </div>
+        </ul>
     </section>
 }

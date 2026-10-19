@@ -1,0 +1,160 @@
+@let chosen = selection();
+@let current = tv.playback();
+@let about = now();
+<div
+    class="overlay"
+    (pointerenter)="hovering.emit(true)"
+    (pointerleave)="hovering.emit(false)"
+>
+    <div class="head">
+        @if (chosen) {
+            @let label = chosen.row.label;
+            <div class="head__info" aria-live="polite">
+                <h2 class="head__name" data-test-id="countries-playing">
+                    {{ chosen.channel.title }}
+                </h2>
+                <p class="head__now" data-test-id="countries-now">
+                    @if (about) {
+                        {{ about.title }}
+                    } @else if (chosen.channel.subtitle) {
+                        {{ chosen.channel.subtitle }}
+                    } @else {
+                        {{ chosen.country.definition.nameKey | translate }}
+                        ·
+                        {{
+                            label.key
+                                ? (label.key | translate: label.params)
+                                : label.text
+                        }}
+                    }
+                </p>
+            </div>
+
+            <div class="head__controls">
+                @if (copies().length > 1) {
+                    <div
+                        class="copies"
+                        role="group"
+                        [attr.aria-label]="
+                            'WORKSPACE.COUNTRIES.COPIES' | translate
+                        "
+                    >
+                        @for (entry of copies(); track entry.copy.streamId) {
+                            @let on =
+                                entry.copy.streamId === chosen.copy.streamId;
+                            <button
+                                type="button"
+                                class="copies__chip"
+                                [class.copies__chip--on]="on"
+                                [attr.aria-pressed]="on"
+                                [attr.data-test-id]="
+                                    'countries-copy-' + entry.copy.streamId
+                                "
+                                (click)="playCopy(entry.copy)"
+                            >
+                                {{ entry.label }}
+                            </button>
+                        }
+                    </div>
+                }
+                <button
+                    type="button"
+                    class="control control--play"
+                    data-test-id="countries-play"
+                    [attr.aria-label]="
+                        !current
+                            ? ((tv.embedded()
+                                  ? 'WORKSPACE.COUNTRIES.WATCH'
+                                  : 'WORKSPACE.COUNTRIES.WATCH_EXTERNAL'
+                              ) | translate: { name: chosen.channel.title })
+                            : ((controls.paused()
+                                  ? 'WORKSPACE.COUNTRIES.PLAY'
+                                  : 'WORKSPACE.COUNTRIES.PAUSE'
+                              ) | translate)
+                    "
+                    (click)="playPause()"
+                >
+                    <mat-icon aria-hidden="true">{{
+                        current && !controls.paused() ? 'pause' : 'play_arrow'
+                    }}</mat-icon>
+                </button>
+                <button
+                    type="button"
+                    class="control"
+                    data-test-id="countries-mute"
+                    [disabled]="!current"
+                    [attr.aria-label]="'WORKSPACE.COUNTRIES.MUTE' | translate"
+                    [attr.aria-pressed]="controls.muted()"
+                    (click)="controls.toggleMute()"
+                >
+                    <mat-icon aria-hidden="true">{{
+                        controls.muted() ? 'volume_off' : 'volume_up'
+                    }}</mat-icon>
+                </button>
+                <button
+                    type="button"
+                    class="control"
+                    data-test-id="countries-open-live"
+                    [attr.aria-label]="
+                        'WORKSPACE.COUNTRIES.OPEN_LIVE' | translate
+                    "
+                    (click)="openLiveView.emit()"
+                >
+                    <mat-icon aria-hidden="true">live_tv</mat-icon>
+                </button>
+                <button
+                    type="button"
+                    class="control"
+                    data-test-id="countries-fullscreen"
+                    [attr.aria-label]="
+                        'WORKSPACE.COUNTRIES.FULLSCREEN' | translate
+                    "
+                    [attr.aria-pressed]="controls.fullscreen()"
+                    (click)="controls.toggleFullscreen()"
+                >
+                    <mat-icon aria-hidden="true">{{
+                        controls.fullscreen() ? 'fullscreen_exit' : 'fullscreen'
+                    }}</mat-icon>
+                </button>
+            </div>
+        }
+    </div>
+
+    <span class="progress" aria-hidden="true">
+        <span
+            class="progress__fill"
+            [style.width.%]="about?.progress ?? 0"
+        ></span>
+    </span>
+
+    <div
+        class="chips"
+        role="group"
+        [attr.aria-label]="'WORKSPACE.COUNTRIES.CATEGORIES_LABEL' | translate"
+    >
+        @for (chip of categories(); track chip.id) {
+            @let on = chip.id === category();
+            <button
+                type="button"
+                class="chip"
+                [class.chip--on]="on"
+                [attr.aria-pressed]="on"
+                [attr.data-test-id]="'countries-chip-' + chip.id"
+                (click)="pickCategory(chip.id)"
+            >
+                {{ chip.labelKey | translate }}
+                <span class="chip__count">{{ chip.count }}</span>
+            </button>
+        }
+    </div>
+
+    <lib-country-tv-cards
+        [cards]="cards()"
+        [playingStreamId]="playingStreamId()"
+        [label]="
+            'WORKSPACE.COUNTRIES.CHANNELS_OF'
+                | translate: { name: countryName() }
+        "
+        (picked)="picked.emit($event)"
+    />
+</div>

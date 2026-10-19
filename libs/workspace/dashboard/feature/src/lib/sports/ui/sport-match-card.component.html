@@ -1,92 +1,103 @@
-@if (offers()) {
-    <button
-        type="button"
-        class="match"
-        [style.--match-tint]="section()?.tint"
-        [attr.aria-label]="
-            match().title +
-            ' · ' +
-            ('WORKSPACE.SPORTS.WATCH_ON' | translate: { channels: watchOn() })
-        "
-        [matMenuTriggerFor]="channels"
-    >
-        <ng-container [ngTemplateOutlet]="face" />
-    </button>
-    <mat-menu #channels="matMenu">
-        @for (option of match().via; track option.channel.streamId) {
-            <button
-                type="button"
-                mat-menu-item
-                (click)="playChannel(option.channel)"
-            >
-                <mat-icon>live_tv</mat-icon>
-                <span>{{ option.name }}</span>
-            </button>
-        }
-    </mat-menu>
-} @else {
-    <button
-        type="button"
-        class="match"
-        [style.--match-tint]="section()?.tint"
-        [attr.aria-label]="match().title"
-        (click)="play()"
-    >
-        <ng-container [ngTemplateOutlet]="face" />
-    </button>
-}
-
-<ng-template #face>
-    <span class="match__top">
-        <span class="match__competition">{{ competition() }}</span>
+@let event = match().event;
+<article class="match" [style.--match-tint]="section()?.tint">
+    <header class="match__top">
+        <span class="match__competition">
+            @if (section()?.logo; as logo) {
+                <img
+                    class="match__logo"
+                    [src]="logo"
+                    alt=""
+                    draggable="false"
+                />
+            }
+            <span class="match__competition-name">{{ competition() }}</span>
+        </span>
         @if (live()) {
-            <span class="match__live">{{
+            <span class="match__clock match__clock--live">{{
                 'WORKSPACE.SPORTS.LIVE' | translate
             }}</span>
         } @else {
-            <span class="match__time">{{ kickOff() }}</span>
+            <span class="match__clock">{{ kickOff() }}</span>
         }
-    </span>
+    </header>
 
-    @if (match().event.home && match().event.away) {
-        <span class="match__teams">
+    @if (sides(); as sides) {
+        <div class="match__teams">
             <span class="match__team">
                 <lib-team-crest
-                    [team]="match().event.home!"
+                    [team]="sides.home"
                     [section]="match().sectionId"
                 />
-                <span class="match__name">{{ match().event.home }}</span>
+                <span
+                    class="match__name"
+                    [class.match__name--mine]="homeMine()"
+                    >{{ sides.home }}</span
+                >
             </span>
             <span class="match__vs" aria-hidden="true">vs</span>
             <span class="match__team">
                 <lib-team-crest
-                    [team]="match().event.away!"
+                    [team]="sides.away"
                     [section]="match().sectionId"
                 />
-                <span class="match__name">{{ match().event.away }}</span>
+                <span
+                    class="match__name"
+                    [class.match__name--mine]="awayMine()"
+                    >{{ sides.away }}</span
+                >
             </span>
-        </span>
+        </div>
     } @else {
-        <span class="match__event">
-            @if (section(); as art) {
-                <img
-                    class="match__art"
-                    [src]="art.image"
-                    alt=""
-                    loading="lazy"
-                    referrerpolicy="no-referrer"
-                />
-            }
+        <div class="match__event">
             <span class="match__event-title">{{ match().title }}</span>
             <span class="match__event-competition">{{
-                match().event.competition
+                event.competition
             }}</span>
-        </span>
+        </div>
     }
 
-    @if (watchOn()) {
-        <span class="match__via">{{
-            'WORKSPACE.SPORTS.WATCH_ON' | translate: { channels: watchOn() }
-        }}</span>
+    @if (offers()) {
+        <button
+            type="button"
+            class="match__watch"
+            [matMenuTriggerFor]="channels"
+        >
+            <mat-icon aria-hidden="true">play_arrow</mat-icon>
+            {{
+                'WORKSPACE.SPORTS.WATCH_ON' | translate: { channels: channel() }
+            }}
+            <mat-icon class="match__more" aria-hidden="true"
+                >expand_more</mat-icon
+            >
+        </button>
+        <mat-menu #channels="matMenu">
+            @for (option of match().via; track option.channel.streamId) {
+                <button
+                    type="button"
+                    mat-menu-item
+                    (click)="watch(option.channel)"
+                >
+                    <mat-icon>live_tv</mat-icon>
+                    <span>{{ option.name }}</span>
+                </button>
+            }
+        </mat-menu>
+    } @else {
+        <button
+            type="button"
+            class="match__watch"
+            [attr.data-test-id]="'sport-match-watch-' + match().key"
+            (click)="watch()"
+        >
+            <mat-icon aria-hidden="true">play_arrow</mat-icon>
+            @if (channel()) {
+                {{
+                    'WORKSPACE.SPORTS.WATCH_ON'
+                        | translate: { channels: channel() }
+                }}
+            } @else {
+                {{ 'WORKSPACE.SPORTS.WATCH' | translate }}
+            }
+        </button>
     }
-</ng-template>
+</article>

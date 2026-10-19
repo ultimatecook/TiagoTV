@@ -57,7 +57,6 @@ export const maxLinesBaseline = [
     'libs/ui/playback/src/lib/embedded-mpv-player/embedded-mpv-player.component.ts',
     'libs/workspace/dashboard/data-access/src/lib/dashboard-data.service.spec.ts',
     'libs/workspace/dashboard/data-access/src/lib/dashboard-data.service.ts',
-    'libs/workspace/dashboard/feature/src/lib/rails/workspace-dashboard-rails.component.ts',
     'libs/workspace/shell/feature/src/lib/workspace-context-panel/workspace-context-panel.component.ts',
     'libs/workspace/shell/feature/src/lib/workspace-shell/services/helpers/workspace-shell-command-builders.ts',
     'tools/release/generate-marketing-artwork.ts',

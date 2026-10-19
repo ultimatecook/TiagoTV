@@ -65,6 +65,11 @@ export interface SportMatch extends SportChannel {
      * ("M+ LaLiga TV", "DAZN LaLiga"). Empty when it has a feed of its own.
      */
     readonly via: readonly MatchChannel[];
+    /**
+     * The channel it plays on, as a viewer knows it: its feed's category
+     * ("Premier League PPV", "DAZN"), else its first `via`'s name.
+     */
+    readonly channelName?: string | null;
 }
 
 export interface SportSectionContent {

@@ -1,0 +1,435 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+// The global search (handoff 05 · Buscador): full width, a 60px field,
+// the scope chips, then the recent searches or the grouped results.
+:host {
+    display: block;
+}
+
+.search-page {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding: var(--tv-page-top) var(--tv-page-x) var(--tv-page-bottom);
+    color: var(--tv-text);
+}
+
+// ─── Field ───────────────────────────────────────────────────────────────
+.search-field {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 60px;
+    padding: 0 12px 0 20px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.06);
+    box-sizing: border-box;
+    cursor: text;
+
+    // The field's ring is the app's, drawn on the whole well.
+    &:has(.search-field__input:focus-visible) {
+        @include focus-ring.focus-ring-declarations($offset: 1px);
+    }
+}
+
+.search-field__icon {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    color: var(--tv-text-3);
+    font-size: 22px;
+}
+
+.search-field__input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--tv-text);
+    font: inherit;
+    font-size: 20px;
+    font-weight: 500;
+
+    &::placeholder {
+        color: var(--tv-placeholder);
+    }
+
+    &::-webkit-search-cancel-button {
+        display: none;
+    }
+}
+
+.search-field__clear {
+    flex: none;
+    height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--tv-text-2);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.14);
+        color: var(--tv-text);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+// ─── Scopes ──────────────────────────────────────────────────────────────
+.search-scopes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: -12px;
+}
+
+.search-scope {
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--tv-text-2);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 160ms ease,
+        color 160ms ease,
+        border-color 160ms ease;
+
+    &:hover:not(.search-scope--active) {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--tv-text);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.search-scope--active {
+    border-color: var(--tv-text);
+    background: var(--tv-text);
+    color: #0b0b09;
+}
+
+// ─── Recent searches ─────────────────────────────────────────────────────
+.search-recent {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.search-recent__head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+}
+
+.search-recent__title {
+    margin: 0;
+    color: var(--tv-text-3);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.search-recent__clear {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--tv-meta);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--tv-text);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.search-recent__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.search-recent__chip {
+    height: 36px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--tv-text);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.search-hint {
+    margin: 0;
+    color: var(--tv-meta);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+// ─── Results ─────────────────────────────────────────────────────────────
+.search-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+}
+
+.search-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.search-group__head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+
+    h2 {
+        margin: 0;
+        color: var(--tv-text);
+        font-size: 17px;
+        font-weight: 600;
+    }
+
+    span {
+        color: var(--tv-meta);
+        font-size: 13px;
+        font-weight: 500;
+    }
+}
+
+.search-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--tv-card-border);
+    border-radius: 16px;
+    background: var(--tv-list-bg);
+}
+
+.search-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    min-height: 64px;
+    padding: 10px 16px;
+    border: 0;
+    box-sizing: border-box;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 160ms ease;
+
+    & + & {
+        border-top: 1px solid var(--tv-separator);
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    // Inside the row: the card clips what lies outside it.
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: -3px);
+        border-radius: 14px;
+    }
+}
+
+.search-row__crest {
+    --crest-size: 44px;
+}
+
+.search-row__logo {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 44px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: linear-gradient(160deg, #2a2a29 0%, #151514 100%);
+    color: var(--tv-text);
+    font-size: 13px;
+    font-weight: 700;
+
+    img {
+        width: 100%;
+        height: 100%;
+        padding: 6px 8px;
+        box-sizing: border-box;
+        object-fit: contain;
+    }
+}
+
+.search-row__poster {
+    display: block;
+    width: 32px;
+    height: 44px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #3a2c22, #14100c);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.search-row__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.search-row__title {
+    overflow: hidden;
+    color: var(--tv-text);
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-row__meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    color: var(--tv-meta);
+    font-size: 13px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-row__flag {
+    flex: none;
+    width: 16px;
+    height: 11px;
+    border-radius: 2px;
+    object-fit: cover;
+}
+
+.search-row__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+}
+
+.search-row__badge--live {
+    background: var(--tv-red);
+    color: #fff;
+}
+
+.search-row__go {
+    color: var(--tv-text-3);
+    opacity: 0;
+    transition: opacity 160ms ease;
+
+    .search-row:hover &,
+    .search-row:focus-visible & {
+        opacity: 1;
+    }
+}
+
+.search-empty {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 32px;
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    text-align: center;
+}
+
+.search-empty__title {
+    margin: 0;
+    color: var(--tv-text);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.search-empty__hint {
+    margin: 0;
+    color: var(--tv-meta);
+    font-size: 13.5px;
+}
+
+// ─── Phones ──────────────────────────────────────────────────────────────
+@media (max-width: 640px) {
+    .search-page {
+        gap: 24px;
+    }
+
+    .search-field {
+        height: 52px;
+        padding-left: 16px;
+    }
+
+    .search-field__input {
+        font-size: 17px;
+    }
+
+    .search-scopes {
+        flex-wrap: nowrap;
+        margin: -8px calc(-1 * var(--tv-page-x)) 0;
+        padding: 0 var(--tv-page-x);
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .search-scope {
+        flex: none;
+    }
+}

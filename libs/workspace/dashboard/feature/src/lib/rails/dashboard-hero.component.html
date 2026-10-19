@@ -15,206 +15,180 @@
         (focusout)="onFocusOut($event)"
         (keydown)="onHeroKeydown($event)"
     >
-        <!-- Every slide's backdrop stays mounted so switching crossfades
-             and the next image is already decoded. -->
+        <!-- Every slide's background stays mounted, so switching crossfades
+             and the next image is already decoded. The whole stage fades
+             into the page below. -->
         <div class="hero__stage" aria-hidden="true">
             @for (slide of slides(); track slide.id) {
                 <div
                     class="hero__backdrop"
                     [class.hero__backdrop--active]="$index === activeIndex()"
-                    [class.hero__backdrop--poster]="
-                        slide.backdropSource === 'poster'
-                    "
-                    [class.hero__backdrop--live]="slide.contentType === 'live'"
                     [style.--hero-hue]="slide.accentHue"
                 >
-                    <span class="hero__backdrop-fallback"></span>
                     @if (slide.backdropUrl; as backdropUrl) {
-                        <img
-                            class="hero__backdrop-image"
-                            [src]="backdropUrl"
-                            alt=""
-                            decoding="async"
-                            [attr.loading]="
-                                $index === activeIndex() ? 'eager' : 'lazy'
-                            "
-                            (error)="presenter.markImageFailed(backdropUrl)"
-                        />
-                        <!-- A poster or channel logo is not a backdrop: it
-                             sits sharp on the right as the slide's key art,
-                             over its own blurred wash. -->
-                        @if (slide.backdropSource === 'poster') {
+                        @if (slide.backdropSource === 'backdrop') {
                             <img
-                                class="hero__backdrop-keyart"
+                                class="hero__image"
                                 [src]="backdropUrl"
                                 alt=""
                                 decoding="async"
+                                [attr.loading]="
+                                    $index === activeIndex() ? 'eager' : 'lazy'
+                                "
+                                (error)="presenter.markImageFailed(backdropUrl)"
+                            />
+                        } @else {
+                            <!-- A poster or channel logo is not a backdrop:
+                                 it stands on the right of the tinted stage. -->
+                            <img
+                                class="hero__keyart"
+                                [class.hero__keyart--logo]="
+                                    slide.contentType === 'live'
+                                "
+                                [src]="backdropUrl"
+                                alt=""
+                                decoding="async"
+                                (error)="presenter.markImageFailed(backdropUrl)"
                             />
                         }
                     }
                 </div>
             }
-            <span class="hero__scrim"></span>
+            <span class="hero__veil hero__veil--left"></span>
+            <span class="hero__veil hero__veil--top"></span>
         </div>
 
         <!-- Every slide is laid out, in one grid cell, so the hero is as
              tall as its tallest slide and a rotation never resizes it (or
-             moves the rails below). Only the active slide is shown; the
+             moves the rows below). Only the active slide is shown; the
              others are inert and carry no test hooks. -->
-        @for (slide of slides(); track slide.id) {
-            @let current = $index === activeIndex();
-            <div
-                class="hero__content"
-                role="group"
-                [attr.aria-roledescription]="
-                    'WORKSPACE.DASHBOARD.HERO_ROLE_SLIDE' | translate
-                "
-                [attr.data-test-id]="current ? 'dashboard-hero-slide' : null"
-                [attr.inert]="current ? null : ''"
-                [attr.data-hero-kind]="slide.kind"
-                [attr.aria-label]="
-                    'WORKSPACE.DASHBOARD.HERO_SLIDE_POSITION'
-                        | translate
-                            : {
-                                  index: $index + 1,
-                                  count: slides().length,
-                              }
-                "
-            >
-                <p class="hero__eyebrow">
-                    <img
-                        class="hero__mark"
-                        src="./assets/brand/logo-7.png"
-                        alt=""
-                        draggable="false"
-                    />
-                    <span
-                        class="hero__type"
-                        [class.hero__type--live]="slide.contentType === 'live'"
-                        >{{ slide.typeLabelKey | translate }}</span
-                    >
-                    <span class="hero__eyebrow-sep" aria-hidden="true">·</span>
-                    <span>{{ slide.reasonLabelKey | translate }}</span>
-                </p>
-
-                <h2 class="hero__title">{{ slide.title }}</h2>
-
-                <p
-                    class="hero__meta"
+        <div class="hero__slides">
+            @for (slide of slides(); track slide.id) {
+                @let current = $index === activeIndex();
+                <div
+                    class="hero__content"
+                    role="group"
+                    [attr.aria-roledescription]="
+                        'WORKSPACE.DASHBOARD.HERO_ROLE_SLIDE' | translate
+                    "
                     [attr.data-test-id]="
-                        current ? 'dashboard-hero-badges' : null
+                        current ? 'dashboard-hero-slide' : null
+                    "
+                    [attr.inert]="current ? null : ''"
+                    [attr.data-hero-kind]="slide.kind"
+                    [attr.aria-label]="
+                        'WORKSPACE.DASHBOARD.HERO_SLIDE_POSITION'
+                            | translate
+                                : {
+                                      index: $index + 1,
+                                      count: slides().length,
+                                  }
                     "
                 >
-                    @if (slide.episodeBadge) {
-                        <app-meta-chip class="hero__pill">{{
-                            slide.episodeBadge
-                        }}</app-meta-chip>
-                    }
-                    @if (slide.rating) {
-                        <app-meta-chip class="hero__pill" variant="rating">
-                            @if (matchPercent(slide.rating); as match) {
-                                {{
-                                    'WORKSPACE.DASHBOARD.MATCH'
-                                        | translate: { value: match }
-                                }}
-                            } @else {
-                                ★ {{ slide.rating }}
-                            }
-                        </app-meta-chip>
-                    }
-                    @for (genre of slide.genres; track genre) {
-                        <app-meta-chip class="hero__pill">{{
-                            genre
-                        }}</app-meta-chip>
-                    }
-                    @if (slide.category) {
-                        <app-meta-chip class="hero__pill">{{
-                            slide.category
-                        }}</app-meta-chip>
-                    }
-                    @if (slide.timeRange) {
-                        <app-meta-chip class="hero__pill hero__pill--time">{{
-                            slide.timeRange
-                        }}</app-meta-chip>
-                    }
-                    <!-- TiagoTV: no year and no source on the hero. -->
-                </p>
-
-                @if (slide.programmeTitle) {
-                    <p
-                        class="hero__programme"
-                        [attr.data-test-id]="
-                            current ? 'dashboard-hero-live-epg' : null
-                        "
-                    >
-                        {{ slide.programmeTitle }}
+                    <p class="hero__eyebrow">
+                        {{ eyebrowKey(slide) | translate }}
                     </p>
-                }
-                @if (slide.description) {
-                    <p class="hero__description">{{ slide.description }}</p>
-                }
-
-                @if (slide.progress !== null) {
-                    <span
-                        class="hero__progress"
-                        [class.hero__progress--live]="
-                            slide.contentType === 'live'
-                        "
-                        role="progressbar"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                        [attr.aria-valuenow]="slide.progress"
-                        [attr.aria-label]="slide.programmeTitle ?? slide.title"
-                        [attr.aria-valuetext]="
-                            slide.contentType === 'live'
-                                ? null
-                                : ('WORKSPACE.DASHBOARD.PERCENT_WATCHED'
-                                  | translate: { value: slide.progress })
-                        "
-                    >
-                        <i [style.--hero-progress]="slide.progress"></i>
-                    </span>
-                }
-
-                <div class="hero__actions">
-                    @let primary = slide.primaryAction;
-                    <a
-                        class="hero__button hero__button--primary"
-                        [attr.data-test-id]="current ? primary.testId : null"
-                        [routerLink]="primary.link"
-                        [state]="primary.state ?? {}"
-                    >
-                        <mat-icon aria-hidden="true">{{
-                            primary.icon
-                        }}</mat-icon>
-                        <span>{{ primary.labelKey | translate }}</span>
-                        @if (primary.remainingLabel; as remaining) {
-                            <span class="hero__button-detail"
-                                >·
-                                {{
-                                    remaining.key | translate: remaining.params
-                                }}</span
+                    @if (platformOf().get(slide.id); as platform) {
+                        @if (platform.logo) {
+                            <img
+                                class="hero__platform"
+                                [class.hero__platform--white]="
+                                    platform.logoTone === 'white'
+                                "
+                                [src]="platform.logo"
+                                [alt]="platform.name"
+                                draggable="false"
+                            />
+                        } @else {
+                            <span
+                                class="hero__platform-name"
+                                [style.color]="platform.wordmarkColor"
+                                >{{ platform.name }}</span
                             >
                         }
-                    </a>
-                    @if (slide.secondaryAction; as secondary) {
-                        <a
-                            class="hero__button hero__button--secondary"
+                    }
+
+                    <h2 class="hero__title">{{ slide.title }}</h2>
+
+                    @let meta = metaOf().get(slide.id);
+                    @if (slide.progress !== null || meta) {
+                        <div
+                            class="hero__meta"
                             [attr.data-test-id]="
-                                current ? secondary.testId : null
+                                current ? 'dashboard-hero-badges' : null
                             "
-                            [routerLink]="secondary.link"
-                            [state]="secondary.state ?? {}"
+                        >
+                            @if (slide.progress !== null) {
+                                <span
+                                    class="hero__progress"
+                                    [class.hero__progress--live]="
+                                        slide.contentType === 'live'
+                                    "
+                                    role="progressbar"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                    [attr.aria-valuenow]="slide.progress"
+                                    [attr.aria-label]="
+                                        slide.programmeTitle ?? slide.title
+                                    "
+                                    [attr.aria-valuetext]="
+                                        slide.contentType === 'live'
+                                            ? null
+                                            : ('WORKSPACE.DASHBOARD.PERCENT_WATCHED'
+                                              | translate
+                                                  : { value: slide.progress })
+                                    "
+                                >
+                                    <i
+                                        [style.--hero-progress]="slide.progress"
+                                    ></i>
+                                </span>
+                            }
+                            @if (meta) {
+                                <span
+                                    class="hero__meta-text"
+                                    [attr.data-test-id]="
+                                        current && slide.contentType === 'live'
+                                            ? 'dashboard-hero-live-epg'
+                                            : null
+                                    "
+                                    >{{ meta }}</span
+                                >
+                            }
+                        </div>
+                    }
+
+                    <div class="hero__actions">
+                        @let primary = slide.primaryAction;
+                        <a
+                            class="hero__button hero__button--primary"
+                            [attr.data-test-id]="
+                                current ? primary.testId : null
+                            "
+                            [routerLink]="primary.link"
+                            [state]="primary.state ?? {}"
                         >
                             <mat-icon aria-hidden="true">{{
-                                secondary.icon
+                                primary.icon
                             }}</mat-icon>
-                            <span>{{ secondary.labelKey | translate }}</span>
+                            <span>{{ primary.labelKey | translate }}</span>
                         </a>
-                    }
+                        @if (slide.secondaryAction; as secondary) {
+                            <a
+                                class="hero__button hero__button--glass"
+                                [attr.data-test-id]="
+                                    current ? secondary.testId : null
+                                "
+                                [routerLink]="secondary.link"
+                                [state]="secondary.state ?? {}"
+                            >
+                                {{ secondary.labelKey | translate }}
+                            </a>
+                        }
+                    </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
         <!-- Outside the @for: a live region has to be in the page before
              its text changes, or the change is not announced. Silent while
              the slides rotate on their own. -->
@@ -233,57 +207,36 @@
         </p>
 
         @if (slides().length > 1) {
-            <div class="hero__controls">
-                @if (canRotate()) {
+            <div
+                class="hero__dots"
+                role="group"
+                [attr.aria-label]="'WORKSPACE.DASHBOARD.HERO_LABEL' | translate"
+            >
+                @for (slide of slides(); track slide.id) {
                     <button
                         type="button"
-                        class="hero__pause"
-                        data-test-id="dashboard-hero-pause"
-                        [attr.aria-pressed]="userPaused()"
-                        [attr.aria-label]="
-                            (userPaused()
-                                ? 'WORKSPACE.DASHBOARD.HERO_PLAY'
-                                : 'WORKSPACE.DASHBOARD.HERO_PAUSE'
-                            ) | translate
+                        class="hero__dot"
+                        data-test-id="dashboard-hero-dot"
+                        [class.hero__dot--active]="$index === activeIndex()"
+                        [attr.aria-current]="
+                            $index === activeIndex() ? 'true' : null
                         "
-                        (click)="togglePaused()"
+                        [attr.aria-label]="
+                            'WORKSPACE.DASHBOARD.HERO_SHOW_SLIDE'
+                                | translate: { title: slide.title }
+                        "
+                        [attr.tabindex]="$index === activeIndex() ? 0 : -1"
+                        (click)="show($index)"
+                        (keydown)="onDotKeydown($event, $index)"
                     >
-                        <mat-icon aria-hidden="true">{{
-                            userPaused() ? 'play_arrow' : 'pause'
-                        }}</mat-icon>
+                        <!-- The slide's timer: its animation's end advances
+                             the slider (see onRotationTick). -->
+                        <span
+                            class="hero__dot-timer"
+                            (animationend)="onRotationTick()"
+                        ></span>
                     </button>
                 }
-                <div
-                    class="hero__dots"
-                    role="group"
-                    [attr.aria-label]="
-                        'WORKSPACE.DASHBOARD.HERO_LABEL' | translate
-                    "
-                >
-                    @for (slide of slides(); track slide.id) {
-                        <button
-                            type="button"
-                            class="hero__dot"
-                            data-test-id="dashboard-hero-dot"
-                            [class.hero__dot--active]="$index === activeIndex()"
-                            [attr.aria-current]="
-                                $index === activeIndex() ? 'true' : null
-                            "
-                            [attr.aria-label]="
-                                'WORKSPACE.DASHBOARD.HERO_SHOW_SLIDE'
-                                    | translate: { title: slide.title }
-                            "
-                            [attr.tabindex]="$index === activeIndex() ? 0 : -1"
-                            (click)="show($index)"
-                            (keydown)="onDotKeydown($event, $index)"
-                        >
-                            <span
-                                class="hero__dot-fill"
-                                (animationend)="onRotationTick()"
-                            ></span>
-                        </button>
-                    }
-                </div>
             </div>
         }
     </section>
@@ -294,11 +247,16 @@
         aria-busy="true"
         data-test-id="dashboard-hero-skeleton"
     >
-        <div class="hero__content">
-            <span class="hero__skeleton hero__skeleton--eyebrow"></span>
-            <span class="hero__skeleton hero__skeleton--title"></span>
-            <span class="hero__skeleton hero__skeleton--meta"></span>
-            <span class="hero__skeleton hero__skeleton--button"></span>
+        <div class="hero__stage">
+            <span class="hero__veil hero__veil--left"></span>
+        </div>
+        <div class="hero__slides">
+            <div class="hero__content">
+                <span class="hero__skeleton hero__skeleton--eyebrow"></span>
+                <span class="hero__skeleton hero__skeleton--title"></span>
+                <span class="hero__skeleton hero__skeleton--meta"></span>
+                <span class="hero__skeleton hero__skeleton--button"></span>
+            </div>
         </div>
     </section>
 }

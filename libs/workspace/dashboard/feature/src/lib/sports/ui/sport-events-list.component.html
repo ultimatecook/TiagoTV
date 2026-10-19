@@ -1,0 +1,67 @@
+<ul class="events" data-test-id="sport-events-list">
+    @for (row of rows(); track row.match.key) {
+        <li class="events__item">
+            <button
+                type="button"
+                class="event"
+                [attr.aria-label]="
+                    row.match.title +
+                    (row.channel
+                        ? ' · ' +
+                          ('WORKSPACE.SPORTS.WATCH_ON'
+                              | translate: { channels: row.channel })
+                        : '')
+                "
+                [attr.data-test-id]="'sport-event-' + row.match.key"
+                (click)="watch(row.match)"
+            >
+                <span
+                    class="event__clock"
+                    [class.event__clock--live]="row.live"
+                >
+                    @if (row.live) {
+                        <i class="event__dot" aria-hidden="true"></i>
+                        {{ 'WORKSPACE.SPORTS.LIVE' | translate }}
+                    } @else {
+                        {{ row.time }}
+                    }
+                </span>
+                <span class="event__competition">
+                    <span
+                        class="event__plate"
+                        aria-hidden="true"
+                        [style.background]="row.tint"
+                    >
+                        @if (row.logo) {
+                            <img [src]="row.logo" alt="" draggable="false" />
+                        }
+                    </span>
+                    <span class="event__competition-name">{{
+                        row.competition
+                    }}</span>
+                </span>
+                @if (row.sides; as sides) {
+                    <span class="event__teams">
+                        <span
+                            class="event__side event__side--home"
+                            [class.event__side--mine]="row.homeMine"
+                            >{{ sides.home }}</span
+                        >
+                        <span class="event__vs" aria-hidden="true">vs</span>
+                        <span
+                            class="event__side"
+                            [class.event__side--mine]="row.awayMine"
+                            >{{ sides.away }}</span
+                        >
+                    </span>
+                } @else {
+                    <span class="event__title">{{ row.match.title }}</span>
+                }
+                <span class="event__channel">{{ row.channel }}</span>
+                <span class="event__play" aria-hidden="true">
+                    <mat-icon>play_arrow</mat-icon>
+                </span>
+            </button>
+        </li>
+    }
+</ul>

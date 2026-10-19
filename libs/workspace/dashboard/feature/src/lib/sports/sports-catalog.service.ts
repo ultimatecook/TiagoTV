@@ -16,11 +16,18 @@ import {
     type XtreamSourceCredentials,
 } from '../xtream-source';
 import { EventRefresh, FRESH_MS } from './event-refresh';
+import { LeagueTableResolver } from './league-tables';
 import { eventCategoryIds, type LiveCatalog } from './live-catalog';
 import { buildLiveChannels, type LiveChannelTile } from './live-channels';
 import { sectionsWithChannels } from './match-channels';
-import { isMatchOn, isMatchOver, KickoffMemory } from './match-clock';
+import { isMatchOn, isMatchOver, KickoffMemory, startOf } from './match-clock';
 import { announcedKickOffs } from './match-fixtures';
+import { isFollowedTeam } from './my-teams';
+import {
+    ESPN_API,
+    fetchJsonOrNull,
+    SportsApiClient,
+} from './sports-api-client';
 import { StoredLiveCatalog } from './stored-live-catalog';
 import { TeamCrestResolver } from './team-crests';
 import {
@@ -73,15 +80,23 @@ export class SportsCatalogService {
     private holders = 0;
     private ticker: ReturnType<typeof setInterval> | null = null;
 
+    /** TheSportsDB, one request at a time for the crests and the tables. */
+    private readonly sportsDb = new SportsApiClient({
+        fetchJson: fetchJsonOrNull,
+    });
     readonly crests = new TeamCrestResolver({
-        fetchJson: async (url) => {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`Crest lookup answered ${response.status}`);
-            }
-            return response.json();
-        },
+        fetchJson: fetchJsonOrNull,
         storage: browserStorage(),
+        client: this.sportsDb,
+    });
+    readonly tables = new LeagueTableResolver({
+        espn: new SportsApiClient(
+            { fetchJson: fetchJsonOrNull },
+            { base: ESPN_API, gapMs: 1000, retryMs: 5000 }
+        ),
+        sportsDb: this.sportsDb,
+        storage: browserStorage(),
+        preferred: isFollowedTeam,
     });
     readonly loading = signal(false);
     readonly failed = signal(false);
@@ -135,6 +150,11 @@ export class SportsCatalogService {
             this.now(),
             kickOffOf
         );
+    }
+
+    /** A match's kick-off: announced, remembered, or when it went live. */
+    kickOff(match: SportMatch): Date | null {
+        return startOf(match, this.kickOffOf(match));
     }
 
     private kickOffOf(match: SportMatch): Date | null {

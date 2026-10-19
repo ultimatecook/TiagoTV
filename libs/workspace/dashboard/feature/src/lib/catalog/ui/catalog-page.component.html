@@ -1,0 +1,52 @@
+@let list = titles();
+@if (list && list.length > 0) {
+    <lib-catalog-hero
+        [kind]="kind()"
+        [releases]="releases()"
+        [featured]="featured()"
+        (picked)="pick($event)"
+    />
+    <div class="catalog__rows">
+        @for (row of rows(); track row.id) {
+            <lib-catalog-row [row]="row" />
+        }
+    </div>
+} @else {
+    <header class="catalog__header">
+        <h1 class="catalog__heading">{{ headingKey() | translate }}</h1>
+    </header>
+    @switch (list ? 'empty' : status()) {
+        @case ('loading') {
+            <div class="catalog__loading" role="status">
+                <span class="catalog__note">{{
+                    'WORKSPACE.CATALOG.LOADING' | translate
+                }}</span>
+                <div class="catalog__skeleton" aria-hidden="true">
+                    @for (slot of [1, 2, 3, 4, 5, 6]; track slot) {
+                        <span class="catalog__skeleton-card"></span>
+                    }
+                </div>
+            </div>
+        }
+        @case ('no-source') {
+            <p class="catalog__message">
+                {{ 'WORKSPACE.CATALOG.NO_SOURCE' | translate }}
+            </p>
+        }
+        @case ('failed') {
+            <p class="catalog__message" role="alert">
+                {{ 'WORKSPACE.CATALOG.FAILED' | translate }}
+            </p>
+        }
+        @default {
+            <p class="catalog__message">
+                {{
+                    (kind() === 'movie'
+                        ? 'WORKSPACE.CATALOG.EMPTY_MOVIES'
+                        : 'WORKSPACE.CATALOG.EMPTY_SERIES'
+                    ) | translate
+                }}
+            </p>
+        }
+    }
+}

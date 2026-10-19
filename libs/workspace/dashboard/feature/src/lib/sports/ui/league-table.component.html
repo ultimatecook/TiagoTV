@@ -1,0 +1,112 @@
+@let standings = table();
+<aside
+    class="table"
+    data-test-id="sport-league-table"
+    [class.table--no-form]="!hasForm()"
+    [style.--table-tint]="section().tint"
+>
+    <header class="table__head">
+        @if (section().logo; as logo) {
+            <img class="table__logo" [src]="logo" alt="" draggable="false" />
+        }
+        <div class="table__heading">
+            <h2 class="table__title">
+                {{ 'WORKSPACE.SPORTS.TABLE' | translate }}
+            </h2>
+            @if (group(); as label) {
+                <span class="table__note">{{
+                    label.key | translate: label.params
+                }}</span>
+            } @else if (standings.group) {
+                <span class="table__note">{{ standings.group }}</span>
+            } @else if (standings.round) {
+                <span class="table__note">{{
+                    'WORKSPACE.SPORTS.TABLE_ROUND'
+                        | translate: { round: standings.round }
+                }}</span>
+            }
+        </div>
+    </header>
+    <div
+        class="table__body"
+        role="table"
+        [attr.aria-label]="'WORKSPACE.SPORTS.TABLE' | translate"
+    >
+        <div class="table__row table__row--labels" role="row">
+            <span role="columnheader">#</span>
+            <span role="columnheader">{{
+                'WORKSPACE.SPORTS.TABLE_TEAM' | translate
+            }}</span>
+            @if (hasForm()) {
+                <span role="columnheader">{{
+                    'WORKSPACE.SPORTS.TABLE_FORM' | translate
+                }}</span>
+            }
+            <span role="columnheader" class="table__num">{{
+                'WORKSPACE.SPORTS.TABLE_PLAYED' | translate
+            }}</span>
+            <span role="columnheader" class="table__num">{{
+                'WORKSPACE.SPORTS.TABLE_POINTS' | translate
+            }}</span>
+        </div>
+        @for (row of rows(); track row.team) {
+            <div
+                class="table__row"
+                role="row"
+                [class.table__row--mine]="row.mine"
+                [attr.data-zone]="row.zone"
+            >
+                <span
+                    class="table__rank"
+                    role="cell"
+                    [class.table__rank--top]="row.rank <= 3"
+                    >{{ row.rank }}</span
+                >
+                <span class="table__team" role="cell">
+                    @if (row.badge) {
+                        <img
+                            class="table__badge"
+                            [src]="row.badge"
+                            alt=""
+                            loading="lazy"
+                            referrerpolicy="no-referrer"
+                        />
+                    } @else {
+                        <span class="table__badge table__badge--empty"></span>
+                    }
+                    <span class="table__name">{{ row.team }}</span>
+                </span>
+                @if (hasForm()) {
+                    <span class="table__form" role="cell">
+                        @for (result of row.form; track $index) {
+                            <i
+                                class="table__result"
+                                [attr.data-result]="result"
+                                [title]="
+                                    'WORKSPACE.SPORTS.FORM.' + result
+                                        | translate
+                                "
+                            ></i>
+                        }
+                    </span>
+                }
+                <span class="table__num table__played" role="cell">{{
+                    row.played
+                }}</span>
+                <span class="table__num table__points" role="cell">{{
+                    row.points
+                }}</span>
+            </div>
+        }
+        @if (legend().length > 0) {
+            <div class="table__legend">
+                @for (zone of legend(); track zone) {
+                    <span class="table__zone" [attr.data-zone]="zone">
+                        <i aria-hidden="true"></i
+                        >{{ zoneKey(zone) | translate }}
+                    </span>
+                }
+            </div>
+        }
+    </div>
+</aside>

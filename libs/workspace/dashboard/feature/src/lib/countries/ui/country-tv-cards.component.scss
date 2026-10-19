@@ -1,0 +1,228 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+// The overlay's channel row: glass cards 196px wide running through the
+// overlay's gutters to the picture's edges (handoff 04). `--before` and
+// `--after` hold the room of the cards it does not render.
+:host {
+    --card-w: 196px;
+    --card-gap: 16px;
+    --row-pad: var(--tv-page-x);
+    display: block;
+    min-width: 0;
+}
+
+.cards {
+    margin: 0 calc(-1 * var(--row-pad));
+    padding: 4px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    &:focus {
+        outline: none;
+    }
+}
+
+// The scrolled content: the rendered cards, with the others' room and
+// the gutters as its padding (on the scroller, it would widen the box).
+.cards__track {
+    --before: 0px;
+    --after: 0px;
+    display: flex;
+    gap: var(--card-gap);
+    width: max-content;
+    padding: 0 calc(var(--row-pad) + var(--after)) 0
+        calc(var(--row-pad) + var(--before));
+}
+
+.card {
+    --plate-hue: 220;
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: 10px;
+    width: var(--card-w);
+    padding: 8px 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.14) 0%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 12px 28px -14px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(20px) saturate(160%);
+    color: var(--tv-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        background-color 200ms ease,
+        border-color 200ms ease;
+    app-region: no-drag;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 1px);
+    }
+}
+
+.card--on {
+    border-color: rgba(255, 255, 255, 0.85);
+}
+
+.card__thumb {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.card__thumb--word {
+    background: linear-gradient(
+        140deg,
+        hsl(var(--plate-hue) 30% 14%) 0%,
+        hsl(var(--plate-hue) 40% 28%) 100%
+    );
+}
+
+.card__logo {
+    max-width: 62%;
+    max-height: 52%;
+    object-fit: contain;
+}
+
+.card__word {
+    display: -webkit-box;
+    max-width: 100%;
+    padding: 0 10px;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.92);
+    font-family: var(--tv-font-display);
+    font-size: 26px;
+    line-height: 0.95;
+    letter-spacing: 0.03em;
+    text-align: center;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.card__word--long {
+    font-size: 21px;
+}
+
+.card__tag {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--tv-red);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.card__tag-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.card__playing {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.card__text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    padding: 0 4px;
+}
+
+.card__name,
+.card__now {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.card__name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.card__now {
+    color: var(--tv-text-2);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.card__bar {
+    display: block;
+    height: 3px;
+    margin: 0 4px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+// Nothing says how far in the programme is: no bar rather than an empty one.
+.card__bar--unknown {
+    visibility: hidden;
+}
+
+.card__fill {
+    display: block;
+    height: 100%;
+    background: var(--tv-live-red);
+}
+
+@media (max-width: 640px) {
+    :host {
+        --card-w: 156px;
+        --card-gap: 12px;
+    }
+
+    .card__word {
+        font-size: 22px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card {
+        transition: none;
+    }
+}

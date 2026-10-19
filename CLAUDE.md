@@ -14,6 +14,7 @@ from the paths in the [context map](docs/maintenance/agent-context-map.md).
 
 This repository is TiagoTV, a personal fork of IPTVnator: the upstream
 release-note, release and external review-gate rules do not apply. The glass
-UI lives in the shell sidebar (`libs/workspace/shell/feature`), the dark
-theme tokens in `apps/web/src/m3-theme.scss` and the Home in
+UI lives in the shell top bar (`libs/workspace/shell/feature`), the dark
+theme tokens in `apps/web/src/m3-theme.scss` and
+`apps/web/src/_tv-tokens.scss`, and the Home in
 `libs/workspace/dashboard/feature/src/lib/rails`.

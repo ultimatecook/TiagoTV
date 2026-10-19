@@ -1,0 +1,80 @@
+@if (channels().length > 0) {
+    <section
+        class="channels"
+        aria-labelledby="home-channels-title"
+        data-test-id="dashboard-recent-channels"
+        libHomeNear
+        (homeNear)="onNear()"
+    >
+        <lib-home-heading
+            headingId="home-channels-title"
+            testId="dashboard-recent-channels"
+            [title]="'WORKSPACE.DASHBOARD.RECENT_CHANNELS' | translate"
+            [link]="['/workspace', 'global-recent']"
+            [linkState]="seeAllState"
+        />
+        <ul class="channels__row">
+            @for (channel of channels(); track channel.card.id) {
+                <li class="channels__item">
+                    <a
+                        class="channel"
+                        [routerLink]="channel.card.link"
+                        [state]="channel.card.state ?? {}"
+                        [attr.data-test-id]="'dashboard-recent-channel'"
+                    >
+                        <span
+                            class="channel__thumb"
+                            [class.channel__thumb--word]="!channel.logo"
+                        >
+                            @if (channel.logo; as logo) {
+                                <img
+                                    class="channel__logo"
+                                    [src]="logo"
+                                    alt=""
+                                    loading="lazy"
+                                    draggable="false"
+                                    (error)="markFailed(logo)"
+                                />
+                            } @else {
+                                <span
+                                    class="channel__word"
+                                    aria-hidden="true"
+                                    >{{ channel.name }}</span
+                                >
+                            }
+                            @if (channel.flag) {
+                                <img
+                                    class="channel__flag"
+                                    [src]="channel.flag"
+                                    alt=""
+                                    draggable="false"
+                                />
+                            }
+                        </span>
+                        <span class="channel__text">
+                            <span class="channel__name">{{
+                                channel.name
+                            }}</span>
+                            <span class="channel__programme">{{
+                                channel.programme ?? ''
+                            }}</span>
+                        </span>
+                        <span
+                            class="channel__progress"
+                            [class.channel__progress--empty]="
+                                channel.progress === null
+                            "
+                            aria-hidden="true"
+                        >
+                            <i
+                                [style.--channel-progress]="
+                                    channel.progress ?? 0
+                                "
+                            ></i>
+                        </span>
+                    </a>
+                </li>
+            }
+        </ul>
+    </section>
+}

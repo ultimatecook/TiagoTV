@@ -3,7 +3,7 @@ import { SportsCatalogService } from '../sports/sports-catalog.service';
 import { buildCountriesTv } from './countries-catalog';
 
 /**
- * "Por países" reads the live catalog the sports views keep: the stored
+ * "En vivo" reads the live catalog the sports views keep: the stored
  * copy of the source's line-up (the Home loads it, so the page usually
  * opens on it at once), its event categories kept fresh. Nothing here
  * downloads the line-up again.

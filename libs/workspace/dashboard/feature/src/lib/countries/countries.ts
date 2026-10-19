@@ -1,5 +1,5 @@
 /**
- * TiagoTV's "Por países": the countries whose live channels the language
+ * TiagoTV's "En vivo": the countries whose live channels the language
  * filter keeps (`isSpanishOrEnglishCategory`), in the page's order:
  * Argentina, Spain, the United Kingdom (Ireland folded in) and the United
  * States. Providers file most countries under their code ("|ES| ✪ DAZN LA

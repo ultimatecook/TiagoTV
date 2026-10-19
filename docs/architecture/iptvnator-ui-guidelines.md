@@ -977,8 +977,9 @@ in front of 84 px channel cards.
   `libs/ui/components/src/lib/styles/_channel-list-layout.scss`. The loading
   state takes the view and hides its headers where the loaded view does
   (`showHeader`, compact lists).
-- The dashboard rails and `lib-dashboard-rail-skeleton` share
-  `libs/workspace/dashboard/feature/src/lib/rails/_dashboard-rail-geometry.scss`.
+- The dashboard rails and `lib-dashboard-rail-skeleton` shared one geometry
+  partial (TiagoTV removed both with the upstream rails; the Home's "Top
+  10" and series sections draw placeholder cards of their own shape).
   A skeleton takes the `layout` and `aspectRatio` of the rail it precedes:
   channel cards for live favorites, 16:9 cards for sources, posters with a
   title and a meta line otherwise.
@@ -995,9 +996,8 @@ The dashboard renders each rail as soon as its own data arrives, and several
 rails resolve empty on a normal profile. A per-rail skeleton shown
 immediately therefore flashed for a few tens of milliseconds and collapsed,
 pulling every rail below it upwards (a layout shift of about 0.23 on each
-launch with sources). Rail skeletons are gated per rail
-(`createRailSkeletonGates` in
-`libs/workspace/dashboard/feature/src/lib/rails/dashboard-skeleton-grace.ts`):
+launch with sources). Rail skeletons were gated per rail
+(`createRailSkeletonGates`, removed from TiagoTV with the upstream rails):
 
 - a skeleton waits out a grace period (`DASHBOARD_RAIL_SKELETON_GRACE_MS`,
   300 ms) counted from when *that* rail started loading, since Xtream and
@@ -1140,32 +1140,42 @@ per-theme tokens in `apps/web/src/_settings-theme.scss`.
 
 ### Structure
 
-- The sidebar is a 20px "Settings" title over four groups (App, Library,
-  Devices, Data), with About pinned to the footer beside the installed
-  version and an update badge. The active item is a soft selection fill with
-  tinted text and no border, so the list never shifts. Back lives in the
-  workspace header and Esc runs it. Section pages are defined once in
-  `SETTINGS_SECTION_DEFINITIONS` (`libs/workspace/shell/util`).
-- Each page is a title (26px) and one-line subtitle, then sections: a 14px
-  heading, an optional description and action buttons, and a card.
-- Rows (`.setting-item`) are a label column (13.5px title, description
-  capped at 56ch) and one right-aligned control column. Put every control in
-  that column, including segmented controls; the page is a size container
-  and rows stack under 600px of pane width. Keep `data-setting-id` on every row: settings search and the
-  command palette reveal rows by it, and the registry spec checks the index
-  against the templates.
-- Controls: `.settings-select` is a 220px outlined select without a floating
-  label (the row title names it; pass `aria-labelledby`); boolean settings
-  are `mat-slide-toggle` switches; segmented choices use `.theme-switcher`
-  as a pill; `.settings-chip` marks rows that apply after a restart or are
-  experimental; `.settings-callout` (`--info`, `--warn`) sits under the row
-  it explains inside `.setting-item__sub` and only while that choice is made.
-- Destructive actions keep the confirm dialog from the Dialogs section; the
-  row itself uses `.app-destructive-button` on a stroked button.
-- The save bar floats over the content column while the form is dirty with
-  the change count, Discard and Save (Cmd/Ctrl+S); the sidebar marks pages
-  with staged edits. A saved change that waits for a restart shows a sticky
-  notice at the top of the page.
+- TiagoTV (handoff 07 · Ajustes): the page draws its own rail
+  (`SettingsRailComponent`, a `232px minmax(0, 1fr)` grid with a 56px gap,
+  sticky 20px under the top bar): a 32px "Ajustes" title over the groups
+  (Cuenta, Aplicación, Biblioteca, Dispositivos, Datos; 11.5px uppercase
+  headings) and 38px items, the active one a `rgba(255,255,255,.12)` fill
+  at 600, with About pinned after a separator beside the installed version
+  and an update badge. Esc leaves settings. Section pages are defined once
+  in `SETTINGS_SECTION_DEFINITIONS` (`libs/workspace/shell/util`); settings
+  search is the top bar's field (`q`).
+- The content column is at most 860px: each page is a 24px title and a
+  14px subtitle, then sections: a 12px uppercase heading, an optional
+  description and action buttons, and a card (radius 18).
+- Rows (`.setting-item`, at least 64px, `14px 20px`) are a label column (15px
+  title, 13px description) and one right-aligned control column. Put every
+  control in that column, including segmented controls; the page is a size
+  container and rows stack under 600px of pane width. Keep
+  `data-setting-id` on every row: settings search and the command palette
+  reveal rows by it, and the registry spec checks the index against the
+  templates.
+- Controls, restyled through the Material token mixins in
+  `_settings-theme.scss`: `mat-slide-toggle` switches are 46×28, green when
+  on; `.settings-select` reads as the value and a chevron (no floating label:
+  the row title names it; pass `aria-labelledby`); `.settings-text-field` is
+  a 240×38 monospace well whose input carries the row's name as
+  `aria-label`; segmented choices use `.theme-switcher` (words only); row
+  buttons are 36px text pills (flat = white primary, stroked and text =
+  glass, `.app-destructive-button` = red tint). `.settings-chip` marks rows
+  that apply after a restart or are experimental; `.settings-callout`
+  (`--info`, `--warn`) sits under the row it explains inside
+  `.setting-item__sub` and only while that choice is made.
+- Destructive actions keep the confirm dialog from the Dialogs section.
+- The save bar is a sticky glass pill (24px from the bottom of the content
+  column) while the form is dirty, with an amber dot, the change count,
+  Discard and Save (Cmd/Ctrl+S); the rail marks pages with staged edits. A
+  saved change that waits for a restart shows a sticky notice under the top
+  bar.
 
 ### Light Theme
 
@@ -1453,7 +1463,7 @@ but the component has not.
   is `position: fixed` on the sidebar host, which also removes it from the
   shell grid, so the phone `workspace-body` stays single-pane. The drawer is
   modal for keyboard and screen-reader users: `CdkTrapFocus` captures and
-  contains Tab focus while open, the shell marks the rail, header, content,
+  contains Tab focus while open, the shell marks the top bar, content,
   and playback footer `inert` (a focus trap alone does not stop a screen
   reader's virtual cursor from activating obscured controls), the panel
   itself is the initial focus target (`tabindex="-1"` + `cdkFocusInitial`,

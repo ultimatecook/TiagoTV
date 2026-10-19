@@ -10,11 +10,10 @@ import {
 
 /**
  * Emits `near` once, when the host comes within `nearMargin` of what its
- * scroller shows: "Por países" renders a row's tiles only then, so a
- * catalog of thousands of channels opens on the few rows in view. The
- * scroller is the host's nearest scrolling ancestor (the rows' pane, or
- * the page's own on a phone). Without IntersectionObserver the host
- * counts as near at once.
+ * scroller shows: a long page of rows (the Series and Movies catalog)
+ * renders a row's cards only then, so it opens on the few rows in view.
+ * The scroller is the host's nearest scrolling ancestor. Without
+ * IntersectionObserver the host counts as near at once.
  */
 @Directive({ selector: '[libNearViewport]' })
 export class NearViewportDirective {

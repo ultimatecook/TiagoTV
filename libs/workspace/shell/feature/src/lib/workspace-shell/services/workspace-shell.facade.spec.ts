@@ -1,8 +1,4 @@
 import { PlaylistSwitcherOpenService } from '@iptvnator/playlist/shared/ui';
-import {
-    NAV_SIDEBAR_HIDDEN_STORAGE_KEY,
-    WorkspaceNavSidebarService,
-} from './workspace-nav-sidebar.service';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
@@ -1158,8 +1154,7 @@ describe('WorkspaceShellFacade', () => {
             return event;
         };
 
-        // No switcher on screen (and no hidden sidebar to show): the key
-        // keeps its default.
+        // No switcher on screen: the key keeps its default.
         expect(press().defaultPrevented).toBe(false);
         expect(opened).not.toHaveBeenCalled();
 
@@ -1180,22 +1175,6 @@ describe('WorkspaceShellFacade', () => {
 
         unregister();
         subscription.unsubscribe();
-    });
-
-    it('shows the hidden sidebar on Ctrl/Cmd+P: its foot holds the switcher', () => {
-        const navSidebar = TestBed.inject(WorkspaceNavSidebarService);
-        navSidebar.hide();
-        const event = new KeyboardEvent('keydown', {
-            key: 'p',
-            ctrlKey: true,
-            cancelable: true,
-        });
-
-        document.dispatchEvent(event);
-
-        expect(event.defaultPrevented).toBe(true);
-        expect(navSidebar.hidden()).toBe(false);
-        localStorage.removeItem(NAV_SIDEBAR_HIDDEN_STORAGE_KEY);
     });
 
     it('records the executed command id after the palette closes with a selection', () => {

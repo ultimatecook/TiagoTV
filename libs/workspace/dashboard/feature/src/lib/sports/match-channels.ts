@@ -55,14 +55,7 @@ export function competitionChannels(
 ): MatchChannel[] {
     return groupChannelFamilies(channels)
         .filter((family) => !EVENT_NAMED.test(family.key))
-        .map((family) => ({
-            family,
-            rank: PASS.test(family.key)
-                ? 2
-                : BROADCASTER.test(family.key)
-                  ? 0
-                  : 1,
-        }))
+        .map((family) => ({ family, rank: familyRank(family.key) }))
         .sort((a, b) => a.rank - b.rank)
         .slice(0, OFFERED)
         .map(({ family }) => {
@@ -72,6 +65,14 @@ export function competitionChannels(
                 channel: { ...channel, title: feedTitle(family, channel) },
             };
         });
+}
+
+/**
+ * A competition's channel family, by how surely it shows its matches:
+ * the broadcasters' own (0), the others (1), the pay-per-view passes (2).
+ */
+export function familyRank(key: string): number {
+    return PASS.test(key) ? 2 : BROADCASTER.test(key) ? 0 : 1;
 }
 
 /**

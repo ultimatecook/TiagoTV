@@ -6,134 +6,105 @@
 .page {
     display: flex;
     flex-direction: column;
-    gap: 30px;
-    padding: 8px 28px 40px;
+    gap: 56px;
+    padding-bottom: 96px;
+    color: var(--tv-text);
 }
 
-// The competition's banner: its colour lit from the right, the player
-// standing there, the name in the display face on the left.
-.hero {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    min-height: 240px;
-    overflow: hidden;
-    border-radius: 22px;
-    background:
-        radial-gradient(
-            70% 120% at 78% 30%,
-            color-mix(in srgb, var(--sport-tint) 60%, #9fb4ff 20%) 0%,
-            transparent 70%
-        ),
-        linear-gradient(
-            110deg,
-            #05060a 0%,
-            color-mix(in srgb, var(--sport-tint) 85%, black) 100%
-        );
-    box-shadow: 0 26px 50px -30px rgba(0, 0, 0, 0.85);
+// The stage rises behind the top bar.
+.page__stage {
+    margin-top: calc(-1 * var(--tv-topbar-h));
 }
 
-.hero__art {
-    position: absolute;
-    right: 6%;
-    // As on the Home's cards: every head the same size, just under the
-    // banner's top edge, the rest cut at its floor.
-    top: calc(8% - var(--art-headroom, 0) * var(--art-height, 1.1) * 75%);
-    height: calc(var(--art-height, 1.1) * 75%);
-    object-fit: contain;
-    object-position: 50% 0;
-    filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.6));
-    -webkit-user-drag: none;
-}
-
-.hero__text {
-    position: relative;
+.page__body {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 28px 32px;
+    gap: 48px;
+    padding: 0 var(--tv-page-x);
+    // "Matches and table" scrolls here, clear of the top bar.
+    scroll-margin-top: calc(var(--tv-topbar-h) + 20px);
 }
 
-.hero__eyebrow {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
+.page__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 40px;
 }
 
-.hero__title {
-    margin: 0;
-    color: #fff;
-    font-family: var(--app-display-font);
-    font-size: clamp(48px, 6vw, 84px);
-    font-weight: 400;
-    line-height: 0.9;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
-    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+.page__grid--table {
+    grid-template-columns: minmax(0, 1fr) 400px;
 }
 
-.hero__logo {
-    display: block;
-    height: calc(clamp(52px, 6vw, 84px) * var(--logo-size, 1));
-    width: auto;
-    filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.45));
-    -webkit-user-drag: none;
-}
-
-.hero__live {
-    align-self: flex-start;
-    margin-top: 6px;
-    padding: 4px 11px;
-    border-radius: 999px;
-    background: var(--app-brand-red, #e8262b);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
-.block {
+.matches {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--tv-title-gap);
+    min-width: 0;
 }
 
-.block__title {
+.matches__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.matches__title {
     margin: 0;
-    color: var(--app-heading-color);
     font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.matches__count {
+    color: var(--tv-meta);
+    font-size: 13px;
     font-weight: 500;
 }
 
-.block__matches {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 16px;
+.matches__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-// One card per channel; a card with many feeds grows down, alone.
-.block__channels {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
-    align-items: start;
-    gap: 14px;
+// The standings stay in view while the matches scroll by.
+.page__table {
+    position: sticky;
+    top: calc(var(--tv-topbar-h) + 20px);
+    align-self: start;
 }
 
-.block__empty {
+.page__table--loading {
+    min-height: 320px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    background: var(--tv-card-bg);
+}
+
+.page__empty,
+.page__missing {
     margin: 0;
-    color: var(--app-body-color);
-    font-size: 14px;
+    padding: 32px 24px;
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    color: var(--tv-text-3);
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
 }
 
-@media (max-width: 760px) {
-    .page {
-        padding: 8px 14px 32px;
+.page__missing {
+    margin: var(--tv-page-top) var(--tv-page-x);
+}
+
+@media (max-width: 1100px) {
+    .page__grid--table {
+        grid-template-columns: minmax(0, 1fr);
     }
 
-    .hero__art {
-        opacity: 0.55;
+    .page__table {
+        position: static;
     }
 }

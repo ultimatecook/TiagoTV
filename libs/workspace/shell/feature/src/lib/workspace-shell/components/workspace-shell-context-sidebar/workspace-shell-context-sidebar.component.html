@@ -51,19 +51,6 @@
             </aside>
         }
     }
-} @else if (variant() === 'settings') {
-    <aside
-        tabindex="-1"
-        cdkFocusInitial
-        class="context-panel context-panel--settings"
-        appResizable
-        [minWidth]="200"
-        [maxWidth]="400"
-        [defaultWidth]="260"
-        storageKey="sidebar-width"
-    >
-        <app-workspace-settings-context-panel />
-    </aside>
 } @else if (variant() === 'collection') {
     <aside
         tabindex="-1"

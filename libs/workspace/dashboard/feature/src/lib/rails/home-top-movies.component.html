@@ -1,0 +1,95 @@
+@if (items().length > 0 || pending()) {
+    <section
+        class="top"
+        aria-labelledby="home-top-movies-title"
+        data-test-id="dashboard-top-movies"
+        libHomeNear
+        (homeNear)="titles.load('movie')"
+    >
+        <lib-home-heading
+            headingId="home-top-movies-title"
+            testId="dashboard-top-movies"
+            [title]="'WORKSPACE.DASHBOARD.TOP_MOVIES' | translate"
+            [subtitle]="'WORKSPACE.DASHBOARD.ON_YOUR_PLATFORMS' | translate"
+            [link]="['/workspace', 'movies']"
+        />
+        @if (items().length > 0) {
+            <ol class="top__row">
+                @for (item of items(); track item.key) {
+                    @let movie = item.movie;
+                    <li class="top__item">
+                        <button
+                            type="button"
+                            class="top__card"
+                            [attr.aria-label]="item.rank + '. ' + movie.title"
+                            [attr.data-test-id]="
+                                'dashboard-top-movie-' + item.rank
+                            "
+                            (click)="open(item)"
+                        >
+                            <span class="top__rank" aria-hidden="true">{{
+                                item.rank
+                            }}</span>
+                            <span
+                                class="top__poster"
+                                [style.--poster-hue]="item.hue"
+                            >
+                                @if (posterOf(item); as poster) {
+                                    <img
+                                        class="top__image"
+                                        [src]="poster"
+                                        alt=""
+                                        loading="lazy"
+                                        decoding="async"
+                                        draggable="false"
+                                        (error)="markFailed(poster)"
+                                    />
+                                }
+                                <span class="top__shade"></span>
+                                <span class="top__info">
+                                    @if (movie.platform.logo) {
+                                        <img
+                                            class="top__platform"
+                                            [class.top__platform--white]="
+                                                movie.platform.logoTone ===
+                                                'white'
+                                            "
+                                            [src]="movie.platform.logo"
+                                            [alt]="movie.platform.name"
+                                            draggable="false"
+                                        />
+                                    } @else {
+                                        <span
+                                            class="top__platform-name"
+                                            [style.color]="
+                                                movie.platform.wordmarkColor
+                                            "
+                                            >{{ movie.platform.name }}</span
+                                        >
+                                    }
+                                    <span class="top__title">{{
+                                        movie.title
+                                    }}</span>
+                                    <span class="top__meta">
+                                        @for (part of item.meta; track $index) {
+                                            <span>{{ part }}</span>
+                                        }
+                                    </span>
+                                </span>
+                            </span>
+                        </button>
+                    </li>
+                }
+            </ol>
+        } @else {
+            <div class="top__row" aria-hidden="true" aria-busy="true">
+                @for (skeleton of skeletons; track skeleton) {
+                    <span class="top__item top__item--skeleton">
+                        <span class="top__rank">{{ skeleton }}</span>
+                        <span class="top__poster top__poster--skeleton"></span>
+                    </span>
+                }
+            </div>
+        }
+    </section>
+}

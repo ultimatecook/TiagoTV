@@ -13,7 +13,7 @@ import { DashboardDataService } from '@iptvnator/workspace/dashboard/data-access
 import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
 import { DashboardPortalLiveEpgPresenter } from './dashboard-portal-live-epg.presenter';
 import { DashboardLiveEpgClock } from './dashboard-live-epg-clock';
-import type { DashboardRailCard } from './dashboard-rail.component';
+import type { DashboardRailCard } from './dashboard-rail-card';
 
 const guideA = 'https://a.example/guide.xml';
 const guideB = 'https://b.example/guide.xml';

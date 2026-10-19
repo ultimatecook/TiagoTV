@@ -1,0 +1,348 @@
+<section class="search-page" data-test-id="search-page">
+    <h1 class="visually-hidden">{{ 'WORKSPACE.SEARCH.TITLE' | translate }}</h1>
+
+    <label class="search-field">
+        <mat-icon class="search-field__icon" aria-hidden="true"
+            >search</mat-icon
+        >
+        <input
+            #searchField
+            type="search"
+            class="search-field__input"
+            data-test-id="search-page-input"
+            spellcheck="false"
+            autocomplete="off"
+            [attr.aria-label]="'WORKSPACE.SEARCH.TITLE' | translate"
+            [placeholder]="'WORKSPACE.SEARCH.PLACEHOLDER' | translate"
+            [value]="draft()"
+            (input)="onInput(searchField.value)"
+            (keydown.enter)="onEnter(searchField.value)"
+            (keydown.arrowdown)="moveFocus($event, 1)"
+        />
+        @if (draft()) {
+            <button
+                type="button"
+                class="search-field__clear"
+                data-test-id="search-page-clear"
+                (click)="clear()"
+            >
+                {{ 'WORKSPACE.SEARCH.CLEAR' | translate }}
+            </button>
+        }
+    </label>
+
+    <div
+        class="search-scopes"
+        role="radiogroup"
+        [attr.aria-label]="'WORKSPACE.SEARCH.SCOPES_LABEL' | translate"
+    >
+        @for (option of scopes; track option.id) {
+            <button
+                type="button"
+                role="radio"
+                class="search-scope"
+                [class.search-scope--active]="scope() === option.id"
+                [attr.aria-checked]="scope() === option.id"
+                [attr.data-test-id]="'search-scope-' + option.id"
+                (click)="scope.set(option.id)"
+            >
+                {{ option.labelKey | translate }}
+            </button>
+        }
+    </div>
+
+    @if (!term()) {
+        <section class="search-recent" data-test-id="search-recent">
+            @if (recent().length > 0) {
+                <div class="search-recent__head">
+                    <h2 class="search-recent__title">
+                        {{ 'WORKSPACE.SEARCH.RECENT' | translate }}
+                    </h2>
+                    <button
+                        type="button"
+                        class="search-recent__clear"
+                        data-test-id="search-recent-clear"
+                        (click)="clearRecent()"
+                    >
+                        {{ 'WORKSPACE.SEARCH.RECENT_CLEAR' | translate }}
+                    </button>
+                </div>
+                <div class="search-recent__list">
+                    @for (entry of recent(); track entry) {
+                        <button
+                            type="button"
+                            class="search-recent__chip"
+                            data-test-id="search-recent-entry"
+                            (click)="pickRecent(entry)"
+                        >
+                            {{ entry }}
+                        </button>
+                    }
+                </div>
+            } @else {
+                <p class="search-hint">
+                    {{ 'WORKSPACE.SEARCH.HINT' | translate }}
+                </p>
+            }
+        </section>
+    } @else {
+        <div
+            class="search-groups"
+            role="group"
+            aria-live="polite"
+            (keydown.arrowdown)="moveFocus($event, 1)"
+            (keydown.arrowup)="moveFocus($event, -1)"
+        >
+            @if (showTeams() && teams().length > 0) {
+                <section class="search-group" data-test-id="search-group-teams">
+                    <header class="search-group__head">
+                        <h2>
+                            {{ 'WORKSPACE.SEARCH.GROUP_TEAMS' | translate }}
+                        </h2>
+                        <span>{{
+                            (teams().length === 1
+                                ? 'WORKSPACE.SEARCH.RESULTS_ONE'
+                                : 'WORKSPACE.SEARCH.RESULTS_COUNT'
+                            ) | translate: { count: teams().length }
+                        }}</span>
+                    </header>
+                    <div class="search-card">
+                        @for (team of teams(); track team.key) {
+                            <a
+                                class="search-row"
+                                data-test-id="search-team"
+                                [routerLink]="[
+                                    '/workspace/sports',
+                                    team.sectionId,
+                                ]"
+                                (click)="remember()"
+                            >
+                                <lib-team-crest
+                                    class="search-row__crest"
+                                    [team]="team.name"
+                                    [section]="team.sectionId"
+                                />
+                                <span class="search-row__text">
+                                    <span class="search-row__title">{{
+                                        team.name
+                                    }}</span>
+                                    <span class="search-row__meta">
+                                        {{ sectionTitle(team.sectionId) }}
+                                        @if (team.opponent) {
+                                            ·
+                                            {{
+                                                'WORKSPACE.SEARCH.VERSUS'
+                                                    | translate
+                                                        : {
+                                                              team: team.opponent,
+                                                          }
+                                            }}
+                                        }
+                                        @if (!team.live && team.match) {
+                                            @if (
+                                                kickOffLabel(team.match);
+                                                as when
+                                            ) {
+                                                · {{ when }}
+                                            }
+                                        }
+                                        @if (team.followed) {
+                                            ·
+                                            {{
+                                                'WORKSPACE.SEARCH.MY_TEAM'
+                                                    | translate
+                                            }}
+                                        }
+                                    </span>
+                                </span>
+                                @if (team.live) {
+                                    <span
+                                        class="search-row__badge search-row__badge--live"
+                                    >
+                                        <i
+                                            class="tv-pulse"
+                                            aria-hidden="true"
+                                        ></i>
+                                        {{
+                                            'WORKSPACE.SEARCH.LIVE' | translate
+                                        }}
+                                    </span>
+                                }
+                            </a>
+                        }
+                    </div>
+                </section>
+            }
+
+            @if (showChannels() && channels().total > 0) {
+                <section
+                    class="search-group"
+                    data-test-id="search-group-channels"
+                >
+                    <header class="search-group__head">
+                        <h2>
+                            {{ 'WORKSPACE.SEARCH.GROUP_CHANNELS' | translate }}
+                        </h2>
+                        <span>{{
+                            (channels().total === 1
+                                ? 'WORKSPACE.SEARCH.RESULTS_ONE'
+                                : 'WORKSPACE.SEARCH.RESULTS_COUNT'
+                            ) | translate: { count: channels().total }
+                        }}</span>
+                    </header>
+                    <div class="search-card">
+                        @for (channel of channels().hits; track channel.key) {
+                            <button
+                                type="button"
+                                class="search-row"
+                                data-test-id="search-channel"
+                                (click)="playChannel(channel)"
+                            >
+                                <span class="search-row__logo">
+                                    @if (
+                                        channel.icon &&
+                                        !brokenImages().has(channel.icon)
+                                    ) {
+                                        <img
+                                            [src]="channel.icon"
+                                            alt=""
+                                            loading="lazy"
+                                            referrerpolicy="no-referrer"
+                                            (error)="imageFailed(channel.icon)"
+                                        />
+                                    } @else {
+                                        {{ initials(channel.title) }}
+                                    }
+                                </span>
+                                <span class="search-row__text">
+                                    <span class="search-row__title">{{
+                                        channel.title
+                                    }}</span>
+                                    <span class="search-row__meta">
+                                        <img
+                                            class="search-row__flag"
+                                            [src]="channel.flag"
+                                            alt=""
+                                        />
+                                        {{ channel.countryNameKey | translate }}
+                                        ·
+                                        {{
+                                            channel.row.key
+                                                ? (channel.row.key
+                                                  | translate
+                                                      : channel.row.params)
+                                                : channel.row.text
+                                        }}
+                                        @if (channel.subtitle) {
+                                            · {{ channel.subtitle }}
+                                        }
+                                    </span>
+                                </span>
+                                <mat-icon
+                                    class="search-row__go"
+                                    aria-hidden="true"
+                                    >play_arrow</mat-icon
+                                >
+                            </button>
+                        }
+                    </div>
+                </section>
+            }
+
+            @if (showTitles()) {
+                @if (titles().total > 0) {
+                    <section
+                        class="search-group"
+                        data-test-id="search-group-titles"
+                    >
+                        <header class="search-group__head">
+                            <h2>{{ titlesHeadingKey() | translate }}</h2>
+                            <span>{{
+                                (titles().total === 1
+                                    ? 'WORKSPACE.SEARCH.RESULTS_ONE'
+                                    : 'WORKSPACE.SEARCH.RESULTS_COUNT'
+                                ) | translate: { count: titles().total }
+                            }}</span>
+                        </header>
+                        <div class="search-card">
+                            @for (title of titles().hits; track title.key) {
+                                <button
+                                    type="button"
+                                    class="search-row"
+                                    data-test-id="search-title"
+                                    (click)="openTitle(title)"
+                                >
+                                    <span class="search-row__poster">
+                                        @if (
+                                            title.poster &&
+                                            !brokenImages().has(title.poster)
+                                        ) {
+                                            <img
+                                                [src]="title.poster"
+                                                alt=""
+                                                loading="lazy"
+                                                referrerpolicy="no-referrer"
+                                                (error)="
+                                                    imageFailed(title.poster)
+                                                "
+                                            />
+                                        }
+                                    </span>
+                                    <span class="search-row__text">
+                                        <span class="search-row__title">{{
+                                            title.title
+                                        }}</span>
+                                        <span class="search-row__meta">
+                                            {{
+                                                (title.kind === 'series'
+                                                    ? 'WORKSPACE.SEARCH.KIND_SERIES'
+                                                    : 'WORKSPACE.SEARCH.KIND_MOVIE'
+                                                ) | translate
+                                            }}
+                                            @if (title.platform) {
+                                                · {{ title.platform }}
+                                            }
+                                            @if (title.year) {
+                                                · {{ title.year }}
+                                            }
+                                        </span>
+                                    </span>
+                                    <mat-icon
+                                        class="search-row__go"
+                                        aria-hidden="true"
+                                        >chevron_right</mat-icon
+                                    >
+                                </button>
+                            }
+                        </div>
+                    </section>
+                } @else if (titlesLoading()) {
+                    <p class="search-hint" data-test-id="search-titles-loading">
+                        {{ 'WORKSPACE.SEARCH.SEARCHING' | translate }}
+                    </p>
+                } @else if (!titles().searchable) {
+                    <p
+                        class="search-hint"
+                        data-test-id="search-titles-unavailable"
+                    >
+                        {{ 'WORKSPACE.SEARCH.TITLES_UNAVAILABLE' | translate }}
+                    </p>
+                }
+            }
+
+            @if (nothingFound()) {
+                <div class="search-empty" data-test-id="search-empty">
+                    <p class="search-empty__title">
+                        {{
+                            'WORKSPACE.SEARCH.NO_RESULTS'
+                                | translate: { query: applied() }
+                        }}
+                    </p>
+                    <p class="search-empty__hint">
+                        {{ 'WORKSPACE.SEARCH.NO_RESULTS_HINT' | translate }}
+                    </p>
+                </div>
+            }
+        </div>
+    }
+</section>

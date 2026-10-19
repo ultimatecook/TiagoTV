@@ -73,13 +73,6 @@
     overflow: hidden;
 }
 
-.context-panel--settings app-workspace-settings-context-panel {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-}
-
 // Below this width the sidebar leaves the layout entirely and becomes an
 // off-canvas drawer: position: fixed takes the host out of the shell grid, so
 // the route content owns the full pane, and the workspace shell slides the
@@ -117,10 +110,15 @@
             visibility 0s;
     }
 
+    // Opaque: it slides over the page (the rail colour is transparent on
+    // the dark glass).
     :host {
         display: flex;
         flex-direction: column;
-        background: var(--app-rail-bg, var(--mat-sys-surface-container-low));
+        background: var(
+            --app-content-bg,
+            var(--mat-sys-surface-container-low)
+        );
     }
 
     .context-drawer-header {

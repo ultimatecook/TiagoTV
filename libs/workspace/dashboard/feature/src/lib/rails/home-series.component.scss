@@ -1,0 +1,336 @@
+// "Series para vos" (README 01 · Inicio, 6): one featured show beside two
+// stacked ones, each over its backdrop or its title-tinted gradient.
+@use '../../../../../../ui/styles/focus-ring';
+@use '../../../../../../ui/styles/skeleton-shimmer' as shimmer;
+
+:host {
+    --series-hue: 230;
+
+    display: block;
+    min-width: 0;
+}
+
+.series {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tv-title-gap);
+}
+
+.series__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    gap: 16px;
+    min-height: 520px;
+
+    &--single {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.series__side {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 16px;
+    min-height: 0;
+}
+
+.series__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--tv-card-border);
+    background: radial-gradient(
+        90% 110% at 72% 30%,
+        hsl(var(--series-hue) 30% 30%) 0%,
+        hsl(var(--series-hue) 30% 12%) 45%,
+        #0b0b0a 85%
+    );
+    color: var(--tv-text-on-image);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 220ms ease;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.55);
+    }
+
+    &--featured {
+        padding: 40px;
+        border-radius: 24px;
+    }
+
+    &--side {
+        padding: 24px 26px;
+        border-radius: 22px;
+
+        &:focus-visible {
+            @include focus-ring.focus-ring-declarations($offset: 3px);
+        }
+    }
+}
+
+.series__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 70% 25%;
+}
+
+.series__veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    &--side {
+        background: linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.85) 0%,
+            rgba(0, 0, 0, 0.45) 45%,
+            transparent 80%
+        );
+    }
+
+    &--bottom {
+        inset: 50% 0 0;
+        background: linear-gradient(
+            180deg,
+            transparent 0%,
+            rgba(0, 0, 0, 0.6) 100%
+        );
+    }
+
+    &--rise {
+        background: linear-gradient(
+            180deg,
+            transparent 20%,
+            rgba(0, 0, 0, 0.85) 100%
+        );
+    }
+}
+
+.series__hit {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+// Over the card's hit area; only its buttons take the pointer.
+.series__body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+
+    &--featured {
+        gap: 16px;
+        max-width: 560px;
+        pointer-events: none;
+
+        .series__button {
+            pointer-events: auto;
+        }
+    }
+}
+
+.series__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    &--large {
+        gap: 12px;
+    }
+}
+
+.series__platform {
+    display: block;
+    height: 14px;
+    max-width: 80px;
+    object-fit: contain;
+    object-position: left center;
+
+    .series__brand--large & {
+        height: 18px;
+        max-width: 100px;
+    }
+
+    &--white {
+        filter: brightness(0) invert(1);
+    }
+}
+
+.series__platform-name {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.series__badge {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+
+    &--new-episode {
+        background: var(--tv-red);
+        color: #fff;
+    }
+
+    &--season {
+        background: rgba(255, 255, 255, 0.9);
+        color: #0b0b09;
+    }
+
+    &--premiere {
+        background: var(--tv-amber);
+        color: #0b0b09;
+    }
+}
+
+.series__title {
+    margin: 0;
+    color: var(--tv-text-on-image);
+    font-family: var(--tv-font-display);
+    font-size: 44px;
+    font-weight: 400;
+    line-height: 0.9;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+
+    &--featured {
+        font-size: 88px;
+        line-height: 0.86;
+        text-wrap: balance;
+    }
+}
+
+.series__meta {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    color: var(--tv-text-2);
+    font-size: 14px;
+    font-weight: 600;
+
+    span + span::before {
+        content: '·';
+        padding: 0 6px;
+    }
+}
+
+.series__plot {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: var(--tv-text-img-2);
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.45;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+
+    &--featured {
+        color: var(--tv-text-img-1);
+        font-size: 16px;
+        line-height: 1.5;
+        text-wrap: pretty;
+        -webkit-line-clamp: 3;
+    }
+}
+
+.series__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.series__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    height: 46px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 160ms ease;
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+
+    mat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+    }
+
+    &--primary {
+        padding: 0 22px 0 16px;
+        background: #fff;
+        color: #0b0b09;
+
+        &:hover {
+            background: #e9e6df;
+        }
+    }
+
+    &--glass {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.14) 0%,
+            rgba(255, 255, 255, 0.05) 100%
+        );
+        color: #fff;
+        // No backdrop-filter: inside the card's rounded clip it would cost
+        // a mask layer the card's size (see the theme skill).
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    }
+}
+
+@include shimmer.keyframes;
+
+.series__skeleton {
+    @include shimmer.block(24px);
+}
+
+@media (max-width: 900px) {
+    .series__grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .series__card--side {
+        min-height: 200px;
+    }
+
+    .series__title--featured {
+        font-size: 60px;
+    }
+}

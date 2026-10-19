@@ -1,11 +1,20 @@
 <section class="sports" data-test-id="dashboard-sports-rail">
-    <header class="sports__heading">
-        <h2 class="sports__title">
-            {{ 'WORKSPACE.SPORTS.TITLE' | translate }}
-        </h2>
-    </header>
+    @if (heading()) {
+        <header class="sports__heading">
+            <h2 class="sports__title">
+                {{ 'WORKSPACE.SPORTS.TITLE' | translate }}
+            </h2>
+            <a
+                class="sports__all"
+                routerLink="/workspace/sports"
+                data-test-id="dashboard-sports-see-all"
+                >{{ 'WORKSPACE.SPORTS.SEE_ALL' | translate }}</a
+            >
+        </header>
+    }
     <div class="sports__row">
         @for (section of sections; track section.id) {
+            @let live = board.liveCounts().get(section.id) ?? 0;
             <a
                 class="sport"
                 [routerLink]="['/workspace', 'sports', section.id]"
@@ -14,6 +23,14 @@
                 [style.--art-headroom]="section.artHeadroom"
                 [style.--art-x.%]="section.artX"
                 [style.--logo-size]="section.logoSize"
+                [attr.aria-label]="
+                    live > 0
+                        ? section.title +
+                          ' · ' +
+                          ('WORKSPACE.SPORTS.LIVE_COUNT'
+                              | translate: { count: live })
+                        : section.title
+                "
                 [attr.data-test-id]="'sport-card-' + section.id"
             >
                 <span class="sport__card" aria-hidden="true"></span>
@@ -32,11 +49,22 @@
                     <img
                         class="sport__logo"
                         [src]="section.logo"
-                        [alt]="section.title"
+                        alt=""
                         draggable="false"
                     />
                 } @else {
-                    <span class="sport__label">{{ section.title }}</span>
+                    <span class="sport__label" aria-hidden="true">{{
+                        section.title
+                    }}</span>
+                }
+                @if (live > 0) {
+                    <span
+                        class="sport__live"
+                        aria-hidden="true"
+                        [attr.data-test-id]="'sport-card-live-' + section.id"
+                    >
+                        <i class="sport__dot"></i>{{ live }}
+                    </span>
                 }
             </a>
         }

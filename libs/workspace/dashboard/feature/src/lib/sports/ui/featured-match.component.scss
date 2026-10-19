@@ -1,0 +1,192 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.featured {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 32px;
+    padding: 40px 48px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 28px;
+    background:
+        radial-gradient(
+            60% 120% at 50% 110%,
+            color-mix(in srgb, var(--featured-tint) 80%, white 10%) 0%,
+            transparent 70%
+        ),
+        radial-gradient(
+            40% 80% at 0% 0%,
+            color-mix(in srgb, var(--home-glow) 35%, transparent) 0%,
+            transparent 70%
+        ),
+        radial-gradient(
+            40% 80% at 100% 0%,
+            color-mix(in srgb, var(--away-glow) 35%, transparent) 0%,
+            transparent 70%
+        ),
+        linear-gradient(
+            160deg,
+            color-mix(in srgb, var(--featured-tint) 70%, black) 0%,
+            #07080c 100%
+        );
+    color: var(--tv-text);
+}
+
+// The competition's logo, a watermark in the corner.
+.featured__mark {
+    position: absolute;
+    right: -40px;
+    bottom: -60px;
+    height: 280px;
+    opacity: 0.06;
+    pointer-events: none;
+    -webkit-user-drag: none;
+}
+
+.featured__side {
+    --crest-size: 88px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+}
+
+.featured__side--home {
+    justify-content: flex-end;
+
+    .featured__name {
+        text-align: right;
+    }
+}
+
+.featured__name {
+    min-width: 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.featured__centre {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.featured__state {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 28px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 255, 255, 0.06) 100%
+    );
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px) saturate(160%);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.featured__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--tv-amber);
+    box-shadow: 0 0 8px var(--tv-amber);
+}
+
+.featured__state--live .featured__dot {
+    background: var(--tv-live-green);
+    box-shadow: 0 0 8px var(--tv-live-green);
+    animation: tv-pulse 1.6s ease-in-out infinite;
+}
+
+.featured__vs,
+.featured__title {
+    font-family: var(--tv-font-display);
+    line-height: 0.9;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.featured__vs {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 64px;
+}
+
+.featured__title {
+    max-width: 640px;
+    color: #fff;
+    font-size: 56px;
+    text-align: center;
+}
+
+.featured__watch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    margin-top: 6px;
+    padding: 0 22px 0 18px;
+    border: 0;
+    border-radius: 999px;
+    background: #fff;
+    color: #0b0b09;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 160ms ease;
+
+    mat-icon {
+        width: 18px;
+        height: 18px;
+        font-size: 18px;
+    }
+
+    &:hover {
+        background: #e9e6df;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+@media (max-width: 900px) {
+    .featured {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 28px 24px;
+        text-align: center;
+    }
+
+    .featured__side,
+    .featured__side--home {
+        --crest-size: 56px;
+        justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .featured__state--live .featured__dot {
+        animation: none;
+    }
+}

@@ -1,86 +1,90 @@
 @if (section(); as section) {
-    <article class="page" [style.--sport-tint]="section.tint">
-        <header
-            class="hero"
-            [style.--art-height]="section.artHeight"
-            [style.--art-headroom]="section.artHeadroom"
-            [style.--logo-size]="section.logoSize"
-        >
-            <img
-                class="hero__art"
-                [src]="section.image"
-                alt=""
-                referrerpolicy="no-referrer"
-                draggable="false"
-            />
-            <div class="hero__text">
-                <span class="hero__eyebrow">{{
-                    'WORKSPACE.SPORTS.TITLE' | translate
-                }}</span>
-                <h1 class="hero__title">
-                    @if (section.logo) {
-                        <img
-                            class="hero__logo"
-                            [src]="section.logo"
-                            [alt]="section.title"
-                            draggable="false"
-                        />
-                    } @else {
-                        {{ section.title }}
-                    }
-                </h1>
-                @if (liveCount() > 0) {
-                    <span class="hero__live">{{
-                        'WORKSPACE.SPORTS.LIVE_COUNT'
-                            | translate: { count: liveCount() }
-                    }}</span>
-                }
-            </div>
-        </header>
+    <article class="page" data-test-id="sport-section-page">
+        <h1 class="visually-hidden">{{ section.title }}</h1>
+        <lib-sport-stage
+            class="page__stage"
+            [section]="section"
+            [cards]="cards()"
+            [liveCount]="liveMatches().length"
+            (more)="showMore()"
+        />
 
-        @if (content(); as content) {
-            <section class="block">
-                <h2 class="block__title">
-                    {{ 'WORKSPACE.SPORTS.MATCHES' | translate }}
-                </h2>
-                @if (matches().length > 0) {
-                    <div class="block__matches">
-                        @for (match of matches(); track match.key) {
-                            <lib-sport-match-card [match]="match" />
+        <div class="page__body">
+            @if (content()) {
+                @if (featured(); as match) {
+                    <lib-featured-match
+                        [match]="match"
+                        [section]="section"
+                        (watch)="watch($event)"
+                    />
+                }
+                <div class="page__grid" [class.page__grid--table]="showTable()">
+                    <section
+                        class="matches"
+                        data-test-id="sport-section-matches"
+                    >
+                        <header class="matches__head">
+                            <h2 class="matches__title">
+                                {{ 'WORKSPACE.SPORTS.MATCHES' | translate }}
+                            </h2>
+                            @if (matches().length > 0) {
+                                <span class="matches__count">{{
+                                    'WORKSPACE.SPORTS.MATCHES_COUNT'
+                                        | translate
+                                            : {
+                                                  live: liveMatches().length,
+                                                  later:
+                                                      matches().length -
+                                                      liveMatches().length,
+                                              }
+                                }}</span>
+                            }
+                        </header>
+                        @if (matches().length === 0) {
+                            <p class="page__empty">
+                                {{ 'WORKSPACE.SPORTS.NO_MATCHES' | translate }}
+                            </p>
+                        } @else if (rest().length > 0) {
+                            <div class="matches__list">
+                                @for (match of rest(); track match.key) {
+                                    <lib-sport-match-row
+                                        [match]="match"
+                                        (watch)="watch($event)"
+                                    />
+                                }
+                            </div>
                         }
-                    </div>
-                } @else {
-                    <p class="block__empty">
-                        {{ 'WORKSPACE.SPORTS.NO_MATCHES' | translate }}
-                    </p>
-                }
-            </section>
-
-            @if (families().length > 0) {
-                <section class="block">
-                    <h2 class="block__title">
-                        {{ 'WORKSPACE.SPORTS.CHANNELS' | translate }}
-                    </h2>
-                    <div class="block__channels">
-                        @for (family of families(); track family.key) {
-                            <lib-channel-family-card
-                                [family]="family"
-                                [fallbackLogo]="section.logo"
-                                [fallbackTint]="section.tint"
-                                (playChannel)="play($event)"
+                    </section>
+                    @if (showTable()) {
+                        @if (table(); as standings) {
+                            <lib-league-table
+                                class="page__table"
+                                [table]="standings"
+                                [section]="section"
                             />
+                        } @else {
+                            <div
+                                class="page__table page__table--loading"
+                                role="status"
+                                [attr.aria-label]="
+                                    'WORKSPACE.SPORTS.TABLE_LOADING' | translate
+                                "
+                            ></div>
                         }
-                    </div>
-                </section>
+                    }
+                </div>
+            } @else {
+                <p class="page__empty" role="status">
+                    {{
+                        (sports.failed()
+                            ? 'WORKSPACE.SPORTS.FAILED'
+                            : 'WORKSPACE.SPORTS.LOADING'
+                        ) | translate
+                    }}
+                </p>
             }
-        } @else if (sports.failed()) {
-            <p class="block__empty">
-                {{ 'WORKSPACE.SPORTS.FAILED' | translate }}
-            </p>
-        } @else {
-            <p class="block__empty">
-                {{ 'WORKSPACE.SPORTS.LOADING' | translate }}
-            </p>
-        }
+        </div>
     </article>
+} @else {
+    <p class="page__missing">{{ 'WORKSPACE.SPORTS.NO_MATCHES' | translate }}</p>
 }

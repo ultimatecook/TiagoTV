@@ -8,113 +8,226 @@ $settings-select-density: mat.define-theme(
     )
 );
 
-// Settings surfaces: rows in titled cards on the page background. Light
-// keeps white cards with hairline borders; dark uses the widget surface with
-// a faint light border, per the UI guidelines' theme split.
+// Settings surfaces (TiagoTV redesign, handoff 07 · Ajustes): rows in
+// glassy cards on the window, the controls of the concept. The redesign is
+// dark only, so the values come from the `--tv-*` tokens. Every Material
+// control is restyled through its token mixin, scoped to the settings page.
 .settings-container {
-    // Compact switch, nearer the 22px toggle of the concept than Material's
-    // default 32px track; the 40px state layer keeps the touch target.
+    // Switch: a 46×28 track, a 22px white knob, green when on.
     @include mat.slide-toggle-overrides(
         (
-            track-width: 40px,
-            track-height: 24px,
-            selected-handle-size: 18px,
-            unselected-handle-size: 14px,
-            pressed-handle-size: 20px,
-            with-icon-handle-size: 18px,
+            track-width: 46px,
+            track-height: 28px,
+            track-shape: 14px,
+            track-outline-width: 0,
+            track-outline-color: transparent,
+            selected-track-outline-width: 0,
+            selected-track-outline-color: transparent,
+            disabled-unselected-track-outline-width: 0,
+            disabled-unselected-track-outline-color: transparent,
+            handle-width: 28px,
+            handle-height: 28px,
+            selected-handle-size: 22px,
+            unselected-handle-size: 22px,
+            pressed-handle-size: 22px,
+            with-icon-handle-size: 22px,
+            selected-handle-horizontal-margin: 0 3px,
+            selected-with-icon-handle-horizontal-margin: 0 3px,
+            selected-pressed-handle-horizontal-margin: 0 3px,
+            unselected-handle-horizontal-margin: 0 3px,
+            unselected-with-icon-handle-horizontal-margin: 0 3px,
+            unselected-pressed-handle-horizontal-margin: 0 3px,
+            selected-icon-size: 0,
+            unselected-icon-size: 0,
+            handle-elevation-shadow: 0 1px 3px rgba(0, 0, 0, 0.35),
+            selected-track-color: var(--tv-live-green),
+            selected-hover-track-color: var(--tv-live-green),
+            selected-focus-track-color: var(--tv-live-green),
+            selected-pressed-track-color: var(--tv-live-green),
+            unselected-track-color: rgba(255, 255, 255, 0.18),
+            unselected-hover-track-color: rgba(255, 255, 255, 0.24),
+            unselected-focus-track-color: rgba(255, 255, 255, 0.24),
+            unselected-pressed-track-color: rgba(255, 255, 255, 0.24),
+            selected-handle-color: #fff,
+            selected-hover-handle-color: #fff,
+            selected-focus-handle-color: #fff,
+            selected-pressed-handle-color: #fff,
+            unselected-handle-color: #fff,
+            unselected-hover-handle-color: #fff,
+            unselected-focus-handle-color: #fff,
+            unselected-pressed-handle-color: #fff,
+            disabled-selected-track-color: var(--tv-live-green),
+            disabled-unselected-track-color: rgba(255, 255, 255, 0.18),
+            disabled-selected-handle-color: #fff,
+            disabled-unselected-handle-color: #fff,
+            disabled-unselected-handle-opacity: 1,
+            selected-hover-state-layer-color: #fff,
+            selected-focus-state-layer-color: #fff,
+            selected-pressed-state-layer-color: #fff,
+            unselected-hover-state-layer-color: #fff,
+            unselected-focus-state-layer-color: #fff,
+            unselected-pressed-state-layer-color: #fff,
+            selected-hover-state-layer-opacity: 0.06,
+            unselected-hover-state-layer-opacity: 0.06,
+        )
+    );
+
+    // Pill buttons, 36px: primary white, secondary glass (stroked and text
+    // buttons alike), the destructive ones red below.
+    @include mat.button-overrides(
+        (
+            filled-container-shape: 999px,
+            filled-container-height: 36px,
+            filled-horizontal-padding: 16px,
+            filled-container-color: #fff,
+            filled-label-text-color: #0b0b09,
+            filled-state-layer-color: #0b0b09,
+            filled-label-text-size: 13.5px,
+            filled-label-text-weight: 600,
+            filled-label-text-tracking: 0,
+            filled-disabled-container-color: rgba(255, 255, 255, 0.12),
+            filled-disabled-label-text-color: rgba(255, 255, 255, 0.4),
+            outlined-container-shape: 999px,
+            outlined-container-height: 36px,
+            outlined-horizontal-padding: 16px,
+            outlined-outline-color: rgba(255, 255, 255, 0.14),
+            outlined-label-text-color: var(--tv-text),
+            outlined-state-layer-color: #fff,
+            outlined-label-text-size: 13.5px,
+            outlined-label-text-weight: 600,
+            outlined-label-text-tracking: 0,
+            outlined-disabled-outline-color: rgba(255, 255, 255, 0.08),
+            outlined-disabled-label-text-color: rgba(255, 255, 255, 0.36),
+            text-container-shape: 999px,
+            text-container-height: 36px,
+            text-horizontal-padding: 14px,
+            text-with-icon-horizontal-padding: 14px,
+            text-label-text-color: var(--tv-text),
+            text-state-layer-color: #fff,
+            text-label-text-size: 13.5px,
+            text-label-text-weight: 600,
+            text-label-text-tracking: 0,
+            text-disabled-label-text-color: rgba(255, 255, 255, 0.36),
+        )
+    );
+
+    // Selects read as a value and a chevron; text fields are 38px
+    // monospace wells (see settings.component.scss for the shapes).
+    @include mat.form-field-overrides(
+        (
+            outlined-container-shape: 10px,
+            outlined-outline-color: rgba(255, 255, 255, 0.14),
+            outlined-hover-outline-color: rgba(255, 255, 255, 0.24),
+            outlined-focus-outline-color: rgba(255, 255, 255, 0.4),
+            outlined-focus-outline-width: 1px,
+            outlined-input-text-color: var(--tv-text),
+            outlined-caret-color: var(--tv-text),
+            outlined-label-text-color: var(--tv-meta),
+            outlined-hover-label-text-color: var(--tv-text-2),
+            outlined-focus-label-text-color: var(--tv-text-2),
+            outlined-input-text-placeholder-color: var(--tv-placeholder),
+            enabled-select-arrow-color: var(--tv-text-2),
+            focus-select-arrow-color: var(--tv-text),
+            trailing-icon-color: var(--tv-text-3),
+        )
+    );
+
+    @include mat.select-overrides(
+        (
+            enabled-trigger-text-color: var(--tv-text-2),
+            trigger-text-size: 14px,
+            trigger-text-weight: 500,
+            enabled-arrow-color: var(--tv-text-2),
+            focused-arrow-color: var(--tv-text),
         )
     );
 
     // Compact select without a floating label (the row title names it).
     .settings-select.mat-mdc-form-field {
         @include mat.form-field-density($settings-select-density);
+        @include mat.form-field-overrides(
+            (
+                outlined-outline-color: transparent,
+                outlined-hover-outline-color: rgba(255, 255, 255, 0.12),
+            )
+        );
     }
 
-    // Save is the page's one solid call to action: the app CTA pair (light
-    // on dark, dark on light), not the theme primary. Set through the button
-    // tokens, which a plain background rule cannot beat.
-    .settings-save-button {
+    // Single-line fields: 38px monospace wells.
+    .settings-text-field.mat-mdc-form-field {
+        @include mat.form-field-overrides(
+            (
+                container-height: 38px,
+                container-vertical-padding: 8px,
+                container-text-font: (
+                    ui-monospace,
+                    SFMono-Regular,
+                    Menlo,
+                    monospace,
+                ),
+                container-text-size: 13.5px,
+                container-text-weight: 500,
+            )
+        );
+    }
+
+    // The unsaved-changes pill: Discard is a quiet text pill, Save white.
+    .unsaved-bar {
         @include mat.button-overrides(
             (
-                filled-container-color: var(--app-cta-bg),
-                filled-label-text-color: var(--app-cta-fg),
-                filled-state-layer-color: var(--app-cta-fg),
-                filled-container-shape: 8px,
+                filled-container-height: 38px,
+                filled-horizontal-padding: 18px,
+                filled-label-text-size: 14px,
+                text-container-height: 38px,
+                text-horizontal-padding: 16px,
+                text-label-text-size: 14px,
+                text-label-text-color: var(--tv-text-img-2),
+            )
+        );
+    }
+
+    // Destructive actions: the red tint pill of the concept.
+    .app-destructive-button {
+        @include mat.button-overrides(
+            (
+                outlined-container-shape: 999px,
+                filled-container-shape: 999px,
+                text-container-shape: 999px,
+                outlined-outline-color: rgba(255, 107, 111, 0.3),
+                outlined-disabled-outline-color: rgba(255, 107, 111, 0.16),
+                outlined-label-text-color: var(--tv-danger),
+                outlined-disabled-label-text-color: var(--tv-danger),
+                outlined-state-layer-color: var(--tv-danger),
             )
         );
     }
 
     --settings-safe-bottom: env(safe-area-inset-bottom, 0px);
-    --settings-card-bg: var(--app-widget-bg, #ffffff);
-    --settings-card-border: rgba(0, 0, 0, 0.08);
-    --settings-item-border: rgba(0, 0, 0, 0.07);
-    --settings-control-bg: #ffffff;
-    --settings-control-border: rgba(0, 0, 0, 0.14);
-    --settings-control-hover-border: rgba(0, 0, 0, 0.26);
-    --settings-chip-bg: rgba(0, 0, 0, 0.07);
-    --settings-chip-fg: var(--app-body-color);
-    --settings-callout-info-bg: color-mix(
-        in srgb,
-        var(--app-selection-color) 6%,
-        var(--settings-card-bg)
-    );
-    --settings-callout-info-border: color-mix(
-        in srgb,
-        var(--app-selection-color) 24%,
-        transparent
-    );
-    --settings-callout-warn-bg: color-mix(in srgb, #d97706 9%, transparent);
-    --settings-callout-warn-border: color-mix(in srgb, #d97706 32%, transparent);
-    --settings-callout-warn-icon: #8a5300;
-    --settings-item-danger-border: color-mix(
-        in srgb,
-        var(--mat-sys-error) 22%,
-        transparent
-    );
-    --settings-action-bar-bg: #ffffff;
-    --settings-action-bar-border: rgba(0, 0, 0, 0.1);
-    --settings-action-bar-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
-    --settings-restart-bar-bg: color-mix(
-        in srgb,
-        var(--app-selection-color) 8%,
-        var(--app-content-bg)
-    );
-    --settings-muted: color-mix(
-        in srgb,
-        var(--mat-sys-on-surface) 64%,
-        transparent
-    );
-}
-
-:where(.dark-theme, [data-theme='dark'], .mat-app-background.dark)
-    .settings-container {
-    --settings-card-bg: var(--app-widget-bg, #1e2330);
-    --settings-card-border: rgba(255, 255, 255, 0.07);
-    --settings-item-border: rgba(255, 255, 255, 0.06);
-    --settings-control-bg: color-mix(in srgb, var(--app-widget-bg) 90%, white 6%);
-    --settings-control-border: rgba(255, 255, 255, 0.12);
-    --settings-control-hover-border: rgba(255, 255, 255, 0.22);
+    --settings-card-bg: var(--tv-card-bg);
+    --settings-card-border: var(--tv-card-border);
+    --settings-item-border: var(--tv-separator);
+    --settings-control-bg: rgba(0, 0, 0, 0.2);
+    --settings-control-border: rgba(255, 255, 255, 0.14);
+    --settings-control-hover-border: rgba(255, 255, 255, 0.24);
     --settings-chip-bg: rgba(255, 255, 255, 0.1);
-    --settings-chip-fg: var(--app-heading-color);
-    --settings-callout-warn-bg: color-mix(in srgb, #fbbf24 10%, transparent);
-    --settings-callout-warn-border: color-mix(in srgb, #fbbf24 30%, transparent);
-    --settings-callout-warn-icon: #fbbf24;
-    --settings-item-danger-border: color-mix(
-        in srgb,
-        var(--mat-sys-error) 30%,
-        transparent
+    --settings-chip-fg: var(--tv-text-2);
+    --settings-callout-info-bg: rgba(255, 255, 255, 0.04);
+    --settings-callout-info-border: var(--tv-card-border);
+    --settings-callout-warn-bg: rgba(254, 188, 46, 0.08);
+    --settings-callout-warn-border: rgba(254, 188, 46, 0.26);
+    --settings-callout-warn-icon: var(--tv-amber);
+    --settings-item-danger-border: rgba(255, 107, 111, 0.22);
+    --settings-action-bar-bg: linear-gradient(
+        180deg,
+        rgba(60, 60, 58, 0.7) 0%,
+        rgba(36, 36, 34, 0.7) 100%
     );
-    --settings-action-bar-bg: var(--app-card-hover-bg, #252b3a);
-    --settings-action-bar-border: rgba(255, 255, 255, 0.1);
-    --settings-action-bar-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
-    --settings-restart-bar-bg: color-mix(
-        in srgb,
-        var(--app-selection-color) 12%,
-        var(--app-content-bg)
+    --settings-action-bar-border: rgba(255, 255, 255, 0.16);
+    --settings-action-bar-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.7);
+    --settings-restart-bar-bg: linear-gradient(
+        180deg,
+        rgba(60, 60, 58, 0.7) 0%,
+        rgba(36, 36, 34, 0.7) 100%
     );
-    --settings-muted: color-mix(
-        in srgb,
-        var(--mat-sys-on-surface) 68%,
-        transparent
-    );
+    --settings-muted: var(--tv-meta);
 }

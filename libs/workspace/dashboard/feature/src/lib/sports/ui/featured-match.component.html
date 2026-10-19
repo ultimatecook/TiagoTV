@@ -1,0 +1,98 @@
+@let pair = sides();
+<section
+    class="featured"
+    data-test-id="sport-featured-match"
+    [style.--featured-tint]="section().tint"
+    [style.--home-glow]="homeGlow()"
+    [style.--away-glow]="awayGlow()"
+>
+    @if (section().logo; as logo) {
+        <img class="featured__mark" [src]="logo" alt="" draggable="false" />
+    }
+    @if (pair) {
+        <div class="featured__side featured__side--home">
+            <span class="featured__name">{{ pair.home }}</span>
+            <lib-team-crest [team]="pair.home" [section]="match().sectionId" />
+        </div>
+    } @else {
+        <span aria-hidden="true"></span>
+    }
+
+    <div class="featured__centre">
+        @if (state(); as state) {
+            <span
+                class="featured__state"
+                [class.featured__state--live]="state.live"
+            >
+                <i class="featured__dot" aria-hidden="true"></i>
+                @if (state.live) {
+                    {{ 'WORKSPACE.SPORTS.LIVE' | translate }}
+                } @else {
+                    {{
+                        state.day.key
+                            ? (state.day.key | translate)
+                            : state.day.text
+                    }}
+                    · {{ state.time }}
+                }
+            </span>
+        }
+        @if (pair) {
+            <span class="featured__vs" aria-hidden="true">vs</span>
+        } @else {
+            <span class="featured__title">{{ match().title }}</span>
+        }
+        @if (offers()) {
+            <button
+                type="button"
+                class="featured__watch"
+                [matMenuTriggerFor]="channels"
+            >
+                <mat-icon aria-hidden="true">play_arrow</mat-icon>
+                {{
+                    'WORKSPACE.SPORTS.WATCH_ON'
+                        | translate: { channels: channel() }
+                }}
+                <mat-icon aria-hidden="true">expand_more</mat-icon>
+            </button>
+            <mat-menu #channels="matMenu">
+                @for (option of match().via; track option.channel.streamId) {
+                    <button
+                        type="button"
+                        mat-menu-item
+                        (click)="play(option.channel)"
+                    >
+                        <mat-icon>live_tv</mat-icon>
+                        <span>{{ option.name }}</span>
+                    </button>
+                }
+            </mat-menu>
+        } @else {
+            <button
+                type="button"
+                class="featured__watch"
+                data-test-id="sport-featured-watch"
+                (click)="play()"
+            >
+                <mat-icon aria-hidden="true">play_arrow</mat-icon>
+                @if (channel()) {
+                    {{
+                        'WORKSPACE.SPORTS.WATCH_ON'
+                            | translate: { channels: channel() }
+                    }}
+                } @else {
+                    {{ 'WORKSPACE.SPORTS.WATCH' | translate }}
+                }
+            </button>
+        }
+    </div>
+
+    @if (pair) {
+        <div class="featured__side">
+            <lib-team-crest [team]="pair.away" [section]="match().sectionId" />
+            <span class="featured__name">{{ pair.away }}</span>
+        </div>
+    } @else {
+        <span aria-hidden="true"></span>
+    }
+</section>

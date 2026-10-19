@@ -1,0 +1,103 @@
+// TiagoTV redesign tokens ("ultra clean" top-bar layout).
+// Every page, the shell top bar and the shared cards read these as
+// `var(--tv-*)`. Sizes are the handoff's design px, used 1:1.
+// The app is dark-only for this design, so the tokens live on `:root`.
+:root {
+    // ─── Layout ────────────────────────────────────────────────────────────
+    --tv-topbar-h: 84px;
+    --tv-page-x: 56px;
+    --tv-page-top: 28px;
+    --tv-page-bottom: 80px;
+    --tv-section-gap: 44px;
+    --tv-title-gap: 20px;
+    // The browser build's glass window corner. A page that runs under the
+    // bar to the window's top edge rounds its backdrop's top corners with
+    // it (the window does not clip). 0 where the window has no corners of
+    // its own to keep: the macOS native-glass window, fullscreen, phones.
+    --tv-window-radius: 34px;
+
+    // ─── Text ──────────────────────────────────────────────────────────────
+    --tv-text: #f4f1ea;
+    --tv-text-on-image: #fbf8f2;
+    --tv-text-img-1: #e6e2d8;
+    --tv-text-img-2: #d6d2c6;
+    --tv-text-2: #bdb9ad;
+    --tv-text-3: #a19d90;
+    --tv-meta: #8c887b;
+    --tv-placeholder: #6f6c63;
+
+    // ─── Accents ───────────────────────────────────────────────────────────
+    --tv-red: #e8262b;
+    --tv-live-red: #ff5a5f;
+    --tv-live-green: #46d369;
+    --tv-amber: #febc2e;
+    --tv-danger: #ff7b7f;
+    --tv-zone-blue: #3b82f6;
+    --tv-zone-orange: #f59e0b;
+    --tv-zone-red: #ef4444;
+
+    // ─── Surfaces ──────────────────────────────────────────────────────────
+    --tv-card-bg: rgba(255, 255, 255, 0.04);
+    --tv-card-border: rgba(255, 255, 255, 0.08);
+    --tv-list-bg: rgba(255, 255, 255, 0.03);
+    --tv-separator: rgba(255, 255, 255, 0.07);
+
+    // ─── Glass (capsules, circles, pills) ──────────────────────────────────
+    --tv-glass-bg: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.14),
+        rgba(255, 255, 255, 0.055)
+    );
+    --tv-glass-border: rgba(255, 255, 255, 0.16);
+    --tv-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.17);
+    --tv-glass-filter: blur(22px) saturate(160%);
+
+    // ─── Shadows ───────────────────────────────────────────────────────────
+    --tv-shadow-card: 0 18px 34px -22px rgba(0, 0, 0, 0.85);
+    --tv-shadow-float: 0 20px 40px -14px rgba(0, 0, 0, 0.7);
+
+    // ─── Type ──────────────────────────────────────────────────────────────
+    // Bebas Neue is bundled (styles.scss @font-face); DM Sans 400–700 too.
+    --tv-font-display: 'Bebas Neue', 'Oswald', sans-serif;
+    --tv-font-ui: 'DM Sans', 'Roboto', sans-serif;
+}
+
+html.native-glass,
+html.window-fullscreen {
+    --tv-window-radius: 0px;
+}
+
+// Narrow windows: the bar takes two rows (circles, then the tabs) and the
+// pages a narrower gutter.
+@media (max-width: 760px) {
+    :root {
+        --tv-topbar-h: 108px;
+        --tv-page-x: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    :root {
+        --tv-window-radius: 0px;
+    }
+}
+
+// Live dot: `animation: tv-pulse 1.6s ease-in-out infinite`. Reduced motion
+// keeps the dot steady (the global rule below covers every consumer).
+@keyframes tv-pulse {
+    50% {
+        opacity: 0.35;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tv-pulse,
+    [data-tv-pulse] {
+        animation: none !important;
+    }
+}
+
+// Opt-in helper for a pulsing live dot.
+.tv-pulse {
+    animation: tv-pulse 1.6s ease-in-out infinite;
+}

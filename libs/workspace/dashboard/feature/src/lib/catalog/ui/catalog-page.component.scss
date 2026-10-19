@@ -1,0 +1,71 @@
+@use '../../../../../../../ui/styles/skeleton-shimmer' as shimmer;
+
+// Series / Películas (README 06). The hero rises behind the top bar and
+// runs edge to edge; the genre rows keep the page's gutter and bleed
+// sideways through it.
+:host {
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+    min-width: 0;
+    padding-bottom: var(--tv-page-bottom);
+    color: var(--tv-text);
+}
+
+@include shimmer.keyframes;
+
+.catalog__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    padding: 0 var(--tv-page-x);
+}
+
+.catalog__header {
+    padding: var(--tv-page-top) var(--tv-page-x) 0;
+}
+
+.catalog__heading {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.catalog__loading {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 var(--tv-page-x);
+}
+
+.catalog__note {
+    color: var(--tv-meta);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.catalog__skeleton {
+    display: grid;
+    grid-auto-columns: 300px;
+    grid-auto-flow: column;
+    gap: 16px;
+    overflow: hidden;
+}
+
+.catalog__skeleton-card {
+    @include shimmer.block(14px);
+    aspect-ratio: 16 / 9;
+}
+
+.catalog__message {
+    margin: 0 var(--tv-page-x);
+    padding: 40px 24px;
+    border: 1px dashed var(--tv-card-border);
+    border-radius: 18px;
+    color: var(--tv-text-2);
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+}

@@ -5,6 +5,7 @@
 @use './settings-theme';
 @use './cover-size';
 @use './platform-themes';
+@use './tv-tokens';
 
 // ─── Tailwind CSS ─────────────────────────────────────────────────────────────
 // Preflight is disabled in tailwind.config.js to avoid conflicts with
@@ -248,7 +249,8 @@ html.native-glass body.dark-theme {
 }
 
 body.dark-theme {
-    background:
+    // Also painted by the shell's window corners, which must match it.
+    --app-room-bg:
         radial-gradient(
             120% 70% at 50% -12%,
             rgba(74, 98, 52, 0.55) 0%,
@@ -271,7 +273,8 @@ body.dark-theme {
             #15140f 46%,
             #2a1d12 82%,
             #3a2717 100%
-        ) !important;
+        );
+    background: var(--app-room-bg) !important;
 }
 
 .dark-theme {

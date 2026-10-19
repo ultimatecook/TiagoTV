@@ -10,9 +10,14 @@
     --page-bg: transparent;
     --grid-min: 150px;
     --grid-poster: 150px;
+    // The shell's top bar floats over the page's ground: heroes and rows
+    // start below it, a billboard runs up under it.
+    --page-top-clear: var(--tv-topbar-h, 84px);
     display: block;
+    box-sizing: border-box;
     min-width: 0;
     min-height: 100%;
+    padding-top: var(--page-top-clear);
     background: var(--page-bg);
 }
 
@@ -30,7 +35,7 @@
 
 // The billboard runs edge to edge; the rows after it paint over its foot.
 .page__billboard {
-    margin: -8px calc(-1 * var(--page-gutter)) 0;
+    margin: calc(-8px - var(--page-top-clear)) calc(-1 * var(--page-gutter)) 0;
 
     ~ lib-platform-row {
         position: relative;
@@ -52,7 +57,7 @@
 
 .banner--bleed {
     height: clamp(420px, 46vw, 640px);
-    margin: -8px calc(-1 * var(--page-gutter)) 0;
+    margin: calc(-8px - var(--page-top-clear)) calc(-1 * var(--page-gutter)) 0;
     border-radius: 0;
     box-shadow: none;
 }

@@ -1,21 +1,16 @@
+import { SportsApiClient } from './sports-api-client';
 import type { SportSectionId } from './sport-sections';
 
 /**
- * Team crests for the Home's match cards, from TheSportsDB's free API (no
- * key of ours, CORS-enabled). Provider feeds name teams their own way
+ * Team crests for the Home's match cards, from TheSportsDB's free API
+ * (see SportsApiClient). Provider feeds name teams their own way
  * ("RC Celta", "Stade Rennais FC"), so a name is tried as written, then
  * without club affixes, and the result must be a men's senior side,
  * preferably from the competition's league. Answers, misses included, are
  * cached so a Home visit costs no requests once its teams are known.
  */
-const API = 'https://www.thesportsdb.com/api/v1/json/123/';
 // v2: v1 kept failed lookups (the API's rate limit) as "no crest".
 const CACHE_KEY = 'tiagotv:team-crests:v2';
-/** The free API refuses bursts: one request every 3s stays under it. */
-const REQUEST_GAP_MS = 3000;
-/** A refused request is tried twice more, after this pause each time. */
-const RETRY_AFTER_MS = 25_000;
-const RETRIES = 2;
 const HIT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MISS_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -114,6 +109,8 @@ export interface TeamCrestDeps {
     readonly storage: Pick<Storage, 'getItem' | 'setItem'> | null;
     readonly now?: () => number;
     readonly wait?: (ms: number) => Promise<void>;
+    /** The app's one TheSportsDB client, shared with the league tables. */
+    readonly client?: SportsApiClient;
 }
 
 export function crestSearchNames(name: string): string[] {
@@ -157,10 +154,11 @@ export class TeamCrestResolver {
     private readonly cache: Record<string, CacheEntry>;
     private readonly pending = new Map<string, Promise<string | null>>();
     private queue: Promise<unknown> = Promise.resolve();
-    private lastRequestAt = 0;
+    private readonly client: SportsApiClient;
 
     constructor(private readonly deps: TeamCrestDeps) {
         this.cache = readCache(deps.storage);
+        this.client = deps.client ?? new SportsApiClient(deps);
     }
 
     /** The crest URL of `team`, or null when none is known. */
@@ -197,28 +195,6 @@ export class TeamCrestResolver {
         return request;
     }
 
-    /** One API request, spaced from the last; a refusal is retried. */
-    private async get(url: string): Promise<unknown> {
-        const wait =
-            this.deps.wait ??
-            ((ms: number) => new Promise<void>((done) => setTimeout(done, ms)));
-        const gap = this.lastRequestAt + REQUEST_GAP_MS - Date.now();
-        if (gap > 0) {
-            await wait(gap);
-        }
-        for (let attempt = 0; ; attempt++) {
-            this.lastRequestAt = Date.now();
-            try {
-                return await this.deps.fetchJson(url);
-            } catch (error) {
-                if (attempt >= RETRIES) {
-                    throw error;
-                }
-                await wait(RETRY_AFTER_MS);
-            }
-        }
-    }
-
     private async lookup(
         team: string,
         section: SportSectionId | null
@@ -229,15 +205,15 @@ export class TeamCrestResolver {
             team.trim().toLowerCase()
         ];
         if (alias?.id) {
-            const body = (await this.get(
-                `${API}lookupteam.php?id=${alias.id}`
+            const body = (await this.client.get(
+                `lookupteam.php?id=${alias.id}`
             )) as { teams?: TheSportsDbTeam[] | null } | null;
             return body?.teams?.[0]?.strBadge ?? null;
         }
         let fallback: string | null = null;
         for (const name of crestSearchNames(alias?.name ?? team)) {
-            const body = (await this.get(
-                `${API}searchteams.php?t=${encodeURIComponent(name.replace(/\s+/g, '_'))}`
+            const body = (await this.client.get(
+                `searchteams.php?t=${encodeURIComponent(name.replace(/\s+/g, '_'))}`
             )) as { teams?: TheSportsDbTeam[] | null } | null;
             const crest = pickCrest(body?.teams ?? [], section);
             if (crest?.inLeague) {

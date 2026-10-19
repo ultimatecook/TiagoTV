@@ -35,15 +35,13 @@
                     </div>
                     <div class="setting-item__control">
                         <mat-form-field
-                            class="settings-select"
+                            class="settings-text-field"
                             appearance="outline"
                             subscriptSizing="dynamic"
                         >
-                            <mat-label>{{
-                                'SETTINGS.PORT_RANGE_LABEL' | translate
-                            }}</mat-label>
                             <input
                                 matInput
+                                [attr.aria-label]="'SETTINGS.PORT_RANGE_LABEL' | translate"
                                 type="number"
                                 id="remoteControlPort"
                                 data-test-id="remote-control-port"

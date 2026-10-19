@@ -1,0 +1,157 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+// A row of 188px 2:3 posters (README 06), bleeding to the content's edges.
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tv-title-gap);
+}
+
+.row__title {
+    margin: 0;
+    color: var(--tv-text);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.row__strip {
+    --strip-column: 188px;
+    // The middle of a 188px 2:3 poster, under the track's 4px top padding.
+    --strip-chevron-top: 145px;
+}
+
+// The rendered row's height (poster, meta, the track's padding), held
+// until its posters render.
+.row__placeholder {
+    height: calc(4px + 282px + 10px + 18px + 8px);
+}
+
+.poster {
+    --poster-tint: #6b6455;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:focus-visible {
+        outline: none;
+
+        .poster__art {
+            @include focus-ring.focus-ring-declarations;
+        }
+    }
+}
+
+.poster__art {
+    position: relative;
+    display: block;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border: 1px solid var(--tv-card-border);
+    border-radius: 16px;
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--poster-tint) 28%, #24221e) 0%,
+        #0d0d0c 100%
+    );
+    transition:
+        transform 200ms ease,
+        border-color 200ms ease;
+}
+
+.poster:hover .poster__art {
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-4px);
+}
+
+.poster__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    -webkit-user-drag: none;
+}
+
+.poster__shade {
+    position: absolute;
+    inset: 40% 0 0;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.6) 45%,
+        rgba(0, 0, 0, 0.92) 100%
+    );
+}
+
+.poster__caption {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.poster__logo {
+    --platform-wordmark-size: 12px;
+    width: 80px;
+    height: 13px;
+    justify-items: start;
+    // A definite cell, so the logo's max-height: 100% holds it to the slot.
+    grid-template: 100% / 100%;
+}
+
+.poster__title {
+    display: -webkit-box;
+    max-width: 100%;
+    padding-top: 0.06em;
+    overflow: hidden;
+    color: var(--tv-text-on-image);
+    font-family: var(--tv-font-display);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 0.92;
+    text-transform: uppercase;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.poster__meta {
+    display: block;
+    padding: 0 2px;
+    overflow: hidden;
+    color: var(--tv-meta);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 18px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .poster__art {
+        transition: none;
+    }
+
+    .poster:hover .poster__art {
+        transform: none;
+    }
+}

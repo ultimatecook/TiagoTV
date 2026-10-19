@@ -1,5 +1,5 @@
 /**
- * The kinds of rows "Por países" shows, in the page's order: a country's
+ * The kinds of rows "En vivo" shows, in the page's order: a country's
  * main channels, then sports, live events, news, movies and series, kids,
  * documentaries, music, everything else, and last the other versions of
  * channels shown above (4K, SD, +1).

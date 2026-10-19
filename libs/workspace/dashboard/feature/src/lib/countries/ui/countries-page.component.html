@@ -1,74 +1,42 @@
 <h1 class="visually-hidden">{{ 'WORKSPACE.COUNTRIES.TITLE' | translate }}</h1>
 
 @if (countries(); as countries) {
-    @if (countries.length > 0) {
-        <lib-country-tv-stage
-            class="tv__stage"
-            (openLiveView)="openLiveView()"
-        />
-
-        <nav
-            class="tv__jump"
-            [attr.aria-label]="'WORKSPACE.COUNTRIES.JUMP' | translate"
+    @if (country(); as country) {
+        <section
+            #live
+            class="live"
+            tabindex="-1"
+            data-test-id="countries-live"
+            [class.live--idle]="!idle.visible()"
+            [attr.aria-label]="country.definition.nameKey | translate"
+            (focusin)="onFocusIn($event)"
+            (focusout)="onFocusOut($event)"
         >
-            @for (country of countries; track country.definition.id) {
-                @let id = country.definition.id;
-                <button
-                    type="button"
-                    class="jump"
-                    [class.jump--on]="activeCountry() === id"
-                    [attr.aria-current]="activeCountry() === id ? 'true' : null"
-                    [attr.data-test-id]="'countries-jump-' + id"
-                    (click)="jumpTo(id)"
-                >
-                    <img
-                        class="jump__flag"
-                        [src]="country.definition.flag"
-                        alt=""
-                        draggable="false"
-                    />
-                    {{ country.definition.nameKey | translate }}
-                </button>
-            }
-        </nav>
+            <lib-country-tv-stage
+                (pointerdown)="onPicturePress()"
+                (click)="onPictureClick()"
+            />
 
-        <div #lanes class="tv__lanes" (scroll)="onLanesScroll()">
-            @for (country of countries; track country.definition.id) {
-                @let id = country.definition.id;
-                <section
-                    class="country"
-                    [attr.data-country]="id"
-                    [attr.data-test-id]="'countries-section-' + id"
-                    [attr.aria-labelledby]="'country-title-' + id"
-                >
-                    <h2 class="country__title" [id]="'country-title-' + id">
-                        <img
-                            class="country__flag"
-                            [src]="country.definition.flag"
-                            alt=""
-                            draggable="false"
-                        />
-                        {{ country.definition.nameKey | translate }}
-                        <span class="country__count">{{
-                            (country.channelCount === 1
-                                ? 'WORKSPACE.COUNTRIES.CHANNELS_ONE'
-                                : 'WORKSPACE.COUNTRIES.CHANNELS'
-                            ) | translate: { count: country.channelCount }
-                        }}</span>
-                    </h2>
-                    @for (row of country.rows; track row.id) {
-                        <lib-country-tv-row
-                            #tvRow
-                            [row]="row"
-                            [playingStreamId]="selectedStreamId()"
-                            [live]="!!tv.playback()"
-                            (picked)="play(country, row, $event)"
-                            (crossed)="cross(tvRow, $event)"
-                        />
-                    }
-                </section>
-            }
-        </div>
+            <lib-country-picker
+                class="live__picker"
+                [countries]="countries"
+                [current]="country"
+                [(open)]="pickerOpen"
+                (picked)="chooseCountry($event)"
+            />
+
+            <lib-country-tv-overlay
+                class="live__overlay"
+                [categories]="categories()"
+                [category]="activeCategory()"
+                (categoryChange)="pickCategory($event)"
+                [cards]="cards()"
+                [countryName]="country.definition.nameKey | translate"
+                (picked)="play($event)"
+                (openLiveView)="openLiveView()"
+                (hovering)="setHovering($event)"
+            />
+        </section>
     } @else {
         <p class="state">{{ 'WORKSPACE.COUNTRIES.EMPTY' | translate }}</p>
     }
@@ -84,25 +52,23 @@
     </div>
 } @else {
     <div
-        class="skeleton"
+        class="live live--loading"
         role="status"
         [attr.aria-label]="'WORKSPACE.COUNTRIES.LOADING' | translate"
     >
-        <div class="skeleton__stage">
-            <span class="skeleton__screen"></span>
-            <span class="skeleton__info">
-                <span class="skeleton__block skeleton__block--plate"></span>
-                <span class="skeleton__block skeleton__block--line"></span>
-                <span class="skeleton__block skeleton__block--title"></span>
-            </span>
-        </div>
-        @for (row of skeletonRows; track row) {
-            <span class="skeleton__block skeleton__block--label"></span>
-            <span class="skeleton__row">
-                @for (tile of [1, 2, 3, 4, 5, 6, 7, 8]; track tile) {
-                    <span class="skeleton__block skeleton__block--tile"></span>
+        <div class="skeleton">
+            <span class="skeleton__block skeleton__block--title"></span>
+            <span class="skeleton__block skeleton__block--line"></span>
+            <span class="skeleton__chips">
+                @for (chip of [1, 2, 3, 4, 5]; track chip) {
+                    <span class="skeleton__block skeleton__block--chip"></span>
                 }
             </span>
-        }
+            <span class="skeleton__row">
+                @for (card of skeletonCards; track card) {
+                    <span class="skeleton__block skeleton__block--card"></span>
+                }
+            </span>
+        </div>
     </div>
 }

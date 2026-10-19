@@ -1,0 +1,164 @@
+@use '../../../../../../../ui/styles/focus-ring';
+
+:host {
+    display: block;
+    min-width: 0;
+}
+
+// Each side's colour glows at its end of the row.
+.row {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 88px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    min-height: 84px;
+    box-sizing: border-box;
+    padding: 0 16px 0 22px;
+    overflow: hidden;
+    border: 1px solid var(--tv-card-border);
+    border-radius: 20px;
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--home-glow) 18%, transparent) 0%,
+        rgba(255, 255, 255, 0.035) 30%,
+        rgba(255, 255, 255, 0.035) 70%,
+        color-mix(in srgb, var(--away-glow) 18%, transparent) 100%
+    );
+    color: var(--tv-text);
+    transition: border-color 160ms ease;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.22);
+    }
+}
+
+.row__when {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.row__time {
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.row--live .row__time {
+    color: var(--tv-live-green);
+}
+
+.row__day {
+    color: var(--tv-meta);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.row__side {
+    --crest-size: 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.row__side--home {
+    justify-content: flex-end;
+}
+
+.row__name {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--tv-text-img-1);
+    font-size: 15.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.row__name--mine {
+    color: #fff;
+    font-weight: 700;
+}
+
+.row__vs {
+    color: rgba(255, 255, 255, 0.5);
+    font-family: var(--tv-font-display);
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.row__title {
+    grid-column: 2 / 5;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 15.5px;
+    font-weight: 600;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.row__watch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 260px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 0 14px 0 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--tv-text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 160ms ease;
+
+    mat-icon {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        font-size: 16px;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.18);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 2px);
+    }
+}
+
+.row--live .row__watch {
+    border-color: transparent;
+    background: #fff;
+    color: #0b0b09;
+
+    &:hover {
+        background: #e9e6df;
+    }
+}
+
+@media (max-width: 900px) {
+    .row {
+        grid-template-columns: 72px minmax(0, 1fr) 40px minmax(0, 1fr);
+        padding: 10px 14px;
+    }
+
+    .row__watch {
+        grid-column: 1 / -1;
+        justify-self: end;
+    }
+}

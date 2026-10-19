@@ -1,0 +1,200 @@
+@if (featured() || pending()) {
+    <section
+        class="series"
+        aria-labelledby="home-series-title"
+        data-test-id="dashboard-series"
+        libHomeNear
+        (homeNear)="titles.load('series')"
+    >
+        <lib-home-heading
+            headingId="home-series-title"
+            testId="dashboard-series"
+            [title]="'WORKSPACE.DASHBOARD.SERIES_FOR_YOU' | translate"
+            [link]="['/workspace', 'series']"
+        />
+        @if (featured(); as card) {
+            <div
+                class="series__grid"
+                [class.series__grid--single]="side().length === 0"
+            >
+                <article
+                    class="series__card series__card--featured"
+                    [style.--series-hue]="card.hue"
+                    data-test-id="dashboard-series-featured"
+                >
+                    <ng-container
+                        *ngTemplateOutlet="art; context: { $implicit: card }"
+                    />
+                    <span class="series__veil series__veil--side"></span>
+                    <span class="series__veil series__veil--bottom"></span>
+                    <!-- The pointer opens the show from anywhere on the card;
+                         the keyboard has the same in "Empezar". -->
+                    <button
+                        type="button"
+                        class="series__hit"
+                        tabindex="-1"
+                        aria-hidden="true"
+                        (click)="open(card)"
+                    ></button>
+                    <div class="series__body series__body--featured">
+                        <ng-container
+                            *ngTemplateOutlet="
+                                brand;
+                                context: { $implicit: card, size: 'large' }
+                            "
+                        />
+                        <h3 class="series__title series__title--featured">
+                            {{ card.name }}
+                        </h3>
+                        <ng-container
+                            *ngTemplateOutlet="
+                                meta;
+                                context: { $implicit: card }
+                            "
+                        />
+                        @if (card.plot) {
+                            <p class="series__plot series__plot--featured">
+                                {{ card.plot }}
+                            </p>
+                        }
+                        <div class="series__actions">
+                            <button
+                                type="button"
+                                class="series__button series__button--primary"
+                                data-test-id="dashboard-series-start"
+                                (click)="open(card)"
+                            >
+                                <mat-icon aria-hidden="true"
+                                    >play_arrow</mat-icon
+                                >
+                                {{
+                                    'WORKSPACE.DASHBOARD.START_FIRST_EPISODE'
+                                        | translate
+                                }}
+                            </button>
+                            <button
+                                type="button"
+                                class="series__button series__button--glass"
+                                data-test-id="dashboard-series-my-list"
+                                [attr.aria-pressed]="saved(card)"
+                                (click)="toggleMyList(card)"
+                            >
+                                @if (saved(card)) {
+                                    <mat-icon aria-hidden="true"
+                                        >check</mat-icon
+                                    >
+                                }
+                                {{ 'WORKSPACE.DASHBOARD.MY_LIST' | translate }}
+                            </button>
+                        </div>
+                    </div>
+                </article>
+                @if (side().length > 0) {
+                    <div class="series__side">
+                        @for (other of side(); track other.key) {
+                            <button
+                                type="button"
+                                class="series__card series__card--side"
+                                [style.--series-hue]="other.hue"
+                                [attr.aria-label]="other.name"
+                                [attr.data-test-id]="
+                                    'dashboard-series-' + other.key
+                                "
+                                (click)="open(other)"
+                            >
+                                <ng-container
+                                    *ngTemplateOutlet="
+                                        art;
+                                        context: { $implicit: other }
+                                    "
+                                />
+                                <span
+                                    class="series__veil series__veil--rise"
+                                ></span>
+                                <span class="series__body">
+                                    <ng-container
+                                        *ngTemplateOutlet="
+                                            brand;
+                                            context: {
+                                                $implicit: other,
+                                                size: 'small',
+                                            }
+                                        "
+                                    />
+                                    <span class="series__title">{{
+                                        other.name
+                                    }}</span>
+                                    @if (other.plot) {
+                                        <span class="series__plot">{{
+                                            other.plot
+                                        }}</span>
+                                    }
+                                </span>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        } @else {
+            <div class="series__grid" aria-hidden="true" aria-busy="true">
+                <span class="series__skeleton"></span>
+                <span class="series__side">
+                    <span class="series__skeleton"></span>
+                    <span class="series__skeleton"></span>
+                </span>
+            </div>
+        }
+    </section>
+}
+
+<ng-template #art let-card>
+    @if (card.image) {
+        <img
+            class="series__image"
+            [src]="card.image"
+            alt=""
+            loading="lazy"
+            decoding="async"
+            draggable="false"
+        />
+    }
+</ng-template>
+
+<ng-template #brand let-card let-size="size">
+    <span class="series__brand" [class.series__brand--large]="size === 'large'">
+        @if (card.series.platform.logo) {
+            <img
+                class="series__platform"
+                [class.series__platform--white]="
+                    card.series.platform.logoTone === 'white'
+                "
+                [src]="card.series.platform.logo"
+                [alt]="card.series.platform.name"
+                draggable="false"
+            />
+        } @else {
+            <span
+                class="series__platform-name"
+                [style.color]="card.series.platform.wordmarkColor"
+                >{{ card.series.platform.name }}</span
+            >
+        }
+        @if (card.badge; as badge) {
+            <span
+                class="series__badge"
+                [class]="'series__badge--' + badge.kind"
+                >{{ card.badgeKey | translate: { season: badge.season } }}</span
+            >
+        }
+    </span>
+</ng-template>
+
+<ng-template #meta let-card>
+    @if (card.meta.length > 0) {
+        <p class="series__meta">
+            @for (part of card.meta; track $index) {
+                <span>{{ part }}</span>
+            }
+        </p>
+    }
+</ng-template>

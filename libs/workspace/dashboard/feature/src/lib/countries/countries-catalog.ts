@@ -20,7 +20,7 @@ import {
 import { isEmptySlot } from './country-slots';
 
 /**
- * The source's live catalog as "Por países" shows it: Argentina, Spain,
+ * The source's live catalog as "En vivo" shows it: Argentina, Spain,
  * the United Kingdom and the United States, each with its rows (see
  * country-rows), each row with its channels (copies together).
  */

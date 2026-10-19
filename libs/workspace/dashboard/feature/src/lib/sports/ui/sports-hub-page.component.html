@@ -1,0 +1,113 @@
+<div class="hub" data-test-id="sports-hub">
+    <header class="hub__header">
+        <h1 class="hub__title">{{ 'WORKSPACE.SPORTS.TITLE' | translate }}</h1>
+        <div
+            class="days"
+            role="group"
+            [attr.aria-label]="'WORKSPACE.SPORTS.DAYS.LABEL' | translate"
+        >
+            @for (day of days(); track day.offset) {
+                @let on = day.offset === offset();
+                <button
+                    type="button"
+                    class="days__day"
+                    [class.days__day--on]="on"
+                    [attr.aria-pressed]="on"
+                    [attr.data-test-id]="'sports-day-' + day.offset"
+                    (click)="offset.set(day.offset)"
+                >
+                    {{
+                        day.name.key
+                            ? (day.name.key | translate)
+                            : day.name.text
+                    }}
+                </button>
+            }
+        </div>
+    </header>
+
+    <lib-sports-rail class="hub__leagues" [heading]="false" />
+
+    <div
+        class="teams"
+        role="group"
+        [attr.aria-label]="'WORKSPACE.SPORTS.MY_TEAMS' | translate"
+    >
+        @for (entry of teams(); track entry.fixture.team.name) {
+            @let team = entry.fixture.team;
+            <button
+                type="button"
+                class="team"
+                [attr.data-test-id]="'sports-team-' + team.sectionId"
+                (click)="openTeam(entry.fixture)"
+            >
+                <lib-team-crest
+                    class="team__crest"
+                    [team]="team.name"
+                    [section]="team.sectionId"
+                />
+                <span class="team__name">{{ team.name }}</span>
+                @if (entry.status; as status) {
+                    @if (status.live) {
+                        <span class="team__status team__status--live">
+                            <i class="team__dot" aria-hidden="true"></i>
+                            {{ 'WORKSPACE.SPORTS.LIVE' | translate }}
+                        </span>
+                    } @else {
+                        <span class="team__status"
+                            >{{
+                                status.day.key
+                                    ? (status.day.key | translate)
+                                    : status.day.text
+                            }}
+                            · {{ status.time }}</span
+                        >
+                    }
+                }
+            </button>
+        }
+    </div>
+
+    @if (sports.catalog()) {
+        @if (offset() === 0 && live().length > 0) {
+            <section class="block" data-test-id="sports-live-now">
+                <h2 class="block__title">
+                    {{ 'WORKSPACE.SPORTS.LIVE_NOW' | translate }}
+                </h2>
+                <div class="block__grid">
+                    @for (match of live(); track match.key) {
+                        <lib-sport-match-card [match]="match" />
+                    }
+                </div>
+            </section>
+        }
+
+        <section class="block" data-test-id="sports-later">
+            @let title = dayTitle();
+            <h2 class="block__title">
+                {{ title.key ? (title.key | translate) : title.text }}
+            </h2>
+            @if (later().length > 0) {
+                <lib-sport-events-list [matches]="later()" />
+            } @else {
+                <p class="block__empty">
+                    {{
+                        (offset() === 0
+                            ? 'WORKSPACE.SPORTS.NO_MATCHES'
+                            : 'WORKSPACE.SPORTS.NO_MATCHES_DAY'
+                        ) | translate
+                    }}
+                </p>
+            }
+        </section>
+    } @else {
+        <p class="block__empty" role="status">
+            {{
+                (sports.failed()
+                    ? 'WORKSPACE.SPORTS.FAILED'
+                    : 'WORKSPACE.SPORTS.LOADING'
+                ) | translate
+            }}
+        </p>
+    }
+</div>

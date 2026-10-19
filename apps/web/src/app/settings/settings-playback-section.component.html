@@ -322,11 +322,9 @@
                             appearance="outline"
                             subscriptSizing="dynamic"
                         >
-                            <mat-label for="mpvPlayerPath">{{
-                                'SETTINGS.MPV_PLAYER_PATH' | translate
-                            }}</mat-label>
                             <input
                                 matInput
+                                [attr.aria-label]="'SETTINGS.MPV_PLAYER_PATH' | translate"
                                 type="text"
                                 id="mpvPlayerPath"
                                 formControlName="mpvPlayerPath"
@@ -415,11 +413,9 @@
                             appearance="outline"
                             subscriptSizing="dynamic"
                         >
-                            <mat-label for="vlcPlayerPath">{{
-                                'SETTINGS.VLC_PLAYER_PATH' | translate
-                            }}</mat-label>
                             <input
                                 matInput
+                                [attr.aria-label]="'SETTINGS.VLC_PLAYER_PATH' | translate"
                                 type="text"
                                 id="vlcPlayerPath"
                                 formControlName="vlcPlayerPath"
@@ -746,11 +742,9 @@
                             appearance="outline"
                             subscriptSizing="dynamic"
                         >
-                            <mat-label for="recordingFolder">{{
-                                'SETTINGS.RECORDING_FOLDER' | translate
-                            }}</mat-label>
                             <input
                                 matInput
+                                [attr.aria-label]="'SETTINGS.RECORDING_FOLDER' | translate"
                                 type="text"
                                 id="recordingFolder"
                                 formControlName="recordingFolder"

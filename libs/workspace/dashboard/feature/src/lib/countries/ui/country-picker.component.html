@@ -1,0 +1,65 @@
+@let country = current();
+<button
+    #trigger
+    type="button"
+    class="picker"
+    data-test-id="countries-picker"
+    aria-haspopup="true"
+    [attr.aria-expanded]="open()"
+    [attr.aria-controls]="menuId"
+    [attr.aria-label]="
+        'WORKSPACE.COUNTRIES.PICKER'
+            | translate: { name: (country.definition.nameKey | translate) }
+    "
+    (click)="toggle()"
+>
+    <img
+        class="flag"
+        [src]="country.definition.flag"
+        alt=""
+        draggable="false"
+    />
+    <span class="picker__name">{{
+        country.definition.nameKey | translate
+    }}</span>
+    <mat-icon class="picker__chevron" aria-hidden="true">expand_more</mat-icon>
+</button>
+
+@if (open()) {
+    <div
+        class="menu"
+        role="group"
+        data-test-id="countries-picker-menu"
+        [id]="menuId"
+        [attr.aria-label]="'WORKSPACE.COUNTRIES.COUNTRIES' | translate"
+    >
+        @for (option of options(); track option.definition.id) {
+            @let on = option.definition.id === country.definition.id;
+            <button
+                type="button"
+                class="menu__option"
+                data-country-option
+                [class.menu__option--on]="on"
+                [attr.aria-current]="on ? 'true' : null"
+                [attr.data-test-id]="'countries-option-' + option.definition.id"
+                (click)="pick(option)"
+            >
+                <img
+                    class="flag flag--menu"
+                    [src]="option.definition.flag"
+                    alt=""
+                    draggable="false"
+                />
+                <span class="menu__name">{{
+                    option.definition.nameKey | translate
+                }}</span>
+                <span class="menu__count">{{
+                    (option.channelCount === 1
+                        ? 'WORKSPACE.COUNTRIES.CHANNELS_ONE'
+                        : 'WORKSPACE.COUNTRIES.CHANNELS'
+                    ) | translate: { count: option.channelCount }
+                }}</span>
+            </button>
+        }
+    </div>
+}

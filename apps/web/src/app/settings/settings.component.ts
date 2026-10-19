@@ -61,6 +61,7 @@ import {
 import { SettingsParentalLockFacade } from './settings-parental-lock.facade';
 import { SettingsParentalLockSectionComponent } from './settings-parental-section.component';
 import { SettingsPlaybackSectionComponent } from './settings-playback-section.component';
+import { SettingsRailComponent } from './settings-rail.component';
 import { SettingsRemoteControlFacade } from './settings-remote-control.facade';
 import { SettingsRemoteControlSectionComponent } from './settings-remote-control-section.component';
 import { SettingsServerSectionComponent } from './settings-server-section.component';
@@ -110,6 +111,7 @@ export const SETTINGS_DEFAULT_SECTION = 'general';
         SettingsGeneralSectionComponent,
         SettingsParentalLockSectionComponent,
         SettingsPlaybackSectionComponent,
+        SettingsRailComponent,
         SettingsRemoteControlSectionComponent,
         SettingsSearchResultsComponent,
         SettingsServerSectionComponent,
@@ -245,6 +247,9 @@ export class SettingsComponent
     get sectionNav(): SettingsSection[] {
         return this.sectionNavItems.filter((section) => section.visible);
     }
+
+    /** The page's own rail lists these (one array, not one per check). */
+    readonly railSections = this.sectionNav;
 
     private readonly sectionParam = toSignal(
         this.route.paramMap.pipe(map((params) => params.get('section'))),

@@ -3,16 +3,19 @@ import {
     Component,
     DestroyRef,
     inject,
+    input,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { SportsBoardService } from '../sports-board.service';
 import { SportsCatalogService } from '../sports-catalog.service';
-import { SPORT_SECTIONS } from '../sport-sections';
+import { SPORTS_ROW } from '../sport-sections';
 
 /**
- * The Home's "Deportes" row: one tall card per competition, a player
- * cut-out standing on the competition's colour, its logo across the
- * bottom (the Movistar+ sports menu). A card opens its competition.
+ * The league cards (the Home's "Deportes" row and the sports hub's): one
+ * tall card per competition, a player cut-out standing on its colour with
+ * the head over the card's top edge, its logo across the bottom, and a
+ * glass pill counting its matches on now. A card opens its competition.
  */
 @Component({
     selector: 'lib-sports-rail',
@@ -22,7 +25,10 @@ import { SPORT_SECTIONS } from '../sport-sections';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SportsRailComponent {
-    readonly sections = SPORT_SECTIONS;
+    readonly board = inject(SportsBoardService);
+    readonly sections = SPORTS_ROW;
+    /** The Home's "Deportes" heading with "See all"; the hub has its own. */
+    readonly heading = input(true);
 
     constructor() {
         // The competition pages and today's matches read the same catalog.

@@ -1,4 +1,4 @@
-import { announcedKickOffs } from './match-fixtures';
+import { announcedKickOffs, categoryChannelName } from './match-fixtures';
 import { buildSportsCatalog, todaysMatches } from './sports-catalog';
 import type { SportsCatalogStream } from './sports-catalog';
 
@@ -117,6 +117,9 @@ describe('matches from every language', () => {
         // Its own feed plays the Spanish match; the others offer channels.
         expect(matches[1].via).toEqual([]);
         expect(matches[1].streamId).toBe(1);
+        // Each says where it plays: its feed's category, or its channels'.
+        expect(matches[1].channelName).toBe('LaLiga PPV');
+        expect(madrid?.channelName).toBe('M+ LaLiga TV');
         for (const match of matches) {
             expect(FRENCH_IDS.has(match.streamId)).toBe(false);
             for (const option of match.via) {
@@ -298,5 +301,20 @@ describe('announcedKickOffs', () => {
                 Date.parse('2026-10-18T15:30:00Z'),
             ],
         ]);
+    });
+});
+
+describe('categoryChannelName', () => {
+    it("names the channel an event feed's category stands for", () => {
+        expect(categoryChannelName('|ES| ✪ DAZN EVENT')).toBe('DAZN');
+        expect(categoryChannelName('|ES| ✪ PREMIER LEAGUE PPV')).toBe(
+            'Premier League PPV'
+        );
+        expect(categoryChannelName('|ES| ✪ LALIGA HYPERMOTION PPV')).toBe(
+            'LaLiga Hypermotion PPV'
+        );
+        expect(categoryChannelName('|ES| ✪ DAZN FEME SOLO EVENTOS')).toBe(
+            'DAZN Feme'
+        );
     });
 });

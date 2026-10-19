@@ -48,14 +48,6 @@ class MockWorkspaceContextPanelComponent {
 class MockWorkspaceCollectionContextPanelComponent {}
 
 @Component({
-    selector: 'app-workspace-settings-context-panel',
-    template: '',
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: true,
-})
-class MockWorkspaceSettingsContextPanelComponent {}
-
-@Component({
     selector: 'app-workspace-sources-filters-panel',
     template: '',
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -113,7 +105,6 @@ describe('WorkspaceShellContextSidebarComponent', () => {
                         MockResizableDirective,
                         MockWorkspaceContextPanelComponent,
                         MockWorkspaceCollectionContextPanelComponent,
-                        MockWorkspaceSettingsContextPanelComponent,
                         MockWorkspaceSourcesFiltersPanelComponent,
                         TranslatePipe,
                     ],
@@ -129,7 +120,7 @@ describe('WorkspaceShellContextSidebarComponent', () => {
     });
 
     it('closes the phone drawer from its always-available close button', () => {
-        fixture.componentRef.setInput('variant', 'settings');
+        fixture.componentRef.setInput('variant', 'collection');
         fixture.detectChanges();
 
         const button: HTMLButtonElement = fixture.nativeElement.querySelector(
@@ -144,17 +135,6 @@ describe('WorkspaceShellContextSidebarComponent', () => {
             WorkspaceShellContextDrawerService
         ) as unknown as { close: jest.Mock };
         expect(drawer.close).toHaveBeenCalledTimes(1);
-    });
-
-    it('renders the settings panel for the settings variant', () => {
-        fixture.componentRef.setInput('variant', 'settings');
-        fixture.detectChanges();
-
-        expect(
-            fixture.nativeElement.querySelector(
-                'app-workspace-settings-context-panel'
-            )
-        ).not.toBeNull();
     });
 
     it('renders the route context panel for category routes', () => {

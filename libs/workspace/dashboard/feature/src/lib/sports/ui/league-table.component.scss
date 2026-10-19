@@ -1,0 +1,245 @@
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.table {
+    --zone-champions: var(--tv-zone-blue);
+    --zone-europe: var(--tv-zone-orange);
+    --zone-promotion: var(--tv-live-green);
+    --zone-playoff: var(--tv-zone-blue);
+    --zone-relegation: var(--tv-zone-red);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    background: var(--tv-card-bg);
+    color: var(--tv-text);
+}
+
+.table__head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    background: linear-gradient(
+        120deg,
+        color-mix(in srgb, var(--table-tint) 90%, black) 0%,
+        color-mix(in srgb, var(--table-tint) 55%, black) 100%
+    );
+}
+
+.table__logo {
+    height: 30px;
+    max-width: 44px;
+    object-fit: contain;
+}
+
+.table__heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.table__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.table__note {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.table__body {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+}
+
+.table__row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 76px 30px 38px;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 10px 0 14px;
+    border-radius: 12px;
+    color: var(--tv-text-img-2);
+    font-size: 14px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    transition: background-color 160ms ease;
+
+    &:not(.table__row--labels):hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    // The zone bar.
+    &[data-zone]::before {
+        content: '';
+        position: absolute;
+        left: 2px;
+        top: 11px;
+        bottom: 11px;
+        width: 3px;
+        border-radius: 2px;
+    }
+
+    &[data-zone='champions']::before {
+        background: var(--zone-champions);
+    }
+
+    &[data-zone='europe']::before {
+        background: var(--zone-europe);
+    }
+
+    &[data-zone='promotion']::before {
+        background: var(--zone-promotion);
+    }
+
+    &[data-zone='playoff']::before {
+        background: var(--zone-playoff);
+    }
+
+    &[data-zone='relegation']::before {
+        background: var(--zone-relegation);
+    }
+}
+
+// The source gives no recent results: no form column.
+.table--no-form .table__row {
+    grid-template-columns: 28px minmax(0, 1fr) 30px 38px;
+}
+
+.table__row--labels {
+    height: 32px;
+    color: var(--tv-meta);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.table__row--mine,
+.table__row--mine:not(.table__row--labels):hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-weight: 700;
+}
+
+.table__rank {
+    color: var(--tv-meta);
+    font-weight: 700;
+}
+
+.table__rank--top {
+    color: var(--tv-amber);
+}
+
+.table__team {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.table__badge {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.table__badge--empty {
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.table__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table__form {
+    display: flex;
+    gap: 3px;
+}
+
+.table__result {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.28);
+
+    &[data-result='W'] {
+        background: var(--tv-live-green);
+    }
+
+    &[data-result='L'] {
+        background: var(--tv-zone-red);
+    }
+}
+
+.table__num {
+    text-align: right;
+}
+
+.table__played {
+    color: var(--tv-text-3);
+}
+
+.table__points {
+    color: #fff;
+    font-weight: 700;
+}
+
+.table__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 6px;
+    padding: 14px 14px 8px;
+    border-top: 1px solid var(--tv-separator);
+}
+
+.table__zone {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--tv-text-3);
+    font-size: 12px;
+    font-weight: 500;
+
+    i {
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+    }
+
+    &[data-zone='champions'] i {
+        background: var(--zone-champions);
+    }
+
+    &[data-zone='europe'] i {
+        background: var(--zone-europe);
+    }
+
+    &[data-zone='promotion'] i {
+        background: var(--zone-promotion);
+    }
+
+    &[data-zone='playoff'] i {
+        background: var(--zone-playoff);
+    }
+
+    &[data-zone='relegation'] i {
+        background: var(--zone-relegation);
+    }
+}

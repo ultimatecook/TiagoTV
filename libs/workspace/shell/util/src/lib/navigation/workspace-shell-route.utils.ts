@@ -14,8 +14,9 @@ export type WorkspaceShellPageKind =
     | 'sources'
     | 'unknown';
 
+// Settings has no shell panel: the settings page draws its own section rail.
 export type WorkspaceShellContextPanel =
-    'none' | 'sources' | 'settings' | 'category' | 'collection';
+    'none' | 'sources' | 'category' | 'collection';
 
 export interface WorkspacePortalContext {
     provider: PortalProvider;
@@ -210,10 +211,6 @@ function resolveContextPanel(
 ): WorkspaceShellContextPanel {
     if (kind === 'sources') {
         return 'sources';
-    }
-
-    if (kind === 'settings') {
-        return 'settings';
     }
 
     if (!context || !section) {

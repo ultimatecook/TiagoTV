@@ -1,191 +1,42 @@
+// TiagoTV's Home (README 01 · Inicio): one column of sections 44px apart
+// under the transparent top bar; the hero bleeds up behind the bar, the
+// sideways rows out to the window's edges.
 :host {
-    // Read by the full-bleed hero to cancel the gutters and centring out.
-    --dashboard-gutter: 28px;
-    --dashboard-top-gutter: 24px;
-    --dashboard-max-width: 1440px;
-
     display: block;
-    padding: var(--dashboard-top-gutter) var(--dashboard-gutter) 40px;
     box-sizing: border-box;
     min-height: 100%;
-    container: dashboard / inline-size;
+    padding: var(--tv-page-top) var(--tv-page-x) var(--tv-page-bottom);
 }
 
 :host(.rails-page-host--empty) {
-    padding: 0;
-    height: 100%;
-    min-height: 100%;
     display: flex;
+    height: 100%;
+    padding: 0;
     overflow: hidden;
 }
 
-.rails-page {
-    max-width: var(--dashboard-max-width);
-    margin: 0 auto;
+.home {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: var(--tv-section-gap);
     min-width: 0;
 
-    // The hero's artwork runs on under the first rails (its tail); they
-    // must paint above the hero's isolated stacking context.
+    // A section with nothing to show renders nothing: no gap for it.
+    > :empty {
+        display: none;
+    }
+
+    // The rows paint above the hero's faded tail.
     > lib-dashboard-hero ~ * {
         position: relative;
     }
 }
 
-.rails-page--empty {
+.home--empty {
     flex: 1;
-    max-width: none;
-    margin: 0;
     gap: 0;
     min-height: 0;
     height: 100%;
     overflow: hidden;
-}
-
-// ── Responsive ──────────────────────────────────────────────────────────────
-@media (max-width: 720px) {
-    :host {
-        --dashboard-gutter: 16px;
-        --dashboard-top-gutter: 16px;
-
-        padding-bottom: 32px;
-    }
-
-    .rails-page {
-        gap: 24px;
-    }
-}
-
-// ── TiagoTV Home ────────────────────────────────────────────────────────────
-// The glass Home: "Continue Watching" (hero card + tall cards) over rails of
-// six posters a row. The shell floats its header over this page's first
-// row, so the page starts at the top of the content area.
-:host {
-    --dashboard-gutter: 36px;
-    --dashboard-top-gutter: 4px;
-    --dashboard-max-width: 100%;
-    --home-gap: 18px;
-    // The sideways rows run on through the gutters to the content's edges.
-    --rail-bleed: var(--dashboard-gutter);
-    --home-feature-height: clamp(340px, 31cqw, 470px);
-}
-
-.rails-page {
-    gap: 36px;
-
-    // Six posters fill a row, at any window width.
-    lib-dashboard-rail:not(.home-feature__rail) {
-        --cover-rail-width: max(
-            140px,
-            calc((100cqw - 5 * var(--home-gap)) / 6)
-        );
-        --cover-gap: var(--home-gap);
-    }
-}
-
-.home-feature {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-width: 0;
-}
-
-.home-heading {
-    display: flex;
-    // Leaves the floating header's avatar its corner.
-    padding-right: 140px;
-    // macOS with the sidebar hidden: the traffic lights sit over this row,
-    // so the heading starts after them.
-    padding-left: max(
-        0px,
-        var(--workspace-corner-inset, 0px) - var(--dashboard-gutter)
-    );
-    min-height: 40px;
-    align-items: center;
-}
-
-.home-heading__link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 6px 4px 0;
-    border-radius: 8px;
-    color: var(--app-heading-color);
-    text-decoration: none;
-    // Under the macOS window's drag strip.
-    app-region: no-drag;
-
-    mat-icon {
-        width: 24px;
-        height: 24px;
-        font-size: 24px;
-        transition: transform 0.15s ease;
-    }
-
-    &:hover mat-icon {
-        transform: translateX(3px);
-    }
-}
-
-.home-heading__title {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-}
-
-.home-feature__row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) calc(
-            var(--home-feature-height) + var(--home-gap)
-        );
-    gap: var(--home-gap);
-    height: var(--home-feature-height);
-    min-width: 0;
-
-    &--hero-only {
-        grid-template-columns: minmax(0, 1fr);
-    }
-}
-
-.home-feature__hero {
-    position: relative;
-    display: grid;
-    min-width: 0;
-    min-height: 0;
-}
-
-// Tall cards, two to the row's height.
-.home-feature__rail {
-    --cover-rail-width: calc(var(--home-feature-height) / 2);
-    --cover-gap: var(--home-gap);
-    min-width: 0;
-}
-
-@container dashboard (max-width: 980px) {
-    .home-feature__row {
-        grid-template-columns: minmax(0, 1fr);
-        height: auto;
-    }
-
-    .home-feature__hero {
-        min-height: var(--home-feature-height);
-    }
-
-    .home-feature__rail {
-        --cover-rail-width: 180px;
-    }
-}
-
-@media (max-width: 1100px) {
-    :host {
-        --dashboard-top-gutter: 20px;
-        --dashboard-gutter: 24px;
-    }
-
-    .home-heading {
-        padding-right: 0;
-    }
 }

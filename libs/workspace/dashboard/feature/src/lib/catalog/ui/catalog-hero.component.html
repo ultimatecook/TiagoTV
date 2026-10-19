@@ -1,0 +1,126 @@
+@let title = featured();
+<section class="hero" [attr.aria-labelledby]="headingId">
+    <div
+        class="hero__backdrop"
+        aria-hidden="true"
+        [style.--hero-tint]="title ? title.platform.ambient : null"
+    >
+        @if (art(); as art) {
+            <img
+                class="hero__art"
+                [class.hero__art--poster]="art.poster"
+                [src]="art.url"
+                alt=""
+                decoding="async"
+                referrerpolicy="no-referrer"
+                draggable="false"
+                (error)="artFailed(art.url)"
+            />
+        }
+        <span class="hero__veil hero__veil--side"></span>
+    </div>
+    <span class="hero__veil hero__veil--top" aria-hidden="true"></span>
+    <span class="hero__veil hero__veil--bottom" aria-hidden="true"></span>
+
+    <h1 class="hero__heading" [id]="headingId">
+        {{ headingKey() | translate }}
+    </h1>
+    <span class="hero__spacer" aria-hidden="true"></span>
+
+    @if (title) {
+        <div class="hero__info" data-test-id="catalog-hero-info">
+            <lib-platform-logo class="hero__logo" [platform]="title.platform" />
+            <h2 class="hero__title">{{ title.title }}</h2>
+            <p class="hero__meta">
+                @for (part of meta(); track $index) {
+                    @if (!$first) {
+                        <span class="hero__dot" aria-hidden="true">·</span>
+                    }
+                    <span>
+                        @for (text of part; track $index) {
+                            @if (!$first) {
+                                <span>, </span>
+                            }
+                            <span>{{
+                                text.key
+                                    ? (text.key | translate: text.params)
+                                    : text.text
+                            }}</span>
+                        }
+                    </span>
+                }
+            </p>
+            <div class="hero__actions">
+                <button
+                    type="button"
+                    class="hero__play"
+                    data-test-id="catalog-hero-play"
+                    (click)="open(title)"
+                >
+                    <mat-icon aria-hidden="true">play_arrow</mat-icon>
+                    {{ 'WORKSPACE.CATALOG.PLAY' | translate }}
+                </button>
+                <button
+                    type="button"
+                    class="hero__more"
+                    data-test-id="catalog-hero-more"
+                    (click)="open(title)"
+                >
+                    {{ 'WORKSPACE.CATALOG.MORE_INFO' | translate }}
+                </button>
+            </div>
+        </div>
+    }
+
+    @if (releases().length > 0) {
+        <div class="hero__releases">
+            <h2 class="hero__releases-title" [id]="releasesId">
+                {{ 'WORKSPACE.CATALOG.NEW' | translate }}
+            </h2>
+            <lib-catalog-strip class="hero__strip" [labelledBy]="releasesId">
+                @for (
+                    release of releases();
+                    track key(release);
+                    let first = $first
+                ) {
+                    @let on = key(release) === featuredKey();
+                    @let image = cardArt(release);
+                    <button
+                        type="button"
+                        class="release"
+                        data-stop
+                        [class.release--on]="on"
+                        [attr.tabindex]="first ? 0 : -1"
+                        [attr.aria-pressed]="on"
+                        [attr.data-test-id]="'catalog-release-' + key(release)"
+                        [style.--release-tint]="release.platform.ambient"
+                        (click)="picked.emit(release)"
+                    >
+                        @if (image) {
+                            <img
+                                class="release__art"
+                                [src]="image"
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                referrerpolicy="no-referrer"
+                                draggable="false"
+                                (error)="artFailed(image)"
+                            />
+                        }
+                        <span class="release__shade" aria-hidden="true"></span>
+                        <span class="release__caption">
+                            <lib-platform-logo
+                                class="release__logo"
+                                [platform]="release.platform"
+                            />
+                            <span class="release__title">{{
+                                release.title
+                            }}</span>
+                        </span>
+                    </button>
+                }
+            </lib-catalog-strip>
+        </div>
+    }
+</section>

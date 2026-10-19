@@ -1,0 +1,199 @@
+// "Top 10 películas hoy" (README 01 · Inicio, 5): a snapping row of big
+// outlined place numbers, each under the edge of its poster.
+@use '../../../../../../ui/styles/focus-ring';
+@use '../../../../../../ui/styles/skeleton-shimmer' as shimmer;
+
+:host {
+    --poster-hue: 220;
+
+    display: block;
+    min-width: 0;
+}
+
+.top {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tv-title-gap);
+}
+
+.top__row {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 48px) / 3.6);
+    gap: 16px;
+    margin: 0 calc(-1 * var(--tv-page-x));
+    padding: 4px var(--tv-page-x) 8px;
+    list-style: none;
+    overflow-x: auto;
+    scroll-padding: 0 var(--tv-page-x);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.top__item {
+    display: flex;
+    min-width: 0;
+    scroll-snap-align: start;
+}
+
+.top__card {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 220ms ease;
+
+    &:hover {
+        transform: translateY(-4px);
+    }
+
+    &:focus-visible {
+        outline: none;
+
+        .top__poster {
+            @include focus-ring.focus-ring-declarations($offset: 3px);
+        }
+    }
+}
+
+.top__rank {
+    flex: none;
+    margin-right: -22px;
+    color: rgba(255, 255, 255, 0.04);
+    font-family: var(--tv-font-display);
+    font-size: 220px;
+    font-weight: 400;
+    line-height: 0.74;
+    letter-spacing: -0.04em;
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.55);
+    user-select: none;
+}
+
+.top__poster {
+    position: relative;
+    z-index: 1;
+    display: block;
+    flex: 1;
+    min-width: 0;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    background: linear-gradient(
+        180deg,
+        hsl(var(--poster-hue) 28% 28%) 0%,
+        hsl(var(--poster-hue) 30% 9%) 100%
+    );
+    box-shadow: -18px 0 30px -12px rgba(0, 0, 0, 0.6);
+
+    &--skeleton {
+        @include shimmer.block(18px);
+    }
+}
+
+.top__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.top__shade {
+    position: absolute;
+    inset: 38% 0 0;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.6) 40%,
+        rgba(0, 0, 0, 0.94) 100%
+    );
+}
+
+.top__info {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    left: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.top__platform {
+    display: block;
+    height: 14px;
+    max-width: 80px;
+    object-fit: contain;
+    object-position: left center;
+
+    &--white {
+        filter: brightness(0) invert(1);
+    }
+}
+
+.top__platform-name {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 14px;
+}
+
+.top__title {
+    color: var(--tv-text-on-image);
+    font-family: var(--tv-font-display);
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 0.9;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+}
+
+.top__meta {
+    display: flex;
+    flex-wrap: wrap;
+    color: var(--tv-text-2);
+    font-size: 12.5px;
+    font-weight: 600;
+
+    span + span::before {
+        content: '·';
+        padding: 0 5px;
+    }
+}
+
+@include shimmer.keyframes;
+
+@media (max-width: 900px) {
+    .top__row {
+        grid-auto-columns: calc((100% - 16px) / 1.6);
+    }
+
+    .top__rank {
+        font-size: 160px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .top__card {
+        transition: none;
+    }
+
+    .top__card:hover {
+        transform: none;
+    }
+}

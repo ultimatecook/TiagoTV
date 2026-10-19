@@ -33,12 +33,12 @@ import { SportsCatalogService } from '../sports/sports-catalog.service';
 import type { CountryChannel } from './country-channels';
 import {
     browserStorage,
-    rememberLastChannel,
+    rememberSelection,
     type TvSelection,
 } from './country-tv-start';
 
 /**
- * The player of "Por países", built the way the Xtream live view builds a
+ * The player of "En vivo", built the way the Xtream live view builds a
  * channel's playback: `XtreamUrlService` with the source's credentials and
  * the stream format setting (MPEG-TS by default), the Auto TS fallback when
  * the account's formats are known, the source's headers, and the live
@@ -125,7 +125,7 @@ export class CountryTvPlayback {
             return;
         }
         this.selection.set(selection);
-        rememberLastChannel(browserStorage(), selection.copy.streamId);
+        rememberSelection(browserStorage(), selection);
         const inline = this.embedded();
         this.playback.set(inline ? playback : null);
         if (!inline) {
@@ -148,6 +148,25 @@ export class CountryTvPlayback {
         if (selection && copy.streamId !== selection.copy.streamId) {
             this.play({ ...selection, copy });
         }
+    }
+
+    /**
+     * "Open in Live TV": the channel in the Xtream live view, which plays
+     * it next, so the page hands nothing to the mini-player.
+     */
+    openLiveView(): void {
+        const selection = this.selection();
+        if (!selection) {
+            return;
+        }
+        this.leaving.set(true);
+        const { copy, channel } = selection;
+        this.sports.play({
+            streamId: copy.streamId,
+            categoryId: copy.categoryId,
+            title: channel.title,
+            icon: copy.icon,
+        });
     }
 
     /** Recovery's "Open in MPV/VLC" after an inline failure. */

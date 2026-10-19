@@ -1,0 +1,203 @@
+// "Eventos de hoy" (README 01 · Inicio, 4): one list card, 60px rows.
+@use '../../../../../../ui/styles/focus-ring';
+
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.events {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tv-title-gap);
+}
+
+// No `overflow: hidden` here: the rows' live dots animate, and a rounded
+// clip over them costs a mask layer; the end rows round their own hover.
+.events__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--tv-card-border);
+    border-radius: 20px;
+    background: var(--tv-list-bg);
+}
+
+.events__item + .events__item {
+    border-top: 1px solid var(--tv-separator);
+}
+
+.event {
+    display: grid;
+    grid-template-columns: 72px 190px minmax(0, 1fr) 200px 40px;
+    align-items: center;
+    gap: 16px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 60px;
+    padding: 0 16px 0 20px;
+    border: 0;
+    background: transparent;
+    color: var(--tv-text-2);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 160ms ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: -2px);
+    }
+
+    .events__item:first-child & {
+        border-radius: 19px 19px 0 0;
+    }
+
+    .events__item:last-child & {
+        border-radius: 0 0 19px 19px;
+    }
+
+    .events__item:only-child & {
+        border-radius: 19px;
+    }
+}
+
+.event__clock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--tv-text);
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+
+    &--live {
+        color: var(--tv-live-red);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+}
+
+.event__dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--tv-live-red);
+    animation: tv-pulse 1.6s ease-in-out infinite;
+}
+
+.event__competition {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.event__logo {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+
+    img {
+        max-width: 70%;
+        max-height: 70%;
+        object-fit: contain;
+    }
+}
+
+.event__competition-name,
+.event__channel {
+    overflow: hidden;
+    color: var(--tv-meta);
+    font-size: 13px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.event__sides {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+
+    &--single {
+        grid-template-columns: minmax(0, 1fr);
+        text-align: center;
+    }
+}
+
+.event__team {
+    overflow: hidden;
+    color: var(--tv-text-2);
+    font-size: 15px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &--home {
+        text-align: right;
+    }
+
+    &--mine {
+        color: var(--tv-text);
+        font-weight: 700;
+    }
+}
+
+.event__vs {
+    color: var(--tv-meta);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.event__play {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--tv-text);
+    transition:
+        background 160ms ease,
+        color 160ms ease;
+
+    mat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+    }
+
+    .event:hover & {
+        background: #fff;
+        color: #0b0b09;
+    }
+}
+
+@media (max-width: 900px) {
+    .event {
+        grid-template-columns: 64px minmax(0, 1fr) 40px;
+    }
+
+    .event__competition,
+    .event__channel {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .event__dot {
+        animation: none;
+    }
+}

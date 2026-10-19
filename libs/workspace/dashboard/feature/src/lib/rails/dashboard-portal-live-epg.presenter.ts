@@ -18,7 +18,7 @@ import {
     DashboardPortalLiveEpgService,
     type DashboardPortalLiveEpgEntry,
 } from '@iptvnator/workspace/dashboard/data-access';
-import type { DashboardRailCard } from './dashboard-rail.component';
+import type { DashboardRailCard } from './dashboard-rail-card';
 import { DashboardLiveEpgClock } from './dashboard-live-epg-clock';
 
 /**

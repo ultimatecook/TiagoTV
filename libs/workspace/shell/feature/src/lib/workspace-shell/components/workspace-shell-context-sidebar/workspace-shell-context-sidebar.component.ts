@@ -25,7 +25,6 @@ import {
 } from '@iptvnator/workspace/shell/util';
 import { WorkspaceCollectionContextPanelComponent } from '../../../workspace-context-panel/workspace-collection-context-panel.component';
 import { WorkspaceContextPanelComponent } from '../../../workspace-context-panel/workspace-context-panel.component';
-import { WorkspaceSettingsContextPanelComponent } from '../../../workspace-context-panel/workspace-settings-context-panel.component';
 import { WorkspaceSourcesFiltersPanelComponent } from '../../../workspace-sources-filters-panel/workspace-sources-filters-panel.component';
 
 const LIVE_SECTIONS: ReadonlySet<PortalRailSection> = new Set([
@@ -42,7 +41,6 @@ const LIVE_SECTIONS: ReadonlySet<PortalRailSection> = new Set([
         TranslatePipe,
         WorkspaceCollectionContextPanelComponent,
         WorkspaceContextPanelComponent,
-        WorkspaceSettingsContextPanelComponent,
         WorkspaceSourcesFiltersPanelComponent,
     ],
     templateUrl: './workspace-shell-context-sidebar.component.html',

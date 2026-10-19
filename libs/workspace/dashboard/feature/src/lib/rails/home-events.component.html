@@ -1,0 +1,86 @@
+@if (rows().length > 0) {
+    <section
+        class="events"
+        aria-labelledby="home-events-title"
+        data-test-id="dashboard-events"
+    >
+        <lib-home-heading
+            headingId="home-events-title"
+            testId="dashboard-events"
+            [title]="'WORKSPACE.DASHBOARD.EVENTS_TODAY' | translate"
+            [subtitle]="summary()"
+            [link]="['/workspace', 'sports']"
+        />
+        <ul class="events__list">
+            @for (row of rows(); track row.key) {
+                <li class="events__item">
+                    <button
+                        type="button"
+                        class="event"
+                        [attr.aria-label]="
+                            row.title +
+                            (row.channel
+                                ? ' · ' +
+                                  ('WORKSPACE.SPORTS.WATCH_ON'
+                                      | translate: { channels: row.channel })
+                                : '')
+                        "
+                        [attr.data-test-id]="'dashboard-event-' + row.key"
+                        (click)="open(row)"
+                    >
+                        <span
+                            class="event__clock"
+                            [class.event__clock--live]="row.live"
+                        >
+                            @if (row.live) {
+                                <i class="event__dot" aria-hidden="true"></i>
+                                {{ 'WORKSPACE.SPORTS.LIVE' | translate }}
+                            } @else {
+                                {{ kickOff(row) }}
+                            }
+                        </span>
+                        <span class="event__competition">
+                            <span
+                                class="event__logo"
+                                [style.background]="row.tint"
+                                aria-hidden="true"
+                            >
+                                @if (row.logo) {
+                                    <img [src]="row.logo" alt="" />
+                                }
+                            </span>
+                            <span class="event__competition-name">{{
+                                row.competition
+                            }}</span>
+                        </span>
+                        @if (row.home && row.away) {
+                            <span class="event__sides">
+                                <span
+                                    class="event__team event__team--home"
+                                    [class.event__team--mine]="row.homeMine"
+                                    >{{ row.home }}</span
+                                >
+                                <span class="event__vs" aria-hidden="true"
+                                    >vs</span
+                                >
+                                <span
+                                    class="event__team"
+                                    [class.event__team--mine]="row.awayMine"
+                                    >{{ row.away }}</span
+                                >
+                            </span>
+                        } @else {
+                            <span class="event__sides event__sides--single">
+                                <span class="event__team">{{ row.title }}</span>
+                            </span>
+                        }
+                        <span class="event__channel">{{ row.channel }}</span>
+                        <span class="event__play" aria-hidden="true">
+                            <mat-icon>play_arrow</mat-icon>
+                        </span>
+                    </button>
+                </li>
+            }
+        </ul>
+    </section>
+}

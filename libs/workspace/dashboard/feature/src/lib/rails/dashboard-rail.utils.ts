@@ -9,7 +9,7 @@ import type {
     DashboardRailAction,
     DashboardRailCard,
     DashboardRailLayout,
-} from './dashboard-rail.component';
+} from './dashboard-rail-card';
 import type { DashboardRailsSettings } from '@iptvnator/shared/interfaces';
 
 // Cap dashboard rails at 20 items. Users get ~3x what's visible at once,

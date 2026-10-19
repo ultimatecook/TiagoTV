@@ -32,10 +32,10 @@ function setWindowWidths(outer: number, inner: number): void {
 }
 
 describe('trafficLightsClearance', () => {
-    it('matches the default layout at 100 %', () => {
-        // x: the rail (60px) plus the header's padding (24px), where the
-        // header content already starts; y: inside the 56px header band.
-        expect(trafficLightsClearance(1)).toEqual({ x: 84, y: 48 });
+    it('clears the lights centred in the 84px top bar at 100 %', () => {
+        // x: 22pt in, 60pt of lights and an 8pt gap; y: their foot plus
+        // 14pt, inside the 84px bar.
+        expect(trafficLightsClearance(1)).toEqual({ x: 90, y: 63 });
     });
 
     it('keeps the same window pixels at every supported zoom', () => {
@@ -46,21 +46,20 @@ describe('trafficLightsClearance', () => {
         ) {
             const factor = 1.2 ** level;
             const clearance = trafficLightsClearance(factor);
-            expect(clearance.x * factor).toBeCloseTo(84);
-            expect(clearance.y * factor).toBeCloseTo(48);
+            expect(clearance.x * factor).toBeCloseTo(90);
+            expect(clearance.y * factor).toBeCloseTo(63);
         }
     });
 
-    it('outgrows the default inset and band when zoomed out', () => {
+    it('outgrows the 100 % clearance when zoomed out', () => {
         const clearance = trafficLightsClearance(1.2 ** ZOOM_LEVEL_MIN);
-        // Past the 60px rail: wider than the header's 24px padding.
-        expect(clearance.x - 60).toBeGreaterThan(24);
-        expect(clearance.y).toBeGreaterThan(56);
+        expect(clearance.x).toBeGreaterThan(90);
+        expect(clearance.y).toBeGreaterThan(63);
     });
 
     it('treats an unusable factor as 100 %', () => {
         for (const factor of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
-            expect(trafficLightsClearance(factor)).toEqual({ x: 84, y: 48 });
+            expect(trafficLightsClearance(factor)).toEqual({ x: 90, y: 63 });
         }
     });
 });
@@ -108,19 +107,19 @@ describe('TrafficLightsClearanceDirective', () => {
 
     it('publishes the clearance and follows zoom changes', () => {
         render();
-        expect(clearance()).toEqual({ x: '84px', y: '48px' });
+        expect(clearance()).toEqual({ x: '90px', y: '63px' });
 
         // Zoomed out to 50%: the viewport holds twice the CSS pixels.
         setWindowWidths(1200, 2400);
         window.dispatchEvent(new Event('resize'));
         fixture.detectChanges();
-        expect(clearance()).toEqual({ x: '168px', y: '96px' });
+        expect(clearance()).toEqual({ x: '180px', y: '126px' });
     });
 
     it('measures the zoom before the first render', () => {
         setWindowWidths(1200, 2400);
         fixture.detectChanges();
-        expect(clearance()).toEqual({ x: '168px', y: '96px' });
+        expect(clearance()).toEqual({ x: '180px', y: '126px' });
     });
 
     it('publishes nothing off macOS and stops listening when disabled', () => {
@@ -140,7 +139,7 @@ describe('TrafficLightsClearanceDirective', () => {
         fixture.componentInstance.enabled.set(true);
         render();
         // Re-enabled, it measures the current zoom.
-        expect(clearance()).toEqual({ x: '168px', y: '96px' });
+        expect(clearance()).toEqual({ x: '180px', y: '126px' });
         removeListener.mockRestore();
     });
 
@@ -156,7 +155,7 @@ describe('TrafficLightsClearanceDirective', () => {
 
         it('clears nothing while the window is fullscreen: the lights are hidden', async () => {
             render();
-            expect(clearance()).toEqual({ x: '84px', y: '48px' });
+            expect(clearance()).toEqual({ x: '90px', y: '63px' });
 
             root.classList.add('window-fullscreen');
             await settle();
@@ -164,7 +163,7 @@ describe('TrafficLightsClearanceDirective', () => {
 
             root.classList.remove('window-fullscreen');
             await settle();
-            expect(clearance()).toEqual({ x: '84px', y: '48px' });
+            expect(clearance()).toEqual({ x: '90px', y: '63px' });
         });
 
         it('starts at zero in a window that is already fullscreen', () => {

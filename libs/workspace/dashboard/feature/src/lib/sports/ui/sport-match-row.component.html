@@ -1,0 +1,84 @@
+@let pair = sides();
+@let current = state();
+<div
+    class="row"
+    [class.row--live]="current?.live"
+    [style.--home-glow]="homeGlow()"
+    [style.--away-glow]="awayGlow()"
+    [attr.data-test-id]="'sport-match-row-' + match().key"
+>
+    <span class="row__when">
+        @if (current?.live) {
+            @if (liveSince(); as time) {
+                <span class="row__time">{{ time }}</span>
+                <span class="row__day">{{
+                    'WORKSPACE.SPORTS.LIVE' | translate
+                }}</span>
+            } @else {
+                <span class="row__time">{{
+                    'WORKSPACE.SPORTS.LIVE' | translate
+                }}</span>
+            }
+        } @else if (current && !current.live) {
+            <span class="row__time">{{ current.time }}</span>
+            <span class="row__day">{{
+                current.day.key
+                    ? (current.day.key | translate)
+                    : current.day.text
+            }}</span>
+        }
+    </span>
+
+    @if (pair) {
+        <span class="row__side row__side--home">
+            <span class="row__name" [class.row__name--mine]="homeMine()">{{
+                pair.home
+            }}</span>
+            <lib-team-crest [team]="pair.home" [section]="match().sectionId" />
+        </span>
+        <span class="row__vs" aria-hidden="true">vs</span>
+        <span class="row__side">
+            <lib-team-crest [team]="pair.away" [section]="match().sectionId" />
+            <span class="row__name" [class.row__name--mine]="awayMine()">{{
+                pair.away
+            }}</span>
+        </span>
+    } @else {
+        <span class="row__title">{{ match().title }}</span>
+    }
+
+    @if (offers()) {
+        <button type="button" class="row__watch" [matMenuTriggerFor]="channels">
+            <mat-icon aria-hidden="true">play_arrow</mat-icon>
+            {{ channel() }}
+            <mat-icon aria-hidden="true">expand_more</mat-icon>
+        </button>
+        <mat-menu #channels="matMenu">
+            @for (option of match().via; track option.channel.streamId) {
+                <button
+                    type="button"
+                    mat-menu-item
+                    (click)="play(option.channel)"
+                >
+                    <mat-icon>live_tv</mat-icon>
+                    <span>{{ option.name }}</span>
+                </button>
+            }
+        </mat-menu>
+    } @else {
+        <button
+            type="button"
+            class="row__watch"
+            [attr.aria-label]="
+                channel()
+                    ? ('WORKSPACE.SPORTS.WATCH_ON'
+                      | translate: { channels: channel() })
+                    : match().title
+            "
+            (click)="play()"
+        >
+            <mat-icon aria-hidden="true">play_arrow</mat-icon>
+            {{ channel() || ('WORKSPACE.SPORTS.WATCH' | translate) }}
+        </button>
+    }
+</div>

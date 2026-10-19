@@ -1,0 +1,455 @@
+@use '../../../../../../../../ui/styles/focus-ring';
+
+// The bar: transparent, 84px, three columns. Only its groups take the
+// pointer; the band itself moves the macOS window like a title bar.
+:host {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 32px;
+    box-sizing: border-box;
+    height: var(--tv-topbar-h);
+    padding: 0 28px 0 22px;
+    color: var(--tv-text);
+    font-family: var(--tv-font-ui);
+    pointer-events: none;
+    app-region: drag;
+}
+
+.topbar__group {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    pointer-events: auto;
+    app-region: no-drag;
+}
+
+.topbar__group--leading {
+    justify-self: start;
+    gap: 20px;
+}
+
+.topbar__group--trailing {
+    // The whole column, so an open search field shrinks to fit it instead
+    // of running into the capsule; only its controls take the pointer.
+    justify-self: stretch;
+    justify-content: flex-end;
+    gap: 14px;
+    pointer-events: none;
+    app-region: drag;
+
+    > * {
+        pointer-events: auto;
+        app-region: no-drag;
+    }
+}
+
+// macOS: the native traffic lights' room (the shell flags the window).
+.topbar__lights {
+    display: none;
+    flex: none;
+    width: calc(var(--traffic-lights-clear-x, 90px) - 30px);
+    height: 14px;
+}
+
+:host-context(.has-traffic-lights) .topbar__lights {
+    display: block;
+}
+
+:host-context(.window-fullscreen) .topbar__lights {
+    display: none;
+}
+
+// Glass: the capsule, the circles and the pill.
+%glass {
+    border: 1px solid var(--tv-glass-border);
+    background: var(--tv-glass-bg);
+    box-shadow:
+        var(--tv-glass-highlight),
+        0 8px 24px -12px rgba(0, 0, 0, 0.5);
+    -webkit-backdrop-filter: var(--tv-glass-filter);
+    backdrop-filter: var(--tv-glass-filter);
+}
+
+.topbar__tabs {
+    @extend %glass;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 5px;
+    border-radius: 999px;
+    pointer-events: auto;
+    app-region: no-drag;
+}
+
+.topbar__tab {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 999px;
+    color: var(--tv-text-2);
+    font-size: 14.5px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    text-decoration: none;
+    transition:
+        background-color 160ms ease,
+        color 160ms ease;
+
+    &:hover {
+        color: #fff;
+    }
+
+    &.is-active {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: -2px);
+    }
+}
+
+.topbar__circle {
+    @extend %glass;
+    position: relative;
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    box-sizing: border-box;
+    border-radius: 50%;
+    color: var(--tv-text);
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+        background-color 160ms ease,
+        transform 160ms ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.16);
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.5;
+    }
+
+    &.is-active {
+        border-color: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+
+    mat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+    }
+}
+
+.topbar__back {
+    animation: topbar-enter 180ms ease;
+}
+
+// "‹ Deportes" on a league page.
+.topbar__pill {
+    @extend %glass;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+    height: 36px;
+    padding: 0 14px 0 8px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    color: var(--tv-text);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    animation: topbar-enter 180ms ease;
+    transition: background-color 160ms ease;
+
+    app-workspace-shell-top-bar-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.16);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.topbar__badge {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    background: var(--tv-red);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+
+// Buscar opens into a field when the page filters itself.
+.topbar__search {
+    display: flex;
+    flex: none;
+    min-width: 0;
+
+    &.is-open {
+        flex: 0 1 clamp(220px, 24vw, 320px);
+    }
+}
+
+.topbar__search-field {
+    @extend %glass;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 150px;
+    height: 46px;
+    padding: 0 6px 0 16px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    color: var(--tv-text);
+    animation: topbar-enter 160ms ease;
+
+    // The field draws the ring around the whole pill.
+    &:has(input:focus-visible) {
+        @include focus-ring.focus-ring-declarations;
+    }
+
+    input {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 500;
+        // The pill around it draws the ring.
+        outline: none;
+
+        &::placeholder {
+            color: var(--tv-placeholder);
+        }
+
+        &::-webkit-search-cancel-button {
+            display: none;
+        }
+    }
+}
+
+.topbar__search-close {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tv-text-2);
+    cursor: pointer;
+
+    app-workspace-shell-top-bar-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: var(--tv-text);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: -2px);
+    }
+}
+
+// The profile circle is the source switcher's trigger, dressed as the
+// red "T": the source's name stays inside as its accessible name.
+.topbar__profile {
+    display: block;
+    flex: none;
+    width: 46px;
+    margin-left: 6px;
+
+    ::ng-deep .playlist-switcher-trigger {
+        position: relative;
+        justify-content: center;
+        width: 46px;
+        height: 46px;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 50%;
+        background: linear-gradient(160deg, #ff4b50 0%, #b8141a 100%);
+        color: #fff;
+
+        &::before {
+            content: 'T' / '';
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        &:hover,
+        &.is-open {
+            background: linear-gradient(160deg, #ff5f63 0%, #c91a20 100%);
+        }
+
+        &.is-open {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
+        }
+
+        > :not(.playlist-info) {
+            display: none;
+        }
+
+        .playlist-info {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+    }
+}
+
+// Above the phone breakpoint the context panel shows beside the content,
+// so its drawer toggle would open nothing.
+.topbar__drawer-toggle {
+    display: none;
+}
+
+@keyframes topbar-enter {
+    from {
+        opacity: 0;
+    }
+}
+
+// Narrow windows: the circles move up beside Back and the capsule takes a
+// row of its own, scrolling sideways when the tabs do not fit.
+@media (max-width: 760px) {
+    :host {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: 52px 40px;
+        grid-template-areas:
+            'leading trailing'
+            'tabs tabs';
+        row-gap: 8px;
+        column-gap: 12px;
+        padding: 8px 16px;
+    }
+
+    .topbar__group--leading {
+        grid-area: leading;
+        gap: 10px;
+    }
+
+    .topbar__group--trailing {
+        grid-area: trailing;
+        gap: 8px;
+    }
+
+    .topbar__tabs {
+        grid-area: tabs;
+        justify-self: stretch;
+        padding: 3px;
+        overflow-x: auto;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+
+    .topbar__tab {
+        height: 32px;
+        padding: 0 14px;
+        font-size: 13.5px;
+    }
+
+    .topbar__circle,
+    .topbar__profile,
+    .topbar__profile ::ng-deep .playlist-switcher-trigger {
+        width: 40px;
+        height: 40px;
+    }
+
+    .topbar__profile {
+        margin-left: 0;
+    }
+
+    .topbar__search.is-open {
+        flex-basis: min(52vw, 240px);
+    }
+
+    .topbar__search-field {
+        min-width: 120px;
+        height: 40px;
+    }
+}
+
+@media (max-width: 640px) {
+    .topbar__drawer-toggle {
+        display: grid;
+    }
+
+    // The history fallback must not cost a list its only way into the
+    // drawer.
+    .topbar__back--yields {
+        display: none;
+    }
+
+    // The live rail is a bottom drawer with its own toggle on a phone.
+    .header-sidebar-toggle {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .topbar__tab,
+    .topbar__circle,
+    .topbar__pill {
+        transition: none;
+    }
+
+    .topbar__back,
+    .topbar__pill,
+    .topbar__search-field {
+        animation: none;
+    }
+}

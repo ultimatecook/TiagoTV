@@ -1,11 +1,4 @@
-import {
-    afterNextRender,
-    computed,
-    DestroyRef,
-    inject,
-    Injectable,
-    Injector,
-} from '@angular/core';
+import { computed, DestroyRef, inject, Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,7 +28,6 @@ import { WorkspaceShellSearchService } from './workspace-shell-search.service';
 import { WorkspaceShellXtreamImportService } from './workspace-shell-xtream-import.service';
 import { WorkspaceShellContextDrawerService } from '@iptvnator/workspace/shell/util';
 import { PlaylistSwitcherOpenService } from '@iptvnator/playlist/shared/ui';
-import { WorkspaceNavSidebarService } from './workspace-nav-sidebar.service';
 
 @Injectable()
 export class WorkspaceShellFacade {
@@ -67,8 +59,6 @@ export class WorkspaceShellFacade {
         }
     );
     private readonly playlistSwitcher = inject(PlaylistSwitcherOpenService);
-    private readonly navSidebar = inject(WorkspaceNavSidebarService);
-    private readonly injector = inject(Injector);
     private readonly dialog = inject(MatDialog);
     private readonly onDocumentKeydown = (event: KeyboardEvent): void => {
         if (!(event.ctrlKey || event.metaKey)) {
@@ -183,23 +173,15 @@ export class WorkspaceShellFacade {
     }
 
     /**
-     * Opens the playlist switcher at the sidebar's foot (⌘P; ⌘K stays the
-     * command palette, and ⌘P no longer prints the page in the browser
-     * build). With the sidebar hidden, it shows the sidebar first. Reports
-     * whether a switcher opens.
+     * Opens the source switcher, the top bar's profile circle (⌘P; ⌘K
+     * stays the command palette, and ⌘P no longer prints the page in the
+     * browser build). Reports whether a switcher opens.
      */
     openPlaylistSwitcher(): boolean {
-        if (this.playlistSwitcher.available) {
-            this.playlistSwitcher.request();
-            return true;
-        }
-        if (!this.navSidebar.collapsed()) {
+        if (!this.playlistSwitcher.available) {
             return false;
         }
-        this.navSidebar.show();
-        afterNextRender(() => this.playlistSwitcher.request(), {
-            injector: this.injector,
-        });
+        this.playlistSwitcher.request();
         return true;
     }
 

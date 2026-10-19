@@ -37,20 +37,6 @@ const dashboardAccessGuard = async () => {
         : router.parseUrl(redirectPath);
 };
 
-export function resolveElectronOnlyGlobalSearchRoute(
-    runtime: Pick<RuntimeCapabilitiesService, 'isElectron'>,
-    router: Pick<Router, 'parseUrl'>
-) {
-    return runtime.isElectron ? true : router.parseUrl('/workspace/sources');
-}
-
-const electronOnlyGlobalSearchGuard = () => {
-    return resolveElectronOnlyGlobalSearchRoute(
-        inject(RuntimeCapabilitiesService),
-        inject(Router)
-    );
-};
-
 /**
  * The focused recording detail depends on `RecordingsService`, whose list
  * never becomes authoritative without the recordings capability — the PWA
@@ -111,6 +97,15 @@ export const routes: Routes = [
                     ),
             },
             {
+                // TiagoTV: Deportes, the top bar's sports hub.
+                path: 'sports',
+                pathMatch: 'full',
+                loadComponent: () =>
+                    import('@iptvnator/workspace/dashboard/feature').then(
+                        (c) => c.SportsHubPageComponent
+                    ),
+            },
+            {
                 // TiagoTV: a competition of the Home's "Deportes" row.
                 path: 'sports/:sectionId',
                 loadComponent: () =>
@@ -127,7 +122,7 @@ export const routes: Routes = [
                     ),
             },
             {
-                // TiagoTV: "Por países", the live channels by country.
+                // TiagoTV: "En vivo", the live channels by country.
                 path: 'countries',
                 loadComponent: () =>
                     import('@iptvnator/workspace/dashboard/feature').then(
@@ -140,6 +135,23 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('@iptvnator/workspace/dashboard/feature').then(
                         (c) => c.CountriesPageComponent
+                    ),
+            },
+            {
+                // TiagoTV: Series / Películas, every platform's catalog.
+                path: 'series',
+                data: { kind: 'series' },
+                loadComponent: () =>
+                    import('@iptvnator/workspace/dashboard/feature').then(
+                        (c) => c.CatalogPageComponent
+                    ),
+            },
+            {
+                path: 'movies',
+                data: { kind: 'movie' },
+                loadComponent: () =>
+                    import('@iptvnator/workspace/dashboard/feature').then(
+                        (c) => c.CatalogPageComponent
                     ),
             },
             {
@@ -172,14 +184,13 @@ export const routes: Routes = [
                     ),
             },
             {
+                // TiagoTV: Buscar, the top bar's search page (teams,
+                // channels, series and movies of the source). It reads the
+                // stored catalogs, so the browser build has it too.
                 path: 'search',
-                canActivate: [electronOnlyGlobalSearchGuard],
-                data: {
-                    isGlobalSearch: true,
-                },
                 loadComponent: () =>
-                    import('@iptvnator/portal/xtream/feature').then(
-                        (c) => c.GlobalSearchResultsComponent
+                    import('@iptvnator/workspace/dashboard/feature').then(
+                        (c) => c.SearchPageComponent
                     ),
             },
             {

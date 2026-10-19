@@ -1,0 +1,246 @@
+@use '../../../../../../../ui/styles/focus-ring';
+@use '../../../../../../../ui/playback/src/lib/player-controls/player-palette';
+
+// The overlay at the foot of the picture (handoff 04): the veil from
+// transparent to black, then the channel, the controls, the progress, the
+// chips and the cards. Over video the focus ring is the player's.
+:host {
+    @include player-palette.focus-ring-token;
+    display: block;
+    padding: 140px var(--tv-page-x) 32px;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.5) 30%,
+        rgba(0, 0, 0, 0.82) 100%
+    );
+    color: var(--tv-text);
+}
+
+.overlay {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+// ── The channel, and the controls ─────────────────────────────────────────
+.head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 44px;
+}
+
+.head__info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.head__name {
+    margin: 0;
+    overflow: hidden;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.head__now {
+    margin: 0;
+    overflow: hidden;
+    color: var(--tv-text-img-2);
+    font-size: 15px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.head__controls {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+}
+
+.control {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tv-text);
+    cursor: pointer;
+    transition: background-color 160ms ease;
+    app-region: no-drag;
+
+    mat-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 22px;
+    }
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.control--play {
+    margin-right: 4px;
+    background: #fff;
+    color: #0b0b09;
+
+    &:hover:not(:disabled) {
+        background: #fff;
+    }
+}
+
+.copies {
+    display: flex;
+    gap: 4px;
+    margin-right: 10px;
+    padding: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.copies__chip {
+    height: 28px;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--tv-text-img-1);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    app-region: no-drag;
+
+    &:hover {
+        color: #fff;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 1px);
+    }
+}
+
+.copies__chip--on {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+// ── The programme's progress ──────────────────────────────────────────────
+.progress {
+    display: block;
+    height: 3px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.progress__fill {
+    display: block;
+    height: 100%;
+    background: var(--tv-live-red);
+}
+
+// ── The category chips ────────────────────────────────────────────────────
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    color: var(--tv-text-img-1);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    app-region: no-drag;
+
+    &:hover:not(.chip--on) {
+        background: rgba(255, 255, 255, 0.14);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+.chip--on {
+    border-color: var(--tv-text);
+    background: var(--tv-text);
+    color: #0b0b09;
+}
+
+.chip__count {
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+    :host {
+        padding: 96px var(--tv-page-x) 20px;
+    }
+
+    .overlay {
+        gap: 14px;
+    }
+
+    .head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .head__name {
+        font-size: 24px;
+    }
+
+    // One line of chips, scrolled sideways.
+    .chips {
+        flex-wrap: nowrap;
+        margin: 0 calc(-1 * var(--tv-page-x));
+        padding: 0 var(--tv-page-x);
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .control {
+        transition: none;
+    }
+}

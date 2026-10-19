@@ -4,6 +4,11 @@ import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { PlatformsCatalogService } from '../platforms/platforms-catalog.service';
+import {
+    STREAMING_PLATFORMS,
+    type PlatformShelf,
+} from '../platforms/streaming-platforms';
 import { DashboardHeroComponent } from './dashboard-hero.component';
 import { DashboardHeroSlidesPresenter } from './dashboard-hero-slides.presenter';
 import type { DashboardHeroSlide } from './dashboard-hero.utils';
@@ -12,6 +17,8 @@ const slide = (id: string, title: string): DashboardHeroSlide => ({
     id,
     kind: 'continue',
     contentType: 'movie',
+    playlistId: 'p',
+    categoryId: '1',
     title,
     typeLabelKey: 'WORKSPACE.DASHBOARD.TYPE_MOVIE',
     reasonLabelKey: 'WORKSPACE.DASHBOARD.CONTINUE_WATCHING',
@@ -41,6 +48,7 @@ describe('DashboardHeroComponent', () => {
     let fixture: ComponentFixture<DashboardHeroComponent>;
     let slides: ReturnType<typeof signal<DashboardHeroSlide[]>>;
     let reducedMotion: boolean;
+    let shelves: ReturnType<typeof signal<PlatformShelf[] | null>>;
 
     const host = () => fixture.nativeElement as HTMLElement;
     const activeTitle = () =>
@@ -53,10 +61,10 @@ describe('DashboardHeroComponent', () => {
             )
         );
     const finishActiveDot = () => {
-        const fill = host().querySelector(
-            '.hero__dot--active .hero__dot-fill'
+        const timer = host().querySelector(
+            '.hero__dot--active .hero__dot-timer'
         ) as HTMLElement;
-        fill.dispatchEvent(new Event('animationend'));
+        timer.dispatchEvent(new Event('animationend'));
         fixture.detectChanges();
     };
 
@@ -68,7 +76,17 @@ describe('DashboardHeroComponent', () => {
         });
         TestBed.configureTestingModule({
             imports: [DashboardHeroComponent, TranslateModule.forRoot()],
-            providers: [provideRouter([])],
+            providers: [
+                provideRouter([]),
+                {
+                    provide: PlatformsCatalogService,
+                    useValue: {
+                        shelves,
+                        source: signal({ _id: 'p' }),
+                        loadShelves: jest.fn().mockResolvedValue(undefined),
+                    },
+                },
+            ],
         });
         TestBed.overrideComponent(DashboardHeroComponent, {
             set: {
@@ -90,6 +108,7 @@ describe('DashboardHeroComponent', () => {
 
     beforeEach(() => {
         reducedMotion = false;
+        shelves = signal(null);
         slides = signal([
             slide('a', 'First'),
             slide('b', 'Second'),
@@ -123,45 +142,6 @@ describe('DashboardHeroComponent', () => {
 
         section.dispatchEvent(new Event('mouseleave'));
         fixture.detectChanges();
-        finishActiveDot();
-        expect(activeTitle()).toBe('Second');
-    });
-
-    it('lets the user pause and resume the rotation', () => {
-        render();
-        const pause = host().querySelector(
-            '[data-test-id=dashboard-hero-pause]'
-        ) as HTMLButtonElement;
-
-        pause.click();
-        fixture.detectChanges();
-        expect(pause.getAttribute('aria-pressed')).toBe('true');
-        finishActiveDot();
-        expect(activeTitle()).toBe('First');
-
-        pause.click();
-        fixture.detectChanges();
-        finishActiveDot();
-        expect(activeTitle()).toBe('Second');
-    });
-
-    it('resumes on Play even while the button keeps the pointer and focus', () => {
-        render();
-        const section = host().querySelector(
-            '[data-test-id=dashboard-hero]'
-        ) as HTMLElement;
-        const pause = host().querySelector(
-            '[data-test-id=dashboard-hero-pause]'
-        ) as HTMLButtonElement;
-        section.dispatchEvent(new Event('mouseenter'));
-        section.dispatchEvent(new FocusEvent('focusin'));
-
-        pause.click();
-        fixture.detectChanges();
-        pause.click();
-        fixture.detectChanges();
-
-        expect(section.classList).not.toContain('hero--paused');
         finishActiveDot();
         expect(activeTitle()).toBe('Second');
     });
@@ -231,8 +211,10 @@ describe('DashboardHeroComponent', () => {
         render();
 
         expect(
-            host().querySelector('[data-test-id=dashboard-hero-pause]')
-        ).toBeNull();
+            host()
+                .querySelector('[data-test-id=dashboard-hero]')
+                ?.classList.contains('hero--rotating')
+        ).toBe(false);
         finishActiveDot();
         expect(activeTitle()).toBe('First');
 
@@ -445,6 +427,53 @@ describe('DashboardHeroComponent', () => {
         expect(clicked).toHaveBeenCalledTimes(1);
     });
 
+    it('names the platform of a title filed in one of its categories', () => {
+        const netflix = STREAMING_PLATFORMS[0];
+        shelves.set([
+            {
+                platform: netflix,
+                categories: [{ id: '1', kind: 'movie', language: 'ES' }],
+            },
+        ]);
+        slides.set([
+            slide('a', 'Filed'),
+            { ...slide('b', 'Elsewhere'), categoryId: '9' },
+        ]);
+        render();
+        const logo = () =>
+            host().querySelector<HTMLImageElement>(
+                '[data-test-id=dashboard-hero-slide] .hero__platform'
+            );
+
+        expect(logo()?.getAttribute('alt')).toBe(netflix.name);
+        dots()[1].click();
+        fixture.detectChanges();
+        expect(logo()).toBeNull();
+    });
+
+    it('says "Seguir viendo" over an unfinished title and why the others are there', () => {
+        slides.set([
+            slide('a', 'Unfinished'),
+            {
+                ...slide('b', 'Import'),
+                kind: 'added',
+                reasonLabelKey: 'WORKSPACE.DASHBOARD.HERO_RECENTLY_ADDED',
+            },
+        ]);
+        render();
+        const eyebrow = () =>
+            host()
+                .querySelector(
+                    '[data-test-id=dashboard-hero-slide] .hero__eyebrow'
+                )
+                ?.textContent?.trim();
+
+        expect(eyebrow()).toBe('WORKSPACE.DASHBOARD.KEEP_WATCHING');
+        dots()[1].click();
+        fixture.detectChanges();
+        expect(eyebrow()).toBe('WORKSPACE.DASHBOARD.HERO_RECENTLY_ADDED');
+    });
+
     it('pauses the rotation while the document is hidden', () => {
         const visibility = jest
             .spyOn(document, 'visibilityState', 'get')
@@ -478,10 +507,10 @@ describe('DashboardHeroComponent rotation animation', () => {
             styles
         )?.[1] ?? '';
 
-    // The fill runs for the whole time an idle dashboard is on screen: a
+    // The timer runs for the whole time an idle Home is on screen: a
     // layout property here means style, layout and paint on every frame.
-    it('fills the active dot with a compositor-only animation', () => {
-        const frames = keyframes('hero-dot-fill');
+    it('times the active indicator with a compositor-only animation', () => {
+        const frames = keyframes('hero-slide-timer');
         const properties = Array.from(
             frames.matchAll(/^\s*([a-z-]+)\s*:/gm),
             (match) => match[1]

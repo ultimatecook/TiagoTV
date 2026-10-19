@@ -1,10 +1,11 @@
 <section
-    class="rails-page"
-    [class.rails-page--empty]="ready() && !hasPlaylists()"
+    class="home"
+    [class.home--empty]="ready() && !hasPlaylists()"
+    [class.home--no-hero]="!showHero()"
     data-test-id="dashboard-page"
 >
-    <!-- The page's one stable h1: the rail already names the page, and the
-         hero's rotating title is only the current slide (an h2). -->
+    <!-- The page's one stable h1: the top bar already names the page, and
+         the hero's rotating title is only the current slide (an h2). -->
     <h1 class="visually-hidden" data-test-id="dashboard-page-heading">
         {{ 'WORKSPACE.SHELL.RAIL_DASHBOARD' | translate }}
     </h1>
@@ -15,202 +16,18 @@
             (addPlaylistClicked)="onAddPlaylist($event)"
         />
     } @else {
-        <!-- "Continue Watching": the rotating hero card beside tall
-             cards of the unfinished titles. Without any history the
-             section features the newest titles instead. Each block renders
-             as soon as ITS data is ready. -->
-        @if (showFeatureSection()) {
-            <section
-                class="home-feature"
-                data-test-id="dashboard-feature-section"
-            >
-                <header class="home-heading">
-                    <a
-                        class="home-heading__link"
-                        [routerLink]="featureSeeAllLink()"
-                        [state]="continueWatchingSeeAllState()"
-                    >
-                        <h2 class="home-heading__title">
-                            {{ featureHeadingKey() | translate }}
-                        </h2>
-                        <mat-icon aria-hidden="true">chevron_right</mat-icon>
-                    </a>
-                </header>
-                <div
-                    class="home-feature__row"
-                    [class.home-feature__row--hero-only]="
-                        featureSideCards().length === 0
-                    "
-                >
-                    @if (dashboardRails().hero) {
-                        <div class="home-feature__hero">
-                            <lib-dashboard-hero />
-                        </div>
-                    }
-                    @if (featureSideCards().length > 0) {
-                        <lib-dashboard-rail
-                            class="home-feature__rail"
-                            [label]="featureHeadingKey() | translate"
-                            [showHeader]="false"
-                            [items]="featureSideCards()"
-                            aspectRatio="1 / 2"
-                            [testId]="'dashboard-continue-watching-rail'"
-                            (actionSelected)="
-                                onContinueWatchingActionSelected($event)
-                            "
-                        />
-                    }
-                </div>
-            </section>
+        <!-- A section with nothing to show renders nothing, and the page
+             leaves it out of its rhythm (see :empty in the stylesheet). -->
+        @if (showHero()) {
+            <lib-dashboard-hero />
         }
-
-        <!-- TiagoTV: under "Continue Watching", the streaming platforms, the
-             sports cards and today's matches. The other rails stay off the
-             Home. -->
         <lib-platforms-rail />
         <lib-sports-rail />
-        <lib-live-matches-rail />
-        <lib-live-channels-rail />
-
-        @if (classicRails) {
-            <!-- New & Popular: the newest titles of the Xtream sources -->
-            @if (
-                dashboardRails().xtreamRecentlyAdded &&
-                xtreamRecentlyAddedCards().length > 0
-            ) {
-                <lib-dashboard-rail
-                    [label]="'WORKSPACE.DASHBOARD.NEW_AND_POPULAR' | translate"
-                    [items]="xtreamRecentlyAddedCards()"
-                    [seeAllLink]="newAndPopularLink()"
-                    [testId]="'dashboard-xtream-recently-added-rail'"
-                />
-            } @else if (railSkeletons.xtreamRecentlyAdded()) {
-                <lib-dashboard-rail-skeleton
-                    testId="dashboard-xtream-recently-added-rail-skeleton"
-                />
-            }
-
-            <!-- Live favorites: no fallback. Recently watched live gets its own rail. -->
-            @if (
-                dashboardRails().liveFavorites &&
-                !showLiveFavoritesSkeleton() &&
-                liveFavoriteCardsEnriched().length > 0
-            ) {
-                <lib-dashboard-rail
-                    [label]="liveRailTitleKeyForSource('favorites') | translate"
-                    [items]="liveFavoriteCardsEnriched()"
-                    [totalCount]="data.globalFavoriteLiveItems().length"
-                    [seeAllLink]="['/workspace/global-favorites']"
-                    [seeAllState]="liveSeeAllState"
-                    layout="channel"
-                    [testId]="'dashboard-live-favorites-rail'"
-                    (visibleCardsChanged)="
-                        liveEpg.setVisibleCards('favorites', $event)
-                    "
-                />
-            } @else if (railSkeletons.liveFavorites()) {
-                <lib-dashboard-rail-skeleton
-                    layout="channel"
-                    testId="dashboard-live-favorites-rail-skeleton"
-                />
-            }
-
-            @if (
-                dashboardRails().recentlyWatchedLive &&
-                recentLiveCardsEnriched().length > 0
-            ) {
-                <lib-dashboard-rail
-                    [label]="liveRailTitleKeyForSource('recent') | translate"
-                    [items]="recentLiveCardsEnriched()"
-                    [totalCount]="data.globalRecentLiveItems().length"
-                    [seeAllLink]="['/workspace/global-recent']"
-                    [seeAllState]="liveSeeAllState"
-                    layout="channel"
-                    [testId]="'dashboard-recent-live-rail'"
-                    (visibleCardsChanged)="
-                        liveEpg.setVisibleCards('recent', $event)
-                    "
-                />
-            }
-
-            @if (
-                dashboardRails().favoriteMoviesAndSeries &&
-                favoriteMoviesAndSeriesCards().length > 0
-            ) {
-                <lib-dashboard-rail
-                    [label]="
-                        'WORKSPACE.DASHBOARD.FAVORITE_MOVIES_AND_SERIES'
-                            | translate
-                    "
-                    [items]="favoriteMoviesAndSeriesCards()"
-                    [totalCount]="
-                        data.globalFavoriteItems().length -
-                        data.globalFavoriteLiveItems().length
-                    "
-                    [seeAllLink]="['/workspace/global-favorites']"
-                    [seeAllState]="favoriteMoviesAndSeriesSeeAllState()"
-                    [testId]="'dashboard-favorite-vod-rail'"
-                />
-            }
-
-            @if (railSkeletons.recentContent()) {
-                <lib-dashboard-rail-skeleton
-                    [layout]="recentContentSkeletonLayout()"
-                    testId="dashboard-recent-content-rail-skeleton"
-                />
-            }
-
-            <!-- Sources rail -->
-            @if (dashboardRails().recentSources && sourceCards().length > 0) {
-                <lib-dashboard-rail
-                    [label]="'WORKSPACE.DASHBOARD.RECENT_SOURCES' | translate"
-                    [items]="sourceCards()"
-                    [totalCount]="data.playlists().length"
-                    [seeAllLink]="['/workspace/sources']"
-                    aspectRatio="16 / 9"
-                    [testId]="'dashboard-recent-sources-rail'"
-                    [reserveMetaLine]="true"
-                    (actionSelected)="onSourceActionSelected($event)"
-                />
-            } @else if (railSkeletons.sources()) {
-                <lib-dashboard-rail-skeleton
-                    aspectRatio="16 / 9"
-                    testId="dashboard-recent-sources-rail-skeleton"
-                />
-            }
-
-            <!-- TMDB recommendations rail ("Because you watched"; opt-in; Electron only) -->
-            @if (
-                dashboardRails().tmdbRecommendations &&
-                recommendationCards().length > 0
-            ) {
-                <lib-dashboard-rail
-                    [label]="recommendationsRailLabel()"
-                    [items]="recommendationCards()"
-                    [totalCount]="recommendationCards().length"
-                    [testId]="'dashboard-tmdb-recommendations-rail'"
-                    [reserveMetaLine]="true"
-                />
-            } @else if (railSkeletons.tmdbRecommendations()) {
-                <lib-dashboard-rail-skeleton
-                    testId="dashboard-tmdb-recommendations-rail-skeleton"
-                />
-            }
-
-            <!-- TMDB trending rail (opt-in; Electron only — needs title matching) -->
-            @if (dashboardRails().tmdbTrending && trendingCards().length > 0) {
-                <lib-dashboard-rail
-                    [label]="'WORKSPACE.DASHBOARD.TMDB_TRENDING' | translate"
-                    [items]="trendingCards()"
-                    [totalCount]="trendingCards().length"
-                    [testId]="'dashboard-tmdb-trending-rail'"
-                    [reserveMetaLine]="true"
-                />
-            } @else if (railSkeletons.tmdbTrending()) {
-                <lib-dashboard-rail-skeleton
-                    testId="dashboard-tmdb-trending-rail-skeleton"
-                />
-            }
+        <lib-home-events />
+        <lib-home-top-movies />
+        <lib-home-series />
+        @if (dashboardRails().recentlyWatchedLive) {
+            <lib-home-recent-channels />
         }
     }
 </section>

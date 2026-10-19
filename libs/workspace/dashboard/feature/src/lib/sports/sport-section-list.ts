@@ -1,7 +1,7 @@
 /**
- * TiagoTV sports: the Home's "Deportes" cards, in the order they show,
- * and the rules that gather each one's channels and matches (applied in
- * sport-sections.ts).
+ * TiagoTV sports: the competitions (the league cards show them in the
+ * order of SPORTS_ROW_ORDER), and the rules that gather each one's
+ * channels and matches (applied in sport-sections.ts).
  *
  * A channel belongs to a section through its category ("|ES| ✪ DAZN LA
  * LIGA"), its own name ("|UK| SKY SPORTS PREMIER LEAGUE"), or, for event
@@ -81,7 +81,7 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
     },
     {
         id: 'laliga',
-        title: 'La Liga',
+        title: 'LaLiga',
         image: 'https://img.uefa.com/imgml/TP/players/1/2027/cutoff/250076574.webp',
         artHeight: 1.23,
         artHeadroom: 0.094,
@@ -198,7 +198,7 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
     },
     {
         id: 'liga-argentina',
-        title: 'Liga Argentina',
+        title: 'Liga Profesional',
         image: `${ART}liga-argentina.webp`,
         artHeight: 1.124,
         artHeadroom: 0.003,
@@ -216,7 +216,7 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
     },
     {
         id: 'libertadores',
-        title: 'Copa Libertadores',
+        title: 'Libertadores',
         image: `${ART}libertadores.webp`,
         artHeight: 1.18,
         artHeadroom: 0.05,
@@ -230,7 +230,7 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
     },
     {
         id: 'hypermotion',
-        title: 'LaLiga Hypermotion',
+        title: 'Hypermotion',
         image: `${ART}hypermotion.webp`,
         artHeight: 1.144,
         artHeadroom: 0.021,
@@ -305,4 +305,25 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
         competition:
             /\bnba\b|liga endesa|\bacb\b|euroleague|euroliga|eurocup|basket\w*|baloncesto/i,
     },
+];
+
+/**
+ * The league cards' order (the Home's and the sports hub's). Motor and
+ * the Eredivisie keep their pages and their matches, without a card.
+ */
+export const SPORTS_ROW_ORDER: readonly SportSectionId[] = [
+    'laliga',
+    'premier-league',
+    'liga-argentina',
+    'champions-league',
+    'europa-league',
+    'libertadores',
+    'mls',
+    'hypermotion',
+    'serie-a',
+    'bundesliga',
+    'ligue-1',
+    'rest-of-world',
+    'tennis',
+    'basketball',
 ];

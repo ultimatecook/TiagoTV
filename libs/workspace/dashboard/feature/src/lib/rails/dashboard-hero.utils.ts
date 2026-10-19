@@ -19,6 +19,9 @@ export interface DashboardHeroSlide extends DashboardHeroArtwork {
     readonly id: string;
     readonly kind: DashboardHeroSlideKind;
     readonly contentType: CollectionContentType;
+    /** The title's playlist and catalog category: its platform's logo. */
+    readonly playlistId: string;
+    readonly categoryId: string;
     readonly title: string;
     /** "Movie" / "Series" / "Live" */
     readonly typeLabelKey: string;

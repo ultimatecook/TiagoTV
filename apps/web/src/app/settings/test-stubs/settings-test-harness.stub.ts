@@ -141,6 +141,11 @@ export class MatSnackBarStub {
 
 export class MockRouter {
     navigate = jest.fn().mockResolvedValue(true);
+    /** The settings rail links its section pages. */
+    createUrlTree = jest.fn((commands: unknown[]) => commands);
+    serializeUrl = jest.fn((commands: unknown[]) =>
+        commands.join('/').replace(/^\/+/, '/')
+    );
 
     navigateByUrl(url: string): string {
         return url;

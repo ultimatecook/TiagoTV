@@ -13,7 +13,7 @@ import {
 } from './country-genres';
 
 /**
- * A country's rows on "Por países": one per meaningful group, its kinds in
+ * A country's rows on "En vivo": one per meaningful group, its kinds in
  * order (see country-genres). A kind's own row ("Deportes", "Noticias")
  * holds the provider's category of that name, the channels of that kind
  * the country's main group mixes in (Argentina's lists ESPN, TN and

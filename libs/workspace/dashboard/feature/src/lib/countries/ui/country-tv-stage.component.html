@@ -1,170 +1,31 @@
 @let selection = tv.selection();
 @let current = tv.playback();
-<div class="stage">
-    <div class="stage__screen" data-test-id="countries-player">
-        @if (current) {
-            <app-web-player-view
-                [playbackSessionKey]="tv.sessionKey()"
-                [streamUrl]="current.streamUrl"
-                [title]="current.title"
-                [playback]="current"
-                [dockable]="!tv.leaving()"
-                (externalFallbackRequested)="tv.openExternally($event)"
-            />
-        } @else if (selection) {
-            <button
-                type="button"
-                class="stage__ready"
-                data-test-id="countries-play"
-                (click)="playSelection()"
-            >
-                <span class="stage__ready-icon" aria-hidden="true">
-                    <mat-icon>play_arrow</mat-icon>
-                </span>
-                <span class="stage__ready-label">{{
-                    (tv.embedded()
-                        ? 'WORKSPACE.COUNTRIES.WATCH'
-                        : 'WORKSPACE.COUNTRIES.WATCH_EXTERNAL'
-                    ) | translate: { name: selection.channel.title }
-                }}</span>
-            </button>
-        }
-    </div>
-
+<div class="rest" aria-hidden="true">
     @if (selection) {
-        @let label = selection.row.label;
-        <div class="info">
-            <div class="info__top">
-                @if (logo(); as logo) {
-                    <div class="info__plate" aria-hidden="true">
-                        <img
-                            [src]="logo"
-                            alt=""
-                            referrerpolicy="no-referrer"
-                            draggable="false"
-                            (error)="logoFailed()"
-                        />
-                    </div>
-                }
-                <div class="info__heading" aria-live="polite">
-                    <p class="info__eyebrow">
-                        @if (current) {
-                            <span class="info__live">
-                                <span class="info__live-dot"></span>
-                                {{ 'WORKSPACE.COUNTRIES.LIVE' | translate }}
-                            </span>
-                        }
-                        <img
-                            class="info__flag"
-                            [src]="selection.country.definition.flag"
-                            alt=""
-                            draggable="false"
-                        />
-                        <span>{{
-                            selection.country.definition.nameKey | translate
-                        }}</span>
-                        <span aria-hidden="true">·</span>
-                        <span class="info__row">{{
-                            label.key
-                                ? (label.key | translate: label.params)
-                                : label.text
-                        }}</span>
-                    </p>
-                    <h2 class="info__title" data-test-id="countries-playing">
-                        {{ selection.channel.title }}
-                    </h2>
-                    @if (selection.channel.subtitle) {
-                        <p class="info__subtitle">
-                            {{ selection.channel.subtitle }}
-                        </p>
-                    }
-                </div>
-            </div>
-
-            <div class="info__bottom">
-                @if (guide.nowNext(); as programmes) {
-                    <dl class="guide">
-                        @if (programmes.now; as now) {
-                            <div class="guide__item">
-                                <dt>
-                                    {{ 'WORKSPACE.COUNTRIES.NOW' | translate }}
-                                    <span class="guide__time">{{
-                                        now.time
-                                    }}</span>
-                                </dt>
-                                <dd>
-                                    <span class="guide__title">{{
-                                        now.title
-                                    }}</span>
-                                    <span class="guide__bar" aria-hidden="true">
-                                        <span
-                                            class="guide__fill"
-                                            [style.width.%]="now.progress"
-                                        ></span>
-                                    </span>
-                                </dd>
-                            </div>
-                        }
-                        @if (programmes.next; as next) {
-                            <div class="guide__item">
-                                <dt>
-                                    {{ 'WORKSPACE.COUNTRIES.NEXT' | translate }}
-                                    <span class="guide__time">{{
-                                        next.time
-                                    }}</span>
-                                </dt>
-                                <dd>
-                                    <span class="guide__title">{{
-                                        next.title
-                                    }}</span>
-                                </dd>
-                            </div>
-                        }
-                    </dl>
-                }
-
-                <div class="info__actions">
-                    @if (copies().length > 1) {
-                        <div
-                            class="copies"
-                            role="group"
-                            [attr.aria-label]="
-                                'WORKSPACE.COUNTRIES.COPIES' | translate
-                            "
-                        >
-                            @for (
-                                entry of copies();
-                                track entry.copy.streamId
-                            ) {
-                                @let on =
-                                    entry.copy.streamId ===
-                                    selection.copy.streamId;
-                                <button
-                                    type="button"
-                                    class="copies__chip"
-                                    [class.copies__chip--on]="on"
-                                    [attr.aria-pressed]="on"
-                                    [attr.data-test-id]="
-                                        'countries-copy-' + entry.copy.streamId
-                                    "
-                                    (click)="tv.playCopy(entry.copy)"
-                                >
-                                    {{ entry.label }}
-                                </button>
-                            }
-                        </div>
-                    }
-                    <button
-                        type="button"
-                        class="info__open"
-                        data-test-id="countries-open-live"
-                        (click)="openLiveView.emit()"
-                    >
-                        <mat-icon aria-hidden="true">live_tv</mat-icon>
-                        {{ 'WORKSPACE.COUNTRIES.OPEN_LIVE' | translate }}
-                    </button>
-                </div>
-            </div>
-        </div>
+        @if (logo(); as logo) {
+            <img
+                class="rest__logo"
+                [src]="logo"
+                alt=""
+                referrerpolicy="no-referrer"
+                draggable="false"
+                (error)="logoFailed()"
+            />
+        } @else {
+            <span class="rest__name">{{ selection.channel.title }}</span>
+        }
     }
 </div>
+
+@if (current) {
+    <app-web-player-view
+        class="player"
+        data-test-id="countries-player"
+        [playbackSessionKey]="tv.sessionKey()"
+        [streamUrl]="current.streamUrl"
+        [title]="current.title"
+        [playback]="current"
+        [dockable]="!tv.leaving()"
+        (externalFallbackRequested)="tv.openExternally($event)"
+    />
+}

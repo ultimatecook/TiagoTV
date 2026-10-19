@@ -1,3 +1,7 @@
+import {
+    channelFamilyName,
+    parseChannelName,
+} from '@iptvnator/portal/shared/util';
 import { categoryLanguageCode } from '@iptvnator/shared/interfaces';
 import {
     competitionChannels,
@@ -233,7 +237,21 @@ function toMatch(
         sectionId,
         liveSince: liveSince === null ? null : new Date(liveSince),
         via: own.length ? [] : offers,
+        channelName: own[0]
+            ? categoryChannelName(own[0].categoryName)
+            : (offers[0]?.name ?? null),
     };
+}
+
+/** "|ES| ✪ PREMIER LEAGUE PPV" → "Premier League PPV", "|ES| ✪ DAZN EVENT" → "DAZN". */
+export function categoryChannelName(categoryName: string): string | null {
+    const name = categoryName
+        .replace(/[✪★☆]/g, ' ')
+        .replace(/\b(solo )?event(o)?s?\b/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const { key } = parseChannelName(name);
+    return key ? channelFamilyName(key, [name]) : null;
 }
 
 /** When the first of its "Live" feeds was so named (ms), if the panel says. */

@@ -247,6 +247,8 @@ export class DashboardHeroSlidesPresenter {
             id: `${source.kind}:${dashboardHeroItemKey(item)}`,
             kind: source.kind,
             contentType: item.type,
+            playlistId: item.playlist_id,
+            categoryId: String(item.category_id ?? ''),
             // "Большая фарма (1 сезон)" → "Большая фарма" only while the
             // episode badge names the season; without a badge the marker is
             // the sole season identity of a per-season catalog entry. A movie
@@ -307,8 +309,9 @@ export class DashboardHeroSlidesPresenter {
 
     /**
      * Resume slides keep the hero's resume handoff (a saved series episode
-     * auto-plays) and offer "Details" as the detail-only way in; discovery
-     * and fallback slides open the detail page; live slides open the channel.
+     * auto-plays) and always offer "Details" as the detail-only way in;
+     * discovery and fallback slides open the detail page; live slides open
+     * the channel.
      */
     private actionsFor(
         source: DashboardHeroSource,
@@ -371,8 +374,8 @@ export class DashboardHeroSlidesPresenter {
                         secondaryAction: null,
                     };
                 }
-                const canResume =
-                    this.data.getRecentItemResumeNavigation(item) !== null;
+                // "Más info" always (the Home's hero offers both): the
+                // detail page without the resume handoff.
                 return {
                     primaryAction: {
                         labelKey: 'WORKSPACE.DASHBOARD.HERO_CONTINUE',
@@ -382,17 +385,13 @@ export class DashboardHeroSlidesPresenter {
                         remainingLabel: formatRemainingLabel(position),
                         testId: 'dashboard-hero-primary-action',
                     },
-                    secondaryAction: canResume
-                        ? {
-                              ...detailsAction(
-                                  link,
-                                  this.data.getRecentItemDetailNavigationState(
-                                      item
-                                  )
-                              ),
-                              testId: 'dashboard-hero-secondary-action',
-                          }
-                        : null,
+                    secondaryAction: {
+                        ...detailsAction(
+                            link,
+                            this.data.getRecentItemDetailNavigationState(item)
+                        ),
+                        testId: 'dashboard-hero-secondary-action',
+                    },
                 };
             }
         }

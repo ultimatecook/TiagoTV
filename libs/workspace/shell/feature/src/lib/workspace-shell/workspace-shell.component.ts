@@ -1,18 +1,18 @@
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import {
-    afterNextRender,
     Component,
     computed,
+    DestroyRef,
     effect,
     ElementRef,
     HostListener,
     inject,
-    Injector,
+    linkedSignal,
     untracked,
     viewChild,
     ChangeDetectionStrategy,
 } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ExternalPlaybackDockComponent } from '@iptvnator/ui/components';
 import {
@@ -26,9 +26,16 @@ import {
 } from '../playlist-drop-overlay';
 import { WorkspaceShellContextSidebarComponent } from './components/workspace-shell-context-sidebar/workspace-shell-context-sidebar.component';
 import { WorkspaceShellImportOverlayComponent } from './components/workspace-shell-import-overlay/workspace-shell-import-overlay.component';
-import { WorkspaceShellNavTabComponent } from './components/workspace-shell-nav-tab/workspace-shell-nav-tab.component';
-import { WorkspaceShellPageControlsComponent } from './components/workspace-shell-page-controls/workspace-shell-page-controls.component';
-import { WorkspaceShellSidebarComponent } from './components/workspace-shell-sidebar/workspace-shell-sidebar.component';
+import {
+    WorkspaceShellTopBarComponent,
+    WorkspaceTopBarSearchMode,
+} from './components/workspace-shell-top-bar/workspace-shell-top-bar.component';
+import {
+    readWorkspaceTopBarPage,
+    resolveWorkspaceTopBarTab,
+    WorkspaceTopBarPage,
+    WorkspaceTopBarTabId,
+} from './components/workspace-shell-top-bar/workspace-top-bar-nav';
 import { WorkspaceShellServerBannerComponent } from './components/workspace-shell-server-banner/workspace-shell-server-banner.component';
 import { LayoutSlideDirective } from './layout-slide.directive';
 import { TrafficLightsClearanceDirective } from './traffic-lights-clearance.directive';
@@ -39,7 +46,7 @@ import { WorkspaceShellHeaderService } from './services/workspace-shell-header.s
 import { WorkspaceShellRouteStateService } from './services/workspace-shell-route-state.service';
 import { WorkspaceShellSearchSyncService } from './services/workspace-shell-search-sync.service';
 import { WorkspaceShellSearchService } from './services/workspace-shell-search.service';
-import { WorkspaceNavSidebarService } from './services/workspace-nav-sidebar.service';
+import { followWorkspaceScroll } from './workspace-scroll-memory';
 import { provideWorkspaceShellCommands } from './services/workspace-shell-commands.provider';
 import { WorkspaceBackGesturesService } from '../workspace-back-gestures/workspace-back-gestures.service';
 import { WorkspaceKeyboardShortcutsService } from '../workspace-keyboard-shortcuts/workspace-keyboard-shortcuts.service';
@@ -61,10 +68,8 @@ import { LIVE_CATEGORIES_POPOVER } from '@iptvnator/portal/shared/util';
         TrafficLightsClearanceDirective,
         WorkspaceShellContextSidebarComponent,
         WorkspaceShellImportOverlayComponent,
-        WorkspaceShellNavTabComponent,
-        WorkspaceShellPageControlsComponent,
         WorkspaceShellServerBannerComponent,
-        WorkspaceShellSidebarComponent,
+        WorkspaceShellTopBarComponent,
     ],
     templateUrl: './workspace-shell.component.html',
     styleUrl: './workspace-shell.component.scss',
@@ -97,36 +102,68 @@ export class WorkspaceShellComponent {
     readonly contextDrawer = inject(WorkspaceShellContextDrawerService);
     /** The bottom mini-player's session, when a page handed a stream over. */
     readonly nowPlaying = inject(NowPlayingDockService);
-    /** The main navigation, hideable to browse with the whole window. */
-    readonly navSidebar = inject(WorkspaceNavSidebarService);
-    private readonly injector = inject(Injector);
     private readonly mpvOverlayVisibility = inject(
         EmbeddedMpvOverlayVisibilityService
     );
-    private readonly pageControls =
-        viewChild<WorkspaceShellPageControlsComponent>('pageControls');
-    private readonly navTab =
-        viewChild<WorkspaceShellNavTabComponent>('navTab');
-    private readonly sidebar =
-        viewChild<WorkspaceShellSidebarComponent>('workspaceSidebar');
-    private readonly sidebarHost = viewChild('workspaceSidebar', {
-        read: ElementRef<HTMLElement>,
-    });
+    private readonly topBar =
+        viewChild<WorkspaceShellTopBarComponent>('topBar');
     private readonly workspaceContent =
         viewChild<ElementRef<HTMLElement>>('workspaceContent');
-    /** Back floats at the top-left of the body (never on the Home). */
-    readonly hasLeadingControls = computed(
-        () => !!this.facade.backTarget() && !this.facade.isDashboardRoute()
+
+    /** The painted corners of the glass window (see the stylesheet). */
+    readonly windowCorners = [
+        'top-left',
+        'top-right',
+        'bottom-left',
+        'bottom-right',
+    ] as const;
+    /** The top bar's view of the current page. */
+    readonly topBarPage = computed(() =>
+        readWorkspaceTopBarPage(this.facade.currentUrl())
     );
-    /** Any floating control: a phone keeps a row for them under the strip. */
-    readonly hasPageControls = computed(
-        () =>
-            this.hasLeadingControls() ||
-            this.facade.hasContextPanelContent() ||
-            !!this.facade.headerShortcut()
-    );
+    /**
+     * The lit tab. A deep page (a title, a channel list) keeps the tab it
+     * was opened from, so the previous value is the input.
+     */
+    readonly activeTab = linkedSignal<
+        WorkspaceTopBarPage,
+        WorkspaceTopBarTabId | null
+    >({
+        source: this.topBarPage,
+        computation: (page, previous) =>
+            resolveWorkspaceTopBarTab(page, previous?.value ?? null),
+    });
+    /**
+     * Back on a deep page. The pages the bar reaches have none, and a
+     * league page has "‹ Deportes" instead.
+     */
+    readonly topBarBack = computed(() => {
+        const page = this.topBarPage();
+        return page.isTabRoot || page.isLeague
+            ? null
+            : this.facade.backTarget();
+    });
+    /**
+     * Buscar filters a page that searches itself (a channel list, Ajustes,
+     * Mi lista); elsewhere it opens the search page, which has its own
+     * field.
+     */
+    readonly searchMode = computed<WorkspaceTopBarSearchMode>(() => {
+        const capability = this.facade.searchCapability();
+        return this.topBarPage().utility !== 'search' &&
+            capability.enabled &&
+            capability.behavior !== 'advanced-only'
+            ? 'inline'
+            : 'page';
+    });
 
     constructor() {
+        followWorkspaceScroll(
+            inject(Router),
+            () => this.workspaceContent()?.nativeElement,
+            inject(DestroyRef)
+        );
+
         // Focus restoration is the closing half of the drawer's focus
         // contract: CdkTrapFocus captures focus into the drawer on open, but
         // deactivating a trap does not restore focus, and the closed drawer
@@ -137,11 +174,11 @@ export class WorkspaceShellComponent {
         effect(() => {
             const open = this.contextDrawer.isOpen();
             if (wasOpen && !open) {
-                // Deferred: the controls are inert while the drawer is open,
-                // and focus() on a still-inert element is silently ignored.
+                // Deferred: the bar is inert while the drawer is open, and
+                // focus() on a still-inert element is silently ignored.
                 // The timeout runs after the render that removes `inert`.
                 setTimeout(() => {
-                    if (this.pageControls()?.focusContextDrawerToggle()) {
+                    if (this.topBar()?.focusContextDrawerToggle()) {
                         return;
                     }
                     // The toggle is gone — a drawer selection navigated to
@@ -151,21 +188,6 @@ export class WorkspaceShellComponent {
                 });
             }
             wasOpen = open;
-        });
-
-        // Hiding the sidebar from inside it inerts the focused control:
-        // focus moves to the pull tab, its way back. The tab keeps focus
-        // across its own toggles; a shortcut that shows the sidebar with
-        // focus nowhere lands on the sidebar's hide control.
-        let wasCollapsed = this.navSidebar.collapsed();
-        effect(() => {
-            const collapsed = this.navSidebar.collapsed();
-            if (collapsed !== wasCollapsed) {
-                wasCollapsed = collapsed;
-                afterNextRender(() => this.moveNavSidebarFocus(collapsed), {
-                    injector: this.injector,
-                });
-            }
         });
 
         // The Embedded MPV native-view video surface is composited outside
@@ -187,6 +209,36 @@ export class WorkspaceShellComponent {
         });
     }
 
+    /**
+     * Buscar where the page does not filter itself: the search page. On it,
+     * Buscar (or find) puts the focus back in the page's own field.
+     */
+    openSearchPage(): void {
+        if (this.topBarPage().utility === 'search') {
+            this.focusPageSearchField();
+            return;
+        }
+        this.facade.openGlobalSearch();
+    }
+
+    /**
+     * The bar floats over the scroller rather than inside it: a wheel over
+     * its capsule or circles still scrolls the page below.
+     */
+    onTopBarWheel(event: WheelEvent): void {
+        const content = this.workspaceContent()?.nativeElement;
+        if (
+            !content ||
+            this.topBarPage().layout !== 'scroll' ||
+            event.ctrlKey ||
+            Math.abs(event.deltaY) <= Math.abs(event.deltaX)
+        ) {
+            return;
+        }
+        const lines = event.deltaMode === WheelEvent.DOM_DELTA_LINE;
+        content.scrollBy({ top: lines ? event.deltaY * 16 : event.deltaY });
+    }
+
     // Typed Event, not KeyboardEvent: Angular types a key-filtered host
     // listener's $event as Event, and only preventDefault is needed here.
     @HostListener('document:keydown.escape', ['$event'])
@@ -204,70 +256,40 @@ export class WorkspaceShellComponent {
         this.contextDrawer.close();
     }
 
-    // One listener per event: Angular keeps only the last @HostListener
-    // declared for the same one.
+    /** Ctrl/Cmd+F (Electron): the bar's search, else the search page. */
     @HostListener('document:keydown', ['$event'])
     onDocumentKeydown(event: KeyboardEvent): void {
-        if (this.handleNavSidebarShortcut(event)) {
-            return;
-        }
         if (
             event.defaultPrevented ||
             !this.facade.isElectron ||
             !isFindShortcut(event) ||
-            // The open drawer is modal: Ctrl/Cmd+F would navigate to global
-            // search behind it (the search input it focuses is inside the
-            // inert sidebar, so the shortcut would act on obscured UI).
+            // The open drawer is modal: Ctrl/Cmd+F would search behind it
+            // (the bar is inert, so the shortcut would act on obscured UI).
             this.contextDrawer.isOpen()
         ) {
             return;
         }
 
-        const sidebar = this.sidebar();
+        const topBar = this.topBar();
         const target = event.target;
-        if (isEditableTarget(target) && !sidebar?.containsSearchInput(target)) {
+        if (isEditableTarget(target) && !topBar?.containsSearchInput(target)) {
             return;
         }
 
         event.preventDefault();
-        // On settings the search already searches the settings, so find
-        // stays on the page instead of leaving for global search.
-        if (!this.facade.isSettingsRoute()) {
-            this.facade.openGlobalSearch(this.facade.searchQuery());
+        // A page that filters itself (a list, Ajustes) keeps the search
+        // here; elsewhere find opens the search page.
+        if (!topBar?.focusSearch({ select: true })) {
+            this.openSearchPage();
         }
-        // The sidebar's field on wide windows; folded to icons, its search
-        // opens beside the rail.
-        setTimeout(() => sidebar?.focusSearchInput({ select: true }));
     }
 
-    /** ⌃⌘S on macOS, Ctrl+Alt+S elsewhere; not while typing. */
-    private handleNavSidebarShortcut(event: KeyboardEvent): boolean {
-        if (
-            event.defaultPrevented ||
-            event.repeat ||
-            !this.navSidebar.isShortcut(event) ||
-            isEditableTarget(event.target) ||
-            this.navSidebar.isPhone() ||
-            this.contextDrawer.isOpen() ||
-            this.nowPlaying.expanded()
-        ) {
-            return false;
-        }
-        event.preventDefault();
-        this.navSidebar.toggle();
-        return true;
-    }
-
-    private moveNavSidebarFocus(collapsed: boolean): void {
-        const active = document.activeElement;
-        const lost = !active || active === document.body;
-        if (collapsed) {
-            if (lost || this.sidebarHost()?.nativeElement.contains(active)) {
-                this.navTab()?.focus();
-            }
-        } else if (lost) {
-            this.sidebar()?.focusHideButton();
-        }
+    private focusPageSearchField(): void {
+        const field = this.workspaceContent()?.nativeElement.querySelector<
+            HTMLInputElement
+        >('input[type="search"], input');
+        field?.focus();
+        field?.select();
     }
 }
 

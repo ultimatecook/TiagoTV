@@ -12,7 +12,7 @@ import { buildXtreamCollectionUid } from '@iptvnator/portal/shared/util';
 import { RuntimeCapabilitiesService, SettingsStore } from '@iptvnator/services';
 import { epgProviderClockMs, type EpgItem } from '@iptvnator/shared/interfaces';
 import { SportsCatalogService } from '../sports/sports-catalog.service';
-import { nowAndNext, type TvNowNext } from './country-tv-epg';
+import { nowAndNext, type TvNowNext, type TvProgramme } from './country-tv-epg';
 import { CountryTvPlayback } from './country-tv-playback';
 
 /** A switch has to settle this long before its guide is asked for. */
@@ -38,10 +38,10 @@ export class CountryTvGuide {
     private readonly resolver = inject(StreamResolverService);
     private readonly settings = inject(SettingsStore);
     private readonly runtime = inject(RuntimeCapabilitiesService);
-    private readonly cache = new Map<
-        number,
-        { items: EpgItem[]; at: number }
-    >();
+    /** Each channel's guide asked for while the page is open. */
+    private readonly cache = signal<
+        ReadonlyMap<number, { items: EpgItem[]; at: number }>
+    >(new Map());
     private readonly guide = signal<{ streamId: number; items: EpgItem[] }>({
         streamId: 0,
         items: [],
@@ -55,13 +55,33 @@ export class CountryTvGuide {
         if (!streamId || guide.streamId !== streamId) {
             return null;
         }
+        return this.programmes(guide.items);
+    });
+
+    /**
+     * What a channel shows now, from a guide already asked for (a channel
+     * played earlier on the page): the cards' programme. Asks for nothing.
+     */
+    nowOn(streamIds: readonly number[]): TvProgramme | null {
+        const cache = this.cache();
+        for (const streamId of streamIds) {
+            const cached = cache.get(streamId);
+            const now = cached ? this.programmes(cached.items)?.now : null;
+            if (now) {
+                return now;
+            }
+        }
+        return null;
+    }
+
+    private programmes(items: readonly EpgItem[]): TvNowNext | null {
         const offset = this.settings.resolvedEpgOffsetMinutes();
         return nowAndNext(
-            guide.items,
+            items,
             epgProviderClockMs(this.clock(), offset),
             offset
         );
-    });
+    }
 
     constructor() {
         const ticker = setInterval(() => this.clock.set(Date.now()), CLOCK_MS);
@@ -87,7 +107,7 @@ export class CountryTvGuide {
     }
 
     private async load(streamId: number, name: string): Promise<void> {
-        const cached = this.cache.get(streamId);
+        const cached = this.cache().get(streamId);
         if (cached && Date.now() - cached.at < GUIDE_TTL_MS) {
             this.guide.set({ streamId, items: cached.items });
             return;
@@ -107,7 +127,9 @@ export class CountryTvGuide {
                 xtreamId: streamId,
             })
             .catch(() => [] as EpgItem[]);
-        this.cache.set(streamId, { items, at: Date.now() });
+        this.cache.update((cache) =>
+            new Map(cache).set(streamId, { items, at: Date.now() })
+        );
         if (this.playback.selection()?.copy.streamId === streamId) {
             this.guide.set({ streamId, items });
         }

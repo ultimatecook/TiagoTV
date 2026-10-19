@@ -9,25 +9,32 @@ import {
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { MetaChipComponent } from '@iptvnator/ui/components';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { injectTranslationTick } from '@iptvnator/services';
+import { PlatformsCatalogService } from '../platforms/platforms-catalog.service';
+import type { StreamingPlatform } from '../platforms/streaming-platforms';
 import { DashboardHeroSlidesPresenter } from './dashboard-hero-slides.presenter';
-import { ratingMatchPercent } from './dashboard-match.utils';
 import { HERO_ROTATION_MS } from './dashboard-hero-slides.utils';
 import type { DashboardHeroSlide } from './dashboard-hero.utils';
+import { heroEyebrowKey, heroMetaParts } from './home-hero.utils';
+import { platformOfCategory } from './home-platform-titles';
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 /**
- * Cinematic dashboard hero: a full-bleed backdrop that rotates between an
- * unfinished title, a favourite channel on air now and a few discovery
- * picks (see `pickDashboardHeroSources`).
+ * The Home's "Seguir viendo" hero: an automatic slider that bleeds up
+ * behind the top bar. Each slide is an unfinished title (then, when
+ * there are few, a channel on air and a few discovery picks; see
+ * `pickDashboardHeroSources`) over its backdrop, or the title-tinted
+ * gradient where it has none: its platform's logo, the title in Bebas,
+ * how far it was watched, Continue and More info.
  *
- * Rotation is driven by the active dot's CSS fill animation: its
- * `animationend` advances the slide, so pausing (hover, focus inside the
- * hero, the pause button) is just `animation-play-state: paused` and resumes
- * where it stopped. With `prefers-reduced-motion` there is no animation and
- * therefore no auto-advance; the dots still switch slides.
+ * Rotation is driven by the active indicator's (invisible) timer
+ * animation: its `animationend` advances the slide, so pausing (pointer or
+ * focus inside the hero, a hidden document) is just
+ * `animation-play-state: paused`, and picking a slide restarts the timer.
+ * With `prefers-reduced-motion` there is no animation and therefore no
+ * auto-advance; the indicators still switch slides.
  *
  * The active slide is tracked by id, so a slide that arrives late (the live
  * slide waits for its EPG answer) never yanks the user off the current one.
@@ -35,26 +42,28 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
  * as tall as its tallest slide and a rotation never resizes it.
  *
  * The hero is a focusable region: ←/→ switch slides, Enter follows the
- * primary action. Rotation also pauses while the document is hidden.
+ * primary action.
  */
 @Component({
     selector: 'lib-dashboard-hero',
-    imports: [MatIcon, MetaChipComponent, RouterLink, TranslatePipe],
+    imports: [MatIcon, RouterLink, TranslatePipe],
     templateUrl: './dashboard-hero.component.html',
     styleUrl: './dashboard-hero.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     // The presenter comes from the page (`lib-workspace-dashboard-rails`),
-    // which also reads it to lay out its first section.
+    // which also reads it to decide whether the hero shows at all.
     host: {
         '[style.--hero-rotation-ms]': 'rotationMs + "ms"',
     },
 })
 export class DashboardHeroComponent {
-    readonly matchPercent = ratingMatchPercent;
-
     readonly presenter = inject(DashboardHeroSlidesPresenter);
+    private readonly platforms = inject(PlatformsCatalogService);
+    private readonly translate = inject(TranslateService);
+    private readonly languageTick = injectTranslationTick();
     readonly slides = this.presenter.slides;
     readonly rotationMs = HERO_ROTATION_MS;
+    readonly eyebrowKey = heroEyebrowKey;
 
     /**
      * The slide on screen, by id. Pinned to the first slide as soon as one
@@ -85,7 +94,6 @@ export class DashboardHeroComponent {
     private readonly hovered = signal(false);
     private readonly focusWithin = signal(false);
     private readonly documentHidden = signal(false);
-    readonly userPaused = signal(false);
     readonly reducedMotion = signal(false);
 
     readonly activeIndex = computed(() => {
@@ -104,14 +112,45 @@ export class DashboardHeroComponent {
     );
 
     readonly paused = computed(
-        () =>
-            this.userPaused() ||
-            this.hovered() ||
-            this.focusWithin() ||
-            this.documentHidden()
+        () => this.hovered() || this.focusWithin() || this.documentHidden()
     );
 
+    /** Each slide's platform, where its catalog category belongs to one. */
+    readonly platformOf = computed(() => {
+        const shelves = this.platforms.shelves() ?? [];
+        const sourceId = this.platforms.source()?._id;
+        const found = new Map<string, StreamingPlatform>();
+        for (const slide of this.slides()) {
+            const platform =
+                slide.playlistId === sourceId
+                    ? platformOfCategory(
+                          shelves,
+                          slide.contentType,
+                          slide.categoryId
+                      )
+                    : null;
+            if (platform) {
+                found.set(slide.id, platform);
+            }
+        }
+        return found;
+    });
+
+    /** "T2·E5 · Quedan 23 min", "Película · Quedan 38 min", per slide. */
+    readonly metaOf = computed(() => {
+        this.languageTick();
+        const translate = (key: string, params?: Record<string, unknown>) =>
+            this.translate.instant(key, params);
+        return new Map(
+            this.slides().map((slide) => [
+                slide.id,
+                heroMetaParts(slide, translate).join(' · '),
+            ])
+        );
+    });
+
     constructor() {
+        void this.platforms.loadShelves();
         if (typeof document !== 'undefined') {
             const onVisibility = () =>
                 this.documentHidden.set(document.visibilityState === 'hidden');
@@ -143,25 +182,12 @@ export class DashboardHeroComponent {
         }
     }
 
-    /** The active dot's fill animation finished: time for the next slide. */
+    /** The active indicator's timer ran out: time for the next slide. */
     onRotationTick(): void {
         if (!this.canRotate() || this.paused()) {
             return;
         }
         this.show((this.activeIndex() + 1) % this.slides().length);
-    }
-
-    togglePaused(): void {
-        if (!this.userPaused()) {
-            this.userPaused.set(true);
-            return;
-        }
-        // An explicit Play wins over the implicit pauses: the pointer and
-        // the focus are on this very button, so they would otherwise keep
-        // the rotation stopped. They re-arm on the next enter / focus move.
-        this.userPaused.set(false);
-        this.hovered.set(false);
-        this.focusWithin.set(false);
     }
 
     setHovered(hovered: boolean): void {
@@ -182,7 +208,7 @@ export class DashboardHeroComponent {
 
     /**
      * On the hero region itself: ←/→ switch slides, Enter follows the
-     * primary action. Buttons and dots inside keep their own keys.
+     * primary action. Buttons and indicators inside keep their own keys.
      */
     onHeroKeydown(event: KeyboardEvent): void {
         if (event.target !== event.currentTarget) {
@@ -209,7 +235,7 @@ export class DashboardHeroComponent {
         }
     }
 
-    /** Roving arrows between the dots, like a tab list. */
+    /** Roving arrows between the indicators, like a tab list. */
     onDotKeydown(event: KeyboardEvent, index: number): void {
         const count = this.slides().length;
         const step =

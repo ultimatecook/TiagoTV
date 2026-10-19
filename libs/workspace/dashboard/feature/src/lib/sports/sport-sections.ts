@@ -1,5 +1,6 @@
 import {
     SPORT_SECTIONS,
+    SPORTS_ROW_ORDER,
     type SportSection,
     type SportSectionId,
 } from './sport-section-list';
@@ -9,6 +10,11 @@ import {
  * in sport-section-list.ts) a match or a channel belongs to.
  */
 export { SPORT_SECTIONS, type SportSection, type SportSectionId };
+
+/** The league cards, in their order (see SPORTS_ROW_ORDER). */
+export const SPORTS_ROW: readonly SportSection[] = SPORTS_ROW_ORDER.map((id) =>
+    SPORT_SECTIONS.find((section) => section.id === id)
+).filter((section): section is SportSection => !!section);
 
 /**
  * Event slots named in another shape ("EC-DAZN 5: ABN AMRO Open | … | Sat
