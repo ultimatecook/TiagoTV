@@ -26,7 +26,8 @@ export const DEFAULT_SETTINGS: Settings = {
     // which it keeps counting after they close.
     streamFormat: StreamFormat.TsStreamFormat,
     openStreamOnDoubleClick: false,
-    language: Language.ENGLISH,
+    // TiagoTV: Spanish until the user picks another language.
+    language: Language.SPANISH,
     showCaptions: false,
     showDashboard: true,
     startupBehavior: StartupBehavior.FirstView,

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
+import { SharpImagePipe } from '../../sharp-image.pipe';
 import type { PlatformLook } from '../platform-design';
 import type { PlatformTitle } from '../platform-titles';
 import type { StreamingPlatform } from '../streaming-platforms';
@@ -20,7 +21,7 @@ import {
  */
 @Component({
     selector: 'lib-platform-carousel',
-    imports: [MatIcon, MatTooltip, TranslatePipe],
+    imports: [MatIcon, MatTooltip, SharpImagePipe, TranslatePipe],
     templateUrl: './platform-carousel.component.html',
     styleUrl: './platform-carousel.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

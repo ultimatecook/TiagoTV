@@ -12,6 +12,7 @@ import { PlatformsCatalogService } from '../platforms-catalog.service';
 import type { PlatformLook, TileDress } from '../platform-design';
 import { genreLabelKey } from '../platform-genres';
 import { languagesLabel, type PlatformTitle } from '../platform-titles';
+import { SharpImagePipe } from '../../sharp-image.pipe';
 import { titleTypeKey } from './platform-hero-slides';
 
 /** TiagoTV's own tile: a poster with its name under it. */
@@ -33,7 +34,7 @@ const POSTER: TileDress = {
  */
 @Component({
     selector: 'lib-platform-title-card',
-    imports: [NgTemplateOutlet, TranslatePipe],
+    imports: [NgTemplateOutlet, SharpImagePipe, TranslatePipe],
     templateUrl: './platform-title-card.component.html',
     styleUrl: './platform-title-card.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,7 +65,18 @@ export class PlatformTitleCardComponent {
             : [title.poster, backdrop];
         const failed = this.failed();
         const url = candidates.find((item) => !!item && !failed.has(item));
-        return url ? { url, cropped: url === title.poster && landscape } : null;
+        if (!url) {
+            return null;
+        }
+        // About as wide as the tile draws (CSS px), for a sharp copy: a
+        // cropped poster fills a 16:9 tile's whole width.
+        const large = this.dress().large;
+        return {
+            url,
+            cropped: url === title.poster && landscape,
+            kind: url === title.poster ? 'poster' : 'backdrop',
+            width: landscape ? (large ? 700 : 420) : large ? 380 : 280,
+        } as const;
     });
     readonly label = computed(() => {
         const rank = this.rank();

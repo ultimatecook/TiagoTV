@@ -11,6 +11,7 @@ import {
     type PlatformShelf,
     type StreamingPlatformId,
 } from '../platforms/streaming-platforms';
+import { CatalogImport } from './catalog-import';
 import { StoredVodCatalog } from './catalog-stored';
 import { toStoredVodCatalog } from './catalog-stored-rows';
 import { CatalogService } from './catalog.service';
@@ -41,6 +42,7 @@ describe('CatalogService', () => {
         titlesOf: jest.Mock;
         loadShelves: jest.Mock;
         loadTitles: jest.Mock;
+        categoryTitles: jest.Mock;
         open: jest.Mock;
     };
     let service: CatalogService;
@@ -79,11 +81,24 @@ describe('CatalogService', () => {
                 );
                 version.update((value) => value + 1);
             }),
+            categoryTitles: jest.fn(async (category) =>
+                toPlatformTitles(category, [
+                    {
+                        series_id: Number(category.id),
+                        name: `Show of ${category.id}`,
+                    },
+                ])
+            ),
             open: jest.fn(),
         };
         TestBed.configureTestingModule({
             providers: [
                 { provide: StoredVodCatalog, useValue: stored },
+                // The browser build: nothing is imported (see the first-run spec).
+                {
+                    provide: CatalogImport,
+                    useValue: { supported: false, ensure: jest.fn() },
+                },
                 { provide: XtreamApiService, useValue: api },
                 { provide: PlatformsCatalogService, useValue: platforms },
             ],
@@ -129,34 +144,50 @@ describe('CatalogService', () => {
         expect(stored.read).toHaveBeenCalledTimes(1);
     });
 
-    it("loads the platforms' own lists one after the other when nothing is stored", async () => {
+    it("asks the platforms' categories one at a time when nothing is stored", async () => {
         stored.read.mockResolvedValue(null);
-        const order: string[] = [];
-        const load = platforms.loadTitles.getMockImplementation() as (
-            id: StreamingPlatformId
-        ) => Promise<void>;
-        platforms.loadTitles.mockImplementation(async (id) => {
-            order.push(`start ${id}`);
-            await load(id);
-            order.push(`end ${id}`);
+        let running = 0;
+        let most = 0;
+        const answer = platforms.categoryTitles.getMockImplementation() as (
+            category: unknown
+        ) => Promise<PlatformTitle[]>;
+        platforms.categoryTitles.mockImplementation(async (category) => {
+            most = Math.max(most, ++running);
+            const titles = await answer(category);
+            running--;
+            return titles;
         });
 
         await service.load('series');
 
-        expect(order).toEqual([
-            'start netflix',
-            'end netflix',
-            'start disney-plus',
-            'end disney-plus',
-        ]);
+        expect(
+            platforms.categoryTitles.mock.calls.map(([category]) => category.id)
+        ).toEqual(['2331', '1720']);
+        expect(most).toBe(1);
+        // A platform's page loads its own lists: none were asked here.
+        expect(platforms.loadTitles).not.toHaveBeenCalled();
         expect(
             service
                 .titles('series')
                 ?.map((title) => [title.title, title.platform.id])
         ).toEqual([
-            ['Show of netflix', 'netflix'],
-            ['Show of disney-plus', 'disney-plus'],
+            ['Show of 2331', 'netflix'],
+            ['Show of 1720', 'disney-plus'],
         ]);
+    });
+
+    it("reuses the lists a platform's page already loaded", async () => {
+        stored.read.mockResolvedValue(null);
+        await platforms.loadTitles('netflix');
+
+        await service.load('series');
+
+        expect(
+            platforms.categoryTitles.mock.calls.map(([category]) => category.id)
+        ).toEqual(['1720']);
+        expect(
+            service.titles('series')?.map((title) => title.platform.id)
+        ).toEqual(['netflix', 'disney-plus']);
     });
 
     it('fails only once nothing loaded and the platforms failed', async () => {

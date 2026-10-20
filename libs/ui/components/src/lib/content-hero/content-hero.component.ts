@@ -15,12 +15,22 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { displayTitle } from '@iptvnator/shared/interfaces';
+import { displayTitle, sharpImageUrl } from '@iptvnator/shared/interfaces';
 import { TranslateModule } from '@ngx-translate/core';
 import { HeroTrailerBackdropComponent } from '../detail-ui/hero-trailer-backdrop.component';
 
 /** `stage` keeps room for a 16:9 backdrop; `compact` is sized by the content. */
 export type ContentHeroLayout = 'stage' | 'compact';
+
+/** The poster card's width (`--poster-width`), with room for a larger one. */
+const POSTER_WIDTH = 240;
+
+/** The backdrop spans the window. */
+function viewportWidth(): number {
+    return typeof window !== 'undefined' && window.innerWidth > 0
+        ? window.innerWidth
+        : 1600;
+}
 
 @Component({
     selector: 'app-content-hero',
@@ -69,6 +79,21 @@ export class ContentHeroComponent {
     readonly backdropImageUrl = computed(() =>
         this.backdropError() ? undefined : this.backdropSourceUrl()
     );
+    /**
+     * The backdrop and the poster at sizes that stay sharp where they are
+     * drawn (a provider's small TMDB copy looked blurry); the blurred
+     * poster backdrop needs no more than it has. Failures keep their URLs.
+     */
+    readonly sharpBackdropUrl = computed(() => {
+        const url = this.backdropImageUrl();
+        return url && !this.usesPosterBackdrop()
+            ? sharpImageUrl(url, 'backdrop', viewportWidth())
+            : url;
+    });
+    readonly sharpPosterUrl = computed(() => {
+        const url = this.posterUrl();
+        return url ? sharpImageUrl(url, 'poster', POSTER_WIDTH) : url;
+    });
     /**
      * No 16:9 backdrop, or the provider sent the poster twice: the poster,
      * blurred and scaled, becomes the backdrop (the sharp copy stays on the

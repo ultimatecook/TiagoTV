@@ -11,6 +11,7 @@ import { posterMeta } from '../catalog/catalog-meta';
 import { CatalogService } from '../catalog/catalog.service';
 import type { CatalogTitle } from '../catalog/catalog-titles';
 import { titleKey } from '../platforms/platform-titles';
+import { SharpImagePipe } from '../sharp-image.pipe';
 import { dashboardHeroHue } from './dashboard-hero.utils';
 import { HomeHeadingComponent } from './home-heading.component';
 import { HomeNearDirective } from './home-near.directive';
@@ -36,7 +37,12 @@ export interface HomeTopMovie {
  */
 @Component({
     selector: 'lib-home-top-movies',
-    imports: [HomeHeadingComponent, HomeNearDirective, TranslatePipe],
+    imports: [
+        HomeHeadingComponent,
+        HomeNearDirective,
+        SharpImagePipe,
+        TranslatePipe,
+    ],
     templateUrl: './home-top-movies.component.html',
     styleUrl: './home-top-movies.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

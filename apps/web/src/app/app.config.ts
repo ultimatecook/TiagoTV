@@ -60,8 +60,9 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
  * and re-rendering once the IDB-backed settings finish loading.
  *
  * The hint is written by AppComponent.initSettings() whenever the saved
- * settings resolve, so first-ever boots fall back to English (no hint
- * present yet) and every subsequent boot uses the saved language.
+ * settings resolve, so first-ever boots fall back to Spanish (no hint
+ * present yet; TiagoTV's default) and every subsequent boot uses the saved
+ * language, whichever it is.
  */
 const SUPPORTED_LANGS = new Set([
     'ar',
@@ -94,7 +95,7 @@ export function getInitialLanguage(): string {
     } catch {
         // localStorage may throw in privacy modes; fall through to default.
     }
-    return 'en';
+    return 'es';
 }
 
 /**

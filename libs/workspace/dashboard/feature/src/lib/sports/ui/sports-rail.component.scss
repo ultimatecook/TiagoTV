@@ -52,6 +52,8 @@
     padding: max(44px, calc((100% - 80px) * 0.0261 + 8px)) var(--tv-page-x) 24px;
     scroll-padding-left: var(--tv-page-x);
     overflow-x: auto;
+    // Sideways only: the wheel's vertical turn scrolls the page.
+    overflow-y: hidden;
     scroll-snap-type: x proximity;
     scrollbar-width: none;
 

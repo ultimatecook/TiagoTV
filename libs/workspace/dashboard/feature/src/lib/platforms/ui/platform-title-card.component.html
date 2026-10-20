@@ -10,7 +10,7 @@
     <span class="card__art">
         @if (art(); as art) {
             <img
-                [src]="art.url"
+                [src]="art.url | sharpImage: art.kind : art.width"
                 [class.card__img--cropped]="art.cropped"
                 alt=""
                 loading="lazy"

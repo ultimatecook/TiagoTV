@@ -66,3 +66,32 @@ describe("the Home's sideways rows", () => {
         expect(geometry).toContain('padding: 10px var(--tv-page-x) 8px;');
     });
 });
+
+/**
+ * The Home's rows scroll sideways only. `overflow-x: auto` alone computes
+ * the other axis to `auto` as well: the Top 10's tall outlined numbers
+ * gave its row some 40px to scroll up and down, which took the wheel's
+ * turn the page should have had.
+ */
+const HOME_SCROLLERS: ReadonlyArray<readonly [file: string, sel: string]> = [
+    ...HOME_ROWS,
+    ['sports/ui/sports-rail.component.scss', '.sports__row {'],
+];
+
+/** The rule's own declarations, up to its first nested block. */
+function ruleBody(file: string, selector: string): string {
+    const source = readFileSync(resolve(__dirname, file), 'utf8');
+    const start = source.indexOf(selector);
+    expect(start).toBeGreaterThanOrEqual(0);
+    const end = source.indexOf('{', start + selector.length);
+    return source.slice(start, end).replace(/\/\/.*$/gm, '');
+}
+
+describe("the Home's rows' scrolling", () => {
+    it.each(HOME_SCROLLERS)('%s never scrolls up and down', (file, sel) => {
+        const body = ruleBody(file, sel);
+
+        expect(body).toContain('overflow-x: auto;');
+        expect(body).toContain('overflow-y: hidden;');
+    });
+});

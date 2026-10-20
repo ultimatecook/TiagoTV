@@ -19,7 +19,7 @@
         @case ('loading') {
             <div class="catalog__loading" role="status">
                 <span class="catalog__note">{{
-                    'WORKSPACE.CATALOG.LOADING' | translate
+                    loadingKey() | translate
                 }}</span>
                 <div class="catalog__skeleton" aria-hidden="true">
                     @for (slot of [1, 2, 3, 4, 5, 6]; track slot) {

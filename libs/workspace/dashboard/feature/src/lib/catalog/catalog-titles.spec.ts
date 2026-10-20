@@ -307,6 +307,16 @@ describe('featuredTitle', () => {
         // Still featured once newer titles pushed it out of the releases.
         expect(featuredTitle(releases, titles, 'movie:3')?.id).toBe(3);
         expect(featuredTitle(releases, titles, 'movie:404')?.id).toBe(1);
+        // Still featured once it shows another of its versions.
+        const merged = titled(7, NETFLIX, 4, {
+            versions: [
+                { id: 7, categoryId: '1610', language: 'ES', title: 'T7' },
+                { id: 9, categoryId: '1125', language: 'EN', title: 'T9' },
+            ],
+        });
+        expect(featuredTitle(releases, [merged, ...titles], 'movie:9')?.id).toBe(
+            7
+        );
         expect(featuredTitle(releases, titles, null)?.id).toBe(1);
         expect(featuredTitle([], [], null)).toBeNull();
     });

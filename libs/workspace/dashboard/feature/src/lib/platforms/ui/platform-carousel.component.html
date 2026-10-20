@@ -19,14 +19,14 @@
                 @if (slide.backdrop; as backdrop) {
                     <img
                         class="carousel__image"
-                        [src]="backdrop"
+                        [src]="backdrop | sharpImage: 'backdrop' : 1920"
                         alt=""
                         referrerpolicy="no-referrer"
                     />
                 } @else if (slide.title.poster; as poster) {
                     <img
                         class="carousel__keyart"
-                        [src]="poster"
+                        [src]="poster | sharpImage: 'poster' : 360"
                         alt=""
                         referrerpolicy="no-referrer"
                     />

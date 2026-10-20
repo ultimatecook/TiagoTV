@@ -24,7 +24,7 @@
                         @if (image) {
                             <img
                                 class="poster__img"
-                                [src]="image"
+                                [src]="image | sharpImage: 'poster' : 200"
                                 alt=""
                                 loading="lazy"
                                 decoding="async"

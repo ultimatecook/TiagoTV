@@ -242,7 +242,7 @@ export class SettingsFormFacade {
         // The switch re-renders every date with the new locale; its data is
         // a lazy chunk that must be registered first, and a newer choice
         // must win over an older one whose data arrives later.
-        void this.dateLocales.use(this.form.value.language ?? Language.ENGLISH);
+        void this.dateLocales.use(this.form.value.language ?? Language.SPANISH);
         this.settingsService.changeTheme(
             this.form.value.theme ?? Theme.SystemTheme
         );

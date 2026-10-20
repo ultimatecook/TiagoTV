@@ -38,10 +38,12 @@ const title = (
 
 describe('CatalogPageComponent', () => {
     const titles = signal<readonly CatalogTitle[] | null>(null);
+    const preparing = signal(false);
     const catalog = {
         source: signal({ _id: 'p1' }),
         titles: jest.fn(() => titles()),
         status: jest.fn(() => (titles() ? 'ready' : 'loading')),
+        preparing: jest.fn(() => preparing()),
         load: jest.fn(() => Promise.resolve()),
         heroLead: jest.fn(() => 0),
         extrasOf: jest.fn(() => null),
@@ -54,6 +56,7 @@ describe('CatalogPageComponent', () => {
 
     beforeEach(() => {
         titles.set(null);
+        preparing.set(false);
         jest.clearAllMocks();
         TestBed.configureTestingModule({
             imports: [CatalogPageComponent, TranslateModule.forRoot()],
@@ -75,6 +78,48 @@ describe('CatalogPageComponent', () => {
         const element: HTMLElement = fixture.nativeElement;
         expect(element.querySelector('[role="status"]')).not.toBeNull();
         expect(element.querySelector('lib-catalog-hero')).toBeNull();
+    });
+
+    it('says the catalog is being prepared while the app imports it', () => {
+        preparing.set(true);
+        const fixture = render();
+        const note = () =>
+            fixture.nativeElement.querySelector('.catalog__note')?.textContent;
+
+        expect(catalog.preparing).toHaveBeenCalledWith('series');
+        expect(note()).toContain('WORKSPACE.CATALOG.PREPARING');
+
+        preparing.set(false);
+        fixture.detectChanges();
+        expect(note()).toContain('WORKSPACE.CATALOG.LOADING');
+    });
+
+    it("keeps its hero while more platforms' lists arrive", () => {
+        jest.useFakeTimers();
+        titles.set([title(1, 'DARK', NETFLIX, ['drama'])]);
+        const fixture = render();
+        const heroTitle = () =>
+            fixture.nativeElement
+                .querySelector('.hero__title')
+                ?.textContent?.trim();
+        jest.advanceTimersByTime(500);
+        expect(heroTitle()).toBe('DARK');
+
+        // HBO Max answers: it now leads "Novedades".
+        titles.set([
+            title(2, 'SUCCESSION', HBO, ['drama']),
+            title(1, 'DARK', NETFLIX, ['drama']),
+        ]);
+        fixture.detectChanges();
+        jest.advanceTimersByTime(500);
+
+        expect(heroTitle()).toBe('DARK');
+        // Only its page is asked for (the service asks once per title).
+        expect(
+            catalog.loadExtras.mock.calls.map(
+                ([featured]: [CatalogTitle]) => featured.id
+            )
+        ).not.toContain(2);
     });
 
     it('features a picked release without leaving the page', () => {

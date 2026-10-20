@@ -3,40 +3,50 @@ import type {
     PortalAddedItem,
 } from '@iptvnator/shared/interfaces';
 import { pickNewReleases, type CatalogTitle } from '../catalog/catalog-titles';
+import type { HeroBackdropTitle } from './home-hero-backdrops.service';
 
-/** Of each kind: more than the hero's places, for the ones already shown. */
+/** Of each kind: more than the hero's places, for those without a backdrop. */
 const HERO_CATALOG_TITLES = 6;
 
 /**
- * The Home hero's discovery slides ("Recién agregado"), from Series /
+ * The Home hero's discovery candidates ("Recién agregado"), from Series /
  * Películas' catalog (`CatalogService`): one title per show, in Spanish
  * where it has a Spanish version, the platforms taking turns
  * (`pickNewReleases`, led by the session's `lead`), movies and series in
  * turn. The provider's raw newest rows would feature one platform's batch
  * of uploads, in English beside the Spanish title the rows below show.
+ * Only those with a backdrop are featured (`HomeHeroBackdropsService`).
  */
-export function catalogHeroItems(
+export function catalogHeroCandidates(
     movies: readonly CatalogTitle[] | null,
     series: readonly CatalogTitle[] | null,
-    playlist: PlaylistMeta | null,
     lead: number
-): PortalAddedItem[] {
-    if (!playlist) {
-        return [];
-    }
+): CatalogTitle[] {
     const lists = [movies, series].map((titles) =>
         pickNewReleases(titles ?? [], HERO_CATALOG_TITLES, lead)
     );
-    const items: PortalAddedItem[] = [];
+    const candidates: CatalogTitle[] = [];
     for (let index = 0; index < HERO_CATALOG_TITLES; index++) {
         for (const list of lists) {
             const title = list[index];
             if (title) {
-                items.push(toAddedItem(title, playlist));
+                candidates.push(title);
             }
         }
     }
-    return items;
+    return candidates;
+}
+
+/** The featured titles as the hero's added rows, with their backdrops. */
+export function catalogHeroItems(
+    featured: readonly HeroBackdropTitle[],
+    playlist: PlaylistMeta | null
+): PortalAddedItem[] {
+    return playlist
+        ? featured.map(({ title, backdrop }) =>
+              toAddedItem({ ...title, backdrop }, playlist)
+          )
+        : [];
 }
 
 function toAddedItem(

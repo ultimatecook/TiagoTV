@@ -2338,6 +2338,7 @@
             "DURATION_M": "{{minutes}} min",
             "ON_PLATFORM": "En {{platform}}",
             "LOADING": "Cargando el catálogo de tus plataformas…",
+            "PREPARING": "Preparando tu catálogo… La primera vez puede tardar unos minutos.",
             "NO_SOURCE": "Agregá una fuente Xtream para ver acá el catálogo de tus plataformas.",
             "FAILED": "No se pudo cargar el catálogo. Probá de nuevo en un rato.",
             "EMPTY_SERIES": "Ninguna de tus plataformas tiene series todavía.",

@@ -26,6 +26,8 @@
     padding: 10px var(--tv-page-x) 8px;
     list-style: none;
     overflow-x: auto;
+    // Sideways only: the wheel's vertical turn scrolls the page.
+    overflow-y: hidden;
     scroll-padding: 0 var(--tv-page-x);
     scroll-snap-type: x proximity;
     scrollbar-width: none;

@@ -10,23 +10,43 @@
     min-width: 0;
 }
 
+// The places are sized from the section's width (`cqi`): about four and a
+// half in view, each a 2:3 poster (≈ 250px at the design's 1512px) and its
+// number. The number and the overlap follow the poster, so every poster is
+// as wide whether its number is "1" or "10".
 .top {
+    --top-per-view: 4.6;
+    --top-gap: 16px;
+    --top-place: calc(
+        (100cqi - (var(--top-per-view) - 1) * var(--top-gap)) /
+            var(--top-per-view)
+    );
+    // A place is its poster, its number (0.36 of the number's size for a
+    // "1") and the overlap given back: 1.18 posters.
+    --top-poster: calc(var(--top-place) / 1.18);
+
     display: flex;
     flex-direction: column;
     gap: var(--tv-title-gap);
+    container-type: inline-size;
 }
 
 .top__row {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: calc((100% - 48px) / 3.6);
-    gap: 16px;
+    grid-auto-columns: max-content;
+    gap: var(--top-gap);
     // The top padding holds a lifted card's focus ring (the scroller clips
     // at its edge); the negative margin gives the room back to the layout.
     margin: -6px calc(-1 * var(--tv-page-x)) 0;
     padding: 10px var(--tv-page-x) 8px;
     list-style: none;
     overflow-x: auto;
+    // Sideways only. With `overflow-x: auto` alone the other axis computes
+    // to `auto` too, and the numbers' tall glyph boxes gave the row a few
+    // pixels to scroll up and down, which caught the wheel's turn the page
+    // should take.
+    overflow-y: hidden;
     scroll-padding: 0 var(--tv-page-x);
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
@@ -71,10 +91,11 @@
 
 .top__rank {
     flex: none;
-    margin-right: -22px;
+    // The design's 220px number beside a 318px poster, and its 22px tuck.
+    margin-right: calc(var(--top-poster) * -0.07);
     color: rgba(255, 255, 255, 0.04);
     font-family: var(--tv-font-display);
-    font-size: 220px;
+    font-size: calc(var(--top-poster) * 0.69);
     font-weight: 400;
     line-height: 0.74;
     letter-spacing: -0.04em;
@@ -86,8 +107,8 @@
     position: relative;
     z-index: 1;
     display: block;
-    flex: 1;
-    min-width: 0;
+    flex: none;
+    width: var(--top-poster);
     aspect-ratio: 2 / 3;
     overflow: hidden;
     box-sizing: border-box;
@@ -126,9 +147,9 @@
 
 .top__info {
     position: absolute;
-    right: 18px;
-    bottom: 18px;
-    left: 18px;
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -156,7 +177,7 @@
 .top__title {
     color: var(--tv-text-on-image);
     font-family: var(--tv-font-display);
-    font-size: 38px;
+    font-size: clamp(22px, calc(var(--top-poster) * 0.12), 38px);
     font-weight: 400;
     line-height: 0.9;
     letter-spacing: 0.01em;
@@ -169,7 +190,7 @@
     display: flex;
     flex-wrap: wrap;
     color: var(--tv-text-2);
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 600;
 
     span + span::before {
@@ -181,12 +202,8 @@
 @include shimmer.keyframes;
 
 @media (max-width: 900px) {
-    .top__row {
-        grid-auto-columns: calc((100% - 16px) / 1.6);
-    }
-
-    .top__rank {
-        font-size: 160px;
+    .top {
+        --top-per-view: 2.2;
     }
 }
 

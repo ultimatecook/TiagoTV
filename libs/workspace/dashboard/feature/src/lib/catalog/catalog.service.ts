@@ -5,18 +5,25 @@ import type { PlaylistMeta } from '@iptvnator/shared/interfaces';
 import { PlatformsCatalogService } from '../platforms/platforms-catalog.service';
 import { xtreamSourceCredentials } from '../xtream-source';
 import { catalogExtras, type CatalogExtras } from './catalog-extras';
+import { CatalogImport } from './catalog-import';
+import { CatalogPlatformLists } from './catalog-platform-lists';
 import { StoredVodCatalog } from './catalog-stored';
 import { storedPlatformLists, withKnownGenres } from './catalog-stored-rows';
 import {
     aggregateCatalog,
     type CatalogKind,
     type CatalogTitle,
-    type PlatformTitleList,
 } from './catalog-titles';
 
 /** The stored copy changes with the app's imports, not by the minute. */
 const FRESH_MS = 10 * 60 * 1000;
 const OPTIONS = { suppressErrorLog: true };
+/**
+ * From the platforms' own lists, the page shows nothing until this many
+ * platforms answered (or all, where fewer carry the kind): never one
+ * platform's titles as if they were the whole catalog.
+ */
+export const MIN_ANSWERED_PLATFORMS = 3;
 
 interface StoredTitles {
     readonly playlistId: string;
@@ -30,15 +37,19 @@ export type CatalogStatus = 'no-source' | 'loading' | 'ready' | 'failed';
 /**
  * Series / Películas: the titles of every platform the source carries,
  * one catalog per kind. Read from the catalog the app already stored
- * (`StoredVodCatalog`), so opening the page asks the provider nothing;
- * where nothing is stored yet, from the platforms' own lists, which
- * `PlatformsCatalogService` loads (one platform after the other) and keeps
- * for the platform pages too. A title's page is asked once, for the hero.
+ * (`StoredVodCatalog`), so opening the page asks the provider nothing.
+ * Where nothing is stored yet, Electron imports the kind first, as the
+ * Xtream views would (`CatalogImport`), and reads it then; the browser
+ * build, or a failed import, takes the platforms' own lists
+ * (`CatalogPlatformLists`, the platforms taking turns), shown once several
+ * platforms answered. A title's page is asked once, for the hero.
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
     private readonly platforms = inject(PlatformsCatalogService);
     private readonly stored = inject(StoredVodCatalog);
+    private readonly importer = inject(CatalogImport);
+    private readonly lists = inject(CatalogPlatformLists);
     private readonly api = inject(XtreamApiService);
 
     private readonly storedTitles = signal<
@@ -49,7 +60,10 @@ export class CatalogService {
         new Set()
     );
     private readonly busy = signal<ReadonlySet<CatalogKind>>(new Set());
+    /** The kinds waiting on their first import (Electron). */
+    private readonly importing = signal<ReadonlySet<CatalogKind>>(new Set());
     private readonly requests = new Map<CatalogKind, Promise<void>>();
+    private readonly storedReads = new Map<string, Promise<boolean>>();
     private readonly loadedExtras = signal<ReadonlyMap<string, CatalogExtras>>(
         new Map()
     );
@@ -75,9 +89,17 @@ export class CatalogService {
         if (this.titles(kind) !== null) {
             return 'ready';
         }
-        return this.busy().has(kind) || !this.platforms.failed()
+        return this.busy().has(kind) || !this.failed(kind)
             ? 'loading'
             : 'failed';
+    }
+
+    /**
+     * Whether the kind is still loading because the app is importing it
+     * for the first time: "Preparando tu catálogo…", which takes longer.
+     */
+    preparing(kind: CatalogKind): boolean {
+        return this.importing().has(kind) && this.titles(kind) === null;
     }
 
     load(kind: CatalogKind): Promise<void> {
@@ -97,19 +119,18 @@ export class CatalogService {
     }
 
     /**
-     * The stored copy alone, never the platforms' lists, so it asks the
-     * provider nothing: the Home's hero features the catalog's titles when
-     * the app keeps them, and leaves the lists to the sections that load.
+     * The stored copy alone, never an import or the platforms' lists, so
+     * it asks the provider nothing and does not wait for them: the Home's
+     * hero features the catalog's titles when the app keeps them (or once
+     * a section's import stored them), and leaves the rest to the sections
+     * that load.
      */
     loadStored(kind: CatalogKind): Promise<void> {
         const source = this.source();
         if (!source || this.isFresh(kind, source._id)) {
             return Promise.resolve();
         }
-        return (
-            this.requests.get(kind) ??
-            this.readStored(kind, source).then(() => undefined)
-        );
+        return this.readStoredOnce(kind, source).then(() => undefined);
     }
 
     /**
@@ -173,42 +194,77 @@ export class CatalogService {
         if (stored?.playlistId === source._id) {
             return stored.titles;
         }
-        if (!this.fromPlatforms().has(kind)) {
+        // While the import runs, lists the platform pages already loaded
+        // may show, on the same terms; nothing is asked for them.
+        if (!this.fromPlatforms().has(kind) && !this.importing().has(kind)) {
             return null;
         }
-        const lists: PlatformTitleList[] = [];
-        for (const shelf of this.platforms.shelves() ?? []) {
-            const titles = this.platforms.titlesOf(shelf.platform.id);
-            if (titles) {
-                lists.push({ platform: shelf.platform, titles });
-            }
+        const view = this.lists.view(kind);
+        const busy = this.busy().has(kind);
+        if (
+            busy &&
+            view.answered < Math.min(MIN_ANSWERED_PLATFORMS, view.total)
+        ) {
+            return null;
         }
-        const titles = aggregateCatalog(lists, kind);
+        const titles = aggregateCatalog(view.lists, kind);
         // None yet: the platforms are still loading, failed, or carry none.
-        return titles.length > 0 ||
-            (!this.busy().has(kind) && !this.platforms.failed())
+        return titles.length > 0 || (!busy && !this.failed(kind))
             ? titles
             : null;
     }
 
+    private failed(kind: CatalogKind): boolean {
+        return (
+            this.platforms.failed() ||
+            (this.fromPlatforms().has(kind) && this.lists.view(kind).failed > 0)
+        );
+    }
+
     private async read(kind: CatalogKind, source: PlaylistMeta): Promise<void> {
         this.busy.update((kinds) => new Set(kinds).add(kind));
-        if (await this.readStored(kind, source)) {
+        if (await this.readStoredOnce(kind, source)) {
             return;
         }
-        // Nothing stored: each platform's lists in turn, never all at once.
         this.storedTitles.update((state) => {
             const next = new Map(state);
             next.delete(kind);
             return next;
         });
-        this.fromPlatforms.update((kinds) => new Set(kinds).add(kind));
-        await this.platforms.loadShelves();
-        for (const shelf of this.platforms.shelves() ?? []) {
-            if (shelf.categories.some((category) => category.kind === kind)) {
-                await this.platforms.loadTitles(shelf.platform.id);
+        if (this.importer.supported) {
+            this.importing.update((kinds) => new Set(kinds).add(kind));
+            try {
+                const imported = await this.importer.ensure(
+                    source._id,
+                    xtreamSourceCredentials(source),
+                    kind
+                );
+                if (imported && (await this.readStored(kind, source))) {
+                    return;
+                }
+            } finally {
+                this.importing.update((kinds) => without(kinds, kind));
             }
         }
+        // Not stored and not imported: the platforms' lists, in turns.
+        this.fromPlatforms.update((kinds) => new Set(kinds).add(kind));
+        await this.lists.load(kind);
+    }
+
+    /** One stored read of the kind at a time, shared by its callers. */
+    private readStoredOnce(
+        kind: CatalogKind,
+        source: PlaylistMeta
+    ): Promise<boolean> {
+        const key = `${source._id}:${kind}`;
+        let read = this.storedReads.get(key);
+        if (!read) {
+            read = this.readStored(kind, source).finally(() =>
+                this.storedReads.delete(key)
+            );
+            this.storedReads.set(key, read);
+        }
+        return read;
     }
 
     /** Whether the stored copy had titles of the kind, now kept. */

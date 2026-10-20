@@ -13,6 +13,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { genreLabelKey } from '../../platforms/platform-genres';
 import { titleKey } from '../../platforms/platform-titles';
 import { PlatformLogoComponent } from '../../platforms/ui/platform-logo.component';
+import { SharpImagePipe } from '../../sharp-image.pipe';
 import { posterMeta } from '../catalog-meta';
 import type { CatalogRow, CatalogTitle } from '../catalog-titles';
 import { CatalogService } from '../catalog.service';
@@ -30,7 +31,12 @@ const NEAR_MARGIN = '900px';
  */
 @Component({
     selector: 'lib-catalog-row',
-    imports: [CatalogStripComponent, PlatformLogoComponent, TranslatePipe],
+    imports: [
+        CatalogStripComponent,
+        PlatformLogoComponent,
+        SharpImagePipe,
+        TranslatePipe,
+    ],
     templateUrl: './catalog-row.component.html',
     styleUrl: './catalog-row.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

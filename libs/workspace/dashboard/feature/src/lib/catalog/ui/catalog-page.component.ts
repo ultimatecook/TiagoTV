@@ -66,6 +66,12 @@ export class CatalogPageComponent {
             ? 'WORKSPACE.CATALOG.MOVIES'
             : 'WORKSPACE.CATALOG.SERIES'
     );
+    /** A first import takes longer than a read: the page says which. */
+    readonly loadingKey = computed(() =>
+        this.catalog.preparing(this.kind())
+            ? 'WORKSPACE.CATALOG.PREPARING'
+            : 'WORKSPACE.CATALOG.LOADING'
+    );
 
     constructor() {
         effect(() => {
@@ -74,9 +80,17 @@ export class CatalogPageComponent {
             this.catalog.source();
             untracked(() => void this.catalog.load(kind));
         });
-        // Its page once a title stays featured a moment: while the
-        // platforms' lists arrive one after the other, the first release
-        // may change a few times.
+        // The first title featured stays until another is picked: while
+        // the platforms' lists arrive, "Novedades" reshuffles (another
+        // platform may lead it), and a hero swapping titles would ask the
+        // provider for each one's page.
+        effect(() => {
+            const title = this.featured();
+            if (title && titleKey(title) !== untracked(this.featuredKey)) {
+                this.featuredKey.set(titleKey(title));
+            }
+        });
+        // Its page once a title stays featured a moment.
         effect((onCleanup) => {
             const title = this.featured();
             if (title) {

@@ -21,6 +21,7 @@ import {
     buildGenreCategories,
     buildPlatformShelves,
     type PlatformCatalogCategory,
+    type PlatformCategory,
     type PlatformShelf,
     type StreamingPlatformId,
 } from './streaming-platforms';
@@ -160,26 +161,9 @@ export class PlatformsCatalogService {
         }
         let request = this.titleRequests.get(id);
         if (!request) {
-            const credentials = xtreamSourceCredentials(source);
-            const options = (categoryId: string) => ({
-                ...OPTIONS,
-                categoryId,
-            });
             request = Promise.all(
-                shelf.categories.map(async (category) =>
-                    toPlatformTitles(
-                        category,
-                        category.kind === 'movie'
-                            ? await this.api.getVodStreams(
-                                  credentials,
-                                  options(category.id)
-                              )
-                            : await this.api.getSeriesStreams(
-                                  credentials,
-                                  options(category.id)
-                              ),
-                        catalog.genreCategories
-                    )
+                shelf.categories.map((category) =>
+                    this.categoryTitles(category)
                 )
             )
                 .then((lists) => {
@@ -197,6 +181,31 @@ export class PlatformsCatalogService {
             this.titleRequests.set(id, request);
         }
         return request;
+    }
+
+    /**
+     * One of the platforms' categories, asked now (one request): what
+     * Series / Películas load, category by category, while the app keeps
+     * no catalog. Not kept here: a platform's page loads all its own.
+     */
+    async categoryTitles(
+        category: PlatformCategory
+    ): Promise<PlatformTitle[]> {
+        const source = this.source();
+        if (!source) {
+            return [];
+        }
+        const credentials = xtreamSourceCredentials(source);
+        const options = { ...OPTIONS, categoryId: category.id };
+        const items =
+            category.kind === 'movie'
+                ? await this.api.getVodStreams(credentials, options)
+                : await this.api.getSeriesStreams(credentials, options);
+        return toPlatformTitles(
+            category,
+            items,
+            this.catalog()?.genreCategories
+        );
     }
 
     /** The synopsis and backdrop of a hero title, once fetched. */

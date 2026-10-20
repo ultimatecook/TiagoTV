@@ -11,6 +11,7 @@ import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { titleKey } from '../../platforms/platform-titles';
 import { PlatformLogoComponent } from '../../platforms/ui/platform-logo.component';
+import { SharpImagePipe } from '../../sharp-image.pipe';
 import { heroMeta } from '../catalog-meta';
 import type { CatalogKind, CatalogTitle } from '../catalog-titles';
 import { CatalogService } from '../catalog.service';
@@ -32,6 +33,7 @@ let nextId = 0;
         CatalogStripComponent,
         MatIcon,
         PlatformLogoComponent,
+        SharpImagePipe,
         TranslatePipe,
     ],
     templateUrl: './catalog-hero.component.html',

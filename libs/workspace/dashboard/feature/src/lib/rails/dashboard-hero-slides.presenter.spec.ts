@@ -11,6 +11,7 @@ import type {
     PortalRecentItem,
 } from '@iptvnator/shared/interfaces';
 import { DashboardDataService } from '@iptvnator/workspace/dashboard/data-access';
+import type { CatalogExtras } from '../catalog/catalog-extras';
 import { CatalogService } from '../catalog/catalog.service';
 import type { CatalogTitle } from '../catalog/catalog-titles';
 import {
@@ -28,6 +29,7 @@ import {
 import type { DashboardHeroLiveCandidate } from './dashboard-hero-slides.utils';
 import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
 import type { DashboardLiveEpgDetails } from './dashboard-live-epg.utils';
+import { HERO_IMAGE_CHECK } from './home-hero-backdrops.service';
 
 const series: PortalRecentItem = {
     id: 1,
@@ -71,6 +73,7 @@ const favoriteFilm: PortalFavoriteItem = {
     category_id: '9',
     xtream_id: 44,
     release_year: 2023,
+    backdrop_url: 'https://img/burnley-wide.jpg',
     added_at: '2026-08-02',
 };
 const import1: PortalAddedItem = {
@@ -110,6 +113,10 @@ describe('DashboardHeroSlidesPresenter', () => {
     let catalogMovies: ReturnType<typeof signal<CatalogTitle[] | null>>;
     let catalogSource: ReturnType<typeof signal<{ _id: string } | null>>;
     let loadStored: jest.Mock;
+    let catalogPages: ReturnType<
+        typeof signal<ReadonlyMap<number, CatalogExtras>>
+    >;
+    let loadExtras: jest.Mock;
     const positions = new Map<string | number, PlaybackPositionData>([
         [
             1,
@@ -196,7 +203,15 @@ describe('DashboardHeroSlidesPresenter', () => {
                             kind === 'movie' ? catalogMovies() : null,
                         heroLead: () => 0,
                         loadStored,
+                        extrasOf: (title: CatalogTitle) =>
+                            catalogPages().get(title.id) ?? null,
+                        loadExtras,
                     },
+                },
+                // The backdrop finder's image load: jsdom loads none.
+                {
+                    provide: HERO_IMAGE_CHECK,
+                    useValue: () => Promise.resolve(true),
                 },
                 {
                     provide: DashboardLiveEpgPresenter,
@@ -247,11 +262,33 @@ describe('DashboardHeroSlidesPresenter', () => {
         catalogMovies = signal(null);
         catalogSource = signal(null);
         loadStored = jest.fn().mockResolvedValue(undefined);
+        catalogPages = signal(new Map());
+        loadExtras = jest.fn();
     });
 
     afterEach(() => {
         jest.useRealTimers();
     });
+
+    /** Effects and the backdrop finder's steps, a few rounds. */
+    async function settle(): Promise<void> {
+        for (let round = 0; round < 6; round++) {
+            TestBed.tick();
+            await Promise.resolve();
+            await Promise.resolve();
+        }
+    }
+
+    function page(backdrop: string | null): CatalogExtras {
+        return {
+            plot: null,
+            backdrop,
+            genres: [],
+            year: null,
+            minutes: null,
+            seasons: null,
+        };
+    }
 
     it('leaves unavailable saved films in the collection rather than promoting them to a playable hero', () => {
         favorites.set([{ ...favoriteFilm, catalogStatus: 'missing' }]);
@@ -460,6 +497,12 @@ describe('DashboardHeroSlidesPresenter', () => {
     it('features the catalog’s titles, in Spanish, over the raw newest rows', async () => {
         // The provider's newest row is the English copy of a Spanish title.
         addedItems.set([{ ...import1, title: 'EXTRACTION (2020)_ENG' }]);
+        // The stored row has a poster only: its page gives the backdrop.
+        loadExtras.mockImplementation((title: CatalogTitle) =>
+            catalogPages.update((pages) =>
+                new Map(pages).set(title.id, page('https://img/rake-wide.jpg'))
+            )
+        );
         const netflix = findStreamingPlatform('netflix') as StreamingPlatform;
         const rake: CatalogTitle[] = [
             {
@@ -502,18 +545,81 @@ describe('DashboardHeroSlidesPresenter', () => {
         expect(loadStored.mock.calls).toEqual([['movie'], ['series']]);
         expect(presenter.loading()).toBe(true);
         read();
-        await Promise.resolve();
-        await Promise.resolve();
+        await settle();
 
         expect(presenter.loading()).toBe(false);
+        expect(loadExtras).toHaveBeenCalledTimes(1);
         expect(presenter.slides().map((slide) => slide.title)).toEqual([
             'TYLER RAKE',
         ]);
         expect(presenter.slides()[0]).toMatchObject({
             kind: 'added',
+            backdropSource: 'backdrop',
+            backdropUrl: 'https://img/rake-wide.jpg',
             rating: '6.8',
             year: 2020,
             primaryAction: { link: ['/added', '77'] },
+        });
+    });
+
+    it('never features a discovery title on its poster: no backdrop, no slide', async () => {
+        // FAUDA's stored row and its page name no backdrop.
+        const netflix = findStreamingPlatform('netflix') as StreamingPlatform;
+        catalogMovies.set([
+            {
+                id: 78,
+                kind: 'movie',
+                categoryId: '1610',
+                title: 'FAUDA',
+                poster: 'https://img/fauda.jpg',
+                language: 'ES',
+                added: 1_760_000_000,
+                genres: [],
+                rating: null,
+                plot: null,
+                backdrop: null,
+                tmdb: null,
+                year: 2015,
+                versions: [],
+                platform: netflix,
+                platforms: [netflix],
+            },
+        ]);
+        catalogSource.set({ _id: 'p3' });
+        recentItems.set([]);
+        favorites.set([{ ...favoriteFilm, backdrop_url: undefined }]);
+        candidates.set([]);
+        const presenter = create();
+        await settle();
+
+        // Asked for its page, and the skeleton waits for the answer.
+        expect(loadExtras).toHaveBeenCalledTimes(1);
+        expect(presenter.loading()).toBe(true);
+
+        catalogPages.set(new Map([[78, page(null)]]));
+        await settle();
+
+        // Nothing stands on a real backdrop: no hero rather than a poster
+        // on the tinted stage (the favourite has none either).
+        expect(presenter.slides()).toEqual([]);
+        expect(presenter.loading()).toBe(false);
+    });
+
+    it('leaves a discovery slide whose backdrop fails to load out of the rotation', () => {
+        const presenter = create();
+        expect(presenter.slides().map((slide) => slide.kind)).toContain(
+            'added'
+        );
+
+        presenter.markImageFailed('https://img/parallel-wide.jpg');
+
+        expect(presenter.slides().map((slide) => slide.kind)).not.toContain(
+            'added'
+        );
+        // A resume slide keeps its poster look.
+        expect(presenter.slides()[0]).toMatchObject({
+            kind: 'continue',
+            backdropSource: 'poster',
         });
     });
 
@@ -585,7 +691,9 @@ describe('DashboardHeroSlidesPresenter', () => {
     });
 
     it('opens a finished fallback title on its details, never "Continue"', () => {
-        recentItems.set([watchedMovie]);
+        recentItems.set([
+            { ...watchedMovie, backdrop_url: 'https://img/finished-wide.jpg' },
+        ]);
         favorites.set([]);
         addedItems.set([]);
         candidates.set([]);

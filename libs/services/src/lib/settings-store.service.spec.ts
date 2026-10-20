@@ -691,7 +691,8 @@ describe('SettingsStore storage failure reporting', () => {
         await initialLoad;
 
         expect(store.storageFailure()).toBe('load');
-        expect(store.getSettings().language).toBe(Language.ENGLISH);
+        // TiagoTV's default language: Spanish.
+        expect(store.getSettings().language).toBe(Language.SPANISH);
     });
 
     it('flags a failed save and rethrows instead of silently keeping the in-memory change', async () => {

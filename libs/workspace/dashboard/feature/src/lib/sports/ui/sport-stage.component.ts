@@ -18,6 +18,7 @@ import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { WebPlayerViewComponent } from '@iptvnator/ui/playback';
 import { CountryTvControls } from '../../countries/country-tv-controls';
+import { OVERLAY_IDLE_MS } from '../../countries/country-tv-idle';
 import { liveKeyAction, onLivePage } from '../../countries/country-tv-keys';
 import type { SignalCard } from '../signal-cards';
 import type { SportSection } from '../sport-sections';
@@ -26,7 +27,7 @@ import { SportTvPlayback } from '../sport-tv-playback';
 import { SportSignalCardComponent } from './sport-signal-card.component';
 
 /** In full screen, the overlay steps aside after this long without a move. */
-const IDLE_MS = 3500;
+const IDLE_MS = OVERLAY_IDLE_MS;
 
 /**
  * The top of a competition's page: its channel playing across the whole

@@ -70,7 +70,8 @@ Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
    platform's logo when its catalog category belongs to one
    (`platformOfCategory`, `rails/home-platform-titles.ts`). Gated by
    `dashboardRails().hero`, and rendered only while it has slides or its
-   skeleton.
+   skeleton: with nothing to feature over a real backdrop there is no
+   hero.
 2. Platforms — `platforms/ui/platforms-rail.component.*`
    (`PlatformsCatalogService.shelves()`, from the stored category lists).
 3. Sports — `sports/ui/sports-rail.component.*` (the sports views' card row).
@@ -88,12 +89,22 @@ Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
    `rails/home-top-movies.*`, `rails/home-series.*` over
    `HomePlatformTitlesService`: the platforms' aggregated catalog
    (`CatalogService.titles`, the stored catalog first — no provider
-   request — and, only when nothing is stored, the platforms' own lists in
-   turn), ranked by `rankTopMovies` and `pickSeriesForYou` with the day's
-   seed. Nothing is read until a section comes within 400px of the
+   request — and, only when nothing is stored, the same first-run import
+   in Electron or the platforms' lists in turns, shared with Series /
+   Películas: see Series and Movies Catalog), ranked by `rankTopMovies`
+   and `pickSeriesForYou` with the day's seed. Nothing is read until a
+   section comes within 400px of the
    scroller's view (`HomeNearDirective`). Meta lines are the catalog's
    (`posterMeta`, `heroMeta`); the featured show's page is asked once for
-   its seasons (`CatalogService.loadExtras`). Series badges come only from
+   its seasons (`CatalogService.loadExtras`). The Home asks title pages one
+   at a time, the hero's and this section's in one queue
+   (`HomeTitlePagesService`): the provider allows one connection. The Top
+   10's places are sized from the section's width (`container-type:
+   inline-size`, `100cqi`): about 4.6 in view, every poster as wide
+   (≈ 250px at the design's 1512px) with its outlined number scaled to it;
+   the row is tracked by place, since a snapping row re-snaps to the element
+   it rested on and followed the first title one place in when the ranking
+   reordered while the platforms loaded. Series badges come only from
    the catalog entry (`seriesBadge`: "Estreno", "Temporada N" from a
    season marker, "Nuevo episodio" for an older show updated this week).
    "Mi lista" toggles the source's favourite when the title is in the
@@ -105,6 +116,24 @@ Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
    `globalRecentLiveItems()`, the programme and its progress from the
    page's `DashboardLiveEpgPresenter` (asked for the cards in view once the
    row comes near). Gated by `dashboardRails().recentlyWatchedLive`.
+
+The sideways rows (platforms, sports, Top 10, last channels) scroll on x
+only: `overflow-x: auto` alone computes `overflow-y` to `auto` too, and the
+Top 10's tall number glyph boxes gave its row some 40px of vertical scroll
+that caught the wheel. Each declares `overflow-y: hidden`, with padding
+plus a negative margin for a lifted card's focus ring, so the wheel over a
+row scrolls the page (`row-edges.spec.ts`).
+
+Title images are asked for at the size they are drawn
+(`sharpImageUrl` in `@iptvnator/shared/interfaces`, the feature's
+`sharpImage` pipe): provider catalogs point at small TMDB copies (w185
+posters, w780 backdrops) that a large card or hero on a 2× screen showed
+upscaled and blurry. A plain `image.tmdb.org/t/p/<size>/` link is raised to
+the smallest TMDB width covering the CSS width × `devicePixelRatio` (never
+lowered); any other URL — a provider's own image link may carry the
+account — is used exactly as given. The Home's rows and hero, Series /
+Películas, the platform pages and the title page's hero
+(`ContentHeroComponent`) use it.
 
 A section with nothing to show renders nothing and the page's
 `> :empty { display: none }` leaves it out of the gap rhythm. The upstream
@@ -132,8 +161,10 @@ Render rules:
 3. The hero (`lib-dashboard-hero`) renders when it has at least one slide;
    see [Cinematic Hero](#cinematic-hero). It shows its own skeleton while
    it has no slide and any of its sources (history and its playback
-   positions, favorites, Xtream recently added) is still on its first load,
-   or a live candidate still
+   positions, favorites, Xtream recently added, the stored catalog) is still
+   on its first load, the first discovery backdrop is still being looked
+   for (at most `DASHBOARD_HERO_DISCOVERY_WAIT_MS`, 5 s), or a live
+   candidate still
    waits for its first programme answer (portal or XMLTV, for at most
    `DASHBOARD_HERO_LIVE_ANSWER_WAIT_MS`, 2 s, from the hero's creation).
    Dropping it earlier removed the hero and inserted it again when a later
@@ -144,9 +175,12 @@ Render rules:
    becomes a hero slide.
 4. Each section is emitted via `@if` on its own data. Empty sections are
    hidden — there is no "empty widget" placeholder.
-5. Hero slides prefer a stored `backdrop_url`, then the TMDB backdrop; when
-   both are missing a poster (or a channel logo) stands on the right of the
-   title-tinted gradient instead of a flat panel.
+5. Hero slides prefer a stored `backdrop_url`, then the TMDB backdrop, at
+   the window's width (`heroBackdropUrl`). Only a resume slide may go
+   without one, its poster standing on the right of the title-tinted
+   gradient (a live slide: its channel logo); a discovery or fallback slide
+   without a backdrop, or whose backdrop fails to load, is left out — a
+   poster on the tinted stage looked broken.
 
 ## Cinematic Hero
 
@@ -156,9 +190,10 @@ window's edges (`margin: calc(-1 * (--tv-topbar-h + --tv-page-top))
 calc(-1 * --tv-page-x) -16px`), the banner is
 `clamp(460px, calc(100vh - 560px), 620px)` tall at least, and its whole
 background carries `mask-image` so it fades into the page instead of ending
-on an edge. Each slide's background is its backdrop, else a poster (or a
-channel logo) standing on the right of the gradient in the title's hue
-(`--hero-hue`), crossfading in 700ms under a left and a top veil.
+on an edge. Each slide's background is its backdrop, else (resume and live
+slides only) a poster or a channel logo standing on the right of the
+gradient in the title's hue (`--hero-hue`), crossfading in 700ms under a
+left and a top veil.
 
 Height: that clamp is a floor, not a fixed height. Every slide's content is
 laid out in the same grid cell at the bottom of the banner, so it is as tall
@@ -175,15 +210,25 @@ once):
 2. a live channel with a programme on air — the first of
    `selectDashboardHeroLiveCandidates` (up to three favourites, then two
    recently watched channels) whose EPG answer has a title;
-3. remaining places round-robin over the favourite movies/series and
-   Series / Películas' newest titles (`catalogHeroItems` over
+3. remaining places round-robin over the favourite movies/series with a
+   backdrop (their own, or TMDB's: the first four without one are looked
+   up) and Series / Películas' newest titles (`catalogHeroCandidates` over
    `CatalogService`: one title per show, in Spanish where it has a Spanish
    version, the platforms taking turns as in the catalog's "Novedades",
-   movies and series in turn). Only the stored catalog is read for them
+   movies and series in turn). The stored rows carry posters only (series
+   lists sometimes a backdrop), so `HomeHeroBackdropsService` features a
+   candidate only once its 16:9 backdrop is known and has loaded once,
+   landscape (`HERO_IMAGE_CHECK`): rows that name one first, asking
+   nothing, then the others' pages one at a time through
+   `HomeTitlePagesService`, at most `HERO_BACKDROP_PROBES` (8) a session,
+   up to `HERO_DISCOVERY_SLIDES` (4) titles; one without a backdrop is
+   skipped. It is root-provided and looks once per source, so a later
+   visit asks nothing again. Only the stored catalog is read for them
    (`CatalogService.loadStored`, never the platforms' lists: no provider
-   request); while it is read they are held back (the skeleton waits if
-   nothing else is to show), and only when nothing is stored do the
-   provider's raw recently-added rows stand in;
+   request, and no wait for a section's first-run import, whose titles
+   join once it stored them); while it is read they are held back (the
+   skeleton waits if nothing else is to show), and only when nothing is
+   stored do the provider's raw recently-added rows stand in;
 4. only when nothing qualifies, the newest history row of any kind (a
    detail action: it can be a finished title). It waits for
    `continueWatchingSettled()`.
@@ -738,10 +783,45 @@ titles of that kind in one catalog, with no filters and no search of its own.
    Electron once that kind's import completed, the data source's session
    cache in the browser build once a view loaded it. Reading it asks the
    provider nothing. Only the platforms' ES/EN categories count
-   (`buildPlatformShelves`). Where nothing is stored, the page uses
-   `PlatformsCatalogService.loadTitles`, one platform after the other (never
-   all at once), and those lists serve the platform pages too. A stored read
-   is kept ten minutes, and again until the parental lock changes.
+   (`buildPlatformShelves`). A stored read is kept ten minutes, and again
+   until the parental lock changes.
+   - **First run in Electron** (`CatalogImport`). Nothing is stored until
+     the kind is imported, and the redesign opens no Xtream Movies/Series
+     view that would import it, so the catalog runs the app's own import
+     of that one kind: the data source's `getCategories` and `getContent`
+     (`get_series_categories` + `get_series`, or the VOD pair — the whole
+     catalog in two requests), saved by the DB worker, then recorded as the
+     Xtream store does (`completed`; or `failed`, its partial rows cleared,
+     after one retry 20 s later). The page shows "Preparando tu catálogo…"
+     (`WORKSPACE.CATALOG.PREPARING`, `CatalogService.preparing`) and reads
+     the stored copy when the import resolves. It never runs beside other
+     work on the source: while `SourceActivityService` reports it busy (the
+     Xtream store's own import, a refresh, a removal) it polls every 2 s
+     (up to 10 min) and then reads what that flow stored; it holds the
+     source busy itself while importing. The app writes no `importing`
+     status, so a running import is known from that activity, not from
+     `getXtreamImportStatus`. It leaves a `cancelled` import cancelled, a
+     pending backup restore to the Xtream store's flow (which replays it),
+     and does not run while the parental lock withholds every row. A kind
+     whose import failed uses the platforms' lists for the rest of the
+     session and is imported again next launch. (The live sections' first
+     run differs: `StoredLiveCatalog.download` takes the whole line-up in
+     two requests and holds it in memory for the session, without storing
+     it; it never runs in this queue.)
+   - **Platforms' lists** (`CatalogPlatformLists`): the browser build, or
+     a failed import. Each platform's categories of the kind, one request
+     at a time and with the platforms taking turns (every platform's first
+     category, then each one's second…; `takeTurns`), failed ones once more
+     5 s after the pass; each kept 30 minutes. A platform whose page already
+     loaded its lists (`PlatformsCatalogService.titlesOf`) is not asked
+     again; these per-category lists do not feed the platform pages. The
+     page stays loading until three platforms answered or failed (all, when
+     fewer carry the kind: `MIN_ANSWERED_PLATFORMS`), so one platform's
+     titles never pass for the whole catalog; it fails only when no title
+     came and a platform's requests all failed.
+   - Imports and category requests share one queue (`CatalogRequests`):
+     Series, Películas and the Home's sections never ask the provider at
+     once, and a second kind's import waits for the first.
 2. **One title per show** (`aggregateCatalog`). `mergePlatformTitles` joins
    a show's language versions and its copies on other platforms. The card
    shows the Spanish version and that version's platform logo; `platforms`
@@ -761,8 +841,11 @@ titles of that kind in one catalog, with no filters and no search of its own.
    request) and Más info (the page). Under it
    comes "Novedades": the ten newest titles with artwork, the platforms
    taking turns (`pickNewReleases`). Picking one features it and the page
-   does not navigate. The featured title's own page (`get_vod_info` /
-   `get_series_info`) is fetched once per title, after it has stayed
+   does not navigate. The first title featured stays until another is
+   picked (`featuredTitle` follows it to another of its versions), though
+   "Novedades" reshuffles while the platforms' lists arrive. The featured
+   title's own page (`get_vod_info` / `get_series_info`) is fetched once
+   per title, after it has stayed
    featured 0.4 s, for its backdrop and length. Without a backdrop the hero
    shows the poster at its right over the platform's colour.
 5. **Rendering.** A genre row renders its posters once it comes within
@@ -810,7 +893,7 @@ else but the playing channel and its guide.
    included; that picture keeps clear of the top bar, the competition's pill
    and the overlay's controls (`stage--native`, `--sport-overlay-content`),
    and so does the player's diagnostic out of full screen (on a phone the
-   bar takes two rows). In full screen the overlay fades after 3.5 s; a
+   bar takes two rows). In full screen the overlay fades after 2 s; a
    move or any key brings it back.
    The signal row (`signal-cards.ts`) lists the live
    matches' own feeds first, then every numbered feed of the section's

@@ -91,8 +91,11 @@ export class AppComponent implements OnInit {
     private readonly workspaceShellActions = inject(WORKSPACE_SHELL_ACTIONS);
     private readonly contextDrawer = inject(WorkspaceShellContextDrawerService);
 
-    /** Default language as fallback */
-    private readonly DEFAULT_LANG = Language.ENGLISH;
+    /**
+     * The language without a saved choice, and the fallback for a missing
+     * key. TiagoTV: Spanish, its user's language (`es` is complete).
+     */
+    private readonly DEFAULT_LANG = Language.SPANISH;
 
     constructor() {
         syncDocumentLanguage();
@@ -199,6 +202,8 @@ export class AppComponent implements OnInit {
                         this.detectDarkMode();
                     }
                 } else {
+                    // First run: nothing saved, nothing chosen yet.
+                    void this.dateLocales.use(this.DEFAULT_LANG);
                     this.detectDarkMode();
                 }
             });

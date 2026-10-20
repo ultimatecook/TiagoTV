@@ -55,7 +55,7 @@
                 backdropImageUrl() ? null : fallbackBackdropBackground()
             "
         >
-            @if (backdropImageUrl(); as backdropImage) {
+            @if (sharpBackdropUrl(); as backdropImage) {
                 <img
                     class="hero__backdrop-image"
                     [src]="backdropImage"
@@ -111,7 +111,7 @@
                 @if (posterUrl() && !posterError()) {
                     <img
                         class="poster__image"
-                        [src]="posterUrl()"
+                        [src]="sharpPosterUrl()"
                         (error)="onPosterError()"
                         alt=""
                     />

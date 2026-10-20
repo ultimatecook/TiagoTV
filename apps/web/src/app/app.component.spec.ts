@@ -211,8 +211,9 @@ describe('AppComponent', () => {
         expect(storeDispatchSpy).toHaveBeenCalledWith(
             PlaylistActions.loadPlaylists()
         );
+        // TiagoTV: Spanish, without a saved choice and for a missing key.
         expect(translateService.setDefaultLang).toHaveBeenCalledWith(
-            Language.ENGLISH
+            Language.SPANISH
         );
         expect(component.initSettings).toHaveBeenCalledTimes(1);
     });
@@ -237,6 +238,26 @@ describe('AppComponent', () => {
         expect(settingsService.changeTheme).toHaveBeenCalledWith(
             Theme.DarkTheme
         );
+    });
+
+    it('starts a fresh install in Spanish', () => {
+        const dateLocales = TestBed.inject(AppDateLocaleService);
+
+        component.initSettings();
+
+        expect(dateLocales.use).toHaveBeenCalledWith(Language.SPANISH);
+    });
+
+    it('keeps a language the user chose, English included', () => {
+        settingsService.getValueFromLocalStorage.mockReturnValue(
+            of({ ...DEFAULT_SETTINGS, language: Language.ENGLISH })
+        );
+        const dateLocales = TestBed.inject(AppDateLocaleService);
+
+        component.initSettings();
+
+        expect(dateLocales.use).toHaveBeenCalledWith(Language.ENGLISH);
+        expect(dateLocales.use).not.toHaveBeenCalledWith(Language.SPANISH);
     });
 
     it('should apply saved settings and fetch stale epg data only', async () => {

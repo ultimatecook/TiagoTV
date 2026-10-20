@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 
 /** Quiet this long while a channel plays, and the overlay goes. */
-export const OVERLAY_IDLE_MS = 4000;
+export const OVERLAY_IDLE_MS = 2000;
 /** A mouse move this soon after the overlay was sent away keeps it away. */
 export const SETTLE_MS = 700;
 

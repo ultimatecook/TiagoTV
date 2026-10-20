@@ -31,3 +31,21 @@ describe('appConfig', () => {
         expect(tokens).not.toContain(ANIMATION_MODULE_TYPE);
     });
 });
+
+describe('getInitialLanguage', () => {
+    afterEach(() => localStorage.clear());
+
+    it('renders a fresh install in Spanish, TiagoTV’s default', async () => {
+        const { getInitialLanguage } = await import('./app.config');
+
+        expect(getInitialLanguage()).toBe('es');
+    });
+
+    it('keeps the language saved last, English included', async () => {
+        const { getInitialLanguage, PREFERRED_LANGUAGE_STORAGE_KEY } =
+            await import('./app.config');
+        localStorage.setItem(PREFERRED_LANGUAGE_STORAGE_KEY, 'en');
+
+        expect(getInitialLanguage()).toBe('en');
+    });
+});

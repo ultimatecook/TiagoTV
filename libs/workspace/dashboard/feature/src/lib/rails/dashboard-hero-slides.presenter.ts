@@ -36,10 +36,10 @@ import {
     pickDashboardHeroSources,
     type DashboardHeroSource,
 } from './dashboard-hero-slides.utils';
-import { CatalogService } from '../catalog/catalog.service';
 import { dashboardHeroActions } from './dashboard-hero-actions';
 import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
-import { catalogHeroItems } from './home-hero-catalog';
+import { injectDashboardHeroDiscovery } from './dashboard-hero-discovery';
+import { heroBackdropUrl, heroPosterUrl } from './home-hero-images';
 import { splitCatalogGenres } from './dashboard-match.utils';
 import type { DashboardLiveEpgDetails } from './dashboard-live-epg.utils';
 import {
@@ -59,6 +59,9 @@ const TYPE_LABEL_KEYS = {
  * milliseconds; an unreachable portal must not hold the skeleton forever.
  */
 export const DASHBOARD_HERO_LIVE_ANSWER_WAIT_MS = 2000;
+
+/** Favourites without a backdrop of their own looked up on TMDB, at most. */
+const HERO_FAVORITE_LOOKUPS = 4;
 
 const PROVIDER_LABEL_KEYS = {
     xtream: 'WORKSPACE.DASHBOARD.XTREAM',
@@ -80,7 +83,6 @@ const PROVIDER_LABEL_KEYS = {
 @Injectable()
 export class DashboardHeroSlidesPresenter {
     private readonly data = inject(DashboardDataService);
-    private readonly catalog = inject(CatalogService);
     private readonly liveEpg = inject(DashboardLiveEpgPresenter);
     private readonly heroTmdb = inject(DashboardHeroTmdbService);
     private readonly translate = inject(TranslateService);
@@ -93,23 +95,8 @@ export class DashboardHeroSlidesPresenter {
     private readonly requestedTmdbKeys = new Set<string>();
 
     private readonly liveAnswerWaitOver = signal(false);
-    /**
-     * Series / Películas' stored catalog, read for the discovery slides:
-     * the source it was read for, and whether the current one is pending.
-     */
-    private readonly catalogReadFor = signal<string | null>(null);
-    private readonly catalogPending = computed(() => {
-        const sourceId = this.catalog.source()?._id;
-        return !!sourceId && this.catalogReadFor() !== sourceId;
-    });
-    private readonly catalogAdded = computed(() =>
-        catalogHeroItems(
-            this.catalog.titles('movie'),
-            this.catalog.titles('series'),
-            this.catalog.source(),
-            this.catalog.heroLead()
-        )
-    );
+    /** Series / Películas' titles with a backdrop, for discovery slides. */
+    private readonly discovery = injectDashboardHeroDiscovery();
 
     /**
      * Nothing to feature yet and a source that can feature a title is still
@@ -127,7 +114,8 @@ export class DashboardHeroSlidesPresenter {
                 !this.data.continueWatchingSettled() ||
                 this.data.globalFavoritesLoading() ||
                 this.data.xtreamRecentlyAddedLoading() ||
-                this.catalogPending() ||
+                this.discovery.reading() ||
+                this.discovery.waiting() ||
                 (!this.liveAnswerWaitOver() &&
                     this.liveEpg.heroLiveAwaitingFirstAnswer())),
         computation: (loading, previous) =>
@@ -146,6 +134,16 @@ export class DashboardHeroSlidesPresenter {
         return null;
     });
 
+    private readonly favoriteCandidates = computed(() =>
+        this.data
+            .globalFavoriteItems()
+            .filter(
+                (item) =>
+                    !isCatalogUnavailable(item) &&
+                    (item.type === 'movie' || item.type === 'series')
+            )
+    );
+
     private readonly sources = computed(() =>
         pickDashboardHeroSources({
             continueItems: this.data
@@ -155,20 +153,18 @@ export class DashboardHeroSlidesPresenter {
             reserveLive: this.liveEpg
                 .heroLiveCandidates()
                 .some(({ item }) => !isCatalogUnavailable(item)),
-            favorites: this.data
-                .globalFavoriteItems()
-                .filter(
-                    (item) =>
-                        !isCatalogUnavailable(item) &&
-                        (item.type === 'movie' || item.type === 'series')
-                ),
+            // A favourite is featured over its backdrop only.
+            favorites: this.favoriteCandidates().filter((item) =>
+                this.backdropOf(item)
+            ),
             // The catalog's titles (ES/EN merged, the platforms taking
-            // turns); the provider's raw newest rows only without one.
-            // None while it is read: they would be swapped a moment later.
-            recentlyAdded: this.catalogPending()
+            // turns) once their backdrops are known; the provider's raw
+            // newest rows only without a catalog. None while it is read:
+            // they would be swapped a moment later.
+            recentlyAdded: this.discovery.reading()
                 ? []
-                : this.catalogAdded().length > 0
-                  ? this.catalogAdded()
+                : this.discovery.hasCatalog()
+                  ? this.discovery.added()
                   : this.data.xtreamRecentlyAddedItems(),
             // Until the resume candidates are known the newest row may be one
             // of them; featuring it as the fallback would swap the slide.
@@ -180,12 +176,22 @@ export class DashboardHeroSlidesPresenter {
         })
     );
 
+    /**
+     * Every slide but a resume or a live one stands on a real backdrop: a
+     * discovery title's poster on the tinted stage looked broken. One whose
+     * backdrop failed to load leaves the rotation.
+     */
     readonly slides = computed<DashboardHeroSlide[]>(() => {
         this.languageTick();
         const liveDetails = this.liveSlide()?.details ?? null;
-        return this.sources().map((source) =>
-            this.toSlide(source, liveDetails)
-        );
+        return this.sources()
+            .map((source) => this.toSlide(source, liveDetails))
+            .filter(
+                (slide) =>
+                    slide.hasBackdrop ||
+                    slide.kind === 'continue' ||
+                    slide.contentType === 'live'
+            );
     });
 
     constructor() {
@@ -194,21 +200,21 @@ export class DashboardHeroSlidesPresenter {
             DASHBOARD_HERO_LIVE_ANSWER_WAIT_MS
         );
         inject(DestroyRef).onDestroy(() => clearTimeout(liveAnswerWait));
-        effect(() => {
-            const sourceId = this.catalog.source()?._id;
-            if (sourceId) {
-                untracked(() => this.readCatalog(sourceId));
-            }
-        });
 
         effect(() => {
             if (!this.heroTmdb.isEnabled()) {
                 return;
             }
             // Keys read here, tracked: they carry the TMDB language, so a
-            // language change loads the localized overview and genres.
-            const requests = this.sources()
-                .map((source) => source.item)
+            // language change loads the localized overview and genres. The
+            // first favourites without a backdrop of their own are looked
+            // up too: TMDB's may let them feature.
+            const requests = [
+                ...this.sources().map((source) => source.item),
+                ...this.favoriteCandidates()
+                    .filter((item) => !item.backdrop_url)
+                    .slice(0, HERO_FAVORITE_LOOKUPS),
+            ]
                 .filter((item) => item.type !== 'live')
                 .map((item) => ({ item, key: this.heroTmdb.keyFor(item) }));
             untracked(() =>
@@ -219,20 +225,21 @@ export class DashboardHeroSlidesPresenter {
         });
     }
 
-    /** The stored catalog only: no provider request (`loadStored`). */
-    private readCatalog(sourceId: string): void {
-        void Promise.all([
-            this.catalog.loadStored('movie'),
-            this.catalog.loadStored('series'),
-        ])
-            .catch(() => undefined)
-            .finally(() => this.catalogReadFor.set(sourceId));
-    }
-
     markImageFailed(url: string): void {
         this.failedImages.update((state) =>
             state[url] ? state : { ...state, [url]: true }
         );
+    }
+
+    /** The item's own backdrop, else TMDB's (with the opt-in). */
+    private backdropOf(item: PortalActivityItem): string | null {
+        if (item.backdrop_url) {
+            return item.backdrop_url;
+        }
+        return this.heroTmdb.isEnabled()
+            ? (this.tmdbExtras().get(this.heroTmdb.keyFor(item))?.backdropUrl ??
+                  null)
+            : null;
     }
 
     private loadTmdbExtras(item: PortalActivityItem, key: string): void {
@@ -268,10 +275,14 @@ export class DashboardHeroSlidesPresenter {
         // Without TMDB a catalog import still lists a rating, genres and a
         // synopsis for many titles; the slide falls back to those.
         const catalog = source.kind === 'added' ? source.item : null;
+        // At the hero's size: a provider's small TMDB copy looked blurry.
+        const backdrop = item.backdrop_url || extras?.backdropUrl || null;
         const artwork = resolveDashboardHeroArtwork(
             {
-                backdropUrl: item.backdrop_url || extras?.backdropUrl || null,
-                posterUrl: item.poster_url,
+                backdropUrl: backdrop ? heroBackdropUrl(backdrop) : null,
+                posterUrl: item.poster_url
+                    ? heroPosterUrl(item.poster_url)
+                    : null,
             },
             this.failedImages()
         );

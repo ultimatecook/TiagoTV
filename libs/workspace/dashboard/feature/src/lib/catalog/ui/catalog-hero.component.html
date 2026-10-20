@@ -9,7 +9,11 @@
             <img
                 class="hero__art"
                 [class.hero__art--poster]="art.poster"
-                [src]="art.url"
+                [src]="
+                    art.poster
+                        ? (art.url | sharpImage: 'poster' : 360)
+                        : (art.url | sharpImage: 'backdrop' : 1920)
+                "
                 alt=""
                 decoding="async"
                 referrerpolicy="no-referrer"
@@ -99,7 +103,7 @@
                         @if (image) {
                             <img
                                 class="release__art"
-                                [src]="image"
+                                [src]="image | sharpImage: 'backdrop' : 300"
                                 alt=""
                                 loading="lazy"
                                 decoding="async"

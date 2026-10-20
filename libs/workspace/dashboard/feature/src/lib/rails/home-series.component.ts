@@ -10,6 +10,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { injectTranslationTick } from '@iptvnator/services';
+import { sharpImageUrl } from '@iptvnator/shared/interfaces';
 import { heroMeta } from '../catalog/catalog-meta';
 import { CatalogService } from '../catalog/catalog.service';
 import type { CatalogTitle } from '../catalog/catalog-titles';
@@ -25,6 +26,7 @@ import {
     type HomeSeriesBadge,
 } from './home-platform-titles';
 import { HomePlatformTitlesService } from './home-platform-titles.service';
+import { HomeTitlePagesService } from './home-title-pages.service';
 
 export interface HomeSeriesCard {
     readonly series: CatalogTitle;
@@ -39,6 +41,10 @@ export interface HomeSeriesCard {
     readonly badgeKey: string | null;
     readonly hue: number;
 }
+
+/** How wide (CSS px) the featured card and the two beside it draw. */
+const FEATURED_WIDTH = 1100;
+const SIDE_WIDTH = 650;
 
 const BADGE_KEYS: Record<HomeSeriesBadge['kind'], string> = {
     'new-episode': 'WORKSPACE.DASHBOARD.BADGE_NEW_EPISODE',
@@ -67,6 +73,7 @@ const BADGE_KEYS: Record<HomeSeriesBadge['kind'], string> = {
 })
 export class HomeSeriesComponent {
     private readonly catalog = inject(CatalogService);
+    private readonly pages = inject(HomeTitlePagesService);
     private readonly myList = inject(HomeMyListService);
     private readonly translate = inject(TranslateService);
     private readonly languageTick = injectTranslationTick();
@@ -76,14 +83,22 @@ export class HomeSeriesComponent {
         this.languageTick();
         const translate = (key: string, params?: Record<string, unknown>) =>
             this.translate.instant(key, params);
-        return this.titles.seriesForYou().map((series) => {
+        return this.titles.seriesForYou().map((series, index) => {
             const extras = this.catalog.extrasOf(series);
             const badge = seriesBadge(series);
+            const width = index === 0 ? FEATURED_WIDTH : SIDE_WIDTH;
+            // The backdrop where there is one; a poster fills the card
+            // cropped, so it is asked for at the card's whole width.
+            const backdrop = series.backdrop ?? extras?.backdrop ?? null;
             return {
                 series,
                 key: titleKey(series),
                 name: seriesName(series),
-                image: series.backdrop ?? extras?.backdrop ?? series.poster,
+                image: backdrop
+                    ? sharpImageUrl(backdrop, 'backdrop', width)
+                    : series.poster
+                      ? sharpImageUrl(series.poster, 'poster', width)
+                      : null,
                 plot: series.plot ?? extras?.plot ?? null,
                 // Without the kind: the section already says "Series".
                 meta: metaLine(heroMeta(series, extras).slice(1), translate),
@@ -102,7 +117,8 @@ export class HomeSeriesComponent {
     constructor() {
         // The featured show's page gives its seasons (and a synopsis or
         // backdrop a stored row lacks); the two beside it are asked only
-        // for a missing synopsis or backdrop. Also: which are on "Mi lista".
+        // for a missing synopsis or backdrop, one page at a time (with the
+        // hero's: `HomeTitlePagesService`). Also: which are on "Mi lista".
         effect(() => {
             const picks = this.titles.seriesForYou();
             const playlistId = this.catalog.source()?._id;
@@ -112,7 +128,7 @@ export class HomeSeriesComponent {
                         (series, index) =>
                             index === 0 || !series.plot || !series.backdrop
                     )
-                    .forEach((series) => this.catalog.loadExtras(series));
+                    .forEach((series) => void this.pages.fetch(series));
                 if (playlistId) {
                     void this.myList.check(playlistId, picks);
                 }

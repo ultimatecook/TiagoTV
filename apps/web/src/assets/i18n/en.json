@@ -2338,6 +2338,7 @@
             "DURATION_M": "{{minutes}} min",
             "ON_PLATFORM": "On {{platform}}",
             "LOADING": "Loading your platforms' catalogue…",
+            "PREPARING": "Preparing your catalogue… The first time can take a few minutes.",
             "NO_SOURCE": "Add an Xtream source to see your platforms' catalogue here.",
             "FAILED": "The catalogue could not be loaded. Try again in a moment.",
             "EMPTY_SERIES": "None of your platforms has series yet.",

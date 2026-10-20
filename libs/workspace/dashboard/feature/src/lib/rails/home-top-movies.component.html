@@ -14,8 +14,11 @@
             [link]="['/workspace', 'movies']"
         />
         @if (items().length > 0) {
+            <!-- Tracked by place, not title: while the platforms load the
+                 ranking reorders, and a snapping row follows the element it
+                 rested on, which left it scrolled one place in. -->
             <ol class="top__row">
-                @for (item of items(); track item.key) {
+                @for (item of items(); track item.rank) {
                     @let movie = item.movie;
                     <li class="top__item">
                         <button
@@ -37,7 +40,9 @@
                                 @if (posterOf(item); as poster) {
                                     <img
                                         class="top__image"
-                                        [src]="poster"
+                                        [src]="
+                                            poster | sharpImage: 'poster' : 320
+                                        "
                                         alt=""
                                         loading="lazy"
                                         decoding="async"

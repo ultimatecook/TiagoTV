@@ -7,6 +7,7 @@ import {
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
+import { SharpImagePipe } from '../../sharp-image.pipe';
 import type { PlatformLook } from '../platform-design';
 import type { PlatformTitle } from '../platform-titles';
 import type { StreamingPlatform } from '../streaming-platforms';
@@ -34,7 +35,13 @@ const TEXT_INFO: ReadonlySet<PlatformLook> = new Set<PlatformLook>([
  */
 @Component({
     selector: 'lib-platform-billboard',
-    imports: [MatIcon, MatTooltip, PlatformLogoComponent, TranslatePipe],
+    imports: [
+        MatIcon,
+        MatTooltip,
+        PlatformLogoComponent,
+        SharpImagePipe,
+        TranslatePipe,
+    ],
     templateUrl: './platform-billboard.component.html',
     styleUrl: './platform-billboard.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

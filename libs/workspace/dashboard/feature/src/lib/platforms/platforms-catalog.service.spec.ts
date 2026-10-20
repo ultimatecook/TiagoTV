@@ -9,7 +9,10 @@ import { mergePlatformTitles } from './platform-versions';
 
 describe('PlatformsCatalogService', () => {
     const navigate = jest.fn(() => Promise.resolve(true));
-    const api: { getCategories?: jest.Mock } = {};
+    const api: {
+        getCategories?: jest.Mock;
+        getSeriesStreams?: jest.Mock;
+    } = {};
     // "MUERTOS S.L." and "DEATH INC.": one show, a card in Spanish.
     const [muertos] = mergePlatformTitles([
         toPlatformTitles({ id: '482', kind: 'series', language: 'EN' }, [
@@ -24,6 +27,7 @@ describe('PlatformsCatalogService', () => {
         navigate.mockClear();
         localStorage.clear();
         delete api.getCategories;
+        delete api.getSeriesStreams;
         TestBed.configureTestingModule({
             providers: [
                 provideMockStore({
@@ -115,6 +119,54 @@ describe('PlatformsCatalogService', () => {
 
         expect(catalog.failed()).toBe(true);
         expect(platformIds(catalog)).toEqual(['netflix']);
+    });
+
+    it("asks for one category's list, with the source's genres", async () => {
+        api.getCategories = jest.fn((_credentials, kind: string) =>
+            Promise.resolve(
+                kind === 'series'
+                    ? [
+                          {
+                              category_id: 2331,
+                              category_name: '|ES| ✪ NETFLIX SERIES',
+                          },
+                          { category_id: 91, category_name: '|ES| ✪ COMEDIA' },
+                      ]
+                    : []
+            )
+        );
+        api.getSeriesStreams = jest.fn(() =>
+            Promise.resolve([
+                {
+                    series_id: 5,
+                    name: 'MUERTOS S.L. (2024) ES',
+                    category_ids: [2331, 91],
+                },
+            ])
+        );
+        const catalog = TestBed.inject(PlatformsCatalogService);
+        await catalog.loadShelves();
+
+        const titles = await catalog.categoryTitles({
+            id: '2331',
+            kind: 'series',
+            language: 'ES',
+        });
+
+        expect(api.getSeriesStreams).toHaveBeenCalledTimes(1);
+        expect(api.getSeriesStreams).toHaveBeenCalledWith(
+            {
+                serverUrl: 'http://provider.test',
+                username: 'user',
+                password: 'secret',
+            },
+            { suppressErrorLog: true, categoryId: '2331' }
+        );
+        expect(titles.map((title) => [title.title, title.genres])).toEqual([
+            ['MUERTOS S.L.', ['comedy']],
+        ]);
+        // Not kept as the platform's titles: its page loads all of them.
+        expect(catalog.titlesOf('netflix')).toBeNull();
     });
 
     it('tries a failed load again shortly', async () => {

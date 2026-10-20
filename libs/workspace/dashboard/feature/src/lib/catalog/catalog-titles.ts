@@ -213,16 +213,22 @@ export function buildCatalogRows(
 
 /**
  * The hero's title: the one picked (`key`), wherever it now sits in the
- * catalog, else the first of the releases.
+ * catalog — also once it shows another of its versions (its Spanish one
+ * arrived, or another platform now credits it) — else the first of the
+ * releases.
  */
 export function featuredTitle(
     releases: readonly CatalogTitle[],
     titles: readonly CatalogTitle[],
     key: string | null
 ): CatalogTitle | null {
-    return (
-        (key ? titles.find((title) => titleKey(title) === key) : undefined) ??
-        releases[0] ??
-        null
-    );
+    const picked = key
+        ? (titles.find((title) => titleKey(title) === key) ??
+          titles.find((title) =>
+              title.versions.some(
+                  (version) => `${title.kind}:${version.id}` === key
+              )
+          ))
+        : undefined;
+    return picked ?? releases[0] ?? null;
 }

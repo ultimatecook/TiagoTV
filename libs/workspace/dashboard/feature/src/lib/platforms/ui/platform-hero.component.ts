@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
+import { SharpImagePipe } from '../../sharp-image.pipe';
 import type { PlatformTitle } from '../platform-titles';
 import type { StreamingPlatform } from '../streaming-platforms';
 import {
@@ -18,7 +19,13 @@ import { PlatformLogoComponent } from './platform-logo.component';
  */
 @Component({
     selector: 'lib-platform-hero',
-    imports: [MatIcon, MatTooltip, PlatformLogoComponent, TranslatePipe],
+    imports: [
+        MatIcon,
+        MatTooltip,
+        PlatformLogoComponent,
+        SharpImagePipe,
+        TranslatePipe,
+    ],
     templateUrl: './platform-hero.component.html',
     styleUrl: './platform-hero.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
