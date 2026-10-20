@@ -55,6 +55,37 @@ describe('EmbeddedMpvShortcuts', () => {
         }
     });
 
+    it('leaves every key to a host that suspends the player’s shortcuts', () => {
+        // "En vivo" drives the player with its own keys: F, Space and M
+        // must not run twice (the page's action, then the player's).
+        const page = document.createElement('section');
+        page.setAttribute('data-player-shortcuts-suspended', '');
+        const host = document.createElement('div');
+        page.appendChild(host);
+        document.body.appendChild(page);
+        (
+            handlers as unknown as { hostElement: () => HTMLElement }
+        ).hostElement = () => host;
+
+        try {
+            expect(dispatchKey('f')).toBe(false);
+            expect(dispatchKey(' ')).toBe(false);
+            expect(dispatchKey('m')).toBe(false);
+            dispatchKey('Escape');
+            expect(handlers.toggleFullscreen).not.toHaveBeenCalled();
+            expect(handlers.togglePaused).not.toHaveBeenCalled();
+            expect(handlers.toggleMute).not.toHaveBeenCalled();
+            expect(handlers.onEscape).not.toHaveBeenCalled();
+
+            // A key the host hands over, the suspension lifted for it.
+            page.removeAttribute('data-player-shortcuts-suspended');
+            expect(dispatchKey('m')).toBe(true);
+            expect(handlers.toggleMute).toHaveBeenCalledTimes(1);
+        } finally {
+            page.remove();
+        }
+    });
+
     it('forwards playback, seek, volume, and fullscreen shortcuts', () => {
         expect(dispatchKey(' ')).toBe(true);
         expect(dispatchKey('ArrowLeft')).toBe(true);

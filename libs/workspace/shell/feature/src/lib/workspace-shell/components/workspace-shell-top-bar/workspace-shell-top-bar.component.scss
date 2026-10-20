@@ -10,6 +10,10 @@
     box-sizing: border-box;
     height: var(--tv-topbar-h);
     padding: 0 28px 0 22px;
+    // The glass's dark ground, under its sheen: the bar floats over heroes
+    // and artwork, and over a bright one the labels and icons must still
+    // read (at least 4.5:1 over white, with the backdrop dimmed below).
+    --topbar-glass-ground: rgba(16, 16, 15, 0.64);
     color: var(--tv-text);
     font-family: var(--tv-font-ui);
     pointer-events: none;
@@ -63,24 +67,40 @@
 // Glass: the capsule, the circles and the pill.
 %glass {
     border: 1px solid var(--tv-glass-border);
-    background: var(--tv-glass-bg);
+    background-color: var(--topbar-glass-ground);
+    background-image: var(--tv-glass-bg);
     box-shadow:
         var(--tv-glass-highlight),
         0 8px 24px -12px rgba(0, 0, 0, 0.5);
-    -webkit-backdrop-filter: var(--tv-glass-filter);
-    backdrop-filter: var(--tv-glass-filter);
+    -webkit-backdrop-filter: var(--tv-glass-filter) brightness(0.75);
+    backdrop-filter: var(--tv-glass-filter) brightness(0.75);
+}
+
+// A lighter glass on hover and when lit, over the same ground.
+%glass-lit {
+    background-image: linear-gradient(
+        rgba(255, 255, 255, 0.16),
+        rgba(255, 255, 255, 0.16)
+    );
 }
 
 .topbar__tabs {
     @extend %glass;
     display: flex;
     align-items: center;
-    gap: 4px;
     min-width: 0;
     padding: 5px;
     border-radius: 999px;
     pointer-events: auto;
     app-region: no-drag;
+}
+
+.topbar__tabs-track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
 }
 
 .topbar__tab {
@@ -90,7 +110,7 @@
     height: 38px;
     padding: 0 20px;
     border-radius: 999px;
-    color: var(--tv-text-2);
+    color: var(--tv-text-img-1);
     font-size: 14.5px;
     font-weight: 600;
     letter-spacing: -0.005em;
@@ -104,8 +124,11 @@
         color: #fff;
     }
 
+    // A light fill and a hairline: lighter, it would cost the white label
+    // its contrast over a bright hero.
     &.is-active {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
         color: #fff;
     }
 
@@ -133,7 +156,7 @@
         transform 160ms ease;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.16);
+        @extend %glass-lit;
     }
 
     &:active {
@@ -147,7 +170,10 @@
 
     &.is-active {
         border-color: rgba(255, 255, 255, 0.3);
-        background: rgba(255, 255, 255, 0.2);
+        background-image: linear-gradient(
+            rgba(255, 255, 255, 0.2),
+            rgba(255, 255, 255, 0.2)
+        );
         color: #fff;
     }
 
@@ -191,7 +217,7 @@
     }
 
     &:hover {
-        background: rgba(255, 255, 255, 0.16);
+        @extend %glass-lit;
     }
 
     &:focus-visible {
@@ -388,11 +414,43 @@
         grid-area: tabs;
         justify-self: stretch;
         padding: 3px;
+        overflow: hidden;
+    }
+
+    // The tabs scroll sideways inside the capsule; an edge fades out where
+    // more of them hide, the hint that the capsule scrolls.
+    .topbar__tabs-track {
+        --tabs-fade-start: 0px;
+        --tabs-fade-end: 0px;
+        flex: 1;
         overflow-x: auto;
+        border-radius: 999px;
         scrollbar-width: none;
+        -webkit-mask-image: linear-gradient(
+            90deg,
+            transparent 0,
+            #000 var(--tabs-fade-start),
+            #000 calc(100% - var(--tabs-fade-end)),
+            transparent 100%
+        );
+        mask-image: linear-gradient(
+            90deg,
+            transparent 0,
+            #000 var(--tabs-fade-start),
+            #000 calc(100% - var(--tabs-fade-end)),
+            transparent 100%
+        );
 
         &::-webkit-scrollbar {
             display: none;
+        }
+
+        &.has-more-start {
+            --tabs-fade-start: 36px;
+        }
+
+        &.has-more-end {
+            --tabs-fade-end: 36px;
         }
     }
 

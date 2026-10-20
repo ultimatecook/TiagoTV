@@ -3,7 +3,8 @@
  * public site API (`<slug>/standings`: the whole table, its zones, no
  * form) first, TheSportsDB's `lookuptable.php` (the free key's top five
  * rows, with form) when ESPN fails or has none. Both answer the same
- * model; a table in groups shows the one holding a followed team.
+ * model; a table in groups shows the one holding a followed team, and
+ * keeps the others for the page to switch to.
  */
 export type TableZone =
     'champions' | 'europe' | 'promotion' | 'playoff' | 'relegation';
@@ -26,6 +27,19 @@ export interface LeagueTable {
     readonly round: number | null;
     /** The group shown when the table has several ("Group A"). */
     readonly group: string | null;
+    /**
+     * Every group, in the source's order, when the table has several (the
+     * shown one among them). Absent for a single table, and from tables
+     * stored before the groups were kept.
+     */
+    readonly groups?: readonly LeagueTableGroup[];
+}
+
+/** One group of a table in several: "Group A", "Eastern Conference". */
+export interface LeagueTableGroup {
+    readonly name: string | null;
+    readonly rows: readonly LeagueTableRow[];
+    readonly round: number | null;
 }
 
 /**
@@ -63,30 +77,30 @@ export function zoneOf(
         : null;
 }
 
-interface Group<T> {
-    readonly name: string | null;
-    readonly rows: readonly T[];
-}
-
-/** The group holding a followed team, else the first. */
-function pickGroup<T>(
-    groups: readonly Group<T>[],
-    team: (row: T) => string,
+/**
+ * The groups' tables as one: the group holding a followed team (else the
+ * first) shown, with every group when there are several.
+ */
+function grouped(
+    groups: readonly LeagueTableGroup[],
     preferred: (team: string) => boolean
-): Group<T> | null {
-    return (
-        groups.find((group) =>
-            group.rows.some((row) => preferred(team(row)))
-        ) ??
-        groups[0] ??
-        null
-    );
+): LeagueTable | null {
+    const shown =
+        groups.find((group) => group.rows.some((row) => preferred(row.team))) ??
+        groups[0];
+    if (!shown) {
+        return null;
+    }
+    const { rows, round } = shown;
+    return groups.length > 1
+        ? { rows, round, group: shown.name, groups }
+        : { rows, round, group: null };
 }
 
-function table(rows: LeagueTableRow[], group: string | null): LeagueTable {
+function group(rows: LeagueTableRow[], name: string | null): LeagueTableGroup {
     const sorted = rows.sort((a, b) => a.rank - b.rank);
     const played = sorted.reduce((most, row) => Math.max(most, row.played), 0);
-    return { rows: sorted, round: played > 0 ? played : null, group };
+    return { name, rows: sorted, round: played > 0 ? played : null };
 }
 
 // ─── ESPN ──────────────────────────────────────────────────────────────
@@ -123,35 +137,28 @@ export function parseEspnTable(
 ): LeagueTable | null {
     const root = body as EspnStandings | null;
     const groups = (root?.children?.length ? root.children : root ? [root] : [])
-        .map((child) => ({
-            name: child.name ?? null,
-            rows: (child.standings?.entries ?? []).filter(
+        .map((child) => {
+            const entries = (child.standings?.entries ?? []).filter(
                 (entry) => !!entry.team?.displayName
-            ),
-        }))
-        .filter((group) => group.rows.length > 0);
-    const shown = pickGroup(
-        groups,
-        (entry) => entry.team?.displayName ?? '',
-        preferred
-    );
-    if (!shown) {
-        return null;
-    }
-    const rows = shown.rows.map((entry, index): LeagueTableRow => {
-        const stat = (name: string) =>
-            entry.stats?.find((item) => item.name === name)?.value;
-        return {
-            rank: stat('rank') || index + 1,
-            team: (entry.team?.displayName ?? '').trim(),
-            badge: espnBadge(entry.team?.logos?.[0]?.href),
-            played: stat('gamesPlayed') ?? 0,
-            points: stat('points') ?? 0,
-            form: [],
-            zone: zoneOf(entry.note?.description),
-        };
-    });
-    return table(rows, groups.length > 1 ? shown.name : null);
+            );
+            return group(entries.map(espnRow), child.name ?? null);
+        })
+        .filter((entry) => entry.rows.length > 0);
+    return grouped(groups, preferred);
+}
+
+function espnRow(entry: EspnEntry, index: number): LeagueTableRow {
+    const stat = (name: string) =>
+        entry.stats?.find((item) => item.name === name)?.value;
+    return {
+        rank: stat('rank') || index + 1,
+        team: (entry.team?.displayName ?? '').trim(),
+        badge: espnBadge(entry.team?.logos?.[0]?.href),
+        played: stat('gamesPlayed') ?? 0,
+        points: stat('points') ?? 0,
+        form: [],
+        zone: zoneOf(entry.note?.description),
+    };
 }
 
 // ─── TheSportsDB ───────────────────────────────────────────────────────
@@ -176,18 +183,15 @@ export function parseLeagueTable(
         ? list.filter((row) => !!row?.strTeam)
         : [];
     const names = [...new Set(rows.map((row) => row.strGroup ?? ''))];
-    const groups = names.map((name) => ({
-        name,
-        rows: rows.filter((row) => (row.strGroup ?? '') === name),
-    }));
-    const shown = pickGroup(groups, (row) => row.strTeam ?? '', preferred);
-    if (!shown) {
-        return null;
-    }
-    return table(
-        shown.rows.map(sportsDbRow),
-        groups.length > 1 ? shown.name : null
+    const groups = names.map((name) =>
+        group(
+            rows
+                .filter((row) => (row.strGroup ?? '') === name)
+                .map(sportsDbRow),
+            name
+        )
     );
+    return grouped(groups, preferred);
 }
 
 function sportsDbRow(row: SportsDbRow): LeagueTableRow {

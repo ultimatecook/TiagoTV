@@ -151,6 +151,7 @@
     <lib-country-tv-cards
         [cards]="cards()"
         [playingStreamId]="playingStreamId()"
+        [playing]="tv.playback() !== null"
         [label]="
             'WORKSPACE.COUNTRIES.CHANNELS_OF'
                 | translate: { name: countryName() }

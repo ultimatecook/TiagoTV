@@ -37,6 +37,9 @@ import {
  * only thing that creates or destroys the player, so shell state changes
  * cannot recreate it.
  */
+/** The host focused by the page itself on opening (see `onBlur`). */
+const QUIET_FOCUS_CLASS = 'shell-host--quiet-focus';
+
 @Component({
     selector: 'app-portal-detail-shell',
     standalone: true,
@@ -53,6 +56,7 @@ import {
         // on body, while preserving already-handled events and overlay guards.
         '(keydown.escape)': 'onEscape($event)',
         '[class.shell-host--watch]': 'isWatch()',
+        '(blur)': 'onBlur()',
         '(document:keydown.escape)': 'onEscape($event)',
     },
 })
@@ -109,6 +113,10 @@ export class PortalDetailShellComponent {
                 (active === element.ownerDocument.body ||
                     active === element.closest('main'))
             ) {
+                // The page's own focus, so keys scroll it: no ring for it
+                // (see the stylesheet). Not a class binding: it must be on
+                // before the focus paints.
+                element.classList.add(QUIET_FOCUS_CLASS);
                 element.focus({ preventScroll: true });
             }
         });
@@ -120,6 +128,10 @@ export class PortalDetailShellComponent {
             }
             wasWatch = watch;
         });
+    }
+
+    onBlur(): void {
+        this.host.nativeElement.classList.remove(QUIET_FOCUS_CLASS);
     }
 
     onScrollKey(event: KeyboardEvent): void {

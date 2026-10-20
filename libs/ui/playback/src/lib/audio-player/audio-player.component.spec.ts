@@ -2,6 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlaybackHistoryGate } from '@iptvnator/playback/data-access';
+import {
+    NowPlayingDockService,
+    type NowPlayingHandoff,
+} from '../now-playing/now-playing-dock.service';
+import { PlaybackStreamOwner } from '../now-playing/playback-stream-owner';
 import { AudioPlayerComponent } from './audio-player.component';
 
 describe('AudioPlayerComponent', () => {
@@ -225,7 +230,70 @@ describe('AudioPlayerComponent', () => {
 
         expect(pauseSpy).toHaveBeenCalled();
     });
+
+    it('closes its connection when destroyed, not only pauses it', () => {
+        const audio = createComponent();
+
+        fixture.destroy();
+
+        expect(audio.hasAttribute('src')).toBe(false);
+    });
+
+    it('ends the mini-player and waits for its player before tuning in', () => {
+        const dock = TestBed.inject(NowPlayingDockService);
+        dock.handOff(HANDOFF);
+        const releaseBarPlayer = dock.registerPlayer();
+
+        const audio = createComponent();
+
+        // One stream: the bar's session ends, and its connection must be
+        // closed before the station opens its own.
+        expect(dock.session()).toBeNull();
+        expect(audio.hasAttribute('src')).toBe(false);
+
+        releaseBarPlayer();
+        fixture.detectChanges();
+        expect(audio.src).toBe('https://example.com/radio.mp3');
+    });
+
+    it('stops for another player until the next station', () => {
+        const streams = TestBed.inject(PlaybackStreamOwner);
+        const audio = createComponent();
+        const page = { stop: jest.fn() };
+
+        streams.claim(page);
+        fixture.detectChanges();
+        expect(audio.hasAttribute('src')).toBe(false);
+        expect(component.playState()).toBe('paused');
+
+        streams.release(page);
+        fixture.detectChanges();
+        expect(audio.hasAttribute('src')).toBe(false);
+
+        fixture.componentRef.setInput('url', 'https://example.com/jazz.mp3');
+        fixture.detectChanges();
+        expect(audio.src).toBe('https://example.com/jazz.mp3');
+        // The page player had already let go: nothing to stop.
+        expect(page.stop).not.toHaveBeenCalled();
+    });
 });
+
+const HANDOFF: NowPlayingHandoff = {
+    sessionKey: 'live-1',
+    streamUrl: 'https://example.com/live/1.ts',
+    playback: null,
+    title: 'Channel',
+    subtitle: null,
+    artworkUrl: null,
+    startTime: 0,
+    duration: 0,
+    isLive: true,
+    paused: false,
+    volume: 1,
+    muted: false,
+    returnUrl: '/workspace/countries',
+    returnState: null,
+};
 
 function createKeyboardEvent(
     key: string,

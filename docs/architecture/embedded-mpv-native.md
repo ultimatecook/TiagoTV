@@ -643,6 +643,28 @@ dry. `EmbeddedMpvPlayerComponent` therefore emits `playbackEnded` only for an
 VOD that ended well before its duration (see Network Auto-Reconnect), the
 episode continues instead of autoplay skipping its rest (issue #1902).
 
+## One Session At A Time
+
+Providers often allow one stream connection, so the app holds one stream in
+all (see [Embedded Inline Playback](./embedded-inline-playback.md#live-start-recovery-and-stream-connections)):
+
+- Renderer: each `EmbeddedMpvSessionController` dispose (teardown, a session
+  created after teardown, a failed frame attach) is reported to
+  `PlaybackStreamOwner.closing()`, and `startSession` awaits
+  `PlaybackStreamOwner.whenClosed()` after `prepareEmbeddedMpv` and before
+  `createEmbeddedMpvSession`. The previous channel's or page's session is
+  disposed before the next one exists, whichever player instance owned it,
+  and web engines elsewhere wait for the same dispose before mounting.
+- Main process: the `EMBEDDED_MPV_CREATE_SESSION` handler disposes every
+  session still open (`disposeAllSessions()`, a warning with the count only)
+  before it creates the next. In order IPC the renderer's own dispose always
+  arrives first, so this only reaps a session a renderer view lost track of,
+  whose stream would otherwise play on beside the new one.
+
+Not covered: the frame-copy helper exits asynchronously after `quit` (SIGTERM
+after 500 ms, SIGKILL after 2 s), so its connection can briefly outlive the
+dispose answer.
+
 ## Session Options (Extra libmpv Options)
 
 `Settings > Playback > Extra embedded MPV options` is a free-form textarea,
@@ -859,7 +881,11 @@ controls host. The renderer files live under
   listener and routes through a callback interface; the component supplies
   callbacks for Space/K, F, arrow keys, M, and Escape. The optional
   `arrowKeysBlocked` handler suspends the seek/volume arrows while a dock
-  chip panel owns them for chip navigation.
+  chip panel owns them for chip navigation. Like the shared and legacy
+  player shortcuts it yields every key, Escape included, while its host sits
+  in an `inert` region or under `data-player-shortcuts-suspended` (the docked
+  M3U guide, "En vivo" and the league stage, which forward K and M with the
+  marker lifted); without that, "En vivo" ran each key twice.
 - `embedded-mpv-overlay-visibility.service.ts` — singleton service that exposes
   `overlayActive: signal<boolean>`. Tracks `MatDialog.afterOpened`/
   `afterAllClosed` for dialog-shaped overlays and falls back to a
@@ -904,6 +930,13 @@ each time the active bounds-sync runs:
 
 - **Modal overlay open** (any MatDialog, including the command palette) → `HIDDEN_BOUNDS`. The MPV video host moves off-screen so the dialog has the full window.
 - **Otherwise** → full host bounds.
+
+A page that lays its own controls over a full-bleed picture ("En vivo" and
+the league stage, `CountryTvControls` in
+[Workspace Dashboard](./workspace-dashboard.md)) cannot keep them over this
+host: it sizes the player's host clear of them, hides the dock it does not
+use, and hands full screen to the player's own `fullscreenTarget`, where the
+dock is the controls again.
 
 Control menus never influence bounds: all five (volume, audio, subtitle,
 speed, aspect) render horizontally inside the fixed-height controls strip

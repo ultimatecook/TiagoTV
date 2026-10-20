@@ -32,7 +32,7 @@ describe('CountryTvCardsComponent', () => {
                 : null,
     };
 
-    async function render(playing: number | null = null) {
+    async function render(playing: number | null = null, on = true) {
         TestBed.configureTestingModule({
             imports: [CountryTvCardsComponent, TranslateModule.forRoot()],
             providers: [{ provide: CountryTvListings, useValue: listings }],
@@ -40,6 +40,7 @@ describe('CountryTvCardsComponent', () => {
         fixture = TestBed.createComponent(CountryTvCardsComponent);
         fixture.componentRef.setInput('cards', CARDS);
         fixture.componentRef.setInput('playingStreamId', playing);
+        fixture.componentRef.setInput('playing', on);
         fixture.componentRef.setInput('label', 'Channels');
         fixture.detectChanges();
         await fixture.whenStable();
@@ -90,6 +91,16 @@ describe('CountryTvCardsComponent', () => {
         expect(card(3)?.querySelector('.card__tag')).toBeNull();
         // No programme known: the row's name, and no progress bar.
         expect(card(3)?.querySelector('.card__bar--unknown')).not.toBeNull();
+    });
+
+    it('marks the picked card as playing only while it plays', async () => {
+        await render(1000, false);
+        expect(card(0)?.getAttribute('aria-current')).not.toBe('true');
+        expect(card(0)?.textContent).not.toContain(
+            'WORKSPACE.COUNTRIES.PLAYING'
+        );
+        // The row's tab stop still rests on the picked card.
+        expect(card(0)?.getAttribute('tabindex')).toBe('0');
     });
 
     it('plays a card on a click', async () => {

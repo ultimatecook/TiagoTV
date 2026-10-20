@@ -72,6 +72,11 @@ import { SettingsComponent } from '../settings.component';
 
 export const DEFAULT_DASHBOARD_RAILS = {
     hero: true,
+    platforms: true,
+    sports: true,
+    events: true,
+    topMovies: true,
+    seriesForYou: true,
     continueWatching: true,
     liveFavorites: true,
     recentlyWatchedLive: true,

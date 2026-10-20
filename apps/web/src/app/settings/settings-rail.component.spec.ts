@@ -337,5 +337,39 @@ describe('SettingsRailComponent', () => {
 
             expect(back).not.toHaveBeenCalled();
         });
+
+        it('leaves settings on the Escape that hides a showing tooltip', () => {
+            setup();
+            const back = jest
+                .spyOn(TestBed.inject(Location), 'back')
+                .mockImplementation(() => undefined);
+            // MatTooltip's overlay hides on Escape at <body> and stops the
+            // key there (the Ajustes circle's, under the pointer).
+            const tooltip = (event: Event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            };
+            document.body.addEventListener('keydown', tooltip);
+            const circle = document.createElement('a');
+            document.body.appendChild(circle);
+
+            pressEscape({}, circle);
+            document.body.removeEventListener('keydown', tooltip);
+            circle.remove();
+
+            expect(back).toHaveBeenCalledTimes(1);
+        });
+
+        it('yields to a surface over the page, which leaves it inert', () => {
+            const { fixture } = setup();
+            const back = jest
+                .spyOn(TestBed.inject(Location), 'back')
+                .mockImplementation(() => undefined);
+            (fixture.nativeElement as HTMLElement).setAttribute('inert', '');
+
+            pressEscape();
+
+            expect(back).not.toHaveBeenCalled();
+        });
     });
 });

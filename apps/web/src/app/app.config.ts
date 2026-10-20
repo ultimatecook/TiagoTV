@@ -30,6 +30,7 @@ import {
 } from '@iptvnator/portal/shared/util/tokens';
 import { STALKER_PLAYLIST_CONNECTION_EDITOR } from '@iptvnator/playlist/shared/ui/stalker-connection-editor';
 import { provideXtreamDataSource } from '@iptvnator/portal/xtream/data-access';
+import { provideDefaultUiScale } from '@iptvnator/workspace/shell/util';
 import {
     provideParentalLockPlaylistCleanup,
     DataService,
@@ -171,5 +172,8 @@ export const appConfig: ApplicationConfig = {
         provideParentalLockPlaylistCleanup(),
         ...provideXtreamDataSource(),
         providePlatformTheme(),
+        // Electron: app zoom −1 (≈83 %) once, for a user who never zoomed —
+        // the redesign's 1:1 sizes are 1.25× what the user approved.
+        provideDefaultUiScale(),
     ],
 };

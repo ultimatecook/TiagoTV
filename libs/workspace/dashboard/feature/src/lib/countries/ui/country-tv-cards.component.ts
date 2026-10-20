@@ -44,6 +44,8 @@ export class CountryTvCardsComponent {
     readonly cards = input.required<readonly TvCard[]>();
     /** The stream on the player, to mark its card. */
     readonly playingStreamId = input<number | null>(null);
+    /** Whether that stream is on: an idle pick keeps the tab stop only. */
+    readonly playing = input(true);
     /** The row's accessible name. */
     readonly label = input('');
     readonly picked = output<TvCard>();
@@ -101,7 +103,7 @@ export class CountryTvCardsComponent {
                 return {
                     card,
                     index: start + offset,
-                    on: start + offset === playing,
+                    on: start + offset === playing && this.playing(),
                     logo:
                         channel.icons.find((icon) => !failed.has(icon)) ?? null,
                     hue: hueOf(channel.title),

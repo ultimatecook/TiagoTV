@@ -2,12 +2,15 @@ import type { TvCountry } from '../countries/countries-catalog';
 import type { SportSectionId } from '../sports/sport-sections';
 import type { SportMatch } from '../sports/sports-catalog';
 import {
+    catalogQuery,
     findChannels,
     findTeams,
     foldTerm,
     languageFilter,
     matchRank,
+    teamMatchToday,
     toTitleHits,
+    type TeamHit,
 } from './search-results';
 
 function match(
@@ -51,6 +54,34 @@ describe('search results', () => {
             expect(matchRank('Real Madrid', 'madrid')).toBe(1);
             expect(matchRank('Telemadrid', 'madrid')).toBe(2);
             expect(matchRank('Sevilla', 'madrid')).toBe(-1);
+        });
+
+        it('takes a term of several words word by word', () => {
+            // The phrase as typed first, then every word in any order.
+            expect(matchRank('Real Madrid TV', foldTerm('real madrid'))).toBe(
+                0
+            );
+            expect(matchRank('Real Madrid TV', foldTerm('madrid real'))).toBe(
+                3
+            );
+            expect(matchRank('Real Madrid TV', foldTerm('real betis'))).toBe(
+                -1
+            );
+            // Spacing aside: "laliga" is "la LIGA".
+            expect(matchRank('DAZN la LIGA', foldTerm('dazn laliga'))).toBe(1);
+            expect(matchRank('DAZN la LIGA', foldTerm('laliga'))).toBe(2);
+            expect(
+                matchRank('LaLiga TV Hypermotion', foldTerm('la liga'))
+            ).toBe(1);
+            expect(matchRank('DAZN la LIGA', foldTerm('DAZN LaLiga 2'))).toBe(
+                -1
+            );
+        });
+
+        it('asks the catalog for the longest word of the term', () => {
+            expect(catalogQuery('dazn laliga')).toBe('laliga');
+            expect(catalogQuery('  La casa de papel ')).toBe('papel');
+            expect(catalogQuery('Narcos')).toBe('Narcos');
         });
     });
 
@@ -183,6 +214,34 @@ describe('search results', () => {
             );
         });
 
+        it('finds a channel whatever the words’ spacing and order', () => {
+            const laLiga = [
+                {
+                    ...countries[0],
+                    rows: [
+                        {
+                            ...countries[0].rows[0],
+                            channels: [
+                                {
+                                    ...countries[0].rows[0].channels[0],
+                                    key: 'dazn la liga',
+                                    title: 'DAZN la LIGA',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ] as TvCountry[];
+
+            expect(
+                findChannels(laLiga, foldTerm('dazn laliga')).hits.map(
+                    (hit) => hit.title
+                )
+            ).toEqual(['DAZN la LIGA']);
+            expect(findChannels(laLiga, foldTerm('liga dazn')).total).toBe(1);
+            expect(findChannels(laLiga, foldTerm('dazn tenis')).total).toBe(0);
+        });
+
         it('caps the list but counts every match', () => {
             const { hits, total } = findChannels(countries, 'madrid', 1);
             expect(hits).toHaveLength(1);
@@ -248,6 +307,79 @@ describe('search results', () => {
                     poster: 'p.jpg',
                 }),
             ]);
+        });
+
+        it('holds the answers of a longer term to every word, best first', () => {
+            // The catalog was asked for "papel" alone (see catalogQuery).
+            const hits = toTitleHits(
+                [
+                    { category_id: '1', title: 'Papel', xtream_id: 1 },
+                    {
+                        category_id: '1',
+                        title: 'La Casa de Papel (2017)',
+                        xtream_id: 2,
+                    },
+                    {
+                        category_id: '1',
+                        title: 'Papel y casa',
+                        xtream_id: 3,
+                    },
+                ],
+                'series',
+                names,
+                foldTerm('casa papel')
+            );
+
+            expect(hits.map((hit) => [hit.title, hit.rank])).toEqual([
+                ['La Casa de Papel', 3],
+                ['Papel y casa', 3],
+            ]);
+        });
+
+        it('keeps a one-word answer the catalog found its own way, last', () => {
+            const hits = toTitleHits(
+                [
+                    { category_id: '1', title: 'Vis a vis', xtream_id: 1 },
+                    { category_id: '1', title: 'Visitors', xtream_id: 2 },
+                ],
+                'series',
+                names,
+                foldTerm('vis-a-vis')
+            );
+            expect(hits.map((hit) => hit.rank)).toEqual([4, 4]);
+        });
+    });
+
+    describe('teamMatchToday', () => {
+        const now = new Date(2026, 9, 18, 17, 30);
+        const team = (start: Date | null, live = false): TeamHit => ({
+            key: 'laliga:real madrid',
+            name: 'Real Madrid',
+            sectionId: 'laliga',
+            followed: null,
+            match: match('Real Madrid', 'Sevilla', 'laliga', start),
+            opponent: 'Sevilla',
+            live,
+            rank: 0,
+        });
+
+        it('plays the team’s match on now or later today', () => {
+            const tonight = team(new Date(2026, 9, 18, 21, 0));
+            expect(teamMatchToday(tonight, now, null)).toBe(tonight.match);
+            const onNow = team(null, true);
+            expect(teamMatchToday(onNow, now, null)).toBe(onNow.match);
+        });
+
+        it('leaves a match another day, or none, to the league page', () => {
+            const tomorrow = team(new Date(2026, 9, 19, 21, 0));
+            expect(teamMatchToday(tomorrow, now, null)).toBeNull();
+            expect(
+                teamMatchToday({ ...tomorrow, match: null }, now, null)
+            ).toBeNull();
+            // The kick-off the app keeps wins over the feed's.
+            expect(
+                teamMatchToday(tomorrow, now, new Date(2026, 9, 18, 22, 0))
+            ).toBe(tomorrow.match);
         });
     });
 });

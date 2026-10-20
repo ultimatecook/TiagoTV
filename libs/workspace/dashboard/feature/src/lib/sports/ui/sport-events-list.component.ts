@@ -12,7 +12,7 @@ import { injectSportsLocale, matchSides } from '../match-view';
 import { isFollowedTeam } from '../my-teams';
 import { SportsBoardService } from '../sports-board.service';
 import { SportsCatalogService } from '../sports-catalog.service';
-import { findSportSection } from '../sport-sections';
+import { competitionLogo, findSportSection } from '../sport-sections';
 import type { SportMatch } from '../sports-catalog';
 
 interface EventRow {
@@ -53,15 +53,18 @@ export class SportEventsListComponent {
         return this.matches().map((match): EventRow => {
             const section = findSportSection(match.sectionId);
             const kickOff = this.sports.kickOff(match);
+            // Without the card's logo (the NBA's), its own competition.
+            const logo = competitionLogo(section, match.event.competition);
             return {
                 match,
                 sides: matchSides(match),
                 live: this.sports.isLive(match),
                 time: kickOff ? kickOffTime(kickOff, locale) : '',
-                competition: section?.catchAll
-                    ? match.event.competition
-                    : (section?.title ?? match.event.competition),
-                logo: section?.logo ?? null,
+                competition:
+                    section?.catchAll || logo !== section?.logo
+                        ? match.event.competition
+                        : (section?.title ?? match.event.competition),
+                logo,
                 tint: section?.tint ?? '#20232c',
                 homeMine: isFollowedTeam(match.event.home),
                 awayMine: isFollowedTeam(match.event.away),

@@ -1,4 +1,11 @@
-import { inject } from '@angular/core';
+import {
+    afterNextRender,
+    effect,
+    inject,
+    Injector,
+    signal,
+    untracked,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { NowPlayingDockService } from './now-playing-dock.service';
 import {
@@ -7,6 +14,10 @@ import {
     type NowPlayingProgress,
     type NowPlayingTeardown,
 } from './now-playing-handoff';
+import {
+    PlaybackStreamOwner,
+    type PlaybackStreamHolder,
+} from './playback-stream-owner';
 
 /** What a page player describes about its stream when it is torn down. */
 export type NowPlayingPageSnapshot = Omit<
@@ -15,13 +26,17 @@ export type NowPlayingPageSnapshot = Omit<
 >;
 
 /**
- * A page player's side of the mini-player: it ends the mini-player's
- * session when the page starts its own playback, follows the page's
- * progress, and hands the stream over when a navigation tears the page
- * down mid-playback. Create it in an injection context.
+ * A page player's side of the app's one stream and of the mini-player: the
+ * page's playback claims the stream (ending the mini-player's session and
+ * stopping any other player), waits until the previous connection is
+ * closed, follows the page's progress, and hands the stream over when a
+ * navigation tears the page down mid-playback. Create it in an injection
+ * context.
  */
 export class NowPlayingPageHandoff {
     private readonly dock = inject(NowPlayingDockService);
+    private readonly streams = inject(PlaybackStreamOwner);
+    private readonly injector = inject(Injector);
     private readonly router = inject(Router, { optional: true });
     /** Where this playback runs, for the mini-player's way back. */
     private readonly originUrl = this.router?.url ?? '';
@@ -29,23 +44,62 @@ export class NowPlayingPageHandoff {
         typeof history !== 'undefined' ? history.state : null
     );
     private progress: NowPlayingProgress | null = null;
+    private readonly stoppedState = signal(false);
+    private readonly holder: PlaybackStreamHolder = {
+        stop: () => this.stopForAnotherPlayer(),
+    };
+    /** Another player took the stream: this one renders no engine. */
+    readonly stopped = this.stoppedState.asReadonly();
 
-    constructor(private readonly dockable: () => boolean) {}
-
-    /** One stream plays at a time: the page's playback ends the bar's. */
-    pageStarted(): void {
-        if (this.dockable()) {
-            this.dock.pagePlaybackStarted();
-        }
+    /**
+     * @param dockable whether a navigation away hands the stream to the
+     *   mini-player (not for Embedded MPV, nor a page that is leaving for a
+     *   player of its own).
+     * @param inMiniPlayer the mini-player's own view: the bar holds the
+     *   stream for it, so it neither claims nor waits.
+     * @param request what the page asks the player to play: once another
+     *   player stopped this one, a new request claims the stream back. Its
+     *   own retries and reloads keep the request and never take it back.
+     */
+    constructor(
+        private readonly dockable: () => boolean,
+        private readonly inMiniPlayer: () => boolean = () => false,
+        request: () => unknown = () => null
+    ) {
+        effect(() => {
+            request();
+            untracked(() => {
+                if (this.stoppedState()) {
+                    this.pageStarted();
+                }
+            });
+        });
     }
 
     /**
-     * The page's player must not open its stream yet: the bar's player is
-     * still mounted and may hold the connection a one-connection account
-     * allows. It unmounts right after `pageStarted()` ended its session.
+     * One stream plays at a time: the page's playback ends the bar's, and
+     * any other player's, whatever engine either one plays on.
      */
-    waits(): boolean {
-        return this.dockable() && this.dock.playerMounted();
+    pageStarted(): void {
+        if (this.inMiniPlayer()) {
+            return;
+        }
+        this.stoppedState.set(false);
+        this.streams.claim(this.holder);
+        this.dock.pagePlaybackStarted();
+    }
+
+    /**
+     * The page's player must not open its stream yet: the bar's player (or
+     * another one) is still mounted and may hold the connection a
+     * one-connection account allows, or (with `closes`) an Embedded MPV
+     * session is still being disposed. They let go right after
+     * `pageStarted()` stopped them.
+     */
+    waits(closes = true): boolean {
+        return (
+            !this.inMiniPlayer() && this.streams.blocked(this.holder, closes)
+        );
     }
 
     record(progress: NowPlayingProgress): void {
@@ -53,6 +107,8 @@ export class NowPlayingPageHandoff {
     }
 
     release(snapshot: NowPlayingPageSnapshot): void {
+        // Its engine (a child) is already gone, with its connection.
+        this.streams.release(this.holder);
         const handoff = resolveNowPlayingHandoff({
             ...snapshot,
             dockable: this.dockable(),
@@ -64,6 +120,18 @@ export class NowPlayingPageHandoff {
         if (handoff) {
             this.dock.handOff(handoff);
         }
+    }
+
+    /**
+     * Another player claimed the stream while this page's is still
+     * mounted: its engine unmounts (closing the connection), and once that
+     * rendered, the stream is let go.
+     */
+    private stopForAnotherPlayer(): void {
+        this.stoppedState.set(true);
+        afterNextRender(() => this.streams.release(this.holder), {
+            injector: this.injector,
+        });
     }
 
     /**

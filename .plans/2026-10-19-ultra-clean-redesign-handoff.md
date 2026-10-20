@@ -144,6 +144,40 @@ Both are on the preview branch.
 - **Missing data:** no scores or minutes anywhere (the provider has none);
   live-match state is not computed for `via` channels such as M+ LaLiga TV.
 
+## Post-publish fixes (2026-10-20)
+
+After the user tried the published redesign (Embedded MPV "experimental"
+player selected), a read-only audit of flows and layout ran and these were
+fixed on `preview/home-platforms` (one `fix:` commit on top of `main`):
+
+- One stream app-wide: `libs/ui/playback/src/lib/now-playing/playback-stream-owner.ts`
+  stops the previous player (page, pill, Embedded MPV, radio) and waits for
+  its connection to close before the next opens. The main process also
+  disposes stray MPV sessions (`embedded-mpv.events.ts`) — that part needs a
+  new installer.
+- En vivo / league page fullscreen with native-view MPV: the player itself
+  goes fullscreen; Esc/F/button exit; keys no longer run twice.
+- Series/Películas: platforms take turns (`catalog/catalog-fairness.ts`); the
+  stored SQLite rows carry no genres, which made everything Netflix.
+- Scale: a one-time default app zoom of level −1 (≈83 %) in Electron
+  (`libs/workspace/shell/util/src/lib/default-ui-scale.ts`), matching the
+  prototype the user approved at `zoom:.8`.
+- Shell: player header below the bar, Back on Mi lista details, the
+  "‹ Deportes" pill no longer adds history, one Esc leaves settings, overlays
+  `no-drag`, Downloads entry in the source switcher, top scrim when scrolled,
+  dark-glass capsule for contrast.
+- Pages: play buttons really play (navigation-state play requests), search
+  team rows open the right match, word-based search, Space/arrow keys,
+  Home hero from CatalogService, En vivo "Todos" without finished events,
+  Ajustes › Inicio switches wired to the new Home, Mi lista/Descargas
+  restyled, contrast tokens raised.
+
+Still open: the HTML5 player ignores the saved start position (pre-existing,
+suspected `PlaybackRecoverySession.recordTimeUpdate`); external MPV/VLC from
+the Xtream live view and title pages doesn't stop the pill; the stage's
+resting logo falls back to the NBA logo for non-NBA basketball; stale
+Electron E2Es (old sidebar).
+
 ## Questions still open with the user
 
 - Should Series/Películas also include kept-language titles that are on no

@@ -11,6 +11,21 @@
         </h2>
         <span class="switcher__count">{{ playlists().length }}</span>
         <span class="switcher__spacer"></span>
+        <!-- The download manager's permanent way in (Electron; the bar's
+             downloads circle shows only while downloads run). -->
+        @if (showDownloads) {
+            <button
+                mat-icon-button
+                type="button"
+                class="switcher__action"
+                data-test-id="playlist-switcher-downloads"
+                (click)="openDownloads()"
+                [matTooltip]="'WORKSPACE.TOP_BAR.DOWNLOADS' | translate"
+                [attr.aria-label]="'WORKSPACE.TOP_BAR.DOWNLOADS' | translate"
+            >
+                <mat-icon>download</mat-icon>
+            </button>
+        }
         <button
             mat-icon-button
             type="button"

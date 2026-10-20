@@ -35,6 +35,8 @@ export interface CountriesCatalogStream {
     readonly stream_icon?: string | null;
     readonly category_id: string | number | null;
     readonly is_adult?: number | string | null;
+    /** When the panel last named it (epoch seconds). */
+    readonly added?: number | string | null;
 }
 
 export interface TvCountry {
@@ -79,7 +81,7 @@ export function buildCountriesTv(
             !category ||
             !Number.isFinite(streamId) ||
             Number(stream.is_adult) === 1 ||
-            isEmptySlot(stream.name, category.label, now)
+            isEmptySlot(stream.name, category.label, now, stream.added)
         ) {
             continue;
         }

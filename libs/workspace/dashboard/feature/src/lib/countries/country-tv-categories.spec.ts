@@ -75,14 +75,14 @@ describe('countryCards', () => {
         expect(titles('main')).toEqual(['La 1', 'Antena 3']);
     });
 
-    it('runs All through the kinds in the chips’ order', () => {
+    it('opens All on the main channels, then the chips’ order', () => {
         expect(titles('all')).toEqual([
-            ...titles('sports'),
             ...titles('main'),
+            ...titles('sports'),
             ...titles('news'),
         ]);
         const cards = countryCards(SPAIN, 'all');
-        expect(cards[0].row.tier).toBe('sports');
+        expect(cards[0].channel.title).toBe('La 1');
         expect(cards[cards.length - 1].row.tier).toBe('news');
     });
 

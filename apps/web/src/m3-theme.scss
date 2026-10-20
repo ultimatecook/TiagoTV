@@ -314,8 +314,10 @@ html {
         // Typography: warm whites over graphite glass
         --app-heading-color: #f4f1ea;
         --app-body-color: #bdb9ad;
-        --app-muted-color: #8c887b;
-        --app-eyebrow-color: #a19d90;
+        // Muted and eyebrow text: `--tv-meta` and `--tv-text-3`, 4.5:1 over
+        // the darkest likely glass (see _tv-tokens.scss).
+        --app-muted-color: #a39f93;
+        --app-eyebrow-color: #aeaa9d;
 
         // Provider accents
         --app-provider-xtream: #f2efe8;

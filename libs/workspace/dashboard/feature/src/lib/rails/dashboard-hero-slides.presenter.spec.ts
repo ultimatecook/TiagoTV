@@ -11,6 +11,12 @@ import type {
     PortalRecentItem,
 } from '@iptvnator/shared/interfaces';
 import { DashboardDataService } from '@iptvnator/workspace/dashboard/data-access';
+import { CatalogService } from '../catalog/catalog.service';
+import type { CatalogTitle } from '../catalog/catalog-titles';
+import {
+    findStreamingPlatform,
+    type StreamingPlatform,
+} from '../platforms/streaming-platforms';
 import {
     DashboardHeroTmdbService,
     type DashboardHeroTmdbExtras,
@@ -101,6 +107,9 @@ describe('DashboardHeroSlidesPresenter', () => {
     let addedLoading: ReturnType<typeof signal<boolean>>;
     let liveAwaiting: ReturnType<typeof signal<boolean>>;
     let positionsSettled: ReturnType<typeof signal<boolean>>;
+    let catalogMovies: ReturnType<typeof signal<CatalogTitle[] | null>>;
+    let catalogSource: ReturnType<typeof signal<{ _id: string } | null>>;
+    let loadStored: jest.Mock;
     const positions = new Map<string | number, PlaybackPositionData>([
         [
             1,
@@ -180,6 +189,16 @@ describe('DashboardHeroSlidesPresenter', () => {
                     },
                 },
                 {
+                    provide: CatalogService,
+                    useValue: {
+                        source: catalogSource,
+                        titles: (kind: string) =>
+                            kind === 'movie' ? catalogMovies() : null,
+                        heroLead: () => 0,
+                        loadStored,
+                    },
+                },
+                {
                     provide: DashboardLiveEpgPresenter,
                     useValue: {
                         heroLiveCandidates: candidates,
@@ -225,6 +244,9 @@ describe('DashboardHeroSlidesPresenter', () => {
         addedLoading = signal(false);
         liveAwaiting = signal(false);
         positionsSettled = signal(true);
+        catalogMovies = signal(null);
+        catalogSource = signal(null);
+        loadStored = jest.fn().mockResolvedValue(undefined);
     });
 
     afterEach(() => {
@@ -355,6 +377,39 @@ describe('DashboardHeroSlidesPresenter', () => {
         });
     });
 
+    it('resumes an unfinished Xtream movie on its page, playing', () => {
+        const movie: PortalRecentItem = {
+            id: 6,
+            title: 'Tyler Rake',
+            type: 'movie',
+            source: 'xtream',
+            playlist_id: 'p3',
+            category_id: '2',
+            xtream_id: 66,
+            viewed_at: '2026-09-04',
+        };
+        positions.set(6, {
+            contentXtreamId: 66,
+            contentType: 'vod',
+            positionSeconds: 1200,
+            durationSeconds: 6000,
+        });
+        recentItems.set([movie]);
+        try {
+            const [resume] = create().slides();
+
+            // "Continuar" asks the page to play (from the saved position);
+            // "Más info" stays the plain detail.
+            expect(resume.primaryAction.state).toEqual({
+                resume: true,
+                detailPlayRequest: { mode: 'resume', contentId: 66 },
+            });
+            expect(resume.secondaryAction?.state).toEqual({ resume: false });
+        } finally {
+            positions.delete(6);
+        }
+    });
+
     it('shows a favourite channel with its programme on air now', () => {
         const live = create().slides()[1];
 
@@ -399,6 +454,66 @@ describe('DashboardHeroSlidesPresenter', () => {
         expect(slides[3]).toMatchObject({
             backdropSource: 'backdrop',
             primaryAction: { link: ['/added', '5'], state: { added: true } },
+        });
+    });
+
+    it('features the catalog’s titles, in Spanish, over the raw newest rows', async () => {
+        // The provider's newest row is the English copy of a Spanish title.
+        addedItems.set([{ ...import1, title: 'EXTRACTION (2020)_ENG' }]);
+        const netflix = findStreamingPlatform('netflix') as StreamingPlatform;
+        const rake: CatalogTitle[] = [
+            {
+                id: 77,
+                kind: 'movie',
+                categoryId: '1610',
+                title: 'TYLER RAKE',
+                poster: 'https://img/rake.jpg',
+                language: 'ES',
+                added: 1_760_000_000,
+                genres: [],
+                rating: 6.8,
+                plot: null,
+                backdrop: null,
+                tmdb: null,
+                year: 2020,
+                versions: [],
+                platform: netflix,
+                platforms: [netflix],
+            },
+        ];
+        catalogSource.set({ _id: 'p3' });
+        let read!: () => void;
+        loadStored.mockReturnValue(
+            new Promise<void>((done) => {
+                read = () => {
+                    catalogMovies.set(rake);
+                    done();
+                };
+            })
+        );
+        recentItems.set([]);
+        favorites.set([]);
+        candidates.set([]);
+        const presenter = create();
+        TestBed.tick();
+
+        // Only the stored copy is read (no provider request), and the
+        // skeleton waits for it rather than swap the slides after.
+        expect(loadStored.mock.calls).toEqual([['movie'], ['series']]);
+        expect(presenter.loading()).toBe(true);
+        read();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(presenter.loading()).toBe(false);
+        expect(presenter.slides().map((slide) => slide.title)).toEqual([
+            'TYLER RAKE',
+        ]);
+        expect(presenter.slides()[0]).toMatchObject({
+            kind: 'added',
+            rating: '6.8',
+            year: 2020,
+            primaryAction: { link: ['/added', '77'] },
         });
     });
 

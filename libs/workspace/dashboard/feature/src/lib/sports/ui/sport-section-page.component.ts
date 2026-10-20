@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { NowPlayingDockService } from '@iptvnator/ui/playback';
 import { groupChannelFamilies } from '../channel-families';
 import { hasLeagueTable, type LeagueTable } from '../league-tables';
 import { signalCards } from '../signal-cards';
@@ -51,6 +52,7 @@ export class SportSectionPageComponent {
     readonly tv = inject(SportTvPlayback);
     private readonly host: HTMLElement = inject(ElementRef).nativeElement;
     private readonly router = inject(Router);
+    private readonly dock = inject(NowPlayingDockService);
 
     /** Bound from the route parameter. */
     readonly sectionId = input<string>('');
@@ -94,7 +96,12 @@ export class SportSectionPageComponent {
             const section = this.section();
             const cards = this.cards();
             if (section && this.content() && this.opened !== section.id) {
-                untracked(() => this.open(section.id, cards[0]?.channel));
+                untracked(() =>
+                    this.open(
+                        section.id,
+                        cards.map((card) => card.channel)
+                    )
+                );
             }
         });
     }
@@ -114,15 +121,31 @@ export class SportSectionPageComponent {
             ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    private open(sectionId: SportSectionId, first?: SportChannel): void {
+    private open(
+        sectionId: SportSectionId,
+        channels: readonly SportChannel[]
+    ): void {
         this.opened = sectionId;
         // The navigation's state, or (once it ended) the history entry's.
         const state =
             untracked(() => this.router.currentNavigation())?.extras.state ??
             (typeof history === 'undefined' ? null : history.state);
-        const channel = playRequest(state) ?? first;
+        const request = playRequest(state);
+        // The mini-player's channel, when it is one of this page's: back
+        // from the mini-player, the state replays the way in (the channel
+        // asked for then), not the one picked later and left playing.
+        const docked = this.tv.dockedChannel(channels);
+        const returning =
+            !!docked &&
+            request?.streamId ===
+                playRequest(this.dock.session()?.returnState ?? null)?.streamId;
+        const channel = (returning ? docked : request) ?? docked ?? channels[0];
         if (channel) {
-            this.tv.open(channel);
+            this.tv.open(channel, !!request && !returning);
+        } else {
+            // Reused for another competition with no channel: the previous
+            // one's stream must not carry over (it goes like any page's).
+            this.tv.clear();
         }
     }
 

@@ -23,15 +23,22 @@ const LIGHTS_HEIGHT = 14;
 const CLEAR_X = MACOS_TRAFFIC_LIGHTS_POSITION.x + LIGHTS_WIDTH + 8;
 /** Window points from the top to where the content area may start. */
 const CLEAR_Y = MACOS_TRAFFIC_LIGHTS_POSITION.y + LIGHTS_HEIGHT + 14;
+/**
+ * Window points of the band the lights are centred on (84: the top bar's
+ * height at 100 %).
+ */
+const BAND = 2 * MACOS_TRAFFIC_LIGHTS_POSITION.y + LIGHTS_HEIGHT;
 
 /** CSS pixels from the window's top-left corner that clear the lights. */
 export interface TrafficLightsClearance {
     readonly x: number;
     readonly y: number;
+    /** The height of the band centred on the lights. */
+    readonly band: number;
 }
 
 /** A fullscreen window hides the lights: there is nothing to clear. */
-const FULLSCREEN_CLEARANCE: TrafficLightsClearance = { x: 0, y: 0 };
+const FULLSCREEN_CLEARANCE: TrafficLightsClearance = { x: 0, y: 0, band: 0 };
 
 /**
  * Set on `<html>` while the window is fullscreen (the web app's
@@ -61,7 +68,7 @@ export function trafficLightsClearance(
 ): TrafficLightsClearance {
     const factor =
         Number.isFinite(zoomFactor) && zoomFactor > 0 ? zoomFactor : 1;
-    return { x: CLEAR_X / factor, y: CLEAR_Y / factor };
+    return { x: CLEAR_X / factor, y: CLEAR_Y / factor, band: BAND / factor };
 }
 
 /**
@@ -69,14 +76,17 @@ export function trafficLightsClearance(
  * `--traffic-lights-clear-x` and `--traffic-lights-clear-y`, refreshed on
  * `resize` (Chromium fires it when the zoom changes). The top bar keeps its
  * leading group clear of the lights with the first; without them (off macOS)
- * it falls back to its default layout. In fullscreen (`window-fullscreen` on `<html>`)
- * macOS hides the lights, so both are `0px`.
+ * it falls back to its default layout. `--traffic-lights-band-h` is the band
+ * centred on the lights: zoomed out, the shell grows the bar to it, so the
+ * lights stay on its centre line. In fullscreen (`window-fullscreen` on
+ * `<html>`) macOS hides the lights, so all three are `0px`.
  */
 @Directive({
     selector: '[appTrafficLightsClearance]',
     host: {
         '[style.--traffic-lights-clear-x]': 'clearX()',
         '[style.--traffic-lights-clear-y]': 'clearY()',
+        '[style.--traffic-lights-band-h]': 'band()',
     },
 })
 export class TrafficLightsClearanceDirective {
@@ -97,6 +107,7 @@ export class TrafficLightsClearanceDirective {
     });
     protected readonly clearX = computed(() => toPx(this.clearance()?.x));
     protected readonly clearY = computed(() => toPx(this.clearance()?.y));
+    protected readonly band = computed(() => toPx(this.clearance()?.band));
 
     constructor() {
         effect((onCleanup) => {

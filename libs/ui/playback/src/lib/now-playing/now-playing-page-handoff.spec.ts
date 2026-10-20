@@ -30,6 +30,25 @@ describe('NowPlayingPageHandoff', () => {
         );
     }
 
+    /** The mini-player's own view: the bar holds the stream for it. */
+    function createBarView(): NowPlayingPageHandoff {
+        return TestBed.runInInjectionContext(
+            () =>
+                new NowPlayingPageHandoff(
+                    () => false,
+                    () => true
+                )
+        );
+    }
+
+    function handOver(): void {
+        const page = create();
+        page.record({ currentTime: 42, duration: 3600, playing: true });
+        router.currentNavigation.set({ id: 2 });
+        page.release(SNAPSHOT);
+        router.currentNavigation.set(null);
+    }
+
     beforeEach(() => {
         router.url = '/workspace/xtreams/p1/vod/10/1';
         router.currentNavigation.set(null);
@@ -72,16 +91,101 @@ describe('NowPlayingPageHandoff', () => {
 
     it('ends the bar when a page starts playing, unless it is the bar', () => {
         const dock = TestBed.inject(NowPlayingDockService);
-        const page = create();
-        page.record({ currentTime: 42, duration: 3600, playing: true });
-        router.currentNavigation.set({ id: 2 });
-        page.release(SNAPSHOT);
+        handOver();
 
-        create(false).pageStarted();
+        createBarView().pageStarted();
         expect(dock.session()).not.toBeNull();
 
         create().pageStarted();
         expect(dock.session()).toBeNull();
+    });
+
+    it('ends the bar for a page player that does not dock (Embedded MPV)', () => {
+        // An Embedded MPV movie or channel never goes to the bar, but its
+        // stream is the account's one connection all the same.
+        const dock = TestBed.inject(NowPlayingDockService);
+        handOver();
+        const releaseBarPlayer = dock.registerPlayer();
+
+        const mpvPage = create(false);
+        mpvPage.pageStarted();
+
+        expect(dock.session()).toBeNull();
+        expect(mpvPage.waits()).toBe(true);
+        releaseBarPlayer();
+        expect(mpvPage.waits()).toBe(false);
+    });
+
+    it('stops a page player when another one claims the stream', () => {
+        const first = create();
+        const second = create(false);
+        first.pageStarted();
+        expect(first.stopped()).toBe(false);
+
+        second.pageStarted();
+
+        expect(first.stopped()).toBe(true);
+        expect(second.stopped()).toBe(false);
+        // The second waits until the first one's engine is gone.
+        expect(second.waits()).toBe(true);
+        first.release(SNAPSHOT);
+        expect(second.waits()).toBe(false);
+    });
+
+    it('claims the stream back once its page asks for a new stream', () => {
+        const request = signal('channel-1');
+        const page = TestBed.runInInjectionContext(
+            () =>
+                new NowPlayingPageHandoff(
+                    () => true,
+                    () => false,
+                    () => request()
+                )
+        );
+        page.pageStarted();
+        TestBed.tick();
+        const other = create();
+        other.pageStarted();
+        expect(page.stopped()).toBe(true);
+
+        // Its own reloads keep the request: it stays stopped.
+        TestBed.tick();
+        expect(page.stopped()).toBe(true);
+
+        request.set('channel-2');
+        TestBed.tick();
+        expect(page.stopped()).toBe(false);
+        expect(other.stopped()).toBe(true);
+    });
+
+    it('is not stopped by a bar that mounts for the session it just ended', () => {
+        // Back to a page that plays at once: the hand-over and the page's
+        // start land in one render, so the shell still mounts the bar for
+        // the session the page already ended. That bar must not take the
+        // stream (the page would stay blank); the page waits for it.
+        const dock = TestBed.inject(NowPlayingDockService);
+        handOver();
+        const page = create();
+        page.pageStarted();
+        expect(dock.session()).toBeNull();
+
+        const releaseLateBar = dock.registerPlayer();
+
+        expect(page.stopped()).toBe(false);
+        expect(page.waits()).toBe(true);
+        releaseLateBar();
+        expect(page.waits()).toBe(false);
+    });
+
+    it('stops the bar when a page player claims the stream before it unmounts', () => {
+        const dock = TestBed.inject(NowPlayingDockService);
+        handOver();
+        const stopBar = jest.fn();
+        dock.registerPlayer(stopBar);
+
+        create().pageStarted();
+
+        expect(stopBar).toHaveBeenCalledTimes(1);
     });
 
     it("holds a page's stream until the bar's player has let go of its own", () => {
@@ -94,7 +198,7 @@ describe('NowPlayingPageHandoff', () => {
         page.pageStarted();
         expect(dock.session()).toBeNull();
         expect(page.waits()).toBe(true);
-        expect(create(false).waits()).toBe(false);
+        expect(createBarView().waits()).toBe(false);
 
         releaseBarPlayer();
         releaseBarPlayer();

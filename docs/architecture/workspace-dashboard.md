@@ -13,11 +13,11 @@ Related:
 - It is a **rail-based** content surface (Netflix / Apple TV pattern), not a
   customizable widget grid.
 - Layout order is static and curated — there is no edit mode, drag-drop, or
-  size stepper. Each rail has a persisted show/hide toggle
+  size stepper. Each section has a persisted show/hide switch
   (`Settings.dashboardRails`, `DashboardRailsSettings` in
   `libs/shared/interfaces/src/lib/settings.interface.ts`, surfaced under
-  Settings → Dashboard); every template rail is gated by
-  `dashboardRails().<key>`. Rails additionally auto-hide when empty.
+  Settings → Inicio); every section is gated by `dashboardRails().<key>`.
+  Sections additionally auto-hide when empty.
 - First-run users see the shared welcome empty-state with a single primary
   CTA to add their first playlist.
 
@@ -80,7 +80,10 @@ Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
    last other place). Scores and minutes are not in the provider's data: a
    row says "En vivo" or its kick-off. The channel column names the
    broadcaster from the event feed's category, or a match's first `via`
-   channel, which a click plays.
+   channel, which a click plays. A feed filed under another sport's
+   category (a Ligue 1 match under Formula 1, `namesOtherSport`) names no
+   channel, and a card's logo that is one competition's (Básquet's NBA logo,
+   `SportSection.logoCompetition`) shows on that competition's rows only.
 5. "Top 10 películas hoy" and 6. "Series para vos" —
    `rails/home-top-movies.*`, `rails/home-series.*` over
    `HomePlatformTitlesService`: the platforms' aggregated catalog
@@ -95,6 +98,9 @@ Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
    season marker, "Nuevo episodio" for an older show updated this week).
    "Mi lista" toggles the source's favourite when the title is in the
    stored catalog (`HomeMyListService`), else opens the title's page.
+   "Empezar T1·E1" opens the show's page playing its first episode
+   (`CatalogService.play(title, 'first-episode')`, see Detail play requests
+   below); a click elsewhere on the card opens the page.
 7. "Últimos canales vistos" — `rails/home-recent-channels.*`:
    `globalRecentLiveItems()`, the programme and its progress from the
    page's `DashboardLiveEpgPresenter` (asked for the cards in view once the
@@ -104,8 +110,16 @@ A section with nothing to show renders nothing and the page's
 `> :empty { display: none }` leaves it out of the gap rhythm. The upstream
 rails (New & Popular, favourites, sources, TMDB trending and
 recommendations, their skeletons) and the old "Partidos de hoy" and
-"Canales en vivo" rows are no longer on the Home; the other Settings →
-Dashboard switches have no Home section to hide.
+"Canales en vivo" rows are no longer on the Home. Settings → Inicio has a
+switch per section, top to bottom: `hero` ("Seguir viendo"), `platforms`,
+`sports`, `events`, `topMovies`, `seriesForYou`, `recentlyWatchedLive`
+(a key a stored setting lacks is on). The old rails' keys
+(`continueWatching`, `liveFavorites`, `favoriteMoviesAndSeries`,
+`recentSources`, `xtreamRecentlyAdded`, `tmdbTrending`,
+`tmdbRecommendations`) have no switch and no section, but stay in the
+stored settings as they were. "Empezar en Inicio" (`showDashboard`) only
+picks the first page (Inicio, else Fuentes): the top bar keeps Inicio and
+the section switches stay editable either way.
 
 Render rules:
 
@@ -161,8 +175,15 @@ once):
 2. a live channel with a programme on air — the first of
    `selectDashboardHeroLiveCandidates` (up to three favourites, then two
    recently watched channels) whose EPG answer has a title;
-3. remaining places round-robin over the favourite movies/series and the
-   Xtream recently-added titles;
+3. remaining places round-robin over the favourite movies/series and
+   Series / Películas' newest titles (`catalogHeroItems` over
+   `CatalogService`: one title per show, in Spanish where it has a Spanish
+   version, the platforms taking turns as in the catalog's "Novedades",
+   movies and series in turn). Only the stored catalog is read for them
+   (`CatalogService.loadStored`, never the platforms' lists: no provider
+   request); while it is read they are held back (the skeleton waits if
+   nothing else is to show), and only when nothing is stored do the
+   provider's raw recently-added rows stand in;
 4. only when nothing qualifies, the newest history row of any kind (a
    detail action: it can be a finished title). It waits for
    `continueWatchingSettled()`.
@@ -179,8 +200,9 @@ reason otherwise: favourite channel, recently added…), its platform's logo
 when its catalog category belongs to one, the title in Bebas Neue, the
 watch progress (`--app-progress-color`; a live programme's elapsed share in
 `--app-live-color`) beside "T2·E5 · Quedan 23 min" / "Película · …"
-(`heroMetaParts`), then Continue (the resume handoff, as before) and More
-info (detail only). Series titles drop their season marker
+(`heroMetaParts`), then Continue (the resume handoff: a series' saved
+episode auto-plays, an Xtream movie's page plays it from the saved
+position through a detail play request) and More info (detail only). Series titles drop their season marker
 (`splitSeasonSuffix`).
 
 Semantics: the page has one stable, visually hidden `h1`
@@ -253,7 +275,8 @@ upstream rail.
 ## Data Flow
 
 TiagoTV: the Home reads the history (hero, last channels), the favourites
-and Xtream recently-added titles (hero discovery slides only), the playback
+and, without a stored catalog, Xtream recently-added titles (hero discovery
+slides only), the playback
 positions and the live EPG presenters below; the upstream rails' card
 builders, their skeleton gates (`dashboard-rail-skeletons.ts`,
 `dashboard-skeleton-grace.ts`), the TMDB rails' loader
@@ -571,6 +594,11 @@ categories (`PlatformsCatalogService`):
    the list already loaded: a tile fetches nothing. They open after a short
    rest of the pointer (`--card-info-delay`) or at once on keyboard focus,
    and reduced motion drops their slide.
+5. The billboard (`platform-billboard.component.scss`; Netflix, HBO Max and
+   Apple TV) runs up under the top bar and places its text from its foot.
+   At 760 px and below, where the bar takes two rows (108 px), its text
+   keeps the bar's room above it and the billboard grows instead
+   (`min-height: var(--bb-height)`), so no line sits under the bar.
 
 ## By-Country Page (TiagoTV)
 
@@ -591,7 +619,14 @@ switches to it.
    United States. Adult streams and empty slots are left out
    (`country-slots.ts`): "No Event" slots, ended matches, a broadcast window
    that closed, and in a category of slots (PPV, events, a league's games) a
-   numbered slot that names no event ("LALIGA+ PPV 3").
+   numbered slot that names no event ("LALIGA+ PPV 3"). The clock retires
+   finished event feeds as the sports views do (`longestEvent`,
+   `match-clock.ts`, plus half an hour): a "Next | date | time" match past
+   its kick-off by more than its competition's longest match, a "Live" the
+   panel named (`added`) that long ago, a timeless "Next" unchanged for two
+   days, a US pay-per-view game six hours after its Eastern time, and in a
+   category of slots a numbered slot still named after an event a week on
+   ("LIVE EVENT 26 - … Coachella 2026").
 2. **Rows, chips and cards.** `buildCountryRows` still groups a country's
    channels: copies of a channel share one channel (quality badges, country
    codes, capitals tidied: `country-channels.ts`, `country-titles.ts`); a
@@ -605,8 +640,9 @@ switches to it.
    the data of the overlay's category chips (`country-tv-categories.ts`): All,
    then one chip per kind the country has, with its channel count, in the
    order sports, events, main ("Generalistas"), news, movies and series, kids,
-   documentaries, music, others, other versions. All runs through the kinds
-   in that order. A new country starts on All.
+   documentaries, music, others, other versions. All opens on the main
+   channels (La 1, BBC One, CBS…), then runs through the other kinds in the
+   chips' order (`ALL_ORDER`). A new country starts on All.
 3. **Overlay.** The channel's name (32px) and what it shows now, the
    controls (play/pause, sound, Open in Live TV, full screen), the
    programme's 3px progress, the chips and the channels in glass cards
@@ -633,11 +669,14 @@ switches to it.
    brings them back, and the pointer hides while they are away. They stay
    while nothing plays, while keyboard focus or the pointer is on them, and
    while the menu is open. A click on the picture sends them away or brings
-   them back; Esc closes the menu, else sends them away (focus moves to the
-   page). Space or K plays and pauses, M mutes, F goes full screen, an arrow
-   brings focus to the playing card (`country-tv-keys.ts`); keys a focused
-   control handles stay its own, and keys from a dialog or a field elsewhere
-   are left alone.
+   them back; Esc closes the menu, else leaves full screen (where the window
+   lets the page see Esc there), else sends them away (focus moves to the
+   page). Space or K plays and pauses, M mutes, F goes full screen and back,
+   an arrow brings focus to the playing card (`country-tv-keys.ts`); keys a
+   focused control handles stay its own (the cards' arrows, Enter on a
+   button; a letter or Space only in a field, so F on the full screen button
+   just pressed still leaves and Space there pauses rather than pressing it
+   again), and keys from a dialog or a field elsewhere are left alone.
 6. **Playback** (`CountryTvPlayback`). A card plays in place; nothing
    navigates. The playback is built as the Xtream live view builds it:
    `XtreamUrlService` with the source's credentials and the stream format
@@ -649,8 +688,10 @@ switches to it.
    (`tiagotv:countries-channels`), else on the last channel watched
    (`tiagotv:countries-last-channel`), else on Argentina's first, and plays it
    unless the mini-player is playing another page's stream (then the white
-   button offers Play). With MPV or VLC as the player, Play launches it and
-   nothing plays on opening. A channel joins Recently viewed once it has
+   button offers Play); the mini-player's own channel (back from the live
+   view, say) plays anyway, the page taking the stream over. With MPV or VLC
+   as the player, Play ends the mini-player and launches it, and nothing
+   plays on opening. A channel joins Recently viewed once it has
    played (`PlaybackHistoryGate`); a relock that withholds its category stops
    it. "Open in Live TV" opens the channel in the Xtream live view without a
    mini-player hand-over.
@@ -663,6 +704,21 @@ switches to it.
    Embedded MPV has no `<video>` and counts as playing once mounted. Full
    screen takes the whole page, overlay included. The player's diagnostic
    (Retry, the external players) stays above the overlay's height.
+
+   Native-view Embedded MPV (`CountryTvControls.nativeSurface`: the engine
+   without its frame-copy canvas) paints a platform view over the window,
+   above every page element (see [Embedded MPV](./embedded-mpv-native.md#bounds-compositing-strategy)),
+   so the page adapts. Its full screen is the player's own, on its
+   `app-web-player-view` as the live view's controls take it: the picture
+   fills the screen over its own dock (the exit button, shown by a move),
+   which takes the pointer there; nothing of the page shows. Elsewhere the
+   page keeps its dock hidden, and while the overlay shows the picture keeps
+   clear of the top bar, the country button and the overlay's controls
+   (`live--native`, `--live-player-inset` from the overlay's
+   `--live-overlay-content`); quiet, it takes the page. The country menu
+   moves it away while open (`acquireExternalModalSurface`). Before, the
+   picture covered the bar and the overlay, and the page's full screen left
+   it on the page with only the cards' foot showing and no way out.
 8. **Guide.** Now and next come the way the live view loads a channel's guide
    (`StreamResolverService.loadEpgItems`: uploaded XMLTV, the manual mapping,
    then the provider's guide for that channel), asked for once a channel has
@@ -700,7 +756,9 @@ titles of that kind in one catalog, with no filters and no search of its own.
    platform instead.
 4. **Hero** (README 06). It rises behind the top bar. The featured title
    shows its logo, name, kind · year · genres · running time or seasons,
-   Reproducir and Más info (both open the title's Xtream page). Under it
+   Reproducir (the title's Xtream page, playing: the movie from where it
+   was left, a series the episode its quick start names; a detail play
+   request) and Más info (the page). Under it
    comes "Novedades": the ten newest titles with artwork, the platforms
    taking turns (`pickNewReleases`). Picking one features it and the page
    does not navigate. The featured title's own page (`get_vod_info` /
@@ -741,8 +799,20 @@ else but the playing channel and its guide.
    the top bar, as tall as the scroller shows, and plays the first signal, or
    the one the way in asked for, through `SportTvPlayback` (built like "En
    vivo"'s: `XtreamUrlService`, MPEG-TS by default, Auto TS, the mini-player
-   hand-over, one stream at a time). Its controls and keys are "En vivo"'s
-   (`CountryTvControls`). The signal row (`signal-cards.ts`) lists the live
+   hand-over, one stream at a time). A channel the way in asked for plays even
+   over another page's mini-player, and so does the mini-player's own channel;
+   back from the mini-player the page opens on the channel it plays, not on
+   the request its way back replays (`dockedChannel`). A competition with no
+   channel clears the stage, so a reused page never keeps the previous
+   competition's stream; "Playing" shows on the active signal only while the
+   stage plays. Its controls and keys are "En vivo"'s
+   (`CountryTvControls`), Esc and native-view Embedded MPV's own full screen
+   included; that picture keeps clear of the top bar, the competition's pill
+   and the overlay's controls (`stage--native`, `--sport-overlay-content`),
+   and so does the player's diagnostic out of full screen (on a phone the
+   bar takes two rows). In full screen the overlay fades after 3.5 s; a
+   move or any key brings it back.
+   The signal row (`signal-cards.ts`) lists the live
    matches' own feeds first, then every numbered feed of the section's
    channel families, broadcasters first and pay-per-view passes last. Below:
    the first match, the others (84px rows) and the standings.
@@ -757,10 +827,40 @@ else but the playing channel and its guide.
    six); a fallback given while ESPN failed is kept for the session only.
    Zones come from each row's note (Champions, the other continental cups,
    promotion or direct qualification, playoffs, relegation). A table in
-   groups (Argentina, MLS, the Libertadores) shows the group holding a
-   followed team. ESPN refuses headless Chromium's user agent (403), not a
-   desktop one. "Resto del mundo", Tenis, Motor and Básquet have no table and
-   run their matches across the page.
+   groups (Argentina, MLS, the Libertadores) opens on the group holding a
+   followed team, with a small switch to the others (`LeagueTable.groups`;
+   the cache's v3 key keeps every group). ESPN refuses headless Chromium's
+   user agent (403), not a desktop one. "Resto del mundo", Tenis, Motor and
+   Básquet have no table and run their matches across the page.
+
+## Search Page (TiagoTV)
+
+`/workspace/search` (`lib/search/`) matches a term word by word
+(`matchRank`, accents, case and apostrophes folded): the phrase as typed
+ranks first (the start, then a word start, then anywhere), then a text
+holding every word in any order; spacing aside, "dazn laliga" finds
+"DAZN la LIGA". Teams, channels and titles all use it. The catalog's own
+search matches one substring, so a term of several words asks it for its
+longest word (`catalogQuery`) and `toTitleHits` keeps the answers holding
+every word; nothing more is asked of the provider. A team row opens its
+competition's page playing the team's match when it is on today
+(`teamMatchToday`, `SportsBoardService.openMatch`), else the page as it
+opens.
+
+## Detail Play Requests
+
+A "play" button that lands on an Xtream details page (the Home hero's
+Continue on a movie, "Empezar T1·E1", Series / Películas' Reproducir) adds
+`DETAIL_PLAY_REQUEST_STATE_KEY` to the navigation state
+(`withDetailPlayRequest`, `@iptvnator/portal/shared/util`): a mode
+(`resume`, `first-episode`) and the title's id. The page reads it once as
+it is created, from the navigation or, for a collection's inline detail,
+the history entry (`playOnDetailRequest`), and starts playing once it shows
+that title and its saved positions are in: a movie through its primary
+action (resume, else from the start), a series the first episode or the
+episode its quick start names (the first again once watched through). The
+request then leaves the history entry, so Back or Forward onto it does not
+play again.
 
 ## Empty State
 
@@ -789,7 +889,8 @@ The welcome state is rendered via the existing
 6. Xtream and Stalker series hero/Continue Watching clicks with a saved episode
    position must resume that exact episode while preserving the
    collection-owned detail and Back behavior. Do not apply autoplay to
-   ordinary collection-grid clicks.
+   ordinary collection-grid clicks; only a button that says play carries a
+   detail play request.
 7. `Recently Used Sources` reflects recent source usage across all provider
    types, not just recent imports.
 8. The live rail title key must match the rendered source: favorites use

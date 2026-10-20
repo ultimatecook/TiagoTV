@@ -59,6 +59,21 @@ describe('PlatformsCatalogService', () => {
         ]);
     });
 
+    it('opens a title playing it: its page carries the play request', () => {
+        const catalog = TestBed.inject(PlatformsCatalogService);
+
+        catalog.play(muertos, 'first-episode');
+
+        expect(navigate).toHaveBeenCalledWith(
+            ['/workspace', 'xtreams', 'source', 'series', '2331', '2'],
+            {
+                state: {
+                    detailPlayRequest: { mode: 'first-episode', contentId: 2 },
+                },
+            }
+        );
+    });
+
     const netflixVod = [
         { category_id: 7, category_name: '|ES| ✪ ORIGINAL NETFLIX' },
     ];

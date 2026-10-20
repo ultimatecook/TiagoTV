@@ -100,15 +100,26 @@ handleEmbeddedMpv(EMBEDDED_MPV_PREPARE, () =>
 
 handleEmbeddedMpv(
     EMBEDDED_MPV_CREATE_SESSION,
-    (bounds: EmbeddedMpvBounds, title?: string, initialVolume?: number) =>
+    (bounds: EmbeddedMpvBounds, title?: string, initialVolume?: number) => {
+        // One native session at a time: the renderer disposes a session
+        // before it creates the next, so one still alive here was lost track
+        // of (a view that leaked it). On a one-connection account its stream
+        // would play on beside the new one, so it goes first.
+        const leaked = getService().disposeAllSessions();
+        if (leaked > 0) {
+            console.warn(
+                `[Embedded MPV] Disposed ${leaked} session(s) still open before creating a new one`
+            );
+        }
         // Settings are read here, per session, so the service itself never
         // touches the config store (constructed at module load).
-        getService().createSession(
+        return getService().createSession(
             bounds,
             title,
             initialVolume,
             readEmbeddedMpvSessionOptions()
-        )
+        );
+    }
 );
 
 handleEmbeddedMpv(

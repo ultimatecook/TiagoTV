@@ -6,6 +6,7 @@ import {
 import type { TvCountry } from '../countries/countries-catalog';
 import type { RowLabel } from '../countries/country-rows';
 import { STREAMING_PLATFORMS } from '../platforms/streaming-platforms';
+import { dayOffset } from '../sports/match-days';
 import {
     followedTeamOf,
     MY_TEAMS,
@@ -49,19 +50,59 @@ export function foldTerm(value: string): string {
         .trim();
 }
 
+/** A word this long may span the text's spaces ("laliga", "La Liga"). */
+const JOINED_WORD_MIN = 4;
+
 /**
- * How well `text` answers `term` (both folded): 0 when it starts with it,
- * 1 when a word does, 2 when it only contains it, -1 when it does not.
+ * How well `text` answers `term` (`term` folded), best first: 0 when the
+ * text starts with the term, 1 when one of its words does, 2 when it only
+ * contains it, 3 when it holds each of the term's words, in any order
+ * ("madrid real"), -1 when a word is missing. Spacing aside: "dazn laliga"
+ * answers "DAZN la LIGA" as a word start (1), "laliga" as a word inside
+ * "La Liga" (2).
  */
 export function matchRank(text: string, term: string): number {
     const folded = foldTerm(text);
-    if (!term || !folded.includes(term)) {
+    if (!term) {
         return -1;
     }
-    if (folded.startsWith(term)) {
-        return 0;
+    if (folded.includes(term)) {
+        if (folded.startsWith(term)) {
+            return 0;
+        }
+        return folded.includes(` ${term}`) ? 1 : 2;
     }
-    return folded.includes(` ${term}`) ? 1 : 2;
+    const joined = folded.replace(/ /g, '');
+    const phrase = term.replace(/ /g, '');
+    if (phrase.length >= JOINED_WORD_MIN && joined.includes(phrase)) {
+        return joined.startsWith(phrase) ? 1 : 2;
+    }
+    const words = term.split(' ');
+    return words.length > 1 &&
+        words.every(
+            (word) =>
+                folded.includes(word) ||
+                (word.length >= JOINED_WORD_MIN && joined.includes(word))
+        )
+        ? 3
+        : -1;
+}
+
+/**
+ * The query the catalog's own search is asked: it matches one substring,
+ * so a term of several words asks for its longest one (the telling one) and
+ * the answers are held to every word here (`toTitleHits`).
+ */
+export function catalogQuery(query: string): string {
+    const words = query
+        .trim()
+        .split(/\s+/)
+        .filter((word) => foldTerm(word).length > 0);
+    return words.reduce(
+        (longest, word) =>
+            foldTerm(word).length > foldTerm(longest).length ? word : longest,
+        words[0] ?? query.trim()
+    );
 }
 
 /** The best rank of any of `texts`, -1 when none matches. */
@@ -162,6 +203,27 @@ export function findTeams(
         )
         .slice(0, limit)
         .map(({ hit }) => hit);
+}
+
+/**
+ * The match a team row opens playing: the team's match on now or later
+ * today; a match another day leaves the competition's page to itself.
+ */
+export function teamMatchToday(
+    team: TeamHit,
+    now: Date,
+    kickOff: Date | null
+): SportMatch | null {
+    const match = team.match;
+    if (!match) {
+        return null;
+    }
+    const start = kickOff ?? match.event.start;
+    return team.live ||
+        match.event.status === 'live' ||
+        (start !== null && dayOffset(start, now) === 0)
+        ? match
+        : null;
 }
 
 // ─── Channels ──────────────────────────────────────────────────────────────
@@ -300,12 +362,15 @@ export function toTitleHits(
         const title = displayTitle(raw);
         const markedYear = MARKED_YEAR.exec(raw);
         const key = `${kind}:${foldTerm(title)}`;
-        if (seen.has(key)) {
+        // Every word of the term, in the name or the provider's own; a
+        // one-word answer the catalog's search found otherwise (its own
+        // folding) still lists, last.
+        const rank = bestRank([title, raw], term);
+        if (seen.has(key) || (rank < 0 && term.includes(' '))) {
             continue;
         }
         seen.add(key);
         const category = categoryNames.get(categoryId) ?? '';
-        const rank = matchRank(title, term);
         hits.push({
             key,
             kind,
@@ -320,7 +385,7 @@ export function toTitleHits(
             poster: item.poster_url || null,
             categoryId,
             xtreamId: item.xtream_id,
-            rank: rank < 0 ? 3 : rank,
+            rank: rank < 0 ? 4 : rank,
         });
     }
     return hits

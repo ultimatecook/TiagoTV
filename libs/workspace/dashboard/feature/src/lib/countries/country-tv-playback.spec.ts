@@ -49,7 +49,10 @@ const c5n = findSelection(COUNTRIES, 30) as TvSelection;
 describe('CountryTvPlayback', () => {
     let tv: CountryTvPlayback;
     const embedded = signal(true);
-    const session = signal<{ returnUrl: string } | null>(null);
+    const session = signal<{ returnUrl: string; sessionKey?: string } | null>(
+        null
+    );
+    const closeDock = jest.fn(() => session.set(null));
     const lockVersion = signal(0);
     const locked = jest.fn(() => false);
     const player = {
@@ -99,7 +102,10 @@ describe('CountryTvPlayback', () => {
                         isXtreamCategoryLocked: locked,
                     },
                 },
-                { provide: NowPlayingDockService, useValue: { session } },
+                {
+                    provide: NowPlayingDockService,
+                    useValue: { session, close: closeDock },
+                },
             ],
         });
         tv = TestBed.inject(CountryTvPlayback);
@@ -201,6 +207,37 @@ describe('CountryTvPlayback', () => {
         session.set({ returnUrl: '/workspace/countries' });
         tv.open(c5n);
         expect(tv.playback()?.streamUrl).toMatch(/\/30\.ts$/);
+    });
+
+    it('takes over the channel the mini-player is playing', () => {
+        // Back from the live view: the mini-player continues its channel;
+        // the page plays it again instead of sitting idle beside it.
+        const key = createPlaybackSessionKey({
+            kind: 'live',
+            sourceId: SOURCE._id,
+            contentId: 30,
+        });
+        session.set({
+            returnUrl: '/workspace/xtreams/x/live',
+            sessionKey: key,
+        });
+
+        tv.open(telefe);
+        expect(tv.playback()).toBeNull();
+        tv.open(c5n);
+        expect(tv.playback()?.streamUrl).toMatch(/\/30\.ts$/);
+    });
+
+    it('ends the mini-player before MPV or VLC opens its own stream', () => {
+        embedded.set(false);
+        session.set({ returnUrl: '/workspace/countries' });
+
+        tv.play(c5n);
+
+        expect(closeDock).toHaveBeenCalled();
+        expect(closeDock.mock.invocationCallOrder[0]).toBeLessThan(
+            player.openResolvedPlayback.mock.invocationCallOrder[0]
+        );
     });
 
     it('launches MPV or VLC instead of playing inline, never on opening', () => {

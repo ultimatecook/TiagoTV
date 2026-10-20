@@ -108,14 +108,11 @@
                     </header>
                     <div class="search-card">
                         @for (team of teams(); track team.key) {
-                            <a
+                            <button
+                                type="button"
                                 class="search-row"
                                 data-test-id="search-team"
-                                [routerLink]="[
-                                    '/workspace/sports',
-                                    team.sectionId,
-                                ]"
-                                (click)="remember()"
+                                (click)="openTeam(team)"
                             >
                                 <lib-team-crest
                                     class="search-row__crest"
@@ -168,7 +165,7 @@
                                         }}
                                     </span>
                                 }
-                            </a>
+                            </button>
                         }
                     </div>
                 </section>

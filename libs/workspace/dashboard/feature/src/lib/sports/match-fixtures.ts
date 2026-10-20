@@ -10,6 +10,7 @@ import {
 } from './match-channels';
 import { parseSportEvent, type SportEvent } from './sport-events';
 import {
+    namesOtherSport,
     sectionForCompetition,
     type SportSection,
     type SportSectionId,
@@ -201,7 +202,14 @@ function toMatch(
     fixture: Fixture,
     offers: readonly MatchChannel[]
 ): SportMatch | null {
-    const own = fixture.slots.filter(isKept).sort(byRegion);
+    // A feed filed under another sport's category plays last (see below).
+    const own = fixture.slots
+        .filter(isKept)
+        .sort(
+            (a, b) =>
+                byRegion(a, b) ||
+                Number(misfiled(sectionId, a)) - Number(misfiled(sectionId, b))
+        );
     // The kept feed's names; else, of the other languages', a dated one's.
     const shown =
         own[0] ??
@@ -237,10 +245,18 @@ function toMatch(
         sectionId,
         liveSince: liveSince === null ? null : new Date(liveSince),
         via: own.length ? [] : offers,
+        // Its feed's category names where it plays, unless that names
+        // another sport (a Ligue 1 match under Formula 1): no "Ver en F1".
         channelName: own[0]
-            ? categoryChannelName(own[0].categoryName)
+            ? misfiled(sectionId, own[0])
+                ? null
+                : categoryChannelName(own[0].categoryName)
             : (offers[0]?.name ?? null),
     };
+}
+
+function misfiled(sectionId: SportSectionId, slot: EventSlot): boolean {
+    return namesOtherSport(sectionId, slot.categoryName);
 }
 
 /** "|ES| ✪ PREMIER LEAGUE PPV" → "Premier League PPV", "|ES| ✪ DAZN EVENT" → "DAZN". */

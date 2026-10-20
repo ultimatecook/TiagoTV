@@ -1177,14 +1177,35 @@ refused or hanging live start:
   player's connection closed after the next request had opened, and a stalled
   stream's never closed. The custom loader is that fetch loader with an
   unconditional abort; WebSocket URLs keep mpegts.js's own loader.
+- **One stream app-wide.** `PlaybackStreamOwner` (root, `now-playing/`) is
+  the single owner of the account's connection. Every page's
+  `WebPlayerViewComponent` claims it in `ngOnInit` (through
+  `NowPlayingPageHandoff`), whatever its engine, Embedded MPV included; the
+  mini-player's bar claims it when it mounts its player (its own view,
+  `inMiniPlayer`, neither claims nor waits). A claim stops every other
+  holder: the bar ends its session, a page player that is still mounted
+  renders no engine (and claims the stream back only when its page asks it
+  for a new stream, never from its own retries). A holder lets go once its
+  engine is gone (`ngOnDestroy`, or a render after it was stopped), and the
+  claimant renders no engine until then. Embedded MPV disposes its native
+  session over IPC, so each dispose is tracked as a close in flight: web
+  engines wait for it before mounting, and the next Embedded MPV session is
+  created only after it (`whenClosed()`); a close that never answers counts
+  as done after 5 s. The main process also keeps one native session: creating
+  a session disposes any session still open (see
+  [Embedded MPV Native](./embedded-mpv-native.md#one-session-at-a-time)).
+  Before this, an Embedded MPV page player (a movie, or a channel with MPV
+  selected) neither ended nor waited for the mini-player, so the bar's
+  channel kept playing beside it.
 - **Mini-player handoff.** A page player hands its stream to the bottom
   mini-player from `WebPlayerViewComponent.ngOnDestroy`, which runs after its
   engine (a child) was destroyed, so the mini-player opens only after the
-  page's request was aborted. The other way, a page player that starts ends
-  the mini-player session and renders no engine while
-  `NowPlayingDockService.playerMounted()` still reports the bar's player; the
-  bar reports it gone from its own `ngOnDestroy`, after that engine aborted.
-  Opening the mini-player full-window keeps the same player and connection.
+  page's request was aborted. Only web engines hand over (`dockable`, never
+  Embedded MPV). The other way, a page player that starts ends the
+  mini-player session and renders no engine while the bar's player still
+  holds the stream (`NowPlayingDockService.playerMounted()`); the bar reports
+  it gone from its own `ngOnDestroy`, after that engine aborted. Opening the
+  mini-player full-window keeps the same player and connection.
 - **Live start guard.** `WebPlayerLiveStartGuard`, owned by
   `WebPlayerRecoveryController`, watches each live web application until the
   engine reports `playing`. A terminal issue before that — `network-error`

@@ -39,6 +39,15 @@
             ></span>
         }
 
+        <!-- The bar's scrim: a shade under the bar while the page scrolls
+             under it, so its titles never meet the traffic lights or the
+             capsule. Gone at the top of a page, over a hero. -->
+        <div
+            class="workspace-top-scrim"
+            aria-hidden="true"
+            [class.is-shown]="pageScrolled()"
+        ></div>
+
         <!-- The transparent top bar over the window's top edge: tabs, Back,
              Buscar, Ajustes and the source switcher. The redesigned pages
              scroll under it; the others sit in a frame below it. -->
@@ -63,6 +72,8 @@
             [playlistSubtitle]="facade.playlistSubtitle()"
             (wheel)="onTopBarWheel($event)"
             (backRequested)="facade.goBack()"
+            (sportsHubRequested)="facade.goUpToSportsHub()"
+            (activeTabReselected)="onTabReselected()"
             (contextDrawerToggleRequested)="contextDrawer.toggle()"
             (headerShortcutRequested)="facade.runHeaderShortcut()"
             (headerSidebarToggleRequested)="facade.toggleLiveSidebar()"

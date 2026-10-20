@@ -15,6 +15,8 @@
 
 .live {
     --live-overlay-height: 0px;
+    // The overlay without its veil: the controls, chips and cards.
+    --live-overlay-content: 0px;
     position: relative;
     height: 100%;
     min-height: 560px;
@@ -34,6 +36,15 @@
 // fades, the pointer hides.
 .live--idle {
     cursor: none;
+}
+
+// Native-view Embedded MPV paints its picture over the window, above
+// every page element: while the overlay shows, the picture keeps clear of
+// the top bar, the country button and the overlay's controls (the stage
+// reads `--live-player-inset`); quiet, it takes the page again.
+.live--native:not(.live--idle) {
+    --live-player-inset: calc(var(--tv-topbar-h) + 76px) 0
+        calc(var(--live-overlay-content, 0px) + 12px);
 }
 
 .live__picker {

@@ -1,3 +1,4 @@
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import type { LeagueTable } from '../league-tables';
@@ -67,6 +68,59 @@ describe('LeagueTableComponent', () => {
             group: null,
         });
         expect(withForm.querySelectorAll('.table__result')).toHaveLength(2);
+    });
+
+    it('opens a table in groups on the followed team’s, and switches', () => {
+        const groupA = [
+            row(1, 'Estudiantes', null),
+            row(2, 'Boca Juniors', null),
+        ];
+        const groupB = [
+            row(1, 'River Plate', null),
+            row(2, 'Racing Club', null),
+        ];
+        const element = render(
+            {
+                rows: groupB,
+                round: 9,
+                group: 'Group B',
+                groups: [
+                    { name: 'Group A', rows: groupA, round: 9 },
+                    { name: 'Group B', rows: groupB, round: 9 },
+                ],
+            },
+            'liga-argentina'
+        );
+        const teams = () =>
+            Array.from(element.querySelectorAll('.table__name')).map(
+                (name) => name.textContent
+            );
+        const segments = () =>
+            Array.from(
+                element.querySelectorAll<HTMLButtonElement>('.table__group')
+            );
+
+        expect(
+            segments().map((segment) => segment.textContent?.trim())
+        ).toEqual(['A', 'B']);
+        expect(segments()[1].getAttribute('aria-pressed')).toBe('true');
+        expect(teams()).toEqual(['River Plate', 'Racing Club']);
+
+        segments()[0].click();
+        TestBed.inject(ApplicationRef).tick();
+        expect(segments()[0].getAttribute('aria-pressed')).toBe('true');
+        expect(teams()).toEqual(['Estudiantes', 'Boca Juniors']);
+    });
+
+    it('has no switch for a single table', () => {
+        const element = render({
+            rows: [row(1, 'Arsenal', null)],
+            round: 9,
+            group: null,
+        });
+        expect(
+            element.querySelector('[data-test-id="sport-league-table-groups"]')
+        ).toBeNull();
     });
 
     it('names a group, and South America’s second cup', () => {

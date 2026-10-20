@@ -188,6 +188,17 @@ describe('league tables', () => {
             parseEspnTable(groups, (team) => team.startsWith('Newell'))?.group
         ).toBe('Group B');
         expect(parseEspnTable(groups)?.group).toBe('Group A');
+        // Every group stays, for the page to switch to.
+        expect(
+            parseEspnTable(groups)?.groups?.map((group) => [
+                group.name,
+                group.rows.map((row) => row.team),
+            ])
+        ).toEqual([
+            ['Group A', ['Estudiantes']],
+            ['Group B', ['River Plate', "Newell's Old Boys"]],
+        ]);
+        expect(parseEspnTable(groups.children[0])?.groups).toBeUndefined();
         expect(parseEspnTable({ children: [] })).toBeNull();
         expect(parseEspnTable(null)).toBeNull();
     });

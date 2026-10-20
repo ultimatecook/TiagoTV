@@ -11,6 +11,7 @@ import {
     PlaylistRecentHistoryService,
 } from '@iptvnator/playlist/shared/util';
 import {
+    RuntimeCapabilitiesService,
     SortBy,
     SortOptions,
     SortOrder,
@@ -54,6 +55,7 @@ describe('PlaylistSwitcherPanelComponent', () => {
     let remove: jest.Mock;
     let navigate: jest.Mock;
     let xtreamRefreshing: ReturnType<typeof signal<ReadonlySet<string>>>;
+    let runtime: { supportsDownloads: boolean };
 
     const input = () =>
         (fixture.nativeElement as HTMLElement).querySelector(
@@ -86,6 +88,7 @@ describe('PlaylistSwitcherPanelComponent', () => {
         remove = jest.fn();
         navigate = jest.fn();
         xtreamRefreshing = signal<ReadonlySet<string>>(new Set());
+        runtime = { supportsDownloads: false };
         TestBed.configureTestingModule({
             imports: [
                 PlaylistSwitcherPanelComponent,
@@ -154,6 +157,7 @@ describe('PlaylistSwitcherPanelComponent', () => {
                 },
                 { provide: MatDialog, useValue: { open: jest.fn() } },
                 { provide: Router, useValue: { navigate } },
+                { provide: RuntimeCapabilitiesService, useValue: runtime },
             ],
         });
         fixture = TestBed.createComponent(PlaylistSwitcherPanelComponent);
@@ -403,5 +407,24 @@ describe('PlaylistSwitcherPanelComponent', () => {
             ) as HTMLButtonElement
         ).click();
         expect(navigate).toHaveBeenCalledWith(['/workspace', 'sources']);
+    });
+
+    it('keeps a way into the downloads where the runtime has them', () => {
+        const downloads = () =>
+            (fixture.nativeElement as HTMLElement).querySelector(
+                '[data-test-id="playlist-switcher-downloads"]'
+            ) as HTMLButtonElement | null;
+        // The browser build has no download manager.
+        expect(downloads()).toBeNull();
+
+        runtime.supportsDownloads = true;
+        fixture = TestBed.createComponent(PlaylistSwitcherPanelComponent);
+        const closed = jest.fn();
+        fixture.componentInstance.closeRequested.subscribe(closed);
+        fixture.detectChanges();
+
+        downloads()?.click();
+        expect(navigate).toHaveBeenCalledWith(['/workspace', 'downloads']);
+        expect(closed).toHaveBeenCalledTimes(1);
     });
 });

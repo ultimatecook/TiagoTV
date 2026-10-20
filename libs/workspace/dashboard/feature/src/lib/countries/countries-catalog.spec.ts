@@ -86,6 +86,42 @@ describe('buildCountriesTv', () => {
         });
     });
 
+    it('drops the event feeds whose match is over, by the panel’s clock', () => {
+        const [spain] = buildCountriesTv(
+            [
+                { category_id: 1, category_name: '|ES| ✪ SPAIN ᵁᴴᴰ/ᴴᴰ' },
+                { category_id: 2, category_name: '|ES| ✪ DAZN EVENT' },
+            ],
+            [
+                stream(1, 1, '|ES| La 1 ᵁᴴᴰ'),
+                stream(
+                    2,
+                    2,
+                    'Next | 2026-10-18 | 13:00 (GMT) | Ngozi City vs. Bumamuru | Ligue A - Burundi | ES'
+                ),
+                stream(3, 2, 'Live | Ajax - PSV | Eredivisie femenina | ES', {
+                    added: String(Date.parse('2026-10-18T10:19:00Z') / 1000),
+                }),
+                stream(
+                    4,
+                    2,
+                    'Live | SC Cambuur - AZ Alkmaar | Eredivisie | ES',
+                    { added: String(Date.parse('2026-10-18T17:20:00Z') / 1000) }
+                ),
+                stream(
+                    5,
+                    2,
+                    'Next | 2026-10-18 | 19:00 (GMT) | Burgos CF - CE Sabadell | LALIGA HYPERMOTION | ES'
+                ),
+            ],
+            NOW
+        );
+        expect(rowsOf(spain)).toEqual([
+            ['MAIN', ['La 1']],
+            ['EVENTS', ['SC Cambuur - AZ Alkmaar', 'Burgos CF - CE Sabadell']],
+        ]);
+    });
+
     it('lists nothing for a catalog without Spanish or English groups', () => {
         expect(
             buildCountriesTv(

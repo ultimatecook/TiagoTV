@@ -67,6 +67,14 @@ describe('workspace top bar navigation', () => {
         expect(tabAfter('/workspace/xtreams/p1/popular')).toBeNull();
     });
 
+    it('keeps Inicio on a title the Home hero continues in recent', () => {
+        // "Continuar" opens the title over /workspace/global-recent.
+        expect(tabAfter('/workspace/global-recent', 'home')).toBe('home');
+        expect(tabAfter('/workspace/global-recent', 'series')).toBe('series');
+        // Opened straight (a reload, a deep link): Mi lista.
+        expect(tabAfter('/workspace/global-recent')).toBe('my-list');
+    });
+
     it('lights Buscar and Ajustes instead of a tab', () => {
         const search = readWorkspaceTopBarPage('/workspace/search?q=madrid');
         expect(search.utility).toBe('search');

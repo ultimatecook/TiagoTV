@@ -26,6 +26,7 @@ import { WorkspaceShellHeaderService } from './workspace-shell-header.service';
 import { WorkspaceShellRouteStateService } from './workspace-shell-route-state.service';
 import { WorkspaceShellSearchService } from './workspace-shell-search.service';
 import { WorkspaceShellXtreamImportService } from './workspace-shell-xtream-import.service';
+import { WORKSPACE_SPORTS_HUB_PATH } from '../components/workspace-shell-top-bar/workspace-top-bar-nav';
 import { WorkspaceShellContextDrawerService } from '@iptvnator/workspace/shell/util';
 import { PlaylistSwitcherOpenService } from '@iptvnator/playlist/shared/ui';
 
@@ -97,6 +98,8 @@ export class WorkspaceShellFacade {
     readonly currentRoute = this.routeState.currentRoute;
     readonly showDashboard = this.routeState.showDashboard;
     readonly backTarget = this.backNavigation.target;
+    /** A page's own Back, without the history fallback. */
+    readonly pageBackTarget = this.backNavigation.pageTarget;
     readonly currentContext = this.routeState.currentContext;
     readonly currentSection = this.routeState.currentSection;
     readonly commandPaletteCommands = computed<WorkspaceResolvedCommandItem[]>(
@@ -237,6 +240,11 @@ export class WorkspaceShellFacade {
 
     goBack(): void {
         this.backNavigation.goBack();
+    }
+
+    /** "‹ Deportes" on a league page: up to the hub, never a new entry. */
+    goUpToSportsHub(): void {
+        this.backNavigation.up(WORKSPACE_SPORTS_HUB_PATH);
     }
 
     navigateToGlobalFavorites(): void {

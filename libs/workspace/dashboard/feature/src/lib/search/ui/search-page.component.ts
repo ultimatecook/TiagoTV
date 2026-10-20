@@ -13,13 +13,14 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIcon } from '@angular/material/icon';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs';
 import { buildXtreamNavigationTarget } from '@iptvnator/portal/shared/util';
 import { CountriesCatalogService } from '../../countries/countries-catalog.service';
 import { SPORT_SECTIONS } from '../../sports/sport-sections';
 import type { SportMatch } from '../../sports/sports-catalog';
+import { SportsBoardService } from '../../sports/sports-board.service';
 import { SportsCatalogService } from '../../sports/sports-catalog.service';
 import { TeamCrestComponent } from '../../sports/ui/team-crest.component';
 import {
@@ -34,8 +35,10 @@ import {
     foldTerm,
     SEARCH_MIN_LENGTH,
     SEARCH_SCOPES,
+    teamMatchToday,
     type ChannelHit,
     type SearchScope,
+    type TeamHit,
     type TitleHit,
 } from '../search-results';
 import {
@@ -58,7 +61,7 @@ const TITLES_SHOWN = { all: 12, kind: 40 };
  */
 @Component({
     selector: 'lib-search-page',
-    imports: [MatIcon, RouterLink, TeamCrestComponent, TranslatePipe],
+    imports: [MatIcon, TeamCrestComponent, TranslatePipe],
     providers: [SearchTitlesService],
     templateUrl: './search-page.component.html',
     styleUrl: './search-page.component.scss',
@@ -69,6 +72,7 @@ export class SearchPageComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly translate = inject(TranslateService);
     readonly sports = inject(SportsCatalogService);
+    private readonly board = inject(SportsBoardService);
     private readonly countries = inject(CountriesCatalogService);
     private readonly titlesService = inject(SearchTitlesService);
     private readonly field =
@@ -256,6 +260,24 @@ export class SearchPageComponent {
         return start.toDateString() === now.toDateString()
             ? time
             : `${new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(start)} ${time}`;
+    }
+
+    /**
+     * A team on its competition's page: playing its match when it is on
+     * today (as the sports hub's team pills do), else the page as it opens.
+     */
+    openTeam(team: TeamHit): void {
+        this.remember();
+        const match = teamMatchToday(
+            team,
+            this.sports.now(),
+            team.match ? this.sports.kickOff(team.match) : null
+        );
+        if (match) {
+            this.board.openMatch(match);
+        } else {
+            this.board.open(team.sectionId);
+        }
     }
 
     playChannel(channel: ChannelHit): void {

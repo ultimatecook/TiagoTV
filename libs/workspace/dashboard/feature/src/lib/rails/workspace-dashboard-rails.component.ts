@@ -37,9 +37,8 @@ import { HomeTopMoviesComponent } from './home-top-movies.component';
  * renders as soon as its own data is ready and is left out while it has
  * none; the ones below the fold load when they come near.
  *
- * The Settings → Panel switches still apply: the hero ("Banner
- * principal") and the recently watched channels ("TV en directo vista
- * recientemente").
+ * Settings → Inicio has a switch per section (`DashboardRailsSettings`):
+ * a section switched off is left out.
  */
 @Component({
     selector: 'lib-workspace-dashboard-rails',

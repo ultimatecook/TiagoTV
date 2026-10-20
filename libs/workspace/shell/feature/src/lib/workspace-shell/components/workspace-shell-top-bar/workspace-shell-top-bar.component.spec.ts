@@ -127,6 +127,65 @@ describe('WorkspaceShellTopBarComponent', () => {
         expect(byTestId('workspace-header-back')).toBeNull();
     });
 
+    it('goes up to the hub from "‹ Deportes" without a navigation of its own', () => {
+        const requested = jest.fn();
+        component.sportsHubRequested.subscribe(requested);
+        setPage('/workspace/sports/laliga');
+        const pill = byTestId<HTMLAnchorElement>('topbar-sports-back');
+
+        // A plain click: the shell decides between Back and a replacement.
+        const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+        pill?.dispatchEvent(click);
+        expect(click.defaultPrevented).toBe(true);
+        expect(requested).toHaveBeenCalledTimes(1);
+
+        // A modified click (a new window) keeps the link's default.
+        const modified = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            metaKey: true,
+        });
+        pill?.dispatchEvent(modified);
+        expect(modified.defaultPrevented).toBe(false);
+        expect(requested).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports the lit tab clicked again, which the router ignores', () => {
+        const reselected = jest.fn();
+        component.activeTabReselected.subscribe(reselected);
+        fixture.componentRef.setInput('activeTab', 'my-list');
+        fixture.detectChanges();
+
+        // (The tabs' own links would navigate: the handler is driven alone.)
+        const click = (init: MouseEventInit = {}) =>
+            new MouseEvent('click', { button: 0, ...init });
+        component.onTabClick(click(), 'series');
+        component.onTabClick(click({ metaKey: true }), 'my-list');
+        expect(reselected).not.toHaveBeenCalled();
+
+        component.onTabClick(click(), 'my-list');
+        expect(reselected).toHaveBeenCalledTimes(1);
+    });
+
+    it('fades the ends of a capsule whose tabs do not fit', () => {
+        const track = query<HTMLElement>('.topbar__tabs-track') as HTMLElement;
+        // jsdom lays nothing out: a 356px track holding 475px of tabs.
+        Object.defineProperty(track, 'clientWidth', { value: 356 });
+        Object.defineProperty(track, 'scrollWidth', { value: 475 });
+
+        track.scrollLeft = 0;
+        track.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        expect(track.classList).not.toContain('has-more-start');
+        expect(track.classList).toContain('has-more-end');
+
+        track.scrollLeft = 119;
+        track.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        expect(track.classList).toContain('has-more-start');
+        expect(track.classList).not.toContain('has-more-end');
+    });
+
     describe('Buscar', () => {
         it('opens the search page where the page does not filter itself', () => {
             const requested = jest.fn();

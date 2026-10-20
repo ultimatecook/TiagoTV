@@ -318,3 +318,52 @@ describe('categoryChannelName', () => {
         );
     });
 });
+
+describe('a feed filed under another sport', () => {
+    // The provider files "Paris FC - Stade Rennais FC | Ligue 1" under
+    // Formula 1 (18 October 2026).
+    const categories = [
+        { category_id: 1, category_name: '|ES| ✪ FORMULA 1' },
+        { category_id: 2, category_name: '|ES| ✪ DAZN EVENT' },
+    ];
+    const ligue1 =
+        'Next | 2026-10-18 | 15:15 (GMT) | Paris FC - Stade Rennais FC | Ligue 1 | ES';
+
+    it('plays the match without offering the other sport’s channel', () => {
+        const [match] = buildSportsCatalog(
+            categories,
+            [slot(1, ligue1, 1)],
+            SNAPSHOT
+        )['ligue-1'].matches;
+
+        expect(match.streamId).toBe(1);
+        expect(match.channelName).toBeNull();
+    });
+
+    it('prefers a feed of the match’s own sport, and names it', () => {
+        const [match] = buildSportsCatalog(
+            categories,
+            [slot(1, ligue1, 1), slot(2, ligue1, 2)],
+            SNAPSHOT
+        )['ligue-1'].matches;
+
+        expect(match.streamId).toBe(2);
+        expect(match.channelName).toBe('DAZN');
+    });
+
+    it('still names a race on Formula 1', () => {
+        const [race] = buildSportsCatalog(
+            categories,
+            [
+                slot(
+                    3,
+                    'Live | Gran Premio de Estados Unidos | Formula 1 | ES',
+                    1
+                ),
+            ],
+            SNAPSHOT
+        ).motor.matches;
+
+        expect(race.channelName).not.toBeNull();
+    });
+});

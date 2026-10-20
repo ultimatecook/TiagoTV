@@ -47,7 +47,8 @@ describe('sideways rows', () => {
 /**
  * The redesigned Home's rows (README "01 · Inicio") bleed the same way
  * through the page's own padding: `margin: 0 -56px; padding: 4px 56px 8px`
- * in design px, the page's `--tv-page-x`.
+ * in design px, the page's `--tv-page-x`; 6px more at the top hold a lifted
+ * card's focus ring (the scroller clips there), given back by the margin.
  */
 const HOME_ROWS: ReadonlyArray<readonly [file: string, selector: string]> = [
     ['platforms/ui/platforms-rail.component.scss', '.platforms__row {'],
@@ -59,7 +60,9 @@ describe("the Home's sideways rows", () => {
     it.each(HOME_ROWS)('%s bleeds to the window edges', (file, sel) => {
         const geometry = rowGeometry(file, sel);
 
-        expect(geometry).toContain('margin: 0 calc(-1 * var(--tv-page-x));');
-        expect(geometry).toContain('padding: 4px var(--tv-page-x) 8px;');
+        expect(geometry).toContain(
+            'margin: -6px calc(-1 * var(--tv-page-x)) 0;'
+        );
+        expect(geometry).toContain('padding: 10px var(--tv-page-x) 8px;');
     });
 });

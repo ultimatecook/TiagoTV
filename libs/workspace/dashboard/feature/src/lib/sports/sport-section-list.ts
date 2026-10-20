@@ -44,6 +44,11 @@ export interface SportSection {
     readonly artX: number;
     /** The competition's logo in white, shown instead of its name. */
     readonly logo: string | null;
+    /**
+     * The competitions `logo` is the logo of, when the section has several
+     * (the basketball card's is the NBA's): a row of another shows none.
+     */
+    readonly logoCompetition?: RegExp;
     /** The logo's size against the others, so they look even. */
     readonly logoSize: number;
     /** The card's backdrop colour behind the artwork. */
@@ -298,6 +303,7 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
         artHeadroom: 0,
         artX: 50,
         logo: `${LOGO}basketball.png`,
+        logoCompetition: /\bnba\b/i,
         logoSize: 0.8,
         tint: '#5a3412',
         category: /\bnba\b|\bacb\b|baloncesto|basket/i,

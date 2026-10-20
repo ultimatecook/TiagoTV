@@ -56,6 +56,8 @@ import {
 } from './serial-details-season-watch.service';
 import { SerialDetailsWatchToggles } from './serial-details-watch-toggles';
 import { buildSerialEpisodePlayback } from './serial-episode-playback';
+import { requestedSeriesEpisode } from './serial-details-play-request';
+import { playOnDetailRequest } from '../xtream-detail-play-request';
 
 export type XtreamSerieDetailsView = XtreamSerieDetails & {
     readonly series_id: number;
@@ -176,6 +178,28 @@ export class SerialDetailsPlaybackService {
             }
 
             untracked(() => this.playEpisode(episode));
+        });
+
+        // A "play" button elsewhere (the Home, Series / Películas).
+        playOnDetailRequest({
+            contentId: () => this.selectedItem()?.series_id,
+            pick: (mode) => {
+                const item = this.selectedItem();
+                return item
+                    ? requestedSeriesEpisode({
+                          mode,
+                          seasons: item.episodes ?? {},
+                          positionsLoaded: this.playbackPositionState.isLoaded(
+                              this.currentPlaylistId(),
+                              Number(item.series_id)
+                          ),
+                          positions: this.episodePlaybackPositions(),
+                          quickStart: this.quickStartAction(),
+                      })
+                    : null;
+            },
+            play: ({ episode, fromStart }) =>
+                this.playEpisode(episode, undefined, fromStart),
         });
 
         const unsubscribePositionUpdates =

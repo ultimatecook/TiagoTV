@@ -1,4 +1,3 @@
-@let standings = table();
 <aside
     class="table"
     data-test-id="sport-league-table"
@@ -17,15 +16,45 @@
                 <span class="table__note">{{
                     label.key | translate: label.params
                 }}</span>
-            } @else if (standings.group) {
-                <span class="table__note">{{ standings.group }}</span>
-            } @else if (standings.round) {
+            } @else if (shown().name; as name) {
+                <span class="table__note">{{ name }}</span>
+            } @else if (shown().round) {
                 <span class="table__note">{{
                     'WORKSPACE.SPORTS.TABLE_ROUND'
-                        | translate: { round: standings.round }
+                        | translate: { round: shown().round }
                 }}</span>
             }
         </div>
+        @if (groups().length > 1) {
+            <div
+                class="table__groups"
+                role="group"
+                data-test-id="sport-league-table-groups"
+                [attr.aria-label]="'WORKSPACE.SPORTS.TABLE_GROUPS' | translate"
+            >
+                @for (entry of groups(); track entry.index) {
+                    <button
+                        type="button"
+                        class="table__group"
+                        [class.table__group--on]="entry.index === selected()"
+                        [attr.aria-pressed]="entry.index === selected()"
+                        [attr.aria-label]="
+                            entry.label
+                                ? (entry.label.key
+                                  | translate: entry.label.params)
+                                : entry.short
+                        "
+                        (click)="pick(entry.index)"
+                    >
+                        @if (entry.label && !entry.label.params['name']) {
+                            {{ entry.label.key | translate }}
+                        } @else {
+                            {{ entry.short }}
+                        }
+                    </button>
+                }
+            </div>
+        }
     </header>
     <div
         class="table__body"

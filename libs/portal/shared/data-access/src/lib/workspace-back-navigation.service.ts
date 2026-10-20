@@ -43,8 +43,15 @@ export type WorkspaceBackParent = string | readonly string[] | null;
  * app or reloads it.
  */
 function hasInAppPreviousEntry(history: WorkspaceHistoryNavigation): boolean {
+    return previousInAppEntry(history) !== null;
+}
+
+function previousInAppEntry(
+    history: WorkspaceHistoryNavigation
+): NavigationHistoryEntry | null {
     const index = history.currentEntry?.index ?? -1;
-    return index > 0 && history.entries()[index - 1]?.sameDocument === true;
+    const previous = index > 0 ? history.entries()[index - 1] : undefined;
+    return previous?.sameDocument === true ? previous : null;
 }
 
 /**
@@ -78,13 +85,21 @@ export class WorkspaceBackNavigationService {
         run: () => this.location.back(),
     };
 
-    readonly target = computed(() => {
+    /**
+     * The newest page registration, without the history fallback: a page
+     * the bar reaches itself shows Back only for what it opened in place (a
+     * title over Mi lista), never for the page it was reached from.
+     */
+    readonly pageTarget = computed(() => {
         const targets = this.targets();
-        return (
-            targets[targets.length - 1] ??
-            (this.canGoBackInApp() ? this.historyTarget : null)
-        );
+        return targets[targets.length - 1] ?? null;
     });
+
+    readonly target = computed(
+        () =>
+            this.pageTarget() ??
+            (this.canGoBackInApp() ? this.historyTarget : null)
+    );
 
     constructor() {
         const history = this.history;
@@ -124,6 +139,21 @@ export class WorkspaceBackNavigationService {
     }
 
     /**
+     * Up to a page's fixed parent (a league page's "‹ Deportes", the parent's
+     * router path). History Back while the previous entry is that parent, so
+     * the page just left becomes Forward instead of the next Back; otherwise
+     * the parent replaces this entry, so history Back cannot return to it.
+     */
+    up(parentPath: string): void {
+        const previous = this.history && previousInAppEntry(this.history);
+        if (previous?.url && this.routerPath(previous.url) === parentPath) {
+            this.location.back();
+            return;
+        }
+        void this.router.navigateByUrl(parentPath, { replaceUrl: true });
+    }
+
+    /**
      * Returns the release function. It removes only this target: when one
      * page replaces another (a loading shell by the loaded one), creation and
      * destruction can interleave in either order.
@@ -145,6 +175,15 @@ export class WorkspaceBackNavigationService {
         if (!target) return false;
         target.run();
         return true;
+    }
+
+    /** A history entry's URL as a router path (base href and query aside). */
+    private routerPath(url: string): string | null {
+        try {
+            return this.location.normalize(new URL(url).pathname);
+        } catch {
+            return null;
+        }
     }
 
     private async openParent(

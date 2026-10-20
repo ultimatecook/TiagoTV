@@ -57,6 +57,8 @@ class MockWorkspaceShellTopBarComponent {
     readonly playlistTitle = input('');
     readonly playlistSubtitle = input('');
     readonly backRequested = output<void>();
+    readonly sportsHubRequested = output<void>();
+    readonly activeTabReselected = output<void>();
     readonly contextDrawerToggleRequested = output<void>();
     readonly headerShortcutRequested = output<void>();
     readonly headerSidebarToggleRequested = output<void>();
@@ -135,7 +137,9 @@ class MockWorkspaceShellFacade {
         behavior: 'local-filter',
     });
     readonly backTarget = signal<unknown>(null);
+    readonly pageBackTarget = signal<unknown>(null);
     goBack = jest.fn();
+    goUpToSportsHub = jest.fn();
     readonly workspaceLinks = signal([]);
     readonly primaryContextLinks = signal([]);
     readonly secondaryContextLinks = signal([]);
@@ -363,6 +367,96 @@ describe('WorkspaceShellComponent', () => {
         expect(topBar().activeTab()).toBe('sports');
         expect(topBar().back()).toBeNull();
         expect(topBar().page()?.isLeague).toBe(true);
+    });
+
+    it('shows Back on a tab page for a detail it opened in place', async () => {
+        const { facade, fixture, topBar } = await createShell();
+        const history = { label: signal(null), escapeShortcut: signal(false) };
+        const detail = { label: signal(null), escapeShortcut: signal(true) };
+        facade.backTarget.set(history);
+        facade.currentUrl.set('/workspace/global-favorites');
+        fixture.detectChanges();
+        // Mi lista itself: the bar is the way out, history Back is not shown.
+        expect(topBar().back()).toBeNull();
+
+        // A title opened over Mi lista keeps its URL: only its Back leaves.
+        facade.pageBackTarget.set(detail);
+        facade.backTarget.set(detail);
+        fixture.detectChanges();
+        expect(topBar().back()).toBe(detail);
+
+        // The lit tab clicked again closes the detail too.
+        topBar().activeTabReselected.emit();
+        expect(facade.goBack).toHaveBeenCalledTimes(1);
+
+        // Ajustes registers Back for Escape only: the bar shows none.
+        facade.currentUrl.set('/workspace/settings/general');
+        fixture.detectChanges();
+        expect(topBar().back()).toBeNull();
+        topBar().activeTabReselected.emit();
+        expect(facade.goBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('goes up to the sports hub from a league page', async () => {
+        const { facade, topBar } = await createShell();
+
+        topBar().sportsHubRequested.emit();
+
+        expect(facade.goUpToSportsHub).toHaveBeenCalledTimes(1);
+    });
+
+    it('shades the bar while the page scrolls under it, not at its top', async () => {
+        const { facade, fixture } = await createShell();
+        const host = fixture.nativeElement as HTMLElement;
+        facade.currentUrl.set('/workspace/series');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const scrim = host.querySelector('.workspace-top-scrim') as HTMLElement;
+        const content = host.querySelector('main.workspace-content') as HTMLElement;
+        expect(scrim.getAttribute('aria-hidden')).toBe('true');
+        expect(scrim.classList).not.toContain('is-shown');
+
+        content.scrollTop = 240;
+        content.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        expect(scrim.classList).toContain('is-shown');
+
+        content.scrollTop = 0;
+        content.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        expect(scrim.classList).not.toContain('is-shown');
+    });
+
+    it('shades the bar over a page that scrolls itself, and not once it is gone', async () => {
+        const { fixture } = await createShell();
+        const host = fixture.nativeElement as HTMLElement;
+        await fixture.whenStable();
+        const scrim = host.querySelector('.workspace-top-scrim') as HTMLElement;
+        const content = host.querySelector('main.workspace-content') as HTMLElement;
+        // jsdom lays nothing out: the page's own scroller fills the content.
+        const page = document.createElement('div');
+        content.appendChild(page);
+        Object.defineProperty(page, 'clientHeight', { value: 800 });
+        Object.defineProperty(content, 'clientHeight', { value: 800 });
+        const rail = document.createElement('div');
+        page.appendChild(rail);
+        Object.defineProperty(rail, 'clientHeight', { value: 200 });
+
+        page.scrollTop = 300;
+        page.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        expect(scrim.classList).toContain('is-shown');
+
+        // A rail scrolling sideways is not the page.
+        rail.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        expect(scrim.classList).toContain('is-shown');
+
+        // The page leaves (a navigation): its scroll no longer counts.
+        page.remove();
+        content.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        expect(scrim.classList).not.toContain('is-shown');
     });
 
     it('filters a page that searches itself and opens search elsewhere', async () => {

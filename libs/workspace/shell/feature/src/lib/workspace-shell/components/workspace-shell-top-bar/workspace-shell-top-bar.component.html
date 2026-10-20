@@ -5,11 +5,15 @@
     <span class="topbar__lights" aria-hidden="true"></span>
 
     @if (page().isLeague) {
+        <!-- Up to the hub: Back when the hub is the previous page, else the
+             hub replaces the league, so history Back never returns to a
+             league page (which starts a stream). -->
         <a
             class="topbar__pill"
             data-test-id="topbar-sports-back"
-            [routerLink]="sportsHubLink"
+            [attr.href]="sportsHubHref"
             [attr.aria-label]="'WORKSPACE.TOP_BAR.SPORTS_BACK' | translate"
+            (click)="onSportsHubClick($event)"
         >
             <app-workspace-shell-top-bar-icon name="back" />
             <span>{{ 'WORKSPACE.TOP_BAR.SPORTS' | translate }}</span>
@@ -60,17 +64,28 @@
     data-test-id="topbar-tabs"
     [attr.aria-label]="'WORKSPACE.TOP_BAR.NAV_LABEL' | translate"
 >
-    @for (tab of tabs; track tab.id) {
-        @let active = activeTab() === tab.id;
-        <a
-            class="topbar__tab"
-            [class.is-active]="active"
-            [routerLink]="tab.link"
-            [attr.aria-current]="active ? 'page' : null"
-            [attr.data-test-id]="'topbar-tab-' + tab.id"
-            >{{ tab.labelKey | translate }}</a
-        >
-    }
+    <!-- The track scrolls sideways when the tabs do not fit (narrow
+         windows); its edges fade where tabs hide. -->
+    <div
+        #tabsTrack
+        class="topbar__tabs-track"
+        [class.has-more-start]="tabsMoreStart()"
+        [class.has-more-end]="tabsMoreEnd()"
+        (scroll)="measureTabs()"
+    >
+        @for (tab of tabs; track tab.id) {
+            @let active = activeTab() === tab.id;
+            <a
+                class="topbar__tab"
+                [class.is-active]="active"
+                [routerLink]="tab.link"
+                [attr.aria-current]="active ? 'page' : null"
+                [attr.data-test-id]="'topbar-tab-' + tab.id"
+                (click)="onTabClick($event, tab.id)"
+                >{{ tab.labelKey | translate }}</a
+            >
+        }
+    </div>
 </nav>
 
 <div class="topbar__group topbar__group--trailing">

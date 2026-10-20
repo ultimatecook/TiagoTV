@@ -6,7 +6,7 @@
     [style.--home-glow]="homeGlow()"
     [style.--away-glow]="awayGlow()"
 >
-    @if (section().logo; as logo) {
+    @if (logo(); as logo) {
         <img class="featured__mark" [src]="logo" alt="" draggable="false" />
     }
     @if (pair) {

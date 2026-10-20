@@ -202,6 +202,13 @@ describe('CatalogService', () => {
         expect(platforms.open).toHaveBeenCalledWith(title);
     });
 
+    it("draws the hero's leading platform once a session", () => {
+        const lead = service.heroLead();
+
+        expect(Number.isInteger(lead)).toBe(true);
+        expect(service.heroLead()).toBe(lead);
+    });
+
     it('waits for a source', async () => {
         platforms.source.set(null);
 

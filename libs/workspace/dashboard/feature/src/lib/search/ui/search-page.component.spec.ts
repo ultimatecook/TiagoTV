@@ -76,6 +76,7 @@ describe('SearchPageComponent', () => {
         now: signal(new Date('2026-10-18T18:00:00Z')),
         upcoming: (matches: readonly SportMatch[]) => [...matches],
         isLive: () => true,
+        kickOff: () => null,
         keepFresh: jest.fn(),
         play: jest.fn(),
     };
@@ -167,6 +168,26 @@ describe('SearchPageComponent', () => {
             'Gran Hotel Madrid'
         );
         expect(all(element, 'search-empty')).toHaveLength(0);
+    });
+
+    it('opens a team on its competition’s page, playing its match today', async () => {
+        const element = await render('/workspace/search?q=real%20madrid');
+        const navigate = jest.spyOn(router, 'navigate').mockResolvedValue(true);
+
+        (all(element, 'search-team')[0] as HTMLElement).click();
+
+        // Its own match, not the page's first signal.
+        expect(navigate).toHaveBeenCalledWith(
+            ['/workspace', 'sports', 'laliga'],
+            {
+                state: {
+                    tiagotvSportsPlay: expect.objectContaining({
+                        streamId: 1,
+                        title: 'Real Madrid - Barcelona',
+                    }),
+                },
+            }
+        );
     });
 
     it('narrows the groups to the chosen scope', async () => {

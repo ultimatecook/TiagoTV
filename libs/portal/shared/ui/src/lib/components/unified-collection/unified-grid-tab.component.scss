@@ -42,7 +42,8 @@
         minmax(var(--cover-grid-min-width, 148px), 1fr)
     );
     gap: var(--cover-gap, 16px);
-    padding: 16px;
+    // The page's gutter where it sets one (Mi lista, see the page).
+    padding: var(--collection-grid-padding, 16px);
     align-content: start;
 }
 

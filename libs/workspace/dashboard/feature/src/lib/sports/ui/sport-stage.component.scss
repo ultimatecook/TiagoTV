@@ -59,6 +59,14 @@
     }
 }
 
+// Native-view Embedded MPV paints its picture over the window, above every
+// page element: it keeps clear of the top bar, the competition's pill and
+// the overlay's controls.
+.stage--native .stage__screen {
+    inset: calc(var(--tv-topbar-h) + 76px) 0
+        calc(var(--sport-overlay-content, 0px) + 12px);
+}
+
 // The page's overlay is the controls, as on "En vivo": the player's own
 // bar is hidden, and its picture takes no clicks. Its diagnostic, with
 // Retry and the external players, stays usable above the overlay.
@@ -82,11 +90,37 @@
         bottom: var(--sport-overlay-h, 0px);
     }
 
+    // Native-view Embedded MPV keeps no dock below its picture on the
+    // page...
+    app-web-player-view:not(:fullscreen) {
+        .embedded-mpv-player {
+            --embedded-mpv-controls-height: 0px;
+        }
+
+        .embedded-mpv-player__controls {
+            display: none;
+        }
+    }
+
+    // ...and takes its own full screen (`CountryTvControls`), where no page
+    // element can show over its picture: there its dock is the controls,
+    // shown by a move, and the player takes the pointer.
+    app-web-player-view:fullscreen app-embedded-mpv-player {
+        pointer-events: auto;
+    }
+
     // The resting ground shows through until the first frame.
     .video-js,
     video {
         background-color: transparent !important;
     }
+}
+
+// The diagnostic (an expired line's error, Retry) keeps clear of the top
+// bar and the competition's pill as the native picture does: on a phone
+// the bar takes two rows its text would run under. Full screen has no bar.
+.stage:not(:fullscreen) .stage__screen ::ng-deep app-playback-diagnostic-panel {
+    top: calc(var(--tv-topbar-h) + 76px);
 }
 
 // Nothing plays yet (the mini-player was busy, or MPV/VLC is the player).

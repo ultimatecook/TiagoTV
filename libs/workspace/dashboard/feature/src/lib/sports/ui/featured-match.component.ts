@@ -12,7 +12,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { dayName, dayOffset, kickOffTime, type DayName } from '../match-days';
 import { injectSportsLocale, matchSides } from '../match-view';
 import { SportsCatalogService } from '../sports-catalog.service';
-import type { SportSection } from '../sport-sections';
+import { competitionLogo, type SportSection } from '../sport-sections';
 import type { SportChannel, SportMatch } from '../sports-catalog';
 import { teamGlow } from '../team-glow';
 import { TeamCrestComponent } from './team-crest.component';
@@ -66,6 +66,10 @@ export class FeaturedMatchComponent {
         return matchState(this.sports, this.match(), this.locale());
     });
     readonly sides = computed(() => matchSides(this.match()));
+    /** The watermark: the card's logo, unless another's (the NBA's). */
+    readonly logo = computed(() =>
+        competitionLogo(this.section(), this.match().event.competition)
+    );
     readonly homeGlow = computed(() => teamGlow(this.match().event.home));
     readonly awayGlow = computed(() => teamGlow(this.match().event.away));
     readonly channel = computed(() => this.match().channelName ?? '');

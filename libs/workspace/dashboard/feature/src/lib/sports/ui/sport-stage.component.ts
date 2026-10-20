@@ -114,14 +114,25 @@ export class SportStageComponent {
             const overlay = this.overlay()?.nativeElement;
             // Its height, on the stage: the player's diagnostic (Retry, the
             // external players) stays above it.
+            // Without the veil, its controls' height: a native-view picture,
+            // which nothing can cover, stays above them.
             const observer =
                 overlay && typeof ResizeObserver !== 'undefined'
-                    ? new ResizeObserver(() =>
-                          this.stage()?.nativeElement.style.setProperty(
+                    ? new ResizeObserver(() => {
+                          const style = this.stage()?.nativeElement.style;
+                          const veil = parseFloat(
+                              getComputedStyle(overlay).paddingTop
+                          );
+                          const height = overlay.offsetHeight;
+                          style?.setProperty(
                               '--sport-overlay-h',
-                              `${overlay.offsetHeight}px`
-                          )
-                      )
+                              `${height}px`
+                          );
+                          style?.setProperty(
+                              '--sport-overlay-content',
+                              `${Math.max(0, height - (veil || 0))}px`
+                          );
+                      })
                     : null;
             if (overlay) {
                 observer?.observe(overlay);
@@ -163,21 +174,32 @@ export class SportStageComponent {
         }
     }
 
-    /** The remote's keys, while the stage is in view. */
+    /** The remote's keys, while the stage is in view or full screen. */
     private onKeydown(event: KeyboardEvent): void {
         const stage = this.stage()?.nativeElement;
         if (
             !stage ||
             this.controls.isForwarded(event) ||
             !onLivePage(event, stage.closest('article') ?? stage) ||
-            stage.getBoundingClientRect().bottom < window.innerHeight / 2
+            (!this.controls.fullscreen() &&
+                stage.getBoundingClientRect().bottom < window.innerHeight / 2)
         ) {
             return;
         }
+        // Any key brings the overlay back, as a move does: in full screen
+        // the focus can sit on its faded buttons, whose own keys (Tab, the
+        // arrows) must still show where it is.
+        this.wake();
         const action = liveKeyAction(event);
+        // Esc leaves full screen where the window lets the page see it.
+        if (action === 'collapse') {
+            if (this.controls.exitFullscreen()) {
+                event.preventDefault();
+            }
+            return;
+        }
         if (action === 'play' || action === 'mute' || action === 'fullscreen') {
             event.preventDefault();
-            this.wake();
             if (action === 'play') {
                 this.playPause();
             } else if (action === 'mute') {

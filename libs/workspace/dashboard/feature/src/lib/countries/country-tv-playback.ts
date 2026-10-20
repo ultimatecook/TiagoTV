@@ -70,17 +70,9 @@ export class CountryTvPlayback {
     readonly leaving = signal(false);
     /** Inline (web engines, Embedded MPV), or launched in MPV/VLC. */
     readonly embedded = computed(() => this.portalPlayer.isEmbeddedPlayer());
-    readonly sessionKey = computed(() => {
-        const source = this.sports.source();
-        const copy = this.selection()?.copy;
-        return source && copy
-            ? createPlaybackSessionKey({
-                  kind: 'live',
-                  sourceId: source._id,
-                  contentId: copy.streamId,
-              })
-            : '';
-    });
+    readonly sessionKey = computed(() =>
+        this.keyOf(this.selection()?.copy ?? null)
+    );
 
     constructor() {
         // A relock (idle timer, Lock now) stops a channel of a category it
@@ -94,12 +86,16 @@ export class CountryTvPlayback {
 
     /**
      * The page's opening channel: it plays at once unless the mini-player
-     * is playing something from another page, which it would end.
+     * is playing something from another page, which it would end. The
+     * channel the mini-player is playing plays anyway (back from the live
+     * view, say): the page takes the stream over, one connection.
      */
     open(selection: TvSelection): void {
         const session = this.dock.session();
         const fromHere = session?.returnUrl.startsWith('/workspace/countries');
-        if (this.embedded() && (!session || fromHere)) {
+        const docked =
+            !!session && session.sessionKey === this.keyOf(selection.copy);
+        if (this.embedded() && (!session || fromHere || docked)) {
             this.play(selection);
         } else {
             this.selection.set(selection);
@@ -129,6 +125,8 @@ export class CountryTvPlayback {
         const inline = this.embedded();
         this.playback.set(inline ? playback : null);
         if (!inline) {
+            // MPV/VLC opens a stream of its own: the mini-player's goes first.
+            this.dock.close();
             void this.portalPlayer.openResolvedPlayback(playback);
         }
         // Picking is not watching: the channel joins Recently viewed once
@@ -180,6 +178,18 @@ export class CountryTvPlayback {
 
     stop(): void {
         this.playback.set(null);
+    }
+
+    /** The live view's session key for `copy` on the current source. */
+    private keyOf(copy: CountryChannel | null): string {
+        const source = this.sports.source();
+        return source && copy
+            ? createPlaybackSessionKey({
+                  kind: 'live',
+                  sourceId: source._id,
+                  contentId: copy.streamId,
+              })
+            : '';
     }
 
     /** The account's formats, known once the live view asked for them. */

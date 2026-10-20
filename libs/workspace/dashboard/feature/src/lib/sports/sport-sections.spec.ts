@@ -1,7 +1,9 @@
 import {
     channelInSection,
+    competitionLogo,
     findSportSection,
     isFootball,
+    namesOtherSport,
     sectionForCompetition,
     SPORT_SECTIONS,
     type SportSection,
@@ -199,5 +201,34 @@ describe('sport sections', () => {
         expect(
             channelInSection(rest, '|ES| DAZN 1 ᴴᴰ', '|ES| ✪ DEPORTES')
         ).toBe(false);
+    });
+});
+
+describe('namesOtherSport', () => {
+    it.each([
+        ['ligue-1', '|ES| ✪ FORMULA 1', true],
+        ['laliga', '|ES| ✪ DAZN ACB', true],
+        ['premier-league', '|UK| ✪ BOXING EVENT', true],
+        ['basketball', '|ES| ✪ DAZN ACB', false],
+        ['motor', '|ES| ✪ FORMULA 1', false],
+        ['tennis', '|ES| ✪ FORMULA 1', true],
+        ['ligue-1', '|ES| ✪ DAZN EVENT', false],
+        ['laliga', '|ES| ✪ LALIGA PPV', false],
+    ] as const)('%s on "%s": %s', (section, category, other) => {
+        expect(namesOtherSport(section, category)).toBe(other);
+    });
+});
+
+describe('competitionLogo', () => {
+    it('keeps the basketball card’s NBA logo for the NBA', () => {
+        const basketball = findSportSection('basketball');
+        expect(competitionLogo(basketball, 'NBA')).toBe(basketball?.logo);
+        expect(
+            competitionLogo(basketball, 'Super League Basketball')
+        ).toBeNull();
+        expect(competitionLogo(basketball, 'Liga Endesa')).toBeNull();
+        const laliga = findSportSection('laliga');
+        expect(competitionLogo(laliga, 'LALIGA EA SPORTS')).toBe(laliga?.logo);
+        expect(competitionLogo(null, 'NBA')).toBeNull();
     });
 });

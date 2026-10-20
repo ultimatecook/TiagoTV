@@ -17,7 +17,8 @@ import {
 
 /** Session history as the Navigation API reports it. */
 class FakeHistory extends EventTarget {
-    private list: { index: number; sameDocument: boolean }[] = [];
+    private list: { index: number; sameDocument: boolean; url?: string }[] =
+        [];
     private current = -1;
 
     constructor(sameDocument: boolean[] = [true]) {
@@ -34,9 +35,9 @@ class FakeHistory extends EventTarget {
     }
 
     /** A router push; earlier documents' entries are not same-document. */
-    push(sameDocument = true, notify = true): void {
+    push(sameDocument = true, notify = true, url?: string): void {
         this.list = this.list.slice(0, this.current + 1);
-        this.list.push({ index: this.list.length, sameDocument });
+        this.list.push({ index: this.list.length, sameDocument, url });
         this.current = this.list.length - 1;
         if (notify) this.dispatchEvent(new Event('currententrychange'));
     }
@@ -97,7 +98,11 @@ describe('WorkspaceBackNavigationService', () => {
         TestBed.resetTestingModule();
         TestBed.configureTestingModule({
             providers: [
-                { provide: Location, useValue: { back } },
+                {
+                    provide: Location,
+                    // The app's base href is "/": a path is its own route.
+                    useValue: { back, normalize: (path: string) => path },
+                },
                 {
                     provide: Router,
                     useValue: {
@@ -186,6 +191,64 @@ describe('WorkspaceBackNavigationService', () => {
         releaseFirst();
 
         expect(service.target()).toBe(second);
+    });
+
+    it('tells a page registration apart from the history fallback', () => {
+        const history = new FakeHistory();
+        const service = createService(history);
+        history.push();
+
+        expect(service.target()).not.toBeNull();
+        expect(service.pageTarget()).toBeNull();
+
+        const page = createTarget();
+        const release = service.register(page);
+        expect(service.pageTarget()).toBe(page);
+
+        release();
+        expect(service.pageTarget()).toBeNull();
+    });
+
+    describe('up to a parent page', () => {
+        const hub = '/workspace/sports';
+
+        it('goes back while the previous entry is the parent', () => {
+            const history = new FakeHistory();
+            const service = createService(history);
+            history.push(true, true, 'http://localhost:4200/workspace/sports');
+            history.push(true, true, 'http://localhost:4200/workspace/sports/laliga');
+
+            service.up(hub);
+
+            expect(back).toHaveBeenCalledTimes(1);
+            expect(navigateByUrl).not.toHaveBeenCalled();
+        });
+
+        it('replaces the page with its parent when it came from elsewhere', () => {
+            const history = new FakeHistory();
+            const service = createService(history);
+            history.push(true, true, 'http://localhost:4200/workspace/dashboard');
+            history.push(true, true, 'http://localhost:4200/workspace/sports/laliga');
+
+            service.up(hub);
+
+            // History Back from the hub must not return to the league page.
+            expect(back).not.toHaveBeenCalled();
+            expect(navigateByUrl).toHaveBeenCalledWith(hub, {
+                replaceUrl: true,
+            });
+        });
+
+        it('replaces the page on the first page and without the API', () => {
+            createService(new FakeHistory()).up(hub);
+            expect(navigateByUrl).toHaveBeenCalledWith(hub, {
+                replaceUrl: true,
+            });
+
+            createService(null).up(hub);
+            expect(navigateByUrl).toHaveBeenCalledTimes(1);
+            expect(back).not.toHaveBeenCalled();
+        });
     });
 
     describe('history fallback', () => {

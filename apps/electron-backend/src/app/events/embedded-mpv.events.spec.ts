@@ -6,6 +6,7 @@ jest.mock('electron', () => ({
 
 const mockEmbeddedMpvService = {
     createSession: jest.fn(),
+    disposeAllSessions: jest.fn(() => 0),
     prepareAddon: jest.fn(),
     getSupport: jest.fn(),
     willProbeLinuxMpvExecutable: jest.fn(() => false),
@@ -63,6 +64,8 @@ function getIpcMainHandler(
 describe('EmbeddedMpvEvents IPC handlers', () => {
     beforeEach(() => {
         mockEmbeddedMpvService.createSession.mockReset();
+        mockEmbeddedMpvService.disposeAllSessions.mockReset();
+        mockEmbeddedMpvService.disposeAllSessions.mockReturnValue(0);
         mockEmbeddedMpvService.getSupport.mockReset();
         mockEmbeddedMpvService.setPaused.mockReset();
     });
@@ -220,6 +223,33 @@ describe('EmbeddedMpvEvents IPC handlers', () => {
             0.5,
             mockSessionOptions
         );
+    });
+
+    it('disposes a session still open before it creates the next one', async () => {
+        // One native session at a time: a session the renderer lost track
+        // of would keep its stream playing beside the new one.
+        const order: string[] = [];
+        mockEmbeddedMpvService.disposeAllSessions.mockImplementation(() => {
+            order.push('dispose');
+            return 1;
+        });
+        mockEmbeddedMpvService.createSession.mockImplementation(() => {
+            order.push('create');
+            return { id: 'session-2', status: 'idle' };
+        });
+        const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+        try {
+            const handler = getIpcMainHandler(EMBEDDED_MPV_CREATE_SESSION);
+            await handler({}, { x: 0, y: 0, width: 640, height: 360 });
+
+            expect(order).toEqual(['dispose', 'create']);
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                expect.stringContaining('Disposed 1 session(s)')
+            );
+        } finally {
+            consoleWarnSpy.mockRestore();
+        }
     });
 
     it('forwards arguments to the native service and returns its result', async () => {

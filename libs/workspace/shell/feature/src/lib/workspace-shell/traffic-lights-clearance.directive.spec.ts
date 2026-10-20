@@ -35,7 +35,8 @@ describe('trafficLightsClearance', () => {
     it('clears the lights centred in the 84px top bar at 100 %', () => {
         // x: 22pt in, 60pt of lights and an 8pt gap; y: their foot plus
         // 14pt, inside the 84px bar.
-        expect(trafficLightsClearance(1)).toEqual({ x: 90, y: 63 });
+        // band: the 84pt band centred on them, the bar's height.
+        expect(trafficLightsClearance(1)).toEqual({ x: 90, y: 63, band: 84 });
     });
 
     it('keeps the same window pixels at every supported zoom', () => {
@@ -48,6 +49,7 @@ describe('trafficLightsClearance', () => {
             const clearance = trafficLightsClearance(factor);
             expect(clearance.x * factor).toBeCloseTo(90);
             expect(clearance.y * factor).toBeCloseTo(63);
+            expect(clearance.band * factor).toBeCloseTo(84);
         }
     });
 
@@ -59,7 +61,11 @@ describe('trafficLightsClearance', () => {
 
     it('treats an unusable factor as 100 %', () => {
         for (const factor of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
-            expect(trafficLightsClearance(factor)).toEqual({ x: 90, y: 63 });
+            expect(trafficLightsClearance(factor)).toEqual({
+                x: 90,
+                y: 63,
+                band: 84,
+            });
         }
     });
 });
@@ -114,6 +120,21 @@ describe('TrafficLightsClearanceDirective', () => {
         window.dispatchEvent(new Event('resize'));
         fixture.detectChanges();
         expect(clearance()).toEqual({ x: '180px', y: '126px' });
+    });
+
+    it('publishes the lights\' band, which outgrows the bar zoomed out', () => {
+        const band = () =>
+            (
+                fixture.nativeElement.querySelector('div') as HTMLElement
+            ).style.getPropertyValue('--traffic-lights-band-h');
+        render();
+        expect(band()).toBe('84px');
+
+        // The app's default zoom in Electron, about 83 %.
+        setWindowWidths(1000, 1200);
+        window.dispatchEvent(new Event('resize'));
+        fixture.detectChanges();
+        expect(parseFloat(band())).toBeCloseTo(100.8);
     });
 
     it('measures the zoom before the first render', () => {

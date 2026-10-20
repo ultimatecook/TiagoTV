@@ -63,17 +63,7 @@ export class SportTvPlayback {
     readonly leaving = signal(false);
     /** Inline (web engines, Embedded MPV), or launched in MPV/VLC. */
     readonly embedded = computed(() => this.portalPlayer.isEmbeddedPlayer());
-    readonly sessionKey = computed(() => {
-        const source = this.sports.source();
-        const channel = this.selection();
-        return source && channel
-            ? createPlaybackSessionKey({
-                  kind: 'live',
-                  sourceId: source._id,
-                  contentId: channel.streamId,
-              })
-            : '';
-    });
+    readonly sessionKey = computed(() => this.keyOf(this.selection()));
 
     constructor() {
         // A relock (idle timer, Lock now) stops a channel of a category it
@@ -87,16 +77,28 @@ export class SportTvPlayback {
 
     /**
      * The page's opening channel: it plays at once unless the mini-player
-     * is playing something from another page, which it would end.
+     * is playing something from another page, which it would end. A
+     * channel the way in asked for (`requested`), or the one the
+     * mini-player is playing, plays anyway: the page takes the stream over
+     * (the mini-player stops first, one connection).
      */
-    open(channel: SportChannel): void {
+    open(channel: SportChannel, requested = false): void {
         const session = this.dock.session();
         const fromHere = session?.returnUrl.startsWith('/workspace/sports');
-        if (this.embedded() && (!session || fromHere)) {
+        const docked = !!session && session.sessionKey === this.keyOf(channel);
+        if (this.embedded() && (!session || fromHere || requested || docked)) {
             this.play(channel);
         } else {
             this.selection.set(channel);
         }
+    }
+
+    /** The mini-player's channel, when it is one of `channels`. */
+    dockedChannel(channels: readonly SportChannel[]): SportChannel | null {
+        const key = this.dock.session()?.sessionKey;
+        return key
+            ? (channels.find((channel) => this.keyOf(channel) === key) ?? null)
+            : null;
     }
 
     /** A channel picked on the page. */
@@ -120,6 +122,8 @@ export class SportTvPlayback {
         const inline = this.embedded();
         this.playback.set(inline ? playback : null);
         if (!inline) {
+            // MPV/VLC opens a stream of its own: the mini-player's goes first.
+            this.dock.close();
             void this.portalPlayer.openResolvedPlayback(playback);
         }
         // Picking is not watching: the channel joins Recently viewed once
@@ -145,6 +149,24 @@ export class SportTvPlayback {
 
     stop(): void {
         this.playback.set(null);
+    }
+
+    /** Nothing on the stage: no channel, no stream. */
+    clear(): void {
+        this.playback.set(null);
+        this.selection.set(null);
+    }
+
+    /** The live view's session key for `channel` on the current source. */
+    private keyOf(channel: SportChannel | null): string {
+        const source = this.sports.source();
+        return source && channel
+            ? createPlaybackSessionKey({
+                  kind: 'live',
+                  sourceId: source._id,
+                  contentId: channel.streamId,
+              })
+            : '';
     }
 
     /** The account's formats, known once the live view asked for them. */

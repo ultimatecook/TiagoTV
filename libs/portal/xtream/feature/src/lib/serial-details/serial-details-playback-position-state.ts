@@ -70,6 +70,11 @@ export class SerialDetailsPlaybackPositionState {
         }
     }
 
+    /** The series' saved positions are in (a failed read leaves it false). */
+    isLoaded(playlistId: string, seriesXtreamId: number): boolean {
+        return this.loadedKey() === this.createKey(playlistId, seriesXtreamId);
+    }
+
     takeResumeEpisode(
         request: ResumeEpisodeRequest
     ): XtreamSerieEpisode | null {

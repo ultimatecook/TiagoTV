@@ -1,3 +1,4 @@
+export * from './lib/default-ui-scale';
 export * from './lib/workspace-shell-context-drawer.service';
 export * from './lib/navigation/workspace-shell-route.utils';
 export * from './lib/navigation/workspace-search-capability';

@@ -319,7 +319,13 @@ body.dark-theme {
     backdrop-filter: blur(6px);
 }
 
-// Dialog surfaces may overlap the frameless title bar's drag region.
+// Overlays may sit over the top bar's drag band (a menu, the source
+// switcher's panel, a select, a dialog): the pointer must reach them and a
+// modal one's backdrop, which closes it, not move the window. Never the
+// overlay container or a popover host: both span the whole window, so no
+// page could move it any more.
+.cdk-overlay-pane,
+.cdk-overlay-backdrop,
 .mat-mdc-dialog-surface {
     app-region: no-drag;
 }

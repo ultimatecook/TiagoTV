@@ -626,22 +626,21 @@ test.describe('Electron Settings', () => {
                     'mat-slide-toggle[formcontrolname="showDashboard"] [role="switch"]'
                 )
                 .click();
+            // Inicio stays in the top bar: its sections' switches still apply.
             for (const toggleId of [
                 'toggle-dashboard-hero',
-                'toggle-dashboard-rail-continue-watching',
-                'toggle-dashboard-rail-live-favorites',
+                'toggle-dashboard-rail-platforms',
+                'toggle-dashboard-rail-sports',
+                'toggle-dashboard-rail-events',
+                'toggle-dashboard-rail-top-movies',
+                'toggle-dashboard-rail-series-for-you',
                 'toggle-dashboard-rail-recently-watched-live',
-                'toggle-dashboard-rail-favorite-movies-and-series',
-                'toggle-dashboard-rail-recent-sources',
-                'toggle-dashboard-rail-xtream-recently-added',
-                'toggle-dashboard-rail-tmdb-trending',
-                'toggle-dashboard-rail-tmdb-recommendations',
             ]) {
                 await expect(
                     firstLaunch.mainWindow
                         .getByTestId(toggleId)
                         .locator('[role="switch"]')
-                ).toBeDisabled();
+                ).toBeEnabled();
             }
             await saveSettings(firstLaunch.mainWindow);
         } finally {
@@ -728,11 +727,11 @@ test.describe('Electron Settings', () => {
         }
     });
 
-    // The TMDB recommendations rail itself needs the TMDB opt-in, live
-    // TMDB data and catalog matches, so its rendering is covered by unit
-    // tests rather than here. What IS deterministic — and what a form
-    // regression would silently break — is that its toggle persists.
-    test('@settings @dashboard @electron persists the TMDB recommendations rail toggle across a restart', async ({
+    // The Home's "Series para vos" needs a platform catalog, so its
+    // rendering is covered by unit tests rather than here. What IS
+    // deterministic — and what a form regression would silently break —
+    // is that its toggle persists.
+    test('@settings @dashboard @electron persists the Series for you toggle across a restart', async ({
         dataDir,
     }) => {
         let app = await launchElectronApp(dataDir);
@@ -742,7 +741,7 @@ test.describe('Electron Settings', () => {
             await openSettingsSection(app.mainWindow, 'dashboard');
 
             const toggle = app.mainWindow
-                .getByTestId('toggle-dashboard-rail-tmdb-recommendations')
+                .getByTestId('toggle-dashboard-rail-series-for-you')
                 .locator('[role="switch"]');
             await expect(toggle).toBeChecked();
             await setSwitch(toggle, false);
@@ -756,7 +755,7 @@ test.describe('Electron Settings', () => {
             await openSettingsSection(app.mainWindow, 'dashboard');
             await expect(
                 app.mainWindow
-                    .getByTestId('toggle-dashboard-rail-tmdb-recommendations')
+                    .getByTestId('toggle-dashboard-rail-series-for-you')
                     .locator('[role="switch"]')
             ).not.toBeChecked();
         } finally {

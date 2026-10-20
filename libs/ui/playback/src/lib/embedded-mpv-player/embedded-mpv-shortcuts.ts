@@ -3,8 +3,11 @@ export interface EmbeddedMpvShortcutHandlers {
     /**
      * The player's host element, used to opt out of every shortcut while an
      * ancestor is `inert` (e.g. behind the workspace's phone context
-     * drawer): inert strips pointer and Tab access, but this document-level
-     * listener still fires, so shortcuts must check it themselves.
+     * drawer) or marked `data-player-shortcuts-suspended` (a host surface
+     * that drives the player with keys of its own, such as "En vivo" or the
+     * docked programme guide): both strip the player of keyboard
+     * ownership, but this document-level listener still fires, so
+     * shortcuts must check it themselves.
      */
     hostElement?: () => HTMLElement | null;
     /**
@@ -46,8 +49,15 @@ export class EmbeddedMpvShortcuts {
 
         // Inside an inert region the player is outside the interaction
         // model entirely — the modal surface above it owns the keyboard,
-        // including Escape.
-        if (handlers.hostElement?.()?.closest('[inert]')) {
+        // including Escape. A host that suspends the player's shortcuts
+        // owns them too: its page would otherwise run each key twice (its
+        // own action, then this one): F asked for two full screens, the
+        // page's and the player's, and Space or M undid themselves.
+        if (
+            handlers
+                .hostElement?.()
+                ?.closest('[inert], [data-player-shortcuts-suspended]')
+        ) {
             return;
         }
 

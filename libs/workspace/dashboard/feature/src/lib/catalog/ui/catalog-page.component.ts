@@ -13,6 +13,7 @@ import { titleKey } from '../../platforms/platform-titles';
 import {
     buildCatalogRows,
     featuredTitle,
+    NEW_RELEASES,
     pickNewReleases,
     type CatalogKind,
     type CatalogTitle,
@@ -46,7 +47,11 @@ export class CatalogPageComponent {
 
     readonly titles = computed(() => this.catalog.titles(this.kind()));
     readonly status = computed(() => this.catalog.status(this.kind()));
-    readonly releases = computed(() => pickNewReleases(this.titles() ?? []));
+    /** The platform that leads "Novedades": another each session. */
+    private readonly lead = this.catalog.heroLead();
+    readonly releases = computed(() =>
+        pickNewReleases(this.titles() ?? [], NEW_RELEASES, this.lead)
+    );
     readonly rows = computed(() => buildCatalogRows(this.titles() ?? []));
     /** The title the hero features: a picked release, else the first. */
     private readonly featuredKey = linkedSignal<CatalogKind, string | null>({

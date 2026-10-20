@@ -1,6 +1,10 @@
 import { Component, input, output, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { TranslateModule, TranslatePipe } from '@ngx-translate/core';
+import {
+    NowPlayingDockService,
+    type NowPlayingHandoff,
+} from '@iptvnator/ui/playback';
 import type { LeagueTable } from '../league-tables';
 import type { SignalCard } from '../signal-cards';
 import {
@@ -49,6 +53,23 @@ const CATALOG = buildSportsCatalog(
     ]
 );
 
+const HANDOFF: NowPlayingHandoff = {
+    sessionKey: 'live-1',
+    streamUrl: 'http://panel.test/live/u/p/1.ts',
+    playback: null,
+    title: 'Leeds United - Manchester United',
+    subtitle: null,
+    artworkUrl: null,
+    startTime: 0,
+    duration: 0,
+    isLive: true,
+    paused: false,
+    volume: 1,
+    muted: false,
+    returnUrl: '/workspace/sports/premier-league',
+    returnState: null,
+};
+
 const TABLE: LeagueTable = {
     rows: [
         {
@@ -80,6 +101,10 @@ describe('SportSectionPageComponent', () => {
     const tv = {
         open: jest.fn(),
         play: jest.fn(),
+        clear: jest.fn(),
+        dockedChannel: jest.fn(
+            (_channels: readonly SportChannel[]): SportChannel | null => null
+        ),
         selection: signal<SportChannel | null>(null),
     };
     const sports = {
@@ -105,7 +130,7 @@ describe('SportSectionPageComponent', () => {
         Element.prototype.scrollIntoView = jest.fn();
     });
 
-    async function render(sectionId: string) {
+    async function render(sectionId: string, before?: () => void) {
         TestBed.configureTestingModule({
             imports: [SportSectionPageComponent, TranslateModule.forRoot()],
             providers: [{ provide: SportsCatalogService, useValue: sports }],
@@ -125,6 +150,7 @@ describe('SportSectionPageComponent', () => {
                 ],
             },
         });
+        before?.();
         fixture = TestBed.createComponent(SportSectionPageComponent);
         fixture.componentRef.setInput('sectionId', sectionId);
         fixture.detectChanges();
@@ -149,7 +175,8 @@ describe('SportSectionPageComponent', () => {
             1, 10,
         ]);
         expect(tv.open).toHaveBeenCalledWith(
-            expect.objectContaining({ streamId: 1 })
+            expect.objectContaining({ streamId: 1 }),
+            false
         );
     });
 
@@ -166,9 +193,54 @@ describe('SportSectionPageComponent', () => {
             ''
         );
         await render('premier-league');
+        // Asked for: it plays even over another page's mini-player.
         expect(tv.open).toHaveBeenCalledWith(
-            expect.objectContaining({ streamId: 10 })
+            expect.objectContaining({ streamId: 10 }),
+            true
         );
+    });
+
+    it('back from the mini-player, opens the channel it plays, not the way in’s', async () => {
+        // In by "Ver en Sky" (10), then the user picked the other signal (1)
+        // and left: the bar's way back replays the first request.
+        const wayIn = {
+            tiagotvSportsPlay: {
+                streamId: 10,
+                categoryId: '2',
+                title: 'Sky Sports Premier League',
+                icon: null,
+            },
+        };
+        tv.dockedChannel.mockImplementation(
+            (channels) => channels.find((c) => c.streamId === 1) ?? null
+        );
+        history.replaceState(wayIn, '');
+
+        await render('premier-league', () =>
+            TestBed.inject(NowPlayingDockService).handOff({
+                ...HANDOFF,
+                returnUrl: '/workspace/sports/premier-league',
+                returnState: wayIn,
+            })
+        );
+
+        expect(tv.open).toHaveBeenCalledWith(
+            expect.objectContaining({ streamId: 1 }),
+            false
+        );
+        tv.dockedChannel.mockImplementation(() => null);
+    });
+
+    it('drops the previous competition’s stream for one with no channel', async () => {
+        await render('premier-league');
+        expect(tv.clear).not.toHaveBeenCalled();
+
+        // The route reuses the page for another competition.
+        fixture.componentRef.setInput('sectionId', 'serie-a');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(tv.clear).toHaveBeenCalledTimes(1);
     });
 
     it('shows the first match, the others, and the table beside them', async () => {

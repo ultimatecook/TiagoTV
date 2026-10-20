@@ -18,6 +18,11 @@ const expectedDashboardRails = (
     overrides: Partial<DashboardRailsSettings> = {}
 ): DashboardRailsSettings => ({
     hero: true,
+    platforms: true,
+    sports: true,
+    events: true,
+    topMovies: true,
+    seriesForYou: true,
     continueWatching: true,
     liveFavorites: true,
     recentlyWatchedLive: true,
@@ -536,6 +541,50 @@ describe('SettingsStore dashboard rail settings', () => {
             })
         );
     });
+
+    it('turns the new Home sections on over an older release’s rails, keeping its values', async () => {
+        // What a release before the redesign stored: the old rails only.
+        storedSettings = {
+            dashboardRails: {
+                hero: false,
+                continueWatching: false,
+                liveFavorites: true,
+                recentlyWatchedLive: false,
+                favoriteMoviesAndSeries: true,
+                recentSources: false,
+                xtreamRecentlyAdded: true,
+                tmdbTrending: false,
+                tmdbRecommendations: true,
+            },
+        } as unknown as Partial<Settings>;
+        const store = injector.get(SettingsStore);
+
+        await store.loadSettings();
+
+        expect(store.getSettings().dashboardRails).toEqual(
+            expectedDashboardRails({
+                hero: false,
+                continueWatching: false,
+                recentlyWatchedLive: false,
+                recentSources: false,
+                tmdbTrending: false,
+            })
+        );
+    });
+
+    it.each([['on'], [42], [[false]], [{ sports: 'no', events: null }]])(
+        'falls back to the default sections for stored rails %p',
+        async (dashboardRails) => {
+            storedSettings = { dashboardRails } as unknown as Partial<Settings>;
+            const store = injector.get(SettingsStore);
+
+            await store.loadSettings();
+
+            expect(store.getSettings().dashboardRails).toEqual(
+                expectedDashboardRails()
+            );
+        }
+    );
 
     it('deep-merges partial stored dashboard rail settings with enabled defaults', async () => {
         storedSettings = {

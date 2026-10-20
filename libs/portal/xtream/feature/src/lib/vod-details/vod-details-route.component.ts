@@ -47,6 +47,7 @@ import {
     type ExternalPlayerName,
 } from '@iptvnator/shared/interfaces';
 import { injectXtreamDetailNavigation } from '../xtream-detail-navigation';
+import { playOnDetailRequest } from '../xtream-detail-play-request';
 import { VodDetailsPlaybackService } from './vod-details-playback.service';
 import { VodDetailsMultiSourceUiService } from './vod-details-multi-source-ui.service';
 import { VodDetailsDownloadsService } from './vod-details-downloads.service';
@@ -305,6 +306,24 @@ export class VodDetailsRouteComponent implements OnInit, OnDestroy {
             restart: () => this.restartVod(this.playableVodItem()),
             openExternal: (player) =>
                 this.openInExternalPlayer(this.playableVodItem(), player),
+        });
+
+        // A "play" button elsewhere (the Home's Continue, Series /
+        // Películas' Play): the primary action, once the saved position is
+        // in, so it resumes where the movie was left.
+        playOnDetailRequest({
+            contentId: this.selectedVodId,
+            pick: () =>
+                this.playback.positionLoaded() &&
+                !this.isLoadingDetails() &&
+                !this.startBlocked()
+                    ? this.playableVodItem()
+                    : null,
+            play: (vodItem) => {
+                if (this.externalPrimaryButtonState() === 'idle') {
+                    void this.onPrimaryAction(vodItem);
+                }
+            },
         });
 
         registerContentMetadataBackfill({

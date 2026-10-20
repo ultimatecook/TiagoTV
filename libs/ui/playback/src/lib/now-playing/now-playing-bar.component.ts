@@ -73,8 +73,16 @@ export class NowPlayingBarComponent
     private readonly minimizeButton =
         viewChild<ElementRef<HTMLElement>>('minimizeButton');
     private lastSavedPosition = 0;
-    /** Reports the player gone once its stream connection is closed. */
-    private readonly releasePlayer = this.dock.registerPlayer();
+    /**
+     * Holds the app's one stream while mounted; reports the player gone
+     * once its stream connection is closed. Another player claiming the
+     * stream ends this bar's session (not a newer one that replaced it).
+     */
+    private readonly releasePlayer = this.dock.registerPlayer(() => {
+        if (this.dock.session()?.id === this.session().id) {
+            this.dock.close();
+        }
+    });
 
     readonly session = input.required<NowPlayingSession>();
     readonly expanded = this.dock.expanded;

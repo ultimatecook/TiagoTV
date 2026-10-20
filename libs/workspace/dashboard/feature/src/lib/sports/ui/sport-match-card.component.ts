@@ -13,7 +13,7 @@ import { injectSportsLocale, matchSides } from '../match-view';
 import { isFollowedTeam } from '../my-teams';
 import { SportsBoardService } from '../sports-board.service';
 import { SportsCatalogService } from '../sports-catalog.service';
-import { findSportSection } from '../sport-sections';
+import { competitionLogo, findSportSection } from '../sport-sections';
 import type { SportChannel, SportMatch } from '../sports-catalog';
 import { TeamCrestComponent } from './team-crest.component';
 
@@ -39,10 +39,17 @@ export class SportMatchCardComponent {
 
     readonly match = input.required<SportMatch>();
     readonly section = computed(() => findSportSection(this.match().sectionId));
-    /** The card's name, or the match's own competition on "Resto del mundo". */
+    /** The card's logo, unless it is another competition's (the NBA's). */
+    readonly logo = computed(() =>
+        competitionLogo(this.section(), this.match().event.competition)
+    );
+    /**
+     * The card's name; the match's own competition on "Resto del mundo",
+     * and where the card's logo is another's ("Super League Basketball").
+     */
     readonly competition = computed(() => {
         const section = this.section();
-        return section?.catchAll
+        return section?.catchAll || this.logo() !== section?.logo
             ? this.match().event.competition
             : (section?.title ?? '');
     });

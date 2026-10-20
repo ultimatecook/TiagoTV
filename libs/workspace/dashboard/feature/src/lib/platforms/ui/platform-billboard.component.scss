@@ -487,6 +487,18 @@ button.billboard__language {
     }
 }
 
+// The two-row bar (`--tv-topbar-h`, 108px there) covers the top of the
+// billboard, whose text is placed from its foot: the text keeps the bar's
+// room above it, and the billboard grows rather than run it under the bar.
+@media (max-width: 760px) {
+    .billboard {
+        box-sizing: border-box;
+        height: auto;
+        min-height: var(--bb-height);
+        padding-top: calc(var(--tv-topbar-h) + 12px);
+    }
+}
+
 // Narrow: the title block takes the width, the artwork fades under it.
 @media (max-width: 720px) {
     :host {

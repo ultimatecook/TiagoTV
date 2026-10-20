@@ -29,7 +29,6 @@ import {
 import {
     dashboardHeroHue,
     resolveDashboardHeroArtwork,
-    type DashboardHeroAction,
     type DashboardHeroSlide,
 } from './dashboard-hero.utils';
 import {
@@ -37,12 +36,14 @@ import {
     pickDashboardHeroSources,
     type DashboardHeroSource,
 } from './dashboard-hero-slides.utils';
+import { CatalogService } from '../catalog/catalog.service';
+import { dashboardHeroActions } from './dashboard-hero-actions';
 import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
+import { catalogHeroItems } from './home-hero-catalog';
 import { splitCatalogGenres } from './dashboard-match.utils';
 import type { DashboardLiveEpgDetails } from './dashboard-live-epg.utils';
 import {
     buildDashboardEpisodeBadge,
-    formatRemainingLabel,
     playbackProgressPercent,
 } from './dashboard-playback.utils';
 
@@ -79,6 +80,7 @@ const PROVIDER_LABEL_KEYS = {
 @Injectable()
 export class DashboardHeroSlidesPresenter {
     private readonly data = inject(DashboardDataService);
+    private readonly catalog = inject(CatalogService);
     private readonly liveEpg = inject(DashboardLiveEpgPresenter);
     private readonly heroTmdb = inject(DashboardHeroTmdbService);
     private readonly translate = inject(TranslateService);
@@ -91,6 +93,23 @@ export class DashboardHeroSlidesPresenter {
     private readonly requestedTmdbKeys = new Set<string>();
 
     private readonly liveAnswerWaitOver = signal(false);
+    /**
+     * Series / Películas' stored catalog, read for the discovery slides:
+     * the source it was read for, and whether the current one is pending.
+     */
+    private readonly catalogReadFor = signal<string | null>(null);
+    private readonly catalogPending = computed(() => {
+        const sourceId = this.catalog.source()?._id;
+        return !!sourceId && this.catalogReadFor() !== sourceId;
+    });
+    private readonly catalogAdded = computed(() =>
+        catalogHeroItems(
+            this.catalog.titles('movie'),
+            this.catalog.titles('series'),
+            this.catalog.source(),
+            this.catalog.heroLead()
+        )
+    );
 
     /**
      * Nothing to feature yet and a source that can feature a title is still
@@ -108,6 +127,7 @@ export class DashboardHeroSlidesPresenter {
                 !this.data.continueWatchingSettled() ||
                 this.data.globalFavoritesLoading() ||
                 this.data.xtreamRecentlyAddedLoading() ||
+                this.catalogPending() ||
                 (!this.liveAnswerWaitOver() &&
                     this.liveEpg.heroLiveAwaitingFirstAnswer())),
         computation: (loading, previous) =>
@@ -142,7 +162,14 @@ export class DashboardHeroSlidesPresenter {
                         !isCatalogUnavailable(item) &&
                         (item.type === 'movie' || item.type === 'series')
                 ),
-            recentlyAdded: this.data.xtreamRecentlyAddedItems(),
+            // The catalog's titles (ES/EN merged, the platforms taking
+            // turns); the provider's raw newest rows only without one.
+            // None while it is read: they would be swapped a moment later.
+            recentlyAdded: this.catalogPending()
+                ? []
+                : this.catalogAdded().length > 0
+                  ? this.catalogAdded()
+                  : this.data.xtreamRecentlyAddedItems(),
             // Until the resume candidates are known the newest row may be one
             // of them; featuring it as the fallback would swap the slide.
             mostRecent: this.data.continueWatchingSettled()
@@ -167,6 +194,12 @@ export class DashboardHeroSlidesPresenter {
             DASHBOARD_HERO_LIVE_ANSWER_WAIT_MS
         );
         inject(DestroyRef).onDestroy(() => clearTimeout(liveAnswerWait));
+        effect(() => {
+            const sourceId = this.catalog.source()?._id;
+            if (sourceId) {
+                untracked(() => this.readCatalog(sourceId));
+            }
+        });
 
         effect(() => {
             if (!this.heroTmdb.isEnabled()) {
@@ -184,6 +217,16 @@ export class DashboardHeroSlidesPresenter {
                 )
             );
         });
+    }
+
+    /** The stored catalog only: no provider request (`loadStored`). */
+    private readCatalog(sourceId: string): void {
+        void Promise.all([
+            this.catalog.loadStored('movie'),
+            this.catalog.loadStored('series'),
+        ])
+            .catch(() => undefined)
+            .finally(() => this.catalogReadFor.set(sourceId));
     }
 
     markImageFailed(url: string): void {
@@ -286,7 +329,7 @@ export class DashboardHeroSlidesPresenter {
                 ? (details?.nowPlayingProgress ?? null)
                 : playbackProgressPercent(position),
             accentHue: dashboardHeroHue(item.title),
-            ...this.actionsFor(source, position),
+            ...dashboardHeroActions(this.data, source, position),
         };
     }
 
@@ -306,120 +349,4 @@ export class DashboardHeroSlidesPresenter {
                 return 'WORKSPACE.DASHBOARD.RECENTLY_WATCHED';
         }
     }
-
-    /**
-     * Resume slides keep the hero's resume handoff (a saved series episode
-     * auto-plays) and always offer "Details" as the detail-only way in;
-     * discovery and fallback slides open the detail page; live slides open
-     * the channel.
-     */
-    private actionsFor(
-        source: DashboardHeroSource,
-        position: PlaybackPositionData | null
-    ): Pick<DashboardHeroSlide, 'primaryAction' | 'secondaryAction'> {
-        switch (source.kind) {
-            case 'live':
-                return {
-                    primaryAction:
-                        source.origin === 'favorite'
-                            ? watchLiveAction(
-                                  this.data.getGlobalFavoriteLink(source.item),
-                                  this.data.getGlobalFavoriteNavigationState(
-                                      source.item
-                                  )
-                              )
-                            : watchLiveAction(
-                                  this.data.getRecentItemLink(source.item),
-                                  this.data.getRecentItemNavigationState(
-                                      source.item
-                                  )
-                              ),
-                    secondaryAction: null,
-                };
-            case 'favorite':
-                return {
-                    primaryAction: detailsAction(
-                        this.data.getGlobalFavoriteLink(source.item),
-                        this.data.getGlobalFavoriteNavigationState(source.item)
-                    ),
-                    secondaryAction: null,
-                };
-            case 'added':
-                return {
-                    primaryAction: detailsAction(
-                        this.data.getRecentlyAddedLink(source.item),
-                        this.data.getRecentlyAddedNavigationState(source.item)
-                    ),
-                    secondaryAction: null,
-                };
-            case 'continue':
-            case 'recent': {
-                const item = source.item;
-                const link = this.data.getRecentItemLink(item);
-                const state = this.data.getRecentItemNavigationState(item);
-                if (item.type === 'live') {
-                    return {
-                        primaryAction: watchLiveAction(link, state),
-                        secondaryAction: null,
-                    };
-                }
-                // The fallback row can be a finished title (the resume
-                // candidates skip those): nothing to continue, open details.
-                if (source.kind === 'recent') {
-                    return {
-                        primaryAction: detailsAction(
-                            link,
-                            this.data.getRecentItemDetailNavigationState(item)
-                        ),
-                        secondaryAction: null,
-                    };
-                }
-                // "Más info" always (the Home's hero offers both): the
-                // detail page without the resume handoff.
-                return {
-                    primaryAction: {
-                        labelKey: 'WORKSPACE.DASHBOARD.HERO_CONTINUE',
-                        icon: 'play_arrow',
-                        link,
-                        state,
-                        remainingLabel: formatRemainingLabel(position),
-                        testId: 'dashboard-hero-primary-action',
-                    },
-                    secondaryAction: {
-                        ...detailsAction(
-                            link,
-                            this.data.getRecentItemDetailNavigationState(item)
-                        ),
-                        testId: 'dashboard-hero-secondary-action',
-                    },
-                };
-            }
-        }
-    }
-}
-
-function watchLiveAction(
-    link: string[],
-    state: Record<string, unknown> | undefined
-): DashboardHeroAction {
-    return {
-        labelKey: 'WORKSPACE.DASHBOARD.HERO_WATCH_LIVE',
-        icon: 'play_arrow',
-        link,
-        state,
-        testId: 'dashboard-hero-primary-action',
-    };
-}
-
-function detailsAction(
-    link: string[],
-    state: Record<string, unknown> | undefined
-): DashboardHeroAction {
-    return {
-        labelKey: 'WORKSPACE.DASHBOARD.HERO_DETAILS',
-        icon: 'info',
-        link,
-        state,
-        testId: 'dashboard-hero-primary-action',
-    };
 }

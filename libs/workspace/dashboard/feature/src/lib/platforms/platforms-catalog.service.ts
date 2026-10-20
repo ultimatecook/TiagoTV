@@ -2,7 +2,11 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { selectAllPlaylistsMeta } from '@iptvnator/m3u-state';
-import { buildXtreamNavigationTarget } from '@iptvnator/portal/shared/util';
+import {
+    buildXtreamNavigationTarget,
+    withDetailPlayRequest,
+    type DetailPlayMode,
+} from '@iptvnator/portal/shared/util';
 import { XtreamApiService } from '@iptvnator/portal/xtream/data-access';
 import { primaryXtreamSource, xtreamSourceCredentials } from '../xtream-source';
 import type { PlatformGenre } from './platform-genres';
@@ -239,7 +243,8 @@ export class PlatformsCatalogService {
      */
     open(
         title: PlatformTitle,
-        version: PlatformTitleVersion = title.versions[0] ?? title
+        version: PlatformTitleVersion = title.versions[0] ?? title,
+        play?: DetailPlayMode
     ): void {
         const source = this.source();
         if (!source) {
@@ -253,7 +258,23 @@ export class PlatformsCatalogService {
             title: version.title,
             imageUrl: title.poster,
         });
-        void this.router.navigate(target.link, { state: target.state });
+        const navigation = play
+            ? withDetailPlayRequest(target, {
+                  mode: play,
+                  contentId: version.id,
+              })
+            : target;
+        void this.router.navigate(navigation.link, {
+            state: navigation.state,
+        });
+    }
+
+    /**
+     * Opens the title's page playing it (see `DetailPlayMode`): a "play"
+     * button that does not stop at the page.
+     */
+    play(title: PlatformTitle, mode: DetailPlayMode): void {
+        this.open(title, undefined, mode);
     }
 }
 

@@ -78,8 +78,15 @@ export function createSettingsForm(
         language: Language.ENGLISH,
         showCaptions: false,
         showDashboard: true,
+        // The Home's sections; the old Home's rails stay in the group,
+        // without a switch, so their stored values round-trip.
         dashboardRails: formBuilder.group({
             hero: DEFAULT_DASHBOARD_RAILS_SETTINGS.hero,
+            platforms: DEFAULT_DASHBOARD_RAILS_SETTINGS.platforms,
+            sports: DEFAULT_DASHBOARD_RAILS_SETTINGS.sports,
+            events: DEFAULT_DASHBOARD_RAILS_SETTINGS.events,
+            topMovies: DEFAULT_DASHBOARD_RAILS_SETTINGS.topMovies,
+            seriesForYou: DEFAULT_DASHBOARD_RAILS_SETTINGS.seriesForYou,
             continueWatching: DEFAULT_DASHBOARD_RAILS_SETTINGS.continueWatching,
             liveFavorites: DEFAULT_DASHBOARD_RAILS_SETTINGS.liveFavorites,
             recentlyWatchedLive:

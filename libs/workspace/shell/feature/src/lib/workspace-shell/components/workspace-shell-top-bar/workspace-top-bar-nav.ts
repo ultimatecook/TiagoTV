@@ -23,6 +23,7 @@ export const WORKSPACE_TOP_BAR_TABS: readonly WorkspaceTopBarTab[] = [
     tab('my-list', 'MY_LIST', 'global-favorites'),
 ];
 
+export const WORKSPACE_SPORTS_HUB_PATH = '/workspace/sports';
 export const WORKSPACE_SPORTS_HUB_LINK = ['/workspace', 'sports'] as const;
 export const WORKSPACE_SETTINGS_LINK = ['/workspace', 'settings'] as const;
 
@@ -109,7 +110,10 @@ export function readWorkspaceTopBarPage(url: string): WorkspaceTopBarPage {
         case 'global-favorites':
             return page('my-list', null, true, layout);
         case 'global-recent':
-            return page('my-list', null, false, layout);
+            // A deep page, reached from another one (the Home hero's
+            // "Continuar" opens a title in it): it keeps that page's tab,
+            // and lights Mi lista only when opened straight.
+            return page(null, 'my-list', false, layout);
         case 'search':
             return { ...page(null, null, true, layout), utility: 'search' };
         case 'settings':

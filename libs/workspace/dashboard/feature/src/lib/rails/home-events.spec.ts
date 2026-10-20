@@ -137,6 +137,41 @@ describe('homeEventRow', () => {
     });
 });
 
+describe('homeEventRow on the basketball card', () => {
+    const game = (competition: string) =>
+        homeEventRow(
+            match('b', 'Bristol Flyers', 'Liverpool', {
+                sectionId: 'basketball',
+                event: {
+                    status: 'next',
+                    title: 'Bristol Flyers - Liverpool',
+                    home: 'Bristol Flyers',
+                    away: 'Liverpool',
+                    competition,
+                    start: null,
+                    country: 'GB',
+                },
+            }),
+            false
+        );
+
+    it('shows the NBA logo on an NBA game only', () => {
+        expect(game('NBA')).toEqual(
+            expect.objectContaining({
+                logo: findSportSection('basketball')?.logo,
+                competition: findSportSection('basketball')?.title,
+            })
+        );
+        // The UK's league is not the NBA: its own name, no logo.
+        expect(game('Super League Basketball')).toEqual(
+            expect.objectContaining({
+                logo: null,
+                competition: 'Super League Basketball',
+            })
+        );
+    });
+});
+
 describe('homeEventsSummary', () => {
     it('counts the events on now among all of today', () => {
         const list = [match('a', 'A', 'B'), match('b', 'C', 'D')];

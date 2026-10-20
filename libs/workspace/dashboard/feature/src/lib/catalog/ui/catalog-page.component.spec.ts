@@ -43,9 +43,11 @@ describe('CatalogPageComponent', () => {
         titles: jest.fn(() => titles()),
         status: jest.fn(() => (titles() ? 'ready' : 'loading')),
         load: jest.fn(() => Promise.resolve()),
+        heroLead: jest.fn(() => 0),
         extrasOf: jest.fn(() => null),
         loadExtras: jest.fn(),
         open: jest.fn(),
+        play: jest.fn(),
     };
 
     afterEach(() => jest.useRealTimers());
@@ -109,9 +111,20 @@ describe('CatalogPageComponent', () => {
             expect.objectContaining({ id: 2 })
         );
 
+        // "Reproducir" plays the title on its page; "Más info" opens it.
         element
             .querySelector<HTMLButtonElement>(
                 '[data-test-id="catalog-hero-play"]'
+            )
+            ?.click();
+        expect(catalog.play).toHaveBeenCalledWith(
+            expect.objectContaining({ id: 2 }),
+            'resume'
+        );
+        expect(catalog.open).not.toHaveBeenCalled();
+        element
+            .querySelector<HTMLButtonElement>(
+                '[data-test-id="catalog-hero-more"]'
             )
             ?.click();
         expect(catalog.open).toHaveBeenCalledWith(

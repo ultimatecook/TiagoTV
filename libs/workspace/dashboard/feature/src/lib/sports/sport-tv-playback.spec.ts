@@ -39,7 +39,10 @@ const DAZN_2: SportChannel = {
 describe('SportTvPlayback', () => {
     let tv: SportTvPlayback;
     const embedded = signal(true);
-    const session = signal<{ returnUrl: string } | null>(null);
+    const session = signal<{ returnUrl: string; sessionKey?: string } | null>(
+        null
+    );
+    const closeDock = jest.fn(() => session.set(null));
     const locked = jest.fn(() => false);
     const lockVersion = signal(0);
     const player = {
@@ -86,7 +89,10 @@ describe('SportTvPlayback', () => {
                         isXtreamCategoryLocked: locked,
                     },
                 },
-                { provide: NowPlayingDockService, useValue: { session } },
+                {
+                    provide: NowPlayingDockService,
+                    useValue: { session, close: closeDock },
+                },
             ],
         });
         tv = TestBed.inject(SportTvPlayback);
@@ -168,6 +174,27 @@ describe('SportTvPlayback', () => {
         expect(tv.playback()?.streamUrl).toMatch(/\/12\.ts$/);
     });
 
+    it('plays a channel the way in asked for, over another page’s mini-player', () => {
+        // "Ver en …" on the hub or Home: the match starts; the page's player
+        // ends the mini-player's stream before it opens its own.
+        session.set({ returnUrl: '/workspace/movies/1' });
+        tv.open(DAZN_1, true);
+        expect(tv.playback()?.streamUrl).toMatch(/\/11\.ts$/);
+    });
+
+    it('takes over the channel the mini-player is playing', () => {
+        session.set({
+            returnUrl: '/workspace/xtreams/source-1/live',
+            sessionKey: liveKey(12),
+        });
+        tv.open(DAZN_1);
+        expect(tv.playback()).toBeNull();
+
+        tv.open(DAZN_2);
+        expect(tv.playback()?.streamUrl).toMatch(/\/12\.ts$/);
+        expect(tv.dockedChannel([DAZN_1, DAZN_2])).toBe(DAZN_2);
+    });
+
     it('launches MPV or VLC instead, never on opening', () => {
         embedded.set(false);
         tv.open(DAZN_1);
@@ -182,6 +209,25 @@ describe('SportTvPlayback', () => {
         );
     });
 
+    it('ends the mini-player before MPV or VLC opens its own stream', () => {
+        embedded.set(false);
+        session.set({ returnUrl: '/workspace/sports/laliga' });
+
+        tv.play(DAZN_1);
+
+        expect(closeDock).toHaveBeenCalled();
+        expect(closeDock.mock.invocationCallOrder[0]).toBeLessThan(
+            player.openResolvedPlayback.mock.invocationCallOrder[0]
+        );
+    });
+
+    it('clears the stage: no channel, no stream', () => {
+        tv.play(DAZN_1);
+        tv.clear();
+        expect(tv.playback()).toBeNull();
+        expect(tv.selection()).toBeNull();
+    });
+
     it('stops a channel its category’s lock withholds', () => {
         tv.play(DAZN_1);
         TestBed.tick();
@@ -191,3 +237,11 @@ describe('SportTvPlayback', () => {
         expect(tv.playback()).toBeNull();
     });
 });
+
+function liveKey(streamId: number): string {
+    return createPlaybackSessionKey({
+        kind: 'live',
+        sourceId: 'source-1',
+        contentId: streamId,
+    });
+}

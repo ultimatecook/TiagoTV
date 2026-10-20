@@ -372,7 +372,6 @@ export class SettingsComponent
         // Wait for settings to load before setting the form
         await this.form.loadSettings();
         this.form.hydrateFromStore();
-        this.form.bindDashboardControlsEnabledState();
         this.formReady.set(true);
         void this.embeddedMpv.load();
         this.appUpdate.checkAppVersion();

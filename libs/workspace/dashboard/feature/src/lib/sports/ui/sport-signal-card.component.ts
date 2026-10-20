@@ -55,7 +55,7 @@ import type { SignalCard } from '../signal-cards';
                         item.number
                     }}</span>
                 }
-                @if (active()) {
+                @if (active() && playing()) {
                     <span class="signal__playing">{{
                         'WORKSPACE.SPORTS.PLAYING' | translate
                     }}</span>
@@ -85,6 +85,12 @@ import type { SignalCard } from '../signal-cards';
 export class SportSignalCardComponent {
     readonly card = input.required<SignalCard>();
     readonly active = input(false);
+    /**
+     * The stage's stream is on: "Playing" shows on the active card only
+     * then, not while the stage waits for Play (the mini-player kept
+     * another page's stream).
+     */
+    readonly playing = input(true);
     /** The line under the name when no match is known: the competition. */
     readonly subtitle = input('');
     /** The programme's progress on the playing signal. */

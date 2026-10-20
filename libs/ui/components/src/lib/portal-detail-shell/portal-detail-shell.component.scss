@@ -40,6 +40,12 @@
     &:focus-visible {
         @include focus-ring.focus-ring-declarations($offset: -2px);
     }
+
+    // Focused by the page on opening, not by the keyboard: Chromium counts a
+    // script's focus before any input as visible. A Tab back to it rings.
+    &.shell-host--quiet-focus:focus-visible {
+        outline: none;
+    }
 }
 
 :host-context(.dark-theme) {

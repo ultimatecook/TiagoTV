@@ -22,17 +22,13 @@
         line-height: 1.2;
     }
 
+    // TiagoTV: the redesign's list card (Home's "Eventos de hoy").
     &__list {
         display: grid;
         overflow: hidden;
-        border: 1px solid
-            color-mix(
-                in srgb,
-                var(--app-separator, var(--mat-sys-outline-variant)) 78%,
-                transparent
-            );
-        border-radius: 14px;
-        background: var(--mat-sys-surface-container-low);
+        border: 1px solid var(--tv-card-border);
+        border-radius: 20px;
+        background: var(--tv-list-bg);
     }
 
     &__item {

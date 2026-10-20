@@ -1,5 +1,6 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import type { ResolvedPortalPlayback } from '@iptvnator/shared/interfaces';
+import { PlaybackStreamOwner } from './playback-stream-owner';
 
 /** A playback the mini-player continues once the page that ran it is gone. */
 export interface NowPlayingHandoff {
@@ -38,6 +39,7 @@ export interface NowPlayingSession extends NowPlayingHandoff {
  */
 @Injectable({ providedIn: 'root' })
 export class NowPlayingDockService {
+    private readonly streams = inject(PlaybackStreamOwner);
     private readonly sessionState = signal<NowPlayingSession | null>(null);
     private readonly expandedState = signal(false);
     private readonly mountedPlayers = signal(0);
@@ -56,14 +58,27 @@ export class NowPlayingDockService {
      */
     readonly playerMounted = computed(() => this.mountedPlayers() > 0);
 
-    /** The bar mounted its player; the returned call reports it gone. */
-    registerPlayer(): () => void {
+    /**
+     * The bar mounted its player, which now holds the app's one stream
+     * (any other player is stopped); the returned call reports it gone.
+     * `stop` ends the bar's session when another player claims the stream.
+     * A bar mounted for a session a page already ended (in the same
+     * render) takes the stream from nobody: that page waits for it.
+     */
+    registerPlayer(stop: () => void = () => this.close()): () => void {
+        const holder = { stop };
         this.mountedPlayers.update((count) => count + 1);
+        if (this.sessionState() !== null) {
+            this.streams.claim(holder);
+        } else {
+            this.streams.hold(holder);
+        }
         let registered = true;
         return () => {
             if (registered) {
                 registered = false;
                 this.mountedPlayers.update((count) => count - 1);
+                this.streams.release(holder);
             }
         };
     }

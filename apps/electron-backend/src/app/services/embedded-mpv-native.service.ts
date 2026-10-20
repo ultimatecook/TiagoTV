@@ -1106,9 +1106,18 @@ export class EmbeddedMpvNativeService {
         return payload;
     }
 
-    shutdown(): void {
+    /**
+     * Disposes every session (each broadcasts `closed`); returns how many
+     * there were.
+     */
+    disposeAllSessions(): number {
         const sessionIds = [...this.sessions.keys()];
         sessionIds.forEach((sessionId) => this.disposeSession(sessionId));
+        return sessionIds.length;
+    }
+
+    shutdown(): void {
+        this.disposeAllSessions();
         removeSessionOptionsDirectory(this.sessionOptionsDirectory);
         this.sessionOptionsDirectory = null;
         if (this.pollingTimer) {

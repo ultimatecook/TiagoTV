@@ -1,17 +1,23 @@
 import type { PlatformGenre } from '../platforms/platform-genres';
-import { titleKey, type PlatformTitle } from '../platforms/platform-titles';
+import {
+    titleKey,
+    type PlatformTitle,
+    type PlatformTitleVersion,
+} from '../platforms/platform-titles';
 import { mergePlatformTitles } from '../platforms/platform-versions';
 import type {
     PlatformTitleKind,
     StreamingPlatform,
+    StreamingPlatformId,
 } from '../platforms/streaming-platforms';
+import { creditPlatform, takeTurns } from './catalog-fairness';
 
 /**
  * Series / Películas: every platform's titles of one kind in one catalog.
  * A show the provider files on two platforms, or once per language
  * ("MUERTOS S.L." on |ES| Netflix, "DEATH INC." on |EN| Netflix), is one
- * title, shown in Spanish where it has a Spanish version and attributed to
- * the platform of that version.
+ * title, shown in Spanish where it has a Spanish version. A show several
+ * platforms carry counts for the one with fewer titles (`creditPlatform`).
  */
 export type CatalogKind = PlatformTitleKind;
 
@@ -65,87 +71,135 @@ export const MIN_ROW_TITLES = 2;
 export const MAX_ROW_TITLES = 40;
 /** The hero's "Novedades". */
 export const NEW_RELEASES = 10;
+/**
+ * The genre rows hold a platform's titles where at least this share of
+ * them names a genre; the others get a row of their own.
+ */
+export const GENRE_COVERAGE = 0.5;
 
-/** One title per show across every platform and language, newest first. */
+/**
+ * One title per show across every platform and language, the platforms
+ * taking turns (see `takeTurns`), each platform's titles newest first.
+ */
 export function aggregateCatalog(
     lists: readonly PlatformTitleList[],
     kind: CatalogKind
 ): CatalogTitle[] {
     const platformOf = new Map<string, StreamingPlatform>();
+    /** A stream the provider files on two platforms is listed once. */
+    const streamOn = new Map<number, StreamingPlatform[]>();
+    const sizes = new Map<StreamingPlatformId, number>();
     const ofKind = lists.map((list) => {
         const titles = list.titles.filter((title) => title.kind === kind);
+        sizes.set(
+            list.platform.id,
+            (sizes.get(list.platform.id) ?? 0) + titles.length
+        );
         for (const title of titles) {
-            for (const version of title.versions) {
+            for (const version of [title, ...title.versions]) {
                 platformOf.set(version.categoryId, list.platform);
+                const on = streamOn.get(version.id) ?? [];
+                if (!on.includes(list.platform)) {
+                    on.push(list.platform);
+                }
+                streamOn.set(version.id, on);
             }
-            platformOf.set(title.categoryId, list.platform);
         }
         return titles;
     });
+    const platformsOf = (version: PlatformTitleVersion) => {
+        const own = platformOf.get(version.categoryId);
+        const others = streamOn.get(version.id) ?? [];
+        return own ? [own, ...others.filter((item) => item !== own)] : others;
+    };
     const titles: CatalogTitle[] = [];
     for (const title of mergePlatformTitles(ofKind)) {
         const platforms: StreamingPlatform[] = [];
-        for (const categoryId of [
-            title.categoryId,
-            ...title.versions.map((version) => version.categoryId),
-        ]) {
-            const platform = platformOf.get(categoryId);
-            if (platform && !platforms.includes(platform)) {
-                platforms.push(platform);
+        for (const version of title.versions.length > 0
+            ? title.versions
+            : [title]) {
+            for (const platform of platformsOf(version)) {
+                if (!platforms.includes(platform)) {
+                    platforms.push(platform);
+                }
             }
         }
         if (platforms.length > 0) {
-            titles.push({ ...title, platform: platforms[0], platforms });
+            const credited = creditPlatform(
+                title,
+                platforms,
+                platformsOf,
+                sizes
+            );
+            titles.push({
+                ...credited.title,
+                platform: credited.platform,
+                platforms: [
+                    credited.platform,
+                    ...platforms.filter((item) => item !== credited.platform),
+                ],
+            });
         }
     }
-    return titles;
+    return takeTurns(titles);
 }
 
 /**
  * The hero's "Novedades": the newest titles with artwork, the platforms
- * taking turns (the one with the newest title first) so one platform's
- * batch of uploads does not fill the row.
+ * taking turns so one platform's batch of uploads does not fill the row.
+ * The platform with the newest title leads, or the `lead`-th one (drawn
+ * each session), so the hero does not always feature the same platform.
  */
 export function pickNewReleases(
     titles: readonly CatalogTitle[],
-    count = NEW_RELEASES
+    count = NEW_RELEASES,
+    lead = 0
 ): CatalogTitle[] {
     const withArt = titles.filter((title) => title.poster || title.backdrop);
     const pool =
         withArt.length >= Math.min(count, titles.length) ? withArt : titles;
-    const queues = new Map<string, CatalogTitle[]>();
-    for (const title of pool) {
-        const queue = queues.get(title.platform.id);
-        if (queue) {
-            queue.push(title);
-        } else {
-            queues.set(title.platform.id, [title]);
-        }
-    }
-    const picked: CatalogTitle[] = [];
-    const turns = [...queues.values()];
-    for (let round = 0; picked.length < count; round++) {
-        const takers = turns.filter((queue) => round < queue.length);
-        if (takers.length === 0) {
-            break;
-        }
-        for (const queue of takers) {
-            if (picked.length < count) {
-                picked.push(queue[round]);
-            }
-        }
-    }
-    return picked;
+    return takeTurns(pool, count, lead);
 }
 
 /**
- * One row per genre with at least `MIN_ROW_TITLES` titles, newest first;
- * where no genre gathers that many (a stored catalog that names none),
- * one row per platform instead.
+ * One row per genre with at least `MIN_ROW_TITLES` titles (in the
+ * catalog's order: the platforms taking turns, newest first), and one row
+ * per platform for the platforms whose titles mostly name no genre (the
+ * stored catalog in Electron names none; only the platform pages already
+ * opened lend theirs). Where fewer than two platforms name genres, the
+ * genre rows would show those alone: one row per platform instead.
  */
 export function buildCatalogRows(
     titles: readonly CatalogTitle[]
 ): CatalogRow[] {
+    const byPlatform = new Map<StreamingPlatformId, CatalogTitle[]>();
+    for (const title of titles) {
+        const list = byPlatform.get(title.platform.id) ?? [];
+        list.push(title);
+        byPlatform.set(title.platform.id, list);
+    }
+    const platformRows: CatalogRow[] = [];
+    const unnamed: CatalogRow[] = [];
+    for (const list of byPlatform.values()) {
+        if (list.length < MIN_ROW_TITLES) {
+            continue;
+        }
+        const row: CatalogRow = {
+            id: list[0].platform.id,
+            genre: null,
+            platform: list[0].platform,
+            titles: list.slice(0, MAX_ROW_TITLES),
+        };
+        platformRows.push(row);
+        const named = list.filter((title) => title.genres.length > 0);
+        if (named.length < GENRE_COVERAGE * list.length) {
+            unnamed.push(row);
+        }
+    }
+    const namedCount = platformRows.length - unnamed.length;
+    if (unnamed.length > 0 && namedCount < 2) {
+        return platformRows;
+    }
     const genreRows = CATALOG_GENRES.map((genre): CatalogRow => ({
         id: genre,
         genre,
@@ -154,23 +208,7 @@ export function buildCatalogRows(
             .filter((title) => title.genres.includes(genre))
             .slice(0, MAX_ROW_TITLES),
     })).filter((row) => row.titles.length >= MIN_ROW_TITLES);
-    if (genreRows.length > 0) {
-        return genreRows;
-    }
-    const byPlatform = new Map<string, CatalogTitle[]>();
-    for (const title of titles) {
-        const list = byPlatform.get(title.platform.id) ?? [];
-        list.push(title);
-        byPlatform.set(title.platform.id, list);
-    }
-    return [...byPlatform.values()]
-        .filter((list) => list.length >= MIN_ROW_TITLES)
-        .map((list) => ({
-            id: list[0].platform.id,
-            genre: null,
-            platform: list[0].platform,
-            titles: list.slice(0, MAX_ROW_TITLES),
-        }));
+    return genreRows.length > 0 ? genreRows.concat(unnamed) : platformRows;
 }
 
 /**

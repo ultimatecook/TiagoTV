@@ -154,3 +154,115 @@ app-unified-live-tab {
         margin: 0;
     }
 }
+
+/// En vivo's category chips (`country-tv-overlay`) on a button toggle group.
+@mixin glass-chips {
+    @include mat.button-toggle-overrides(
+        (
+            height: 34px,
+            shape: 999px,
+            divider-color: transparent,
+            background-color: rgba(255, 255, 255, 0.08),
+            text-color: var(--tv-text-img-1),
+            selected-state-background-color: var(--tv-text),
+            selected-state-text-color: #0b0b09,
+            state-layer-color: #fff,
+            hover-state-layer-opacity: 0.06,
+            focus-state-layer-opacity: 0.06,
+            label-text-size: 13px,
+            label-text-weight: 600,
+        )
+    );
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+
+    .mat-button-toggle {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        backdrop-filter: blur(16px);
+    }
+
+    .mat-button-toggle + .mat-button-toggle {
+        border-inline-start: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .mat-button-toggle.mat-button-toggle-checked {
+        border-color: var(--tv-text);
+    }
+
+    ::ng-deep .mat-button-toggle-label-content {
+        height: 32px;
+        padding: 0 14px;
+    }
+}
+
+// ── TiagoTV: Mi lista and Vistos recientemente ───────────────────────────
+// The workspace's own collections (`app-global-collection-route`) read
+// like the redesign's pages: the page gutter, the 32px title, En vivo's
+// glass chips for the toggles and glass panels where the list was opaque.
+// A portal's own favourites keep the kit's look.
+:host(.collection-page--tv) {
+    --collection-grid-padding: 0 var(--tv-page-x) var(--tv-page-bottom);
+    color: var(--tv-text);
+
+    .collection-header {
+        flex-wrap: wrap;
+        gap: 16px 24px;
+        padding: var(--tv-page-top) var(--tv-page-x) 24px;
+        border-bottom: 0;
+    }
+
+    .collection-title {
+        font-size: 32px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        color: var(--tv-text);
+    }
+
+    .collection-header-toggles {
+        flex-wrap: wrap;
+    }
+
+    .collection-reload-bar {
+        left: var(--tv-page-x);
+        right: var(--tv-page-x);
+    }
+
+    .content-toggle,
+    .scope-toggle {
+        @include glass-chips;
+    }
+
+    .toggle-placeholder {
+        height: 34px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .skeleton-grid {
+        padding: var(--collection-grid-padding);
+    }
+
+    .skeleton-list,
+    app-unified-live-tab {
+        margin: 0 var(--tv-page-x) var(--tv-page-bottom);
+    }
+
+    // The live tab's channel list, player frame and guide: glass cards
+    // over the window's vibrancy instead of the kit's opaque surface.
+    .collection-content {
+        --app-content-bg: var(--tv-card-bg);
+    }
+
+    app-unified-live-tab {
+        overflow: hidden;
+        border: 1px solid var(--tv-card-border);
+        border-radius: 20px;
+        background: var(--tv-list-bg);
+    }
+}

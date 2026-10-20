@@ -46,8 +46,12 @@
 
 .player {
     position: absolute;
-    inset: 0;
+    // The whole stage; clear of the page's controls for a picture that
+    // draws above the page (native-view Embedded MPV, set by the page).
+    inset: var(--live-player-inset, 0);
     display: block;
+    // The insets size it (the player view's own height is 100%).
+    height: auto;
 }
 
 // The page's overlay is the controls: the player's own bar is hidden, and
@@ -71,6 +75,33 @@
     }
 
     app-playback-diagnostic-panel {
+        // Clear of the top bar and the country button, as the native
+        // picture (`--live-player-inset`): a phone's bar takes two rows.
+        top: calc(var(--tv-topbar-h) + 76px);
         bottom: var(--live-overlay-height, 0px);
     }
+
+    // Native-view Embedded MPV keeps no dock below its picture on the
+    // page...
+    app-web-player-view:not(:fullscreen) {
+        .embedded-mpv-player {
+            --embedded-mpv-controls-height: 0px;
+        }
+
+        .embedded-mpv-player__controls {
+            display: none;
+        }
+    }
+
+    // ...and takes its own full screen (`CountryTvControls`), where no page
+    // element can show over its picture: there its dock is the controls,
+    // shown by a move, and the player takes the pointer.
+    app-web-player-view:fullscreen app-embedded-mpv-player {
+        pointer-events: auto;
+    }
+}
+
+// Full screen has no top bar over the picture.
+:host-context(.live:fullscreen) ::ng-deep app-playback-diagnostic-panel {
+    top: 0;
 }

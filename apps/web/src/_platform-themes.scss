@@ -95,6 +95,29 @@ html[data-platform-theme] app-portal-detail-shell {
     padding-bottom: var(--workspace-now-playing-clearance, 0px);
     scrollbar-gutter: auto;
     scrollbar-width: none;
+
+    // The page also runs up under the shell's top bar, but nothing on it
+    // may rest there: the bar's tabs and circles take those clicks, and in
+    // Electron its band moves the window. The hero's artwork stays under
+    // the bar and its text below it (a hero without a backdrop is only as
+    // tall as its text), the trailer's sound toggle moves below it too,
+    // and the watch state starts the player below the bar.
+    .hero__content {
+        padding-top: calc(var(--tv-topbar-h) + 24px);
+    }
+
+    .hero__trailer-mute {
+        top: calc(var(--tv-topbar-h) + 16px);
+    }
+
+    &.shell-host--watch {
+        padding-top: var(--tv-topbar-h);
+    }
+
+    // Scrolled up under the band, the player's own row stays clickable.
+    .player-shell__header {
+        app-region: no-drag;
+    }
 }
 
 // ─── Netflix ────────────────────────────────────────────────────────────────

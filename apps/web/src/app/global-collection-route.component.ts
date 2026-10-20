@@ -177,6 +177,7 @@ export class GlobalCollectionDetailHostComponent implements OnDestroy {
             />
         } @else {
             <app-unified-collection-page
+                class="collection-page--tv"
                 [mode]="mode()"
                 [playlistId]="activePlaylistId() ?? undefined"
                 [portalType]="activePortalType() ?? undefined"

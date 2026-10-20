@@ -8,6 +8,7 @@ import {
     HostListener,
     inject,
     linkedSignal,
+    Signal,
     untracked,
     viewChild,
     ChangeDetectionStrategy,
@@ -47,6 +48,7 @@ import { WorkspaceShellRouteStateService } from './services/workspace-shell-rout
 import { WorkspaceShellSearchSyncService } from './services/workspace-shell-search-sync.service';
 import { WorkspaceShellSearchService } from './services/workspace-shell-search.service';
 import { followWorkspaceScroll } from './workspace-scroll-memory';
+import { watchWorkspaceScrolled } from './workspace-top-scrim';
 import { provideWorkspaceShellCommands } from './services/workspace-shell-commands.provider';
 import { WorkspaceBackGesturesService } from '../workspace-back-gestures/workspace-back-gestures.service';
 import { WorkspaceKeyboardShortcutsService } from '../workspace-keyboard-shortcuts/workspace-keyboard-shortcuts.service';
@@ -134,15 +136,24 @@ export class WorkspaceShellComponent {
             resolveWorkspaceTopBarTab(page, previous?.value ?? null),
     });
     /**
-     * Back on a deep page. The pages the bar reaches have none, and a
-     * league page has "‹ Deportes" instead.
+     * Back on a deep page; a league page has "‹ Deportes" instead. A tab's
+     * own page has none (the bar is the way out) unless it opened a detail
+     * in place, a title over Mi lista: the URL stays the tab's, so only
+     * the detail's own Back leaves it. Buscar's and Ajustes' registrations
+     * serve Escape and the gestures only.
      */
     readonly topBarBack = computed(() => {
         const page = this.topBarPage();
-        return page.isTabRoot || page.isLeague
-            ? null
-            : this.facade.backTarget();
+        if (page.isLeague) {
+            return null;
+        }
+        if (!page.isTabRoot) {
+            return this.facade.backTarget();
+        }
+        return page.utility ? null : this.facade.pageBackTarget();
     });
+    /** The page under the bar is scrolled: the bar's scrim shows. */
+    readonly pageScrolled: Signal<boolean>;
     /**
      * Buscar filters a page that searches itself (a channel list, Ajustes,
      * Mi lista); elsewhere it opens the search page, which has its own
@@ -158,10 +169,14 @@ export class WorkspaceShellComponent {
     });
 
     constructor() {
-        followWorkspaceScroll(
-            inject(Router),
-            () => this.workspaceContent()?.nativeElement,
-            inject(DestroyRef)
+        const router = inject(Router);
+        const destroyRef = inject(DestroyRef);
+        const scroller = () => this.workspaceContent()?.nativeElement;
+        followWorkspaceScroll(router, scroller, destroyRef);
+        this.pageScrolled = watchWorkspaceScrolled(
+            router,
+            scroller,
+            destroyRef
         );
 
         // Focus restoration is the closing half of the drawer's focus
@@ -219,6 +234,17 @@ export class WorkspaceShellComponent {
             return;
         }
         this.facade.openGlobalSearch();
+    }
+
+    /**
+     * The lit tab clicked again: its URL is already the current one, so the
+     * router does nothing. A detail the tab's page opened in place (a title
+     * over Mi lista) closes, back to the tab's own page.
+     */
+    onTabReselected(): void {
+        if (this.topBarPage().isTabRoot && this.topBarBack()) {
+            this.facade.goBack();
+        }
     }
 
     /**

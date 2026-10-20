@@ -11,7 +11,10 @@ import {
 import { PlaybackHistoryGate } from '@iptvnator/playback/data-access';
 import { ParentalLockService } from '@iptvnator/services';
 import type { PlaylistMeta } from '@iptvnator/shared/interfaces';
-import { NowPlayingDockService } from '@iptvnator/ui/playback';
+import {
+    EmbeddedMpvOverlayVisibilityService,
+    NowPlayingDockService,
+} from '@iptvnator/ui/playback';
 import { SportsCatalogService } from '../../sports/sports-catalog.service';
 import { buildCountriesTv, type TvCountry } from '../countries-catalog';
 import { CountriesCatalogService } from '../countries-catalog.service';
@@ -292,6 +295,84 @@ describe('CountriesPageComponent', () => {
         );
         fixture.detectChanges();
         expect(live.classList).toContain('live--idle');
+    });
+
+    describe('full screen', () => {
+        const fullscreenIs = (element: Element | null) =>
+            Object.defineProperty(document, 'fullscreenElement', {
+                configurable: true,
+                get: () => element,
+            });
+        const key = (target: EventTarget, name: string) =>
+            target.dispatchEvent(
+                new KeyboardEvent('keydown', {
+                    key: name,
+                    bubbles: true,
+                    cancelable: true,
+                })
+            );
+
+        beforeEach(() => {
+            document.exitFullscreen = jest.fn(async () => undefined);
+        });
+
+        afterEach(() => fullscreenIs(null));
+
+        it('leaves on F from the button just pressed, and on Esc', async () => {
+            await render();
+            const live = find('countries-live') as HTMLElement;
+            live.requestFullscreen = jest.fn(async () => {
+                fullscreenIs(live);
+                document.dispatchEvent(new Event('fullscreenchange'));
+            });
+            const button = find('countries-fullscreen') as HTMLButtonElement;
+            button.focus();
+            button.click();
+            await settle();
+            expect(live.requestFullscreen).toHaveBeenCalled();
+            expect(button.getAttribute('aria-pressed')).toBe('true');
+
+            // The button keeps the focus: F there is still the page's.
+            key(button, 'f');
+            expect(document.exitFullscreen).toHaveBeenCalledTimes(1);
+
+            // Where the window lets the page see Esc, it leaves too.
+            key(button, 'Escape');
+            expect(document.exitFullscreen).toHaveBeenCalledTimes(2);
+        });
+
+        it('hands full screen to a native-view Embedded MPV picture, and keeps the page clear of it', async () => {
+            const release = jest.fn();
+            await render();
+            const overlays = TestBed.inject(
+                EmbeddedMpvOverlayVisibilityService
+            );
+            const acquire = jest
+                .spyOn(overlays, 'acquireExternalModalSurface')
+                .mockReturnValue(release);
+            const live = find('countries-live') as HTMLElement;
+            // The engine the stage would render for Embedded MPV.
+            const view = document.createElement('app-web-player-view');
+            view.appendChild(document.createElement('app-embedded-mpv-player'));
+            live.appendChild(view);
+            view.requestFullscreen = jest.fn(async () => undefined);
+            live.requestFullscreen = jest.fn(async () => undefined);
+            await new Promise((resolve) => setTimeout(resolve));
+            fixture.detectChanges();
+            expect(live.classList).toContain('live--native');
+
+            find('countries-fullscreen')?.click();
+            expect(view.requestFullscreen).toHaveBeenCalled();
+            expect(live.requestFullscreen).not.toHaveBeenCalled();
+
+            // The country menu drops over the picture: it moves away.
+            find('countries-picker')?.click();
+            await settle();
+            expect(acquire).toHaveBeenCalledTimes(1);
+            find('countries-picker')?.click();
+            await settle();
+            expect(release).toHaveBeenCalled();
+        });
     });
 
     it('opens the playing channel in the live view, without the mini-player', async () => {

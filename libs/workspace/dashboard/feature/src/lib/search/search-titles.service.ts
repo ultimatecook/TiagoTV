@@ -9,6 +9,7 @@ import { RuntimeCapabilitiesService } from '@iptvnator/services';
 import type { XtreamCategory } from '@iptvnator/shared/interfaces';
 import { primaryXtreamSource, xtreamSourceCredentials } from '../xtream-source';
 import {
+    catalogQuery,
     toTitleHits,
     type TitleHit,
     type TitleKind,
@@ -47,7 +48,10 @@ export class SearchTitlesService {
 
     readonly source = computed(() => primaryXtreamSource(this.playlists()));
 
-    /** `query` as typed goes to the catalog; `term` (folded) ranks. */
+    /**
+     * `query` as typed goes to the catalog (its longest word, see
+     * `catalogQuery`); `term` (folded) ranks and filters the answers.
+     */
     async search(query: string, term: string): Promise<TitleSearch> {
         const [series, movies] = await Promise.all([
             this.searchKind(query, term, 'series'),
@@ -66,7 +70,9 @@ export class SearchTitlesService {
             return null;
         }
         const [items, names] = await Promise.all([
-            this.dataSource.searchContent(source._id, query, [kind]),
+            this.dataSource.searchContent(source._id, catalogQuery(query), [
+                kind,
+            ]),
             this.namesOf(source._id, kind),
         ]);
         return toTitleHits(

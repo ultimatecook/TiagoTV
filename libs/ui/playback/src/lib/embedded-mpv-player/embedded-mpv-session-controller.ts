@@ -17,6 +17,7 @@ import {
     watchEmbeddedMpvSupport,
 } from '@iptvnator/shared/interfaces';
 import { TranslateService } from '@ngx-translate/core';
+import { PlaybackStreamOwner } from '../now-playing/playback-stream-owner';
 import { EmbeddedMpvCommandRunner } from './embedded-mpv-command-runner';
 import { measureBounds } from './embedded-mpv-format.utils';
 import {
@@ -80,6 +81,7 @@ export class EmbeddedMpvSessionController {
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly translate = inject(TranslateService);
+    private readonly streams = inject(PlaybackStreamOwner);
     private readonly unsubscribeSessionUpdate?: () => void;
 
     private boundsProvider: EmbeddedMpvBoundsProvider = (host) =>
@@ -252,6 +254,14 @@ export class EmbeddedMpvSessionController {
                 throw new Error(prepared.reason || this.notAvailableMessage());
             }
 
+            // Stop before start: a session disposed anywhere in the app (the
+            // previous channel, the page just left) is gone before this one
+            // exists, so two never hold a stream at once.
+            await this.streams.whenClosed();
+            if (disposed) {
+                return;
+            }
+
             const created = await electron.createEmbeddedMpvSession(
                 measureBounds(host),
                 playback.title,
@@ -259,7 +269,7 @@ export class EmbeddedMpvSessionController {
             );
 
             if (disposed) {
-                await electron.disposeEmbeddedMpvSession(created.id);
+                await this.dispose(electron, created.id);
                 return;
             }
 
@@ -283,9 +293,9 @@ export class EmbeddedMpvSessionController {
                     return;
                 }
                 if (attached === false && !disposed) {
-                    await electron
-                        .disposeEmbeddedMpvSession(created.id)
-                        .catch(() => undefined);
+                    await this.dispose(electron, created.id).catch(
+                        () => undefined
+                    );
                     throw new Error(
                         this.translate.instant(
                             'EMBEDDED_MPV.PLAYER.FRAME_VIEW_FAILED'
@@ -333,12 +343,25 @@ export class EmbeddedMpvSessionController {
             this.session.set(null);
 
             if (id) {
+                const electron = window.electron;
                 if (untracked(() => this.isFrameCopyEngine())) {
-                    window.electron?.detachEmbeddedMpvFrameView?.();
+                    electron?.detachEmbeddedMpvFrameView?.();
                 }
-                void window.electron?.disposeEmbeddedMpvSession(id);
+                if (electron) {
+                    void this.dispose(electron, id).catch(() => undefined);
+                }
             }
         };
+    }
+
+    /**
+     * Disposes a native session; until the main process answers, the
+     * app's next stream (any player) waits, its connection may be open.
+     */
+    private dispose(electron: ElectronBridge, id: string): Promise<unknown> {
+        const closed = Promise.resolve(electron.disposeEmbeddedMpvSession(id));
+        this.streams.closing(closed);
+        return closed;
     }
 
     // Transport/track/recording commands delegate to the command runner (owns

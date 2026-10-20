@@ -6,9 +6,10 @@ import type { TvRow } from './country-rows';
 /**
  * "En vivo"'s category chips and its row of channel cards, built on a
  * country's rows (see country-rows): a chip per kind of row, sports
- * first, each with its count of channels, after "All", which runs through
- * every kind in the chips' order. A card keeps its row, which the
- * player's selection names.
+ * first, each with its count of channels, after "All", which opens on the
+ * country's main channels (La 1, BBC One), then sports and their live
+ * events, then the rest. A card keeps its row, which the player's
+ * selection names.
  */
 export type TvCategoryId = 'all' | RowTier;
 
@@ -37,6 +38,12 @@ export const CATEGORY_ORDER: readonly RowTier[] = [
     'copies',
 ];
 
+/** "All"'s order: the main channels, then the chips' order. */
+export const ALL_ORDER: readonly RowTier[] = [
+    'main',
+    ...CATEGORY_ORDER.filter((tier) => tier !== 'main'),
+];
+
 const CATEGORIES = 'WORKSPACE.COUNTRIES.CATEGORIES';
 
 export function countryCategories(country: TvCountry): TvCategory[] {
@@ -61,7 +68,7 @@ export function countryCards(
     country: TvCountry,
     category: TvCategoryId
 ): TvCard[] {
-    const tiers = category === 'all' ? CATEGORY_ORDER : [category];
+    const tiers = category === 'all' ? ALL_ORDER : [category];
     const cards: TvCard[] = [];
     for (const tier of tiers) {
         for (const row of country.rows) {

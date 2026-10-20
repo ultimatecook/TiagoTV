@@ -126,3 +126,52 @@ export function channelInSection(
 function isSectionSport(section: SportSection, name: string): boolean {
     return section.id === 'basketball' || !BASKETBALL.test(name);
 }
+
+/** The cards of a sport other than football; the rest are football's. */
+const SPORT_OF: Partial<Record<SportSectionId, string>> = {
+    tennis: 'tennis',
+    motor: 'motor',
+    basketball: 'basketball',
+};
+
+/**
+ * Whether a channel's name (a feed's category: "|ES| ✪ FORMULA 1") says
+ * another sport than the section's. Providers file a match where a slot
+ * is free ("Paris FC - Stade Rennais FC | Ligue 1" under Formula 1): its
+ * card must not offer "Ver en F1".
+ */
+export function namesOtherSport(
+    sectionId: SportSectionId,
+    name: string
+): boolean {
+    const named = sportOfName(name);
+    return named !== null && named !== (SPORT_OF[sectionId] ?? 'football');
+}
+
+/** The sport a channel's name says, if any ("Formula 1", "DAZN ACB"). */
+function sportOfName(name: string): string | null {
+    for (const section of SPORT_SECTIONS) {
+        const sport = SPORT_OF[section.id];
+        if (
+            sport &&
+            ((section.category?.test(name) ?? false) ||
+                (section.channel?.test(name) ?? false))
+        ) {
+            return sport;
+        }
+    }
+    return NOT_FOOTBALL.test(name) ? 'other' : null;
+}
+
+/**
+ * A row's competition logo: the section's, unless it is one competition's
+ * own (the basketball card's NBA logo) and the row is another's.
+ */
+export function competitionLogo(
+    section: SportSection | null,
+    competition: string
+): string | null {
+    return section?.logo && (section.logoCompetition?.test(competition) ?? true)
+        ? section.logo
+        : null;
+}

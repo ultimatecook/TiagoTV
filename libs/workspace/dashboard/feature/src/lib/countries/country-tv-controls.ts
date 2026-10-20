@@ -20,7 +20,11 @@ const STOPPED = new Set(['pause', 'emptied', 'ended', 'error', 'loadstart']);
  * hidden there and its shortcuts suspended (`SHORTCUTS_SUSPENDED` on the
  * stage), so the page drives it the way its keys would: play/pause and
  * mute go to the player's controller as its own K and M, else straight to
- * its video. Full screen takes the whole stage, overlay included.
+ * its video. Full screen takes the whole stage, overlay included, except
+ * with native-view Embedded MPV (`nativeSurface`): its picture is a
+ * platform view over the window that no page element can cover, so there
+ * the player takes its own full screen, with its own controls, as in the
+ * live view.
  *
  * The state comes from the player's `<video>` (HTML5, Video.js,
  * ArtPlayer); Embedded MPV has none, and there the page keeps its own.
@@ -34,7 +38,13 @@ export class CountryTvControls {
     /** The picture is moving (a video said `playing` since it last stopped). */
     readonly playing = signal(false);
     readonly muted = signal(false);
+    /** The stage, or the player on it, is full screen. */
     readonly fullscreen = signal(false);
+    /**
+     * The player draws above the page: native-view Embedded MPV (its
+     * frame-copy engine paints a canvas in the page and does not count).
+     */
+    readonly nativeSurface = signal(false);
 
     private stage: HTMLElement | null = null;
     private video: HTMLVideoElement | null = null;
@@ -43,9 +53,7 @@ export class CountryTvControls {
     private observer: MutationObserver | null = null;
     private readonly onMedia = (event: Event) => this.read(event.type);
     private readonly onFullscreen = () =>
-        this.fullscreen.set(
-            !!this.stage && document.fullscreenElement === this.stage
-        );
+        this.fullscreen.set(this.ownsFullscreen());
 
     constructor() {
         inject(DestroyRef).onDestroy(() => this.detach());
@@ -102,15 +110,59 @@ export class CountryTvControls {
         if (document.fullscreenElement) {
             void document.exitFullscreen?.()?.catch(() => undefined);
         } else {
-            void stage.requestFullscreen?.()?.catch(() => undefined);
+            void this.fullscreenTarget(stage)
+                .requestFullscreen?.()
+                ?.catch(() => undefined);
         }
+    }
+
+    /** Esc: leaves the stage's full screen; false when it has none. */
+    exitFullscreen(): boolean {
+        if (!this.ownsFullscreen()) {
+            return false;
+        }
+        void document.exitFullscreen?.()?.catch(() => undefined);
+        return true;
+    }
+
+    /** The player alone is full screen: the page's overlay is not shown. */
+    playerFullscreen(): boolean {
+        return (
+            this.ownsFullscreen() && document.fullscreenElement !== this.stage
+        );
+    }
+
+    private ownsFullscreen(): boolean {
+        const element =
+            typeof document === 'undefined' ? null : document.fullscreenElement;
+        return !!element && !!this.stage?.contains(element);
+    }
+
+    /**
+     * The stage, overlay included; the player's own full screen surface
+     * (its `app-web-player-view`, as the live view's controls use it) when
+     * it draws above the page.
+     */
+    private fullscreenTarget(stage: HTMLElement): HTMLElement {
+        const player = this.nativeSurface()
+            ? stage
+                  .querySelector('app-embedded-mpv-player')
+                  ?.closest<HTMLElement>('app-web-player-view')
+            : null;
+        return player ?? stage;
     }
 
     /** The player's engine mounted, or remounted (a zap, a retry). */
     private bind(): void {
         const stage = this.stage;
         const video = stage?.querySelector('video') ?? null;
-        const mpv = !video && !!stage?.querySelector('app-embedded-mpv-player');
+        const engine = video
+            ? null
+            : (stage?.querySelector('app-embedded-mpv-player') ?? null);
+        const mpv = !!engine;
+        this.nativeSurface.set(
+            !!engine && !engine.querySelector('[data-embedded-mpv-frame]')
+        );
         if (video === this.video && mpv === this.mpv) {
             return;
         }

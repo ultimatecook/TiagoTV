@@ -103,6 +103,19 @@ describe('PortalDetailShellComponent', () => {
         expect(document.activeElement).not.toBe(shell);
     });
 
+    it('rings the shell for the keyboard, not for its own focus on opening', async () => {
+        await fixture.whenStable();
+        const shell = requiredQuery('app-portal-detail-shell');
+        expect(document.activeElement).toBe(shell);
+        // Focused by the page: the stylesheet draws no ring on it.
+        expect(shell.classList).toContain('shell-host--quiet-focus');
+        // Once focus leaves, a Tab back to the region rings it again.
+        requiredQuery('.play-btn').focus();
+        expect(shell.classList).not.toContain('shell-host--quiet-focus');
+        shell.focus();
+        expect(shell.classList).not.toContain('shell-host--quiet-focus');
+    });
+
     it('keeps native scrolling on the shell without forwarding keys to the player', () => {
         const shell = requiredQuery('app-portal-detail-shell');
         const globalKey = jest.fn();

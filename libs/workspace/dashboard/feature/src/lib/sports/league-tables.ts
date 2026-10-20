@@ -12,6 +12,7 @@ export {
     zoneOf,
     type FormResult,
     type LeagueTable,
+    type LeagueTableGroup,
     type LeagueTableRow,
     type TableZone,
 } from './league-table-sources';
@@ -52,8 +53,9 @@ const TABLE_LEAGUES: Partial<Record<SportSectionId, TableLeague>> = {
     eredivisie: { espn: 'ned.1', id: '4337' },
 };
 
-// v2: v1 held TheSportsDB's five-row tables.
-const CACHE_KEY = 'tiagotv:league-tables:v2';
+// v2: v1 held TheSportsDB's five-row tables. v3: v2 kept one group of a
+// table in groups (no switch to the others).
+const CACHE_KEY = 'tiagotv:league-tables:v3';
 const HIT_TTL_MS = 3 * 60 * 60 * 1000;
 const MISS_TTL_MS = 6 * 60 * 60 * 1000;
 

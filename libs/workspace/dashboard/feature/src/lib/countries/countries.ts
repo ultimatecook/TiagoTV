@@ -71,7 +71,14 @@ export const COUNTRIES: readonly CountryDefinition[] = [
         /^channel 4$/,
         /^channel 5$/,
     ]),
-    country('us', ['USA', 'US'], /\bUSA?\b/),
+    country('us', ['USA', 'US'], /\bUSA?\b/, [
+        /^abc$/,
+        /^cbs$/,
+        /^nbc$/,
+        /^fox$/,
+        /^pbs$/,
+        /^(the )?cw$/,
+    ]),
 ];
 
 /** Ireland's groups, filed under |UK|: they join the United Kingdom. */

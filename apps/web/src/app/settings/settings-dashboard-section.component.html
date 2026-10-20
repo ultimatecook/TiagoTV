@@ -30,6 +30,7 @@
         <div class="settings-section__header">
             <h3>{{ 'SETTINGS.CARD_RAILS' | translate }}</h3>
         </div>
+        <!-- The Home's sections, top to bottom (see DashboardRailsSettings). -->
         <div class="settings-card" formGroupName="dashboardRails">
             <div class="setting-item" data-setting-id="dashboard-hero">
                 <div class="setting-item__meta">
@@ -51,53 +52,119 @@
 
             <div
                 class="setting-item"
-                data-setting-id="dashboard-rail-continue-watching"
+                data-setting-id="dashboard-rail-platforms"
             >
                 <div class="setting-item__meta">
-                    <h4 id="dashboard-rail-continue-watching-label">
-                        {{ 'SETTINGS.DASHBOARD_RAIL_CONTINUE' | translate }}
+                    <h4 id="dashboard-rail-platforms-label">
+                        {{ 'SETTINGS.DASHBOARD_RAIL_PLATFORMS' | translate }}
                     </h4>
                     <p>
                         {{
-                            'SETTINGS.DASHBOARD_RAIL_CONTINUE_DESCRIPTION'
+                            'SETTINGS.DASHBOARD_RAIL_PLATFORMS_DESCRIPTION'
                                 | translate
                         }}
                     </p>
                 </div>
                 <div class="setting-item__control setting-item__toggle">
                     <mat-slide-toggle
-                        formControlName="continueWatching"
-                        aria-labelledby="dashboard-rail-continue-watching-label"
-                        data-test-id="toggle-dashboard-rail-continue-watching"
+                        formControlName="platforms"
+                        aria-labelledby="dashboard-rail-platforms-label"
+                        data-test-id="toggle-dashboard-rail-platforms"
+                    ></mat-slide-toggle>
+                </div>
+            </div>
+
+            <div class="setting-item" data-setting-id="dashboard-rail-sports">
+                <div class="setting-item__meta">
+                    <h4 id="dashboard-rail-sports-label">
+                        {{ 'SETTINGS.DASHBOARD_RAIL_SPORTS' | translate }}
+                    </h4>
+                    <p>
+                        {{
+                            'SETTINGS.DASHBOARD_RAIL_SPORTS_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control setting-item__toggle">
+                    <mat-slide-toggle
+                        formControlName="sports"
+                        aria-labelledby="dashboard-rail-sports-label"
+                        data-test-id="toggle-dashboard-rail-sports"
+                    ></mat-slide-toggle>
+                </div>
+            </div>
+
+            <div class="setting-item" data-setting-id="dashboard-rail-events">
+                <div class="setting-item__meta">
+                    <h4 id="dashboard-rail-events-label">
+                        {{ 'SETTINGS.DASHBOARD_RAIL_EVENTS' | translate }}
+                    </h4>
+                    <p>
+                        {{
+                            'SETTINGS.DASHBOARD_RAIL_EVENTS_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control setting-item__toggle">
+                    <mat-slide-toggle
+                        formControlName="events"
+                        aria-labelledby="dashboard-rail-events-label"
+                        data-test-id="toggle-dashboard-rail-events"
                     ></mat-slide-toggle>
                 </div>
             </div>
 
             <div
                 class="setting-item"
-                data-setting-id="dashboard-rail-live-favorites"
+                data-setting-id="dashboard-rail-top-movies"
             >
                 <div class="setting-item__meta">
-                    <h4 id="dashboard-rail-live-favorites-label">
-                        {{ 'SETTINGS.DASHBOARD_RAIL_LIVE_FAVORITES' | translate }}
+                    <h4 id="dashboard-rail-top-movies-label">
+                        {{ 'SETTINGS.DASHBOARD_RAIL_TOP_MOVIES' | translate }}
                     </h4>
                     <p>
                         {{
-                            'SETTINGS.DASHBOARD_RAIL_LIVE_FAVORITES_DESCRIPTION'
+                            'SETTINGS.DASHBOARD_RAIL_TOP_MOVIES_DESCRIPTION'
                                 | translate
                         }}
                     </p>
                 </div>
                 <div class="setting-item__control setting-item__toggle">
                     <mat-slide-toggle
-                        formControlName="liveFavorites"
-                        aria-labelledby="dashboard-rail-live-favorites-label"
-                        data-test-id="toggle-dashboard-rail-live-favorites"
+                        formControlName="topMovies"
+                        aria-labelledby="dashboard-rail-top-movies-label"
+                        data-test-id="toggle-dashboard-rail-top-movies"
                     ></mat-slide-toggle>
                 </div>
             </div>
 
-            <div class="setting-item" data-setting-id="dashboard-rail-recent-live">
+            <div class="setting-item" data-setting-id="dashboard-rail-series">
+                <div class="setting-item__meta">
+                    <h4 id="dashboard-rail-series-label">
+                        {{ 'SETTINGS.DASHBOARD_RAIL_SERIES' | translate }}
+                    </h4>
+                    <p>
+                        {{
+                            'SETTINGS.DASHBOARD_RAIL_SERIES_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control setting-item__toggle">
+                    <mat-slide-toggle
+                        formControlName="seriesForYou"
+                        aria-labelledby="dashboard-rail-series-label"
+                        data-test-id="toggle-dashboard-rail-series-for-you"
+                    ></mat-slide-toggle>
+                </div>
+            </div>
+
+            <div
+                class="setting-item"
+                data-setting-id="dashboard-rail-recent-live"
+            >
                 <div class="setting-item__meta">
                     <h4 id="dashboard-rail-recent-live-label">
                         {{ 'SETTINGS.DASHBOARD_RAIL_RECENT_LIVE' | translate }}
@@ -114,120 +181,6 @@
                         formControlName="recentlyWatchedLive"
                         aria-labelledby="dashboard-rail-recent-live-label"
                         data-test-id="toggle-dashboard-rail-recently-watched-live"
-                    ></mat-slide-toggle>
-                </div>
-            </div>
-
-            <div class="setting-item" data-setting-id="dashboard-rail-favorite-vod">
-                <div class="setting-item__meta">
-                    <h4 id="dashboard-rail-favorite-vod-label">
-                        {{ 'SETTINGS.DASHBOARD_RAIL_FAVORITE_VOD' | translate }}
-                    </h4>
-                    <p>
-                        {{
-                            'SETTINGS.DASHBOARD_RAIL_FAVORITE_VOD_DESCRIPTION'
-                                | translate
-                        }}
-                    </p>
-                </div>
-                <div class="setting-item__control setting-item__toggle">
-                    <mat-slide-toggle
-                        formControlName="favoriteMoviesAndSeries"
-                        aria-labelledby="dashboard-rail-favorite-vod-label"
-                        data-test-id="toggle-dashboard-rail-favorite-movies-and-series"
-                    ></mat-slide-toggle>
-                </div>
-            </div>
-
-            <div class="setting-item" data-setting-id="dashboard-rail-sources">
-                <div class="setting-item__meta">
-                    <h4 id="dashboard-rail-sources-label">
-                        {{ 'SETTINGS.DASHBOARD_RAIL_SOURCES' | translate }}
-                    </h4>
-                    <p>
-                        {{
-                            'SETTINGS.DASHBOARD_RAIL_SOURCES_DESCRIPTION'
-                                | translate
-                        }}
-                    </p>
-                </div>
-                <div class="setting-item__control setting-item__toggle">
-                    <mat-slide-toggle
-                        formControlName="recentSources"
-                        aria-labelledby="dashboard-rail-sources-label"
-                        data-test-id="toggle-dashboard-rail-recent-sources"
-                    ></mat-slide-toggle>
-                </div>
-            </div>
-
-            <div class="setting-item" data-setting-id="dashboard-rail-xtream-added">
-                <div class="setting-item__meta">
-                    <h4 id="dashboard-rail-xtream-added-label">
-                        {{ 'SETTINGS.DASHBOARD_RAIL_XTREAM_ADDED' | translate }}
-                    </h4>
-                    <p>
-                        {{
-                            'SETTINGS.DASHBOARD_RAIL_XTREAM_ADDED_DESCRIPTION'
-                                | translate
-                        }}
-                    </p>
-                </div>
-                <div class="setting-item__control setting-item__toggle">
-                    <mat-slide-toggle
-                        formControlName="xtreamRecentlyAdded"
-                        aria-labelledby="dashboard-rail-xtream-added-label"
-                        data-test-id="toggle-dashboard-rail-xtream-recently-added"
-                    ></mat-slide-toggle>
-                </div>
-            </div>
-
-            <div
-                class="setting-item"
-                data-setting-id="dashboard-rail-tmdb-trending"
-            >
-                <div class="setting-item__meta">
-                    <h4 id="dashboard-rail-tmdb-trending-label">
-                        {{ 'SETTINGS.DASHBOARD_RAIL_TMDB_TRENDING' | translate }}
-                    </h4>
-                    <p>
-                        {{
-                            'SETTINGS.DASHBOARD_RAIL_TMDB_TRENDING_DESCRIPTION'
-                                | translate
-                        }}
-                    </p>
-                </div>
-                <div class="setting-item__control setting-item__toggle">
-                    <mat-slide-toggle
-                        formControlName="tmdbTrending"
-                        aria-labelledby="dashboard-rail-tmdb-trending-label"
-                        data-test-id="toggle-dashboard-rail-tmdb-trending"
-                    ></mat-slide-toggle>
-                </div>
-            </div>
-
-            <div
-                class="setting-item"
-                data-setting-id="dashboard-rail-tmdb-recommendations"
-            >
-                <div class="setting-item__meta">
-                    <h4 id="dashboard-rail-tmdb-recommendations-label">
-                        {{
-                            'SETTINGS.DASHBOARD_RAIL_TMDB_RECOMMENDATIONS'
-                                | translate
-                        }}
-                    </h4>
-                    <p>
-                        {{
-                            'SETTINGS.DASHBOARD_RAIL_TMDB_RECOMMENDATIONS_DESCRIPTION'
-                                | translate
-                        }}
-                    </p>
-                </div>
-                <div class="setting-item__control setting-item__toggle">
-                    <mat-slide-toggle
-                        formControlName="tmdbRecommendations"
-                        aria-labelledby="dashboard-rail-tmdb-recommendations-label"
-                        data-test-id="toggle-dashboard-rail-tmdb-recommendations"
                     ></mat-slide-toggle>
                 </div>
             </div>

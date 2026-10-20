@@ -104,9 +104,6 @@ export class SettingsFormFacade {
     hydrateFromStore(): void {
         const currentSettings = this.settingsStore.getSettings();
         this.form.patchValue(currentSettings);
-        this.syncDashboardControlsEnabledState(
-            currentSettings.showDashboard ?? true
-        );
 
         if (this.supportsEpg && currentSettings.epgUrl) {
             this.epgUrl.clear();
@@ -129,15 +126,6 @@ export class SettingsFormFacade {
     setRunningValue(control: string, value: unknown): void {
         this.launchValues.set(control, value);
         this.refreshRestartPending();
-    }
-
-    bindDashboardControlsEnabledState(): void {
-        this.form
-            .get('showDashboard')
-            ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((showDashboard) =>
-                this.syncDashboardControlsEnabledState(showDashboard ?? true)
-            );
     }
 
     selectTheme(theme: Theme): void {
@@ -304,18 +292,5 @@ export class SettingsFormFacade {
         this.form.patchValue(value);
         this.form.get(controlName)?.markAsDirty();
         this.form.markAsDirty();
-    }
-
-    private syncDashboardControlsEnabledState(showDashboard: boolean): void {
-        const dashboardRails = this.form.get('dashboardRails');
-        if (!dashboardRails) {
-            return;
-        }
-
-        if (showDashboard) {
-            dashboardRails.enable({ emitEvent: false });
-        } else {
-            dashboardRails.disable({ emitEvent: false });
-        }
     }
 }

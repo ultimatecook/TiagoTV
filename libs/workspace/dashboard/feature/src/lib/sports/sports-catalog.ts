@@ -309,7 +309,7 @@ function byKickOff(a: SportMatch, b: SportMatch): number {
 }
 
 /** The panel's `added` (epoch seconds) in ms, or null. */
-function namedAt(added: string | number | null | undefined): number | null {
+export function namedAt(added: string | number | null | undefined): number | null {
     const seconds = Number(added);
     return added !== null &&
         added !== '' &&

@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import type { DetailPlayMode } from '@iptvnator/portal/shared/util';
 import { XtreamApiService } from '@iptvnator/portal/xtream/data-access';
 import type { PlaylistMeta } from '@iptvnator/shared/interfaces';
 import { PlatformsCatalogService } from '../platforms/platforms-catalog.service';
@@ -53,6 +54,8 @@ export class CatalogService {
         new Map()
     );
     private readonly extrasRequested = new Set<string>();
+    /** Drawn once a session: see `heroLead`. */
+    private readonly lead = Math.floor(Math.random() * 1000);
 
     readonly source = this.platforms.source;
     private readonly views = {
@@ -93,6 +96,31 @@ export class CatalogService {
         return request;
     }
 
+    /**
+     * The stored copy alone, never the platforms' lists, so it asks the
+     * provider nothing: the Home's hero features the catalog's titles when
+     * the app keeps them, and leaves the lists to the sections that load.
+     */
+    loadStored(kind: CatalogKind): Promise<void> {
+        const source = this.source();
+        if (!source || this.isFresh(kind, source._id)) {
+            return Promise.resolve();
+        }
+        return (
+            this.requests.get(kind) ??
+            this.readStored(kind, source).then(() => undefined)
+        );
+    }
+
+    /**
+     * Which platform leads "Novedades", and so features in the hero: drawn
+     * once a session, so the hero is not always the same platform's, and
+     * stays put for the session (its page is asked once, not each visit).
+     */
+    heroLead(): number {
+        return this.lead;
+    }
+
     /** The hero title's page, once fetched. */
     extrasOf(title: CatalogTitle): CatalogExtras | null {
         const source = this.source();
@@ -131,6 +159,11 @@ export class CatalogService {
         this.platforms.open(title);
     }
 
+    /** Opens the title's page playing it: the movie, or an episode. */
+    play(title: CatalogTitle, mode: DetailPlayMode): void {
+        this.platforms.play(title, mode);
+    }
+
     private compute(kind: CatalogKind): readonly CatalogTitle[] | null {
         const source = this.source();
         if (!source) {
@@ -160,27 +193,8 @@ export class CatalogService {
 
     private async read(kind: CatalogKind, source: PlaylistMeta): Promise<void> {
         this.busy.update((kinds) => new Set(kinds).add(kind));
-        const credentials = xtreamSourceCredentials(source);
-        const data = await this.stored
-            .read(source._id, credentials, kind)
-            .catch(() => null);
-        if (data) {
-            const lists = withKnownGenres(
-                storedPlatformLists(data, kind),
-                (list) => this.platforms.titlesOf(list.platform.id)
-            );
-            const titles = aggregateCatalog(lists, kind);
-            if (titles.length > 0) {
-                this.storedTitles.update((state) =>
-                    new Map(state).set(kind, {
-                        playlistId: source._id,
-                        lockVersion: this.stored.version(),
-                        titles,
-                        at: Date.now(),
-                    })
-                );
-                return;
-            }
+        if (await this.readStored(kind, source)) {
+            return;
         }
         // Nothing stored: each platform's lists in turn, never all at once.
         this.storedTitles.update((state) => {
@@ -195,6 +209,36 @@ export class CatalogService {
                 await this.platforms.loadTitles(shelf.platform.id);
             }
         }
+    }
+
+    /** Whether the stored copy had titles of the kind, now kept. */
+    private async readStored(
+        kind: CatalogKind,
+        source: PlaylistMeta
+    ): Promise<boolean> {
+        const credentials = xtreamSourceCredentials(source);
+        const data = await this.stored
+            .read(source._id, credentials, kind)
+            .catch(() => null);
+        if (!data) {
+            return false;
+        }
+        const lists = withKnownGenres(storedPlatformLists(data, kind), (list) =>
+            this.platforms.titlesOf(list.platform.id)
+        );
+        const titles = aggregateCatalog(lists, kind);
+        if (titles.length === 0) {
+            return false;
+        }
+        this.storedTitles.update((state) =>
+            new Map(state).set(kind, {
+                playlistId: source._id,
+                lockVersion: this.stored.version(),
+                titles,
+                at: Date.now(),
+            })
+        );
+        return true;
     }
 
     private isFresh(kind: CatalogKind, playlistId: string): boolean {

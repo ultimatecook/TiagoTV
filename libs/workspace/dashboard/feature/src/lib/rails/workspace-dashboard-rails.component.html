@@ -21,11 +21,21 @@
         @if (showHero()) {
             <lib-dashboard-hero />
         }
-        <lib-platforms-rail />
-        <lib-sports-rail />
-        <lib-home-events />
-        <lib-home-top-movies />
-        <lib-home-series />
+        @if (dashboardRails().platforms) {
+            <lib-platforms-rail />
+        }
+        @if (dashboardRails().sports) {
+            <lib-sports-rail />
+        }
+        @if (dashboardRails().events) {
+            <lib-home-events />
+        }
+        @if (dashboardRails().topMovies) {
+            <lib-home-top-movies />
+        }
+        @if (dashboardRails().seriesForYou) {
+            <lib-home-series />
+        }
         @if (dashboardRails().recentlyWatchedLive) {
             <lib-home-recent-channels />
         }

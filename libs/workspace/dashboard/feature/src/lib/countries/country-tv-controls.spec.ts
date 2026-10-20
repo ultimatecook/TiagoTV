@@ -115,18 +115,86 @@ describe('CountryTvControls', () => {
         controls.toggleFullscreen();
         expect(stage.requestFullscreen).toHaveBeenCalled();
 
-        Object.defineProperty(document, 'fullscreenElement', {
-            configurable: true,
-            get: () => stage,
-        });
+        fullscreenIs(stage);
         document.exitFullscreen = jest.fn(async () => undefined);
         document.dispatchEvent(new Event('fullscreenchange'));
         expect(controls.fullscreen()).toBe(true);
+        expect(controls.playerFullscreen()).toBe(false);
         controls.toggleFullscreen();
         expect(document.exitFullscreen).toHaveBeenCalled();
-        Object.defineProperty(document, 'fullscreenElement', {
-            configurable: true,
-            get: () => null,
+        fullscreenIs(null);
+    });
+
+    describe('with Embedded MPV', () => {
+        /** As the stage renders it: the web player view around the engine. */
+        function mpvIn(parent: HTMLElement, frameCopy = false) {
+            const view = document.createElement('app-web-player-view');
+            const engine = document.createElement('app-embedded-mpv-player');
+            if (frameCopy) {
+                const canvas = document.createElement('canvas');
+                canvas.setAttribute('data-embedded-mpv-frame', '');
+                engine.appendChild(canvas);
+            }
+            view.appendChild(engine);
+            parent.appendChild(view);
+            view.requestFullscreen = jest.fn(async () => undefined);
+            stage.requestFullscreen = jest.fn(async () => undefined);
+            return view;
+        }
+
+        afterEach(() => fullscreenIs(null));
+
+        it('lets a native-view picture, which no page element covers, take its own full screen', async () => {
+            const view = mpvIn(stage);
+            await settle();
+            expect(controls.nativeSurface()).toBe(true);
+
+            controls.toggleFullscreen();
+            // The player's own surface, as the live view's controls use it:
+            // the stage's overlay could not show over the native picture.
+            expect(view.requestFullscreen).toHaveBeenCalled();
+            expect(stage.requestFullscreen).not.toHaveBeenCalled();
+
+            fullscreenIs(view);
+            document.exitFullscreen = jest.fn(async () => undefined);
+            document.dispatchEvent(new Event('fullscreenchange'));
+            expect(controls.fullscreen()).toBe(true);
+            expect(controls.playerFullscreen()).toBe(true);
+
+            // Esc on the page, and F, leave it.
+            expect(controls.exitFullscreen()).toBe(true);
+            controls.toggleFullscreen();
+            expect(document.exitFullscreen).toHaveBeenCalledTimes(2);
+        });
+
+        it('keeps the stage’s full screen for the frame-copy canvas, a page element', async () => {
+            const view = mpvIn(stage, true);
+            await settle();
+            expect(controls.nativeSurface()).toBe(false);
+
+            controls.toggleFullscreen();
+            expect(stage.requestFullscreen).toHaveBeenCalled();
+            expect(view.requestFullscreen).not.toHaveBeenCalled();
         });
     });
+
+    it('leaves alone a full screen that is not the stage’s', () => {
+        document.exitFullscreen = jest.fn(async () => undefined);
+        expect(controls.exitFullscreen()).toBe(false);
+
+        const elsewhere = document.createElement('div');
+        document.body.appendChild(elsewhere);
+        fullscreenIs(elsewhere);
+        expect(controls.exitFullscreen()).toBe(false);
+        expect(document.exitFullscreen).not.toHaveBeenCalled();
+        fullscreenIs(null);
+        elsewhere.remove();
+    });
 });
+
+function fullscreenIs(element: Element | null): void {
+    Object.defineProperty(document, 'fullscreenElement', {
+        configurable: true,
+        get: () => element,
+    });
+}

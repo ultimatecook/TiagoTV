@@ -4,6 +4,7 @@
     #stage
     class="stage"
     [class.stage--idle]="idle()"
+    [class.stage--native]="controls.nativeSurface()"
     [style.--stage-tint]="section().tint"
     (pointermove)="wake()"
 >
@@ -165,6 +166,7 @@
                     <lib-sport-signal-card
                         [card]="card"
                         [active]="on"
+                        [playing]="!!current"
                         [subtitle]="
                             on && programme() ? programme() : section().title
                         "

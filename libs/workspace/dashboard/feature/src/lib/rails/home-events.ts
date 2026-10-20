@@ -1,5 +1,5 @@
 import { isFollowedTeam } from '../sports/my-teams';
-import { findSportSection } from '../sports/sport-sections';
+import { competitionLogo, findSportSection } from '../sports/sport-sections';
 import type { SportMatch } from '../sports/sports-catalog';
 
 /**
@@ -66,15 +66,18 @@ export function homeEventRow(match: SportMatch, live: boolean): HomeEventRow {
     const section = findSportSection(match.sectionId);
     const { home, away } = match.event;
     const twoSided = !!home && !!away;
+    // The card's logo is a competition's (the NBA's): another's row names
+    // its own competition, without it.
+    const logo = competitionLogo(section, match.event.competition);
     return {
         key: match.key,
         live,
         kickOff: match.event.start,
         competition:
-            twoSided && section && !section.catchAll
+            twoSided && section && !section.catchAll && logo === section.logo
                 ? section.title
                 : match.event.competition,
-        logo: section?.logo ?? null,
+        logo,
         tint: section?.tint ?? '#2a2a2a',
         home: twoSided ? home : null,
         away: twoSided ? away : null,

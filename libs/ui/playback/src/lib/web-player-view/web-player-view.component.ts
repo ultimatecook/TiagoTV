@@ -178,12 +178,21 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
      * user navigates away mid-playback; the mini-player's own view is not.
      */
     readonly dockable = input(true);
+    /**
+     * The mini-player's own view: the bar holds the app's one stream for
+     * it. Every other view claims the stream when it starts, whatever its
+     * engine, so the mini-player (or any other player) stops first.
+     */
+    readonly inMiniPlayer = input(false);
 
     // The mini-player plays on a web engine: an MPV-played movie (its audio
     // is beyond those engines) stays on its page.
     private readonly nowPlaying = new NowPlayingPageHandoff(
         () =>
-            this.dockable() && this.selectedPlayer() !== VideoPlayer.EmbeddedMpv
+            this.dockable() &&
+            this.selectedPlayer() !== VideoPlayer.EmbeddedMpv,
+        () => this.inMiniPlayer(),
+        () => [this.streamUrl(), this.playback()]
     );
 
     readonly showCaptions = computed(
@@ -305,11 +314,16 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
     readonly renderedApplications = computed<
         readonly PlaybackApplicationOwnership[]
     >(() => {
-        if (this.liveAutoFormat.pending() || this.nowPlaying.waits()) return [];
+        if (this.liveAutoFormat.pending() || this.nowPlaying.stopped()) {
+            return [];
+        }
         const binding = this.activeBinding();
         const embeddedMpv =
             this.selectedPlayer() === VideoPlayer.EmbeddedMpv && !binding;
-        if (!binding && !embeddedMpv) {
+        // A web engine opens its stream on mount, so it also waits for an
+        // Embedded MPV session still being disposed; Embedded MPV waits for
+        // that itself, before it creates its native session.
+        if ((!binding && !embeddedMpv) || this.nowPlaying.waits(!embeddedMpv)) {
             return [];
         }
 

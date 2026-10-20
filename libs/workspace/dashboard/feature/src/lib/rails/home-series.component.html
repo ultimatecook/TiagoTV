@@ -28,7 +28,7 @@
                     <span class="series__veil series__veil--side"></span>
                     <span class="series__veil series__veil--bottom"></span>
                     <!-- The pointer opens the show from anywhere on the card;
-                         the keyboard has the same in "Empezar". -->
+                         "Empezar" plays its first episode. -->
                     <button
                         type="button"
                         class="series__hit"
@@ -62,7 +62,7 @@
                                 type="button"
                                 class="series__button series__button--primary"
                                 data-test-id="dashboard-series-start"
-                                (click)="open(card)"
+                                (click)="start(card)"
                             >
                                 <mat-icon aria-hidden="true"
                                     >play_arrow</mat-icon

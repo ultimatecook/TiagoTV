@@ -21,7 +21,7 @@ let nextId = 0;
 /**
  * The catalog page's cinematic hero, behind the top bar: the section's
  * name, the featured title (its platform, name, kind · year · genres ·
- * length, Reproducir and Más info, both opening its page) and, on the
+ * length, Reproducir — its page, playing — and Más info) and, on the
  * hero's lower edge, "Novedades": picking one of them features it, the
  * page stays put. The artwork is the title's backdrop, else its poster at
  * the right, over the platform's colour.
@@ -99,7 +99,13 @@ export class CatalogHeroComponent {
         this.failed.update((failed) => new Set(failed).add(url));
     }
 
+    /** "Más info": the title's page. */
     open(title: CatalogTitle): void {
         this.catalog.open(title);
+    }
+
+    /** "Reproducir": the movie, or the series' next episode, playing. */
+    play(title: CatalogTitle): void {
+        this.catalog.play(title, 'resume');
     }
 }

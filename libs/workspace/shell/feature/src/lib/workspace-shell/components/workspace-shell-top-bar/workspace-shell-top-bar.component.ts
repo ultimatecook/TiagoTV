@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PlaylistSwitcherComponent } from '@iptvnator/playlist/shared/ui';
 import {
@@ -61,9 +61,15 @@ export type WorkspaceTopBarSearchMode = 'inline' | 'page';
     templateUrl: './workspace-shell-top-bar.component.html',
     styleUrl: './workspace-shell-top-bar.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    host: {
+        '(window:resize)': 'measureTabs()',
+    },
 })
 export class WorkspaceShellTopBarComponent {
     private readonly injector = inject(Injector);
+    private readonly router = inject(Router);
+    private readonly tabsTrack =
+        viewChild<ElementRef<HTMLElement>>('tabsTrack');
     private readonly searchInput =
         viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private readonly searchButton =
@@ -98,6 +104,10 @@ export class WorkspaceShellTopBarComponent {
     readonly playlistSubtitle = input('');
 
     readonly backRequested = output<void>();
+    /** "‹ Deportes": up to the sports hub (the shell keeps history flat). */
+    readonly sportsHubRequested = output<void>();
+    /** The lit tab clicked again, on a URL the router already shows. */
+    readonly activeTabReselected = output<void>();
     readonly contextDrawerToggleRequested = output<void>();
     readonly headerShortcutRequested = output<void>();
     readonly headerSidebarToggleRequested = output<void>();
@@ -111,8 +121,14 @@ export class WorkspaceShellTopBarComponent {
     readonly accountInfoForPlaylistRequested = output<PlaylistMeta>();
 
     readonly tabs = WORKSPACE_TOP_BAR_TABS;
-    readonly sportsHubLink = WORKSPACE_SPORTS_HUB_LINK;
+    /** The pill's address, for a new window; a click goes up instead. */
+    readonly sportsHubHref = this.router.serializeUrl(
+        this.router.createUrlTree([...WORKSPACE_SPORTS_HUB_LINK])
+    );
     readonly settingsLink = WORKSPACE_SETTINGS_LINK;
+    /** Narrow windows: tabs hidden past either end of the capsule. */
+    readonly tabsMoreStart = signal(false);
+    readonly tabsMoreEnd = signal(false);
 
     private readonly searchOpened = signal(false);
     /**
@@ -149,6 +165,40 @@ export class WorkspaceShellTopBarComponent {
                 untracked(() => this.searchOpened.set(false));
             }
         });
+        // A narrow capsule scrolls: the lit tab is always in view.
+        effect(() => {
+            this.activeTab();
+            afterNextRender(() => this.revealActiveTab(), {
+                injector: this.injector,
+            });
+        });
+    }
+
+    /** A plain click on "‹ Deportes"; a modified one keeps the browser's. */
+    onSportsHubClick(event: MouseEvent): void {
+        if (isModifiedClick(event)) {
+            return;
+        }
+        event.preventDefault();
+        this.sportsHubRequested.emit();
+    }
+
+    /** The lit tab clicked again: the router has nowhere to go. */
+    onTabClick(event: MouseEvent, tabId: WorkspaceTopBarTabId): void {
+        if (tabId === this.activeTab() && !isModifiedClick(event)) {
+            this.activeTabReselected.emit();
+        }
+    }
+
+    /** Which ends of a narrow capsule hide tabs, for its edge fades. */
+    measureTabs(): void {
+        const track = this.tabsTrack()?.nativeElement;
+        if (!track) {
+            return;
+        }
+        const hidden = track.scrollWidth - track.clientWidth;
+        this.tabsMoreStart.set(hidden > 1 && track.scrollLeft > 1);
+        this.tabsMoreEnd.set(hidden > 1 && track.scrollLeft < hidden - 1);
     }
 
     /** Buscar: the inline field here, the search page elsewhere. */
@@ -261,6 +311,21 @@ export class WorkspaceShellTopBarComponent {
         return document.activeElement === toggle;
     }
 
+    private revealActiveTab(): void {
+        const track = this.tabsTrack()?.nativeElement;
+        const active = track?.querySelector<HTMLElement>('.topbar__tab.is-active');
+        if (
+            track &&
+            active &&
+            track.scrollWidth > track.clientWidth &&
+            typeof track.scrollTo === 'function'
+        ) {
+            const centre = active.offsetLeft + active.offsetWidth / 2;
+            track.scrollTo({ left: centre - track.clientWidth / 2 });
+        }
+        this.measureTabs();
+    }
+
     private openSearch(options: { select?: boolean } = {}): void {
         this.searchOpened.set(true);
         afterNextRender(
@@ -277,4 +342,14 @@ export class WorkspaceShellTopBarComponent {
             { injector: this.injector }
         );
     }
+}
+
+function isModifiedClick(event: MouseEvent): boolean {
+    return (
+        event.button !== 0 ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.altKey
+    );
 }

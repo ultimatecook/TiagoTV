@@ -22,8 +22,11 @@
     --tv-text-img-1: #e6e2d8;
     --tv-text-img-2: #d6d2c6;
     --tv-text-2: #bdb9ad;
-    --tv-text-3: #a19d90;
-    --tv-meta: #8c887b;
+    // Text 3 and meta keep 4.5:1 over the darkest likely ground: macOS's
+    // dark under-window vibrancy behind a glass card (#363636, measured
+    // there the old meta #8c887b read 3.4:1). Text 2 > 3 > meta still.
+    --tv-text-3: #aeaa9d;
+    --tv-meta: #a39f93;
     --tv-placeholder: #6f6c63;
 
     // ─── Accents ───────────────────────────────────────────────────────────

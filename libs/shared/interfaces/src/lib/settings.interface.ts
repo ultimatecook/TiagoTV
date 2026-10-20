@@ -73,28 +73,49 @@ export type CoverSize = 'small' | 'medium' | 'large';
 /** Rendering of the live EPG panel under the player. */
 export type EpgViewMode = 'timeline' | 'list';
 
+/**
+ * The Home's sections the Settings → Home switches show or hide, top to
+ * bottom: the "Seguir viendo" hero (the old banner's switch), the
+ * platforms, the sports cards, today's events, the Top 10 movies, "Series
+ * para vos" and the channels watched last (the old recent live rail's
+ * switch). The other keys are the old Home's rails: no section reads
+ * them any more and no switch shows them, but their stored values are
+ * kept as they were.
+ */
 export interface DashboardRailsSettings {
     hero: boolean;
-    continueWatching: boolean;
-    liveFavorites: boolean;
+    platforms: boolean;
+    sports: boolean;
+    events: boolean;
+    topMovies: boolean;
+    seriesForYou: boolean;
     recentlyWatchedLive: boolean;
+    /** @deprecated The old Home's "Continue watching" rail. */
+    continueWatching: boolean;
+    /** @deprecated The old Home's live favourites rail. */
+    liveFavorites: boolean;
+    /** @deprecated The old Home's favourite movies and series rail. */
     favoriteMoviesAndSeries: boolean;
+    /** @deprecated The old Home's recently used sources rail. */
     recentSources: boolean;
+    /** @deprecated The old Home's "Recently added on Xtream" rail. */
     xtreamRecentlyAdded: boolean;
-    /** TMDB "Trending this week" rail (needs the TMDB opt-in; Electron) */
+    /** @deprecated The old Home's TMDB "Trending this week" rail. */
     tmdbTrending: boolean;
-    /**
-     * TMDB "Because you watched" rail seeded from recently watched
-     * movies/series (needs the TMDB opt-in; Electron)
-     */
+    /** @deprecated The old Home's TMDB "Because you watched" rail. */
     tmdbRecommendations: boolean;
 }
 
 export const DEFAULT_DASHBOARD_RAILS_SETTINGS: DashboardRailsSettings = {
     hero: true,
+    platforms: true,
+    sports: true,
+    events: true,
+    topMovies: true,
+    seriesForYou: true,
+    recentlyWatchedLive: true,
     continueWatching: true,
     liveFavorites: true,
-    recentlyWatchedLive: true,
     favoriteMoviesAndSeries: true,
     recentSources: true,
     xtreamRecentlyAdded: true,
@@ -106,12 +127,18 @@ export type DashboardRailsSettingsInput = Partial<
     Record<keyof DashboardRailsSettings, boolean | null | undefined>
 >;
 
+/**
+ * Stored rails settings, whatever release wrote them: a known key keeps
+ * its stored boolean, anything else (a key an older release never wrote,
+ * a value of the wrong type, a stored value that is not an object) takes
+ * its default, on.
+ */
 export function normalizeDashboardRailsSettings(
     settings?: DashboardRailsSettingsInput | null
 ): DashboardRailsSettings {
     const normalized = { ...DEFAULT_DASHBOARD_RAILS_SETTINGS };
 
-    if (!settings) {
+    if (!settings || typeof settings !== 'object') {
         return normalized;
     }
 

@@ -36,6 +36,7 @@ import {
     SourcesTypeFilter,
 } from '@iptvnator/playlist/shared/util';
 import {
+    RuntimeCapabilitiesService,
     SortBy,
     SortService,
     SourceActivityService,
@@ -105,6 +106,9 @@ export class PlaylistSwitcherPanelComponent {
     readonly addPlaylistRequested = output<void>();
     readonly accountInfoRequested = output<PlaylistMeta>();
 
+    /** The download manager is Electron's; the browser build has none. */
+    readonly showDownloads = inject(RuntimeCapabilitiesService)
+        .supportsDownloads;
     readonly listId = 'playlist-switcher-listbox';
     readonly kinds = KINDS;
     readonly kindLabels = { m3u: 'M3U', xtream: 'Xtream', stalker: 'Stalker' };
@@ -371,6 +375,11 @@ export class PlaylistSwitcherPanelComponent {
     openAllSources(): void {
         this.close();
         void this.router.navigate(['/workspace', 'sources']);
+    }
+
+    openDownloads(): void {
+        this.close();
+        void this.router.navigate(['/workspace', 'downloads']);
     }
 
     /** Shift+F10 / the menu key: the highlighted row's ⋯ menu. */

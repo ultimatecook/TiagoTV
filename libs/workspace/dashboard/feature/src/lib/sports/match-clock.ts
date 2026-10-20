@@ -45,10 +45,18 @@ export function longestMatch(section: SportSectionId | null): number {
 /** A race that says how long it runs ("6 horas de Barcelona", "24 Hours of Le Mans"). */
 const RACE_HOURS = /\b(\d{1,2})\s*(?:h|horas|hours|heures|stunden|ore)\b/i;
 
-function longestFor(match: SportMatch): number {
-    const hours = RACE_HOURS.exec(match.event.title);
+/** The longest an event of `section` titled `title` runs (a race says). */
+export function longestEvent(
+    title: string,
+    section: SportSectionId | null
+): number {
+    const hours = RACE_HOURS.exec(title);
     const race = hours ? (Number(hours[1]) + 1) * HOUR : 0;
-    return Math.max(longestMatch(match.sectionId), race);
+    return Math.max(longestMatch(section), race);
+}
+
+function longestFor(match: SportMatch): number {
+    return longestEvent(match.event.title, match.sectionId);
 }
 
 /**

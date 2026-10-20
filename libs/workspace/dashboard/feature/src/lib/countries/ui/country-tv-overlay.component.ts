@@ -71,18 +71,26 @@ export class CountryTvOverlayComponent {
 
     constructor() {
         // Its height, on the page: the player's diagnostic stays above it.
+        // Without the veil, its controls' height: a native-view picture,
+        // which nothing can cover, stays above them.
         const host: HTMLElement = inject(ElementRef).nativeElement;
         const destroyRef = inject(DestroyRef);
         afterNextRender(() => {
             if (typeof ResizeObserver === 'undefined') {
                 return;
             }
-            const observer = new ResizeObserver(() =>
-                host.parentElement?.style.setProperty(
+            const observer = new ResizeObserver(() => {
+                const page = host.parentElement?.style;
+                const veil = parseFloat(getComputedStyle(host).paddingTop);
+                page?.setProperty(
                     '--live-overlay-height',
                     `${host.offsetHeight}px`
-                )
-            );
+                );
+                page?.setProperty(
+                    '--live-overlay-content',
+                    `${Math.max(0, host.offsetHeight - (veil || 0))}px`
+                );
+            });
             observer.observe(host);
             destroyRef.onDestroy(() => observer.disconnect());
         });

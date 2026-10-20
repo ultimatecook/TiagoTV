@@ -32,6 +32,17 @@
     }
 }
 
+// macOS, zoomed out (the app's default zoom is about 83 %): the bar's 84 CSS
+// pixels hold fewer window points than the band the native traffic lights
+// are centred on, so the bar grows to that band (`--traffic-lights-band-h`,
+// 84 window points) and stays centred on them. The token's 84px stays the
+// floor; the two-row narrow bar keeps its own 108px.
+@media (min-width: 761px) {
+    .workspace-shell.has-traffic-lights {
+        --tv-topbar-h: max(84px, var(--traffic-lights-band-h, 0px));
+    }
+}
+
 // The glass window (handoff "Ventana"). It never clips: a rounded clip
 // around the scroller gives every composited layer inside it a mask layer
 // the size of the content area (see "Content surface corner" in the shell
@@ -163,6 +174,42 @@
     }
 }
 
+// The bar's scrim. A page scrolled under the transparent bar would run its
+// titles into the traffic lights and the capsule: while it is scrolled, a
+// shade from the window's top edge to clear below the bar keeps them apart.
+// At the top of a page it is gone, so a hero that bleeds behind the bar
+// shows as designed. A plain gradient over the scroller, below the corners
+// and the rim: never a mask on the scroller (see the shell docs' "Content
+// surface corner"), and it never takes the pointer.
+.workspace-top-scrim {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: calc(var(--tv-topbar-h) + 40px);
+    border-radius: var(--tv-window-radius) var(--tv-window-radius) 0 0;
+    background: linear-gradient(
+        180deg,
+        rgba(10, 10, 9, 0.88) 0%,
+        rgba(10, 10, 9, 0.7) 40%,
+        rgba(10, 10, 9, 0.28) 70%,
+        rgba(10, 10, 9, 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 220ms ease;
+    pointer-events: none;
+
+    &.is-shown {
+        opacity: 1;
+    }
+}
+
+// A framed page starts below the bar: nothing scrolls under it.
+.is-framed .workspace-top-scrim {
+    display: none;
+}
+
 // The bar floats over the top of the window, above the page.
 app-workspace-shell-top-bar {
     position: relative;
@@ -220,6 +267,11 @@ app-workspace-shell-context-sidebar {
 
     .workspace-topbar-spacer {
         display: none;
+    }
+
+    // The title page scrolls itself under the bar.
+    .is-framed .workspace-top-scrim {
+        display: block;
     }
 
     app-workspace-shell-context-sidebar {
@@ -448,7 +500,8 @@ app-workspace-shell-context-sidebar {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .workspace-window::before {
+    .workspace-window::before,
+    .workspace-top-scrim {
         transition: none;
     }
 }

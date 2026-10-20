@@ -23,6 +23,8 @@ import { Store } from '@ngrx/store';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChannelActions } from '@iptvnator/m3u-state';
 import { PlaybackHistoryGate } from '@iptvnator/playback/data-access';
+import { NowPlayingDockService } from '../now-playing/now-playing-dock.service';
+import { PlaybackStreamOwner } from '../now-playing/playback-stream-owner';
 import { PlaybackHistoryConfirmation } from '../playback-history/playback-history-confirmation';
 
 @Component({
@@ -208,6 +210,22 @@ export class AudioPlayerComponent {
     private destroyRef = inject(DestroyRef);
     private hostEl = inject(ElementRef);
     private fallbackVolume = 1;
+    /**
+     * A station holds the app's one stream like a page's player: it stops
+     * the mini-player (or any other player) and opens its stream once that
+     * one let go. Stopped by another player, it plays again only for the
+     * next station.
+     */
+    private readonly streams = inject(PlaybackStreamOwner);
+    private readonly dock = inject(NowPlayingDockService);
+    private readonly stoppedByOther = signal(false);
+    private readonly streamHolder = {
+        stop: () => {
+            this.stoppedByOther.set(true);
+            this.releaseSource();
+            this.streams.release(this.streamHolder);
+        },
+    };
     /** Commits the deferred "recently viewed" write once the station plays. */
     private readonly historyConfirmation = new PlaybackHistoryConfirmation({
         gate: inject(PlaybackHistoryGate),
@@ -231,9 +249,25 @@ export class AudioPlayerComponent {
         });
 
         effect(() => {
+            if (!this.url()) return;
+            untracked(() => {
+                this.stoppedByOther.set(false);
+                this.streams.claim(this.streamHolder);
+                this.dock.pagePlaybackStarted();
+            });
+        });
+
+        effect(() => {
             const url = this.url();
             const audio = this.audioRef()?.nativeElement;
-            if (!audio || !url) return;
+            if (
+                !audio ||
+                !url ||
+                this.stoppedByOther() ||
+                this.streams.blocked(this.streamHolder)
+            ) {
+                return;
+            }
             audio.src = url;
             audio.volume = untracked(() => this.volume());
             audio.load();
@@ -256,8 +290,24 @@ export class AudioPlayerComponent {
         });
 
         this.destroyRef.onDestroy(() => {
-            this.audioRef()?.nativeElement?.pause();
+            this.releaseSource();
+            this.streams.release(this.streamHolder);
         });
+    }
+
+    /**
+     * Pausing keeps a live station's connection open; dropping the source
+     * closes it.
+     */
+    private releaseSource(): void {
+        const audio = this.audioRef()?.nativeElement;
+        if (!audio) return;
+        audio.pause();
+        if (audio.hasAttribute('src')) {
+            audio.removeAttribute('src');
+            audio.load();
+        }
+        this.playState.set('paused');
     }
 
     @HostListener('document:keydown', ['$event'])

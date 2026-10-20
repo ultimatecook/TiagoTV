@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
+import { EmbeddedMpvOverlayVisibilityService } from '@iptvnator/ui/playback';
 import { findCountryDefinition } from '../countries';
 import type { TvCountry } from '../countries-catalog';
 import { CountriesCatalogService } from '../countries-catalog.service';
@@ -76,6 +77,7 @@ export class CountriesPageComponent {
     readonly catalog = inject(CountriesCatalogService);
     readonly tv = inject(CountryTvPlayback);
     readonly controls = inject(CountryTvControls);
+    private readonly mpvOverlays = inject(EmbeddedMpvOverlayVisibilityService);
     private readonly live = viewChild<ElementRef<HTMLElement>>('live');
     private readonly overlayElement = viewChild(CountryTvOverlayComponent, {
         read: ElementRef,
@@ -160,6 +162,13 @@ export class CountriesPageComponent {
             const live = this.live()?.nativeElement;
             if (live) {
                 untracked(() => this.controls.attach(live));
+            }
+        });
+        // A native-view picture paints over the page: the country menu,
+        // which drops over it, moves it away while open (as a dialog does).
+        effect((onCleanup) => {
+            if (this.pickerOpen() && this.controls.nativeSurface()) {
+                onCleanup(this.mpvOverlays.acquireExternalModalSurface());
             }
         });
         afterNextRender(() => this.listen(destroyRef));
@@ -297,7 +306,12 @@ export class CountriesPageComponent {
             this.pinned.set(true);
         }
         const action = liveKeyAction(event);
-        if (!action) {
+        // The player alone has the screen: the overlay's cards are not
+        // shown to take the arrows.
+        if (
+            !action ||
+            (action === 'cards' && this.controls.playerFullscreen())
+        ) {
             return;
         }
         event.preventDefault();
@@ -320,10 +334,16 @@ export class CountriesPageComponent {
         }
     }
 
-    /** Esc: the country menu closes; else the overlay goes. */
+    /**
+     * Esc: the country menu closes; else full screen ends (where the
+     * window lets the page see Esc there); else the overlay goes.
+     */
     private collapse(live: HTMLElement): void {
         if (this.pickerOpen()) {
             this.picker()?.close(true);
+            return;
+        }
+        if (this.controls.exitFullscreen()) {
             return;
         }
         if (live.contains(document.activeElement)) {

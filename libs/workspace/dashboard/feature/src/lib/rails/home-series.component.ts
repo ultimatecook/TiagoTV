@@ -129,6 +129,11 @@ export class HomeSeriesComponent {
         this.catalog.open(card.series);
     }
 
+    /** "Empezar T1·E1": the show's page, playing its first episode. */
+    start(card: HomeSeriesCard): void {
+        this.catalog.play(card.series, 'first-episode');
+    }
+
     async toggleMyList(card: HomeSeriesCard): Promise<void> {
         const playlistId = this.catalog.source()?._id;
         if (!playlistId) {

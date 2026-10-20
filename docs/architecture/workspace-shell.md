@@ -101,6 +101,13 @@ The shell is intentionally split into four persistent regions:
    (`pointer-events: none`); only its groups take clicks, and in Electron
    the band moves the window (`app-region: drag`, groups `no-drag`). A wheel
    over a group still scrolls the page below (the shell forwards it).
+   Nothing a page draws may rest under the band, where the bar takes the
+   clicks and Electron moves the window: pages start below it, and only
+   artwork bleeds behind it. Overlays (menus, the source switcher's panel,
+   selects, dialogs) and modal backdrops are `no-drag` (`.cdk-overlay-pane`,
+   `.cdk-overlay-backdrop` in `apps/web/src/styles.scss`); the overlay
+   container and popover hosts are not, because they span the window and
+   would stop every page from moving it.
     1. Left: room for the macOS traffic lights (`has-traffic-lights` on the
        shell, `--traffic-lights-clear-x`; nothing in the browser), then Back
        on deep pages (see [Header Back](#header-back)), "‹ Deportes" back to
@@ -111,11 +118,14 @@ The shell is intentionally split into four persistent regions:
        Películas (`/workspace/movies`), En vivo (`/workspace/countries`) and
        Mi lista (`/workspace/global-favorites`). `readWorkspaceTopBarPage()`
        (`workspace-top-bar-nav.ts`) reads the lit tab from the URL; a deep
-       page (a title, a portal list) keeps the tab it was opened from
-       (`resolveWorkspaceTopBarTab()`, fed the previous tab), else its
+       page (a title, a portal list, `/workspace/global-recent`, where the
+       Home hero's "Continuar" opens a title) keeps the tab it was opened
+       from (`resolveWorkspaceTopBarTab()`, fed the previous tab), else its
        section decides (`vod` Películas, `series` Series, live sections En
-       vivo). A platform page and its titles belong to Inicio, a league page
-       to Deportes. Buscar and Ajustes light their circle and no tab.
+       vivo, recent Mi lista). A platform page and its titles belong to
+       Inicio, a league page to Deportes. Buscar and Ajustes light their
+       circle and no tab. The lit tab clicked again closes a detail its page
+       opened in place (see [Header Back](#header-back)).
     3. Right: the page's own shortcut and the live channel list toggle
        (`WorkspaceHeaderContextService`, as round glass buttons), a
        downloads circle with the active count while downloads run, the
@@ -123,6 +133,10 @@ The shell is intentionally split into four persistent regions:
        (`/workspace/settings`) and the red profile circle, which is the
        source switcher (`app-playlist-switcher` dressed as the circle; ⌘P /
        Ctrl+P opens it; its popover manages, adds and switches sources).
+       The popover's header also holds the permanent way into Downloads
+       (`/workspace/downloads`), where
+       `RuntimeCapabilitiesService.supportsDownloads` reports the download
+       manager (Electron; the browser build has none).
     4. Buscar filters the page itself where the route searches in place
        (portal lists, sources, downloads, Mi lista, settings): it opens into
        a field in the bar bound to the shell search (Esc clears, then
@@ -131,7 +145,23 @@ The shell is intentionally split into four persistent regions:
        which has its own field; on that page Buscar and find focus it.
        `Ctrl/Cmd+F` (Electron) does the same.
     5. Below 760 px the bar takes two rows (`--tv-topbar-h: 108px`): the
-       circles beside Back, then the capsule, which scrolls sideways.
+       circles beside Back, then the capsule, whose tabs scroll sideways in
+       a track (`.topbar__tabs-track`) that fades out at an end where more
+       tabs hide; the lit tab is scrolled into view.
+    6. The capsule, circles and pills are dark glass: a ground
+       (`--topbar-glass-ground`) under the sheen (`--tv-glass-bg`) and a
+       dimmed backdrop (`--tv-glass-filter` plus `brightness(0.75)`), so the
+       labels (`--tv-text-img-1`) and icons keep 4.5:1 over a white hero.
+    7. The scrim (`.workspace-top-scrim`): while the page under the bar is
+       scrolled (the shell's scroller, or a page's own full-height scroller
+       such as a platform title page; `watchWorkspaceScrolled()`,
+       `workspace-top-scrim.ts`), a dark gradient from the window's top edge
+       to clear below the bar keeps row titles off the traffic lights and
+       the capsule. At the top of a page it is gone, so heroes bleed behind
+       the bar as designed. It is a plain gradient over the scroller, below
+       the corners and the rim, never a mask on the scroller (see
+       [Content surface corner](#content-surface-corner)), and never takes
+       the pointer; framed pages, which start below the bar, have none.
 2. Main body:
     1. Optional left context panel.
     2. Main router outlet content in the one vertical scroller,
@@ -160,7 +190,11 @@ The shell is intentionally split into four persistent regions:
    below the bar's row, so full-height layouts keep their height and the
    context panel sits below the bar. A streaming platform's title page
    (`data-platform-theme`) runs to the top under the bar instead, without
-   its category panel.
+   its category panel. Only its artwork rests there
+   (`apps/web/src/_platform-themes.scss`): the hero's text and the
+   trailer's sound toggle start below the bar, the watch state
+   (`shell-host--watch`) starts the player below it, and the player's own
+   header row is `no-drag` for when it scrolls up under the band.
 
 Every new page starts at the scroller's top; history Back and Forward
 return a page to where it was left, and a change of query parameters alone
@@ -328,17 +362,28 @@ registration wins, and each release removes only its own target. The button
 (`data-test-id="workspace-header-back"`) sits in the bar's left group after
 the macOS traffic lights, never scrolls, and has Electron `no-drag` hit
 testing. The pages the bar reaches itself (the tabs, Buscar, Ajustes) do not
-show it, and a league page shows "‹ Deportes" instead; their registrations
-still serve Escape and the platform gestures. A target supplies its
-label (else the translated "Back"), whether Escape on the page runs it, and
-`run()`.
+show the history fallback, and a league page shows "‹ Deportes" instead;
+their registrations still serve Escape and the platform gestures. A tab's
+own page shows Back only for a page registration
+(`WorkspaceBackNavigationService.pageTarget`, the newest registration
+without the fallback): a detail it opened in place, such as a title over
+Mi lista, keeps the tab's URL, so the tab itself cannot leave it; clicking
+the lit tab again runs the same Back. Buscar and Ajustes never show it. A
+target supplies its label (else the translated "Back"), whether Escape on
+the page runs it, and `run()`.
+
+"‹ Deportes" runs `WorkspaceBackNavigationService.up('/workspace/sports')`:
+history Back while the previous in-app entry is the hub, so the league page
+becomes Forward instead of the next Back (it starts a stream); otherwise
+the hub replaces the league page (`replaceUrl`), as it does without the
+Navigation API. A modified click keeps the link's default.
 
 | Page | Registered by | Back runs | ≤640 px |
 | --- | --- | --- | --- |
 | Portal, collection, offline and recording details | `PortalDetailShellComponent` while `backAvailable()` | the host's `backClicked` | replaces the drawer toggle |
 | Xtream and Stalker Discover and actor pages | `DiscoverViewComponent`, `ActorViewComponent` | the route's history Back; parent: the catalog section Discover lists (`vod` for movies, `series` for TV), the portal's default section for actor | (no drawer) |
 | In-portal search, Xtream and Stalker | `SearchLayoutComponent` while `backAvailable()` and no inline detail replaces the results | history Back; parent: the portal's default section | (no drawer) |
-| Settings | `SettingsRailComponent`, the settings page's rail, which exists exactly while the settings route shows; it also leaves settings on Escape | history Back; parent: the first workspace view (`WorkspaceStartupPreferencesService.resolveDashboardPath()`: the dashboard, or sources when it is hidden) | (no drawer) |
+| Settings | `SettingsRailComponent`, the settings page's rail, which exists exactly while the settings route shows; it also leaves settings on Escape, listened to in the capture phase because a showing tooltip (the Ajustes circle's) hides on Escape and stops it at `<body>`; overlays with a backdrop, fields, fullscreen and an inert page (the full-window player) keep the key | history Back; parent: the first workspace view (`WorkspaceStartupPreferencesService.resolveDashboardPath()`: the dashboard, or sources when it is hidden) | (no drawer) |
 
 Detail-page semantics (Escape, browse and watch) are in
 [Portal Detail Navigation](./portal-detail-navigation.md#detail-scroll-and-focus).
@@ -702,9 +747,14 @@ The Electron window hides the native title bar on all desktop platforms
    macOS, `TrafficLightsClearanceDirective` on `.workspace-shell` reads the
    page zoom factor (`outerWidth / innerWidth`, refreshed on `resize`) and
    publishes the clearance in CSS pixels as `--traffic-lights-clear-x` (90
-   window points: the lights plus a gap) and `--traffic-lights-clear-y` (63:
-   the lights' bottom plus a gap). Off macOS nothing is published and the
-   defaults apply. In fullscreen macOS hides the lights, so both are `0px`
+   window points: the lights plus a gap), `--traffic-lights-clear-y` (63:
+   the lights' bottom plus a gap) and `--traffic-lights-band-h` (84: the
+   band centred on the lights). Zoomed out (the app's default zoom is about
+   83 %) the shell grows the bar to that band above 760 px
+   (`--tv-topbar-h: max(84px, var(--traffic-lights-band-h))` on
+   `.workspace-shell.has-traffic-lights`), so the lights stay on the
+   capsule's centre line. Off macOS nothing is published and the defaults
+   apply. In fullscreen macOS hides the lights, so all three are `0px`
    there. `window-controls.e2e.ts` ("macOS traffic lights") was written for
    the header band and needs updating to this layout.
 
@@ -964,6 +1014,25 @@ Zoom level (Cmd/Ctrl and +/−/0, issue #1109):
    restart; key resolution and the bridge step are unit-tested in
    `keyboard-shortcuts.spec.ts`, `workspace-keyboard-shortcuts.service.spec.ts`
    and `preload-zoom-level.spec.ts`.
+5. TiagoTV's default UI scale: the redesign uses the design handoff's
+   sizes 1:1, but the user approved the prototype seen at `zoom: .8`, so
+   every redesigned screen came out 1.25× too big. Rather than shrink each
+   page, the Electron build starts at level −1 (≈83 %, two steps out) for a
+   user who never changed the zoom. `provideDefaultUiScale`
+   (`libs/workspace/shell/util/src/lib/default-ui-scale.ts`, registered in
+   `apps/web/src/app/app.config.ts`; the util library because the shell
+   feature is lazy-loaded and may not be imported statically) runs once
+   the document is parsed — after the
+   preload's `DOMContentLoaded` restore, so it sees the stored level — and
+   goes through `window.electron.adjustZoomLevel`, so the level persists
+   exactly like a shortcut press (point 3). The bridge has no getter: one
+   step out that lands on −0.5 means the level was 0, and a second step
+   makes it −1; any other answer is undone with a step in (except a probe
+   that lands on the minimum, which may not have moved). The
+   `tiagotv:ui-scale-default:v1` localStorage flag is written before the
+   probe, so it runs once ever and never undoes a later `Cmd/Ctrl+0`;
+   without storage for the flag, or without the bridge (PWA), it does
+   nothing. Unit-tested with a fake bridge in `default-ui-scale.spec.ts`.
 
 Reloading the renderer on an in-app route:
 

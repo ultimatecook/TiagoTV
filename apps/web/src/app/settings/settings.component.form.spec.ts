@@ -262,21 +262,24 @@ describe('SettingsComponent form', () => {
                     '[data-test-id="toggle-dashboard-hero"]'
                 )
             ).not.toBeNull();
+            // A switch per section of the Home, and none for the old
+            // Home's rails.
             expect(
-                nativeElement.querySelector(
-                    '[data-test-id="toggle-dashboard-rail-live-favorites"]'
+                Array.from(
+                    nativeElement.querySelectorAll(
+                        '[formgroupname="dashboardRails"] [data-test-id]'
+                    ),
+                    (toggle) => toggle.getAttribute('data-test-id')
                 )
-            ).not.toBeNull();
-            expect(
-                nativeElement.querySelector(
-                    '[data-test-id="toggle-dashboard-rail-recently-watched-live"]'
-                )
-            ).not.toBeNull();
-            expect(
-                nativeElement.querySelector(
-                    '[data-test-id="toggle-dashboard-rail-favorite-movies-and-series"]'
-                )
-            ).not.toBeNull();
+            ).toEqual([
+                'toggle-dashboard-hero',
+                'toggle-dashboard-rail-platforms',
+                'toggle-dashboard-rail-sports',
+                'toggle-dashboard-rail-events',
+                'toggle-dashboard-rail-top-movies',
+                'toggle-dashboard-rail-series-for-you',
+                'toggle-dashboard-rail-recently-watched-live',
+            ]);
             expect(component.settingsForm.value.showDashboard).toBe(true);
             expect(component.settingsForm.value.dashboardRails).toEqual(
                 DEFAULT_DASHBOARD_RAILS
@@ -289,28 +292,17 @@ describe('SettingsComponent form', () => {
             );
         });
 
-        it('disables dashboard surface controls when the dashboard is off', async () => {
+        it('keeps the Home’s switches editable when the app starts on Sources', async () => {
+            // The top bar keeps Inicio either way: its sections still apply.
             const showDashboard = component.settingsForm.get('showDashboard');
             const dashboardRails = component.settingsForm.get('dashboardRails');
 
             showDashboard?.setValue(false);
             await fixture.whenStable();
 
-            expect(dashboardRails?.disabled).toBe(true);
-            expect(
-                component.settingsForm.get('dashboardRails.hero')?.disabled
-            ).toBe(true);
-            expect(
-                component.settingsForm.get('dashboardRails.continueWatching')
-                    ?.disabled
-            ).toBe(true);
-
-            showDashboard?.setValue(true);
-            await fixture.whenStable();
-
             expect(dashboardRails?.enabled).toBe(true);
             expect(
-                component.settingsForm.get('dashboardRails.hero')?.enabled
+                component.settingsForm.get('dashboardRails.sports')?.enabled
             ).toBe(true);
         });
     });
