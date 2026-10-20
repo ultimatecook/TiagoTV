@@ -178,6 +178,36 @@ the Xtream live view and title pages doesn't stop the pill; the stage's
 resting logo falls back to the NBA logo for non-NBA basketball; stale
 Electron E2Es (old sidebar).
 
+## Second audit (2026-10-20) — state when the session ran out
+
+Published on `main` (`9066f4903`): redesigned pages' responsiveness and
+consistency (shared `libs/workspace/dashboard/feature/src/lib/ui-state/`),
+page-state restore on Back/Forward, plus PARTIAL work from four agents that
+were stopped mid-task (tree verified: typecheck web/backend, tests of the
+touched projects, style checks, production build). Re-audit these areas
+and finish them:
+
+- Theme/tokens: dark Material palette → `--tv-*` neutrals, glass dialogs/
+  menus/snackbar/palette/switcher, pill buttons, `font: inherit`, thin
+  scrollbars, one focus colour (m3-theme.scss, styles.scss, libs/ui/styles).
+- Copy/security: no raw request errors or credentials on screen (done for
+  the VOD detail; check snackbars in pwa/electron services), Spanish copy
+  ("Hogar", "panel", tú vs voseo, "Mi lista"/"Fuentes" naming), Video.js
+  Spanish, account status/dates, decimal comma, key labels.
+- Shell: top-bar capsule must never overlap at narrow widths/zoom, inline
+  search width, lit tab per history entry, `canceledNavigationResolution:
+  'computed'`, Deportes tab on league pages, Cmd+] forward (main-process
+  part in `window-back-gestures.ts` needs a new installer), `**` redirect.
+- Title/detail navigation: clear `seriesResume` after use, Back from a
+  playing title hands over to the mini-player, title Back via
+  `WorkspaceBackNavigationService`, platform "Ver más" as history state,
+  series season and Xtream live channel restore.
+- Not started: restyle the old framed screens (Xtream lists, Fuentes, M3U,
+  title-page gutters, collection page height, old empty/error views).
+
+Audit reports and harnesses lived in the session scratchpad (audit-nav,
+audit-consistency, audit-responsive); they are not in the repo.
+
 ## Questions still open with the user
 
 - Should Series/Películas also include kept-language titles that are on no
