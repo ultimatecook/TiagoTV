@@ -6,6 +6,10 @@
     // ─── Layout ────────────────────────────────────────────────────────────
     --tv-topbar-h: 84px;
     --tv-page-x: 56px;
+    // The content area beside a side panel (a category, channel or filter
+    // list): its own gutter on both sides, half the page's, so the content
+    // reads next to the panel and its right edge meets the bar's circles.
+    --tv-pane-x: 28px;
     --tv-page-top: 28px;
     --tv-page-bottom: 80px;
     --tv-section-gap: 44px;
@@ -90,6 +94,7 @@ html.window-fullscreen {
     :root {
         --tv-topbar-h: 108px;
         --tv-page-x: 20px;
+        --tv-pane-x: 16px;
     }
 }
 

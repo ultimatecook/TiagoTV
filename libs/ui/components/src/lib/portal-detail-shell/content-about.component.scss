@@ -5,9 +5,10 @@
 }
 
 .about {
-    max-width: var(--content-max-width, 1400px);
-    margin: 0 auto;
-    padding: 24px 40px 40px;
+    // The title page's gutter (`--detail-page-x`, the detail shell): the
+    // divider runs between the gutters, the text starts with the sections'.
+    margin: 0 var(--detail-page-x, var(--tv-page-x));
+    padding: 24px 0 40px;
     border-top: 1px solid var(--tag-border, rgba(255, 255, 255, 0.12));
 
     &__heading {
@@ -127,7 +128,7 @@
 
 @media (max-width: 800px) {
     .about {
-        padding: 20px 20px 32px;
+        padding: 20px 0 32px;
 
         &__poster {
             width: 92px;

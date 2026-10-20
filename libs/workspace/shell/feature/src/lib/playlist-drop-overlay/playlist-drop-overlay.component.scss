@@ -16,8 +16,10 @@
 
 // Colours come from the app theme tokens, so the overlay follows the theme
 // chosen in Settings rather than the OS colour scheme. The scrim stays dark
-// in both themes, as a modal backdrop does; the card takes the theme's
-// widget surface with a selection (or, on rejection, error) tint.
+// in both themes, as a modal backdrop does; the card takes the floating
+// surfaces' ground (`--app-overlay-bg`: dark glass in dark, white in light)
+// with a selection (or, on rejection, error) tint. The text is the app's
+// face (inherited), not a font of its own.
 .drop-overlay__backdrop {
     position: absolute;
     inset: 0;
@@ -39,7 +41,7 @@
     background: color-mix(
         in srgb,
         var(--app-selection-color) 8%,
-        var(--app-widget-bg)
+        var(--app-overlay-bg)
     );
     border: 2px dashed var(--app-selection-border);
     border-radius: 18px;
@@ -52,7 +54,7 @@
         background: color-mix(
             in srgb,
             var(--mat-sys-error) 8%,
-            var(--app-widget-bg)
+            var(--app-overlay-bg)
         );
 
         .drop-overlay__icon-wrap {
@@ -88,7 +90,6 @@
 }
 
 .drop-overlay__title {
-    font-family: Roboto, 'Helvetica Neue', sans-serif;
     font-weight: 600;
     font-size: 1.25rem;
     margin: 0;
@@ -96,7 +97,6 @@
 }
 
 .drop-overlay__body {
-    font-family: Roboto, 'Helvetica Neue', sans-serif;
     font-size: 0.9rem;
     margin: 0;
     opacity: 0.78;

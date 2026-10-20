@@ -1,4 +1,5 @@
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../../../../../../ui/styles/scrollbar';
 
 // One row under the player: the brand and a hint on the left, its feeds
 // in a strip that scrolls sideways (the row's only scroller). It sits on
@@ -13,7 +14,8 @@
     flex: 0 0 auto;
     min-width: 0;
     border-top: 1px solid var(--app-widget-header-border);
-    background: var(--app-widget-bg);
+    // A glass card tint on the window, as the guide under it.
+    background: var(--app-card-bg);
     color: var(--app-heading-color);
     // The player's column, not the window, decides when the row stacks.
     container-type: inline-size;
@@ -117,9 +119,7 @@
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-padding-inline: 8px;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--app-muted-color) 55%, transparent)
-        transparent;
+    @include scrollbar.thin;
 }
 
 // Shared shape of a country and a feed.

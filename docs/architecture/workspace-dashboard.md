@@ -627,7 +627,14 @@ categories (`PlatformsCatalogService`):
    by up to two points by the row's own draw of the day, so the rows open on
    different titles. A genre row holds only titles of its genre and needs six
    not shown above it. A row shows 40 titles; "See all" opens its whole list
-   (`PlatformRow.all`).
+   (`PlatformRow.all`) as a history entry of its own (`?row=<id>`, pushed;
+   the `row` input binds it): Back (the header's, the mouse's, Cmd+[ or the
+   list's ‹) closes it through `WorkspaceBackNavigationService.back()`,
+   whose parent is the platform's overview when the list opened the
+   session, and a title opened from it comes back to it. The page keeps
+   each view's scroll per navigation, as the shell does for pages
+   (`followViewScroll`): the shell restores only a page come back to, not a
+   query change on the same page.
 4. Rows are laid out as each platform's own app lays them out (2025–26),
    from `platformDesign` (`platform-design.ts`): the tile shape (Apple TV's
    and Disney+'s posters, the others' 16:9), rows drawn with the other shape
@@ -1053,6 +1060,19 @@ action (resume, else from the start), a series the first episode or the
 episode its quick start names (the first again once watched through). The
 request then leaves the history entry, so Back or Forward onto it does not
 play again.
+
+The hero's Continue on a series carries its episode the other way:
+`seriesResume` inside the global-recent inline-detail state
+(`OPEN_COLLECTION_DETAIL_STATE_KEY`). `createCollectionDetailState` takes it
+off the entry as the detail opens (`clearCollectionDetailSeriesResume`),
+keeping the detail and the in-memory target the open detail resumes from, so
+Back, Forward or a reload onto the entry show the series without starting
+the episode again (each one used to restart it with a new VOD request and
+end the mini-player). The other ways in that play on arrival already leave
+their entry once acted on (`openXtreamLiveItemId`, `openLiveCollectionItem`,
+`openStalkerLiveItemId`, `openStalkerItem`); a league page's
+`tiagotvSportsPlay` stays, as live pages play on opening anyway and the
+mini-player's way back reads it.
 
 ## Empty State
 

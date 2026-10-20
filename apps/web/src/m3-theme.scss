@@ -293,6 +293,10 @@ html {
         0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
     --app-widget-header-border: rgba(0, 0, 0, 0.06);
     --app-card-hover-bg: #f0f2f5;
+    // A card on a page or in a dialog (a poster's frame, a details card):
+    // the widget surface in light, the redesign's glass card in dark.
+    --app-card-bg: #ffffff;
+    --app-card-border: rgba(0, 0, 0, 0.06);
     --app-separator: rgba(0, 0, 0, 0.14);
 
     // Typography — subdued, not pure black
@@ -449,15 +453,21 @@ html {
         // Content area
         --app-content-shadow: none;
 
-        // Widget surfaces: opaque cards and in-place popovers. Overlays use
-        // the glass `--app-overlay-*` tokens below; a panel header is a
-        // glass tint on the window, not a grey band.
+        // Widget surfaces: the opaque surface for what must not show the
+        // window through (EPG cells, text on a filled accent). Cards take
+        // `--app-card-bg`, overlays and in-place popovers the glass
+        // `--app-overlay-*` frame below; a panel header is a glass tint on
+        // the window, not a grey band.
         --app-widget-bg: #2b2b2a;
         --app-widget-header-bg: rgba(255, 255, 255, 0.04);
         --app-widget-border: transparent;
         --app-widget-shadow: none;
         --app-widget-header-border: rgba(255, 255, 255, 0.06);
         --app-card-hover-bg: rgba(255, 255, 255, 0.08);
+        // Cards are glass tints on the window (`--tv-card-*`); only what
+        // must stay opaque reads `--app-widget-bg`.
+        --app-card-bg: var(--tv-card-bg);
+        --app-card-border: var(--tv-card-border);
         --app-separator: rgba(255, 255, 255, 0.1);
 
         // Typography: warm whites over graphite glass

@@ -355,6 +355,35 @@ Dashboard behavior to preserve:
   series id.
 - Back from the collection detail should return to the dashboard handoff state,
   not switch the active playlist.
+- The episode target leaves the history entry as the detail takes it
+  (`clearCollectionDetailSeriesResume`), so Back, Forward or a reload onto
+  the entry show the series without playing it again.
+
+Back, Forward and reload (TiagoTV):
+
+- A title's Back is `injectXtreamDetailBack()` (`xtream-detail-back.ts`):
+  history Back while the previous entry is in-app, else the title's tab page
+  (Películas, Series) replaces the entry. It never closes the player first,
+  so a playing movie or episode goes on in the mini-player, as it does for a
+  tab click or the browser's Back. An inline collection detail asks its
+  collection to close it (`closeRequested`); the collection steps history
+  Back to the list, or shows the list in place when the detail is the first
+  entry of its document. Leaving the history entry hands over even when the
+  URL stays (`NowPlayingPageHandoff` compares the Navigation API entry key).
+- The series page keeps the season on screen on its entry
+  (`xtreamSeriesSeason`, `serial-details-season-memory.ts`) and opens on it
+  again from that entry; a new visit opens on the season of the episode its
+  play button names (`SerialDetailsSeasonsService.preferredSeason`, passed as
+  the season container's `preferredSeasonKey`, after the inline-playing
+  episode's season), so "Play S03E02" and the list agree before the episode
+  counts as in progress.
+- The Xtream live view keeps the played channel and the list scroll on its
+  entry (`xtreamLiveView`, `XtreamLiveViewMemoryService`). Opening on that
+  entry again (Back, Forward, a reload) selects the channel and plays it when
+  nothing else plays or the mini-player plays it (the page takes it over);
+  with another page's stream in the mini-player, or MPV/VLC as the player,
+  it is only selected. A way in that asks for a channel
+  (`openXtreamLiveItemId`) wins over the memory.
 
 Search behavior to preserve:
 

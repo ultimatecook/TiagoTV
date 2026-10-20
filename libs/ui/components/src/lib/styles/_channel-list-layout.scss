@@ -13,7 +13,9 @@ $groups-nav-action-size: 28px;
 
 // ── "All channels" and the favorites/recent context header ─────────────────
 @mixin list-header-box {
-    padding: 12px 16px 8px;
+    // 20px in: the side panels' inner gutter (the category panel's title
+    // and rows), so a list's title lines up with the panel beside it.
+    padding: 12px 20px 8px;
     flex-shrink: 0;
 }
 

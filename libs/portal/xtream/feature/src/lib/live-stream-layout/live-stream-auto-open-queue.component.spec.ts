@@ -23,6 +23,7 @@ import { BehaviorSubject, of, Subject } from 'rxjs';
 import { LiveStreamAutoOpenStateService } from './live-stream-auto-open-state.service';
 import { LiveStreamLayoutComponent } from './live-stream-layout.component';
 import { XtreamLiveChannelItem } from './xtream-live-channel-navigation.service';
+import { XTREAM_LIVE_VIEW_STATE_KEY } from './xtream-live-view-memory.service';
 
 const target = { xtream_id: 202, category_id: '7', name: 'Search Channel' };
 const alpha = { xtream_id: 201, category_id: '7', name: 'Alpha' };
@@ -219,7 +220,10 @@ describe('Xtream live auto-open playback queue', () => {
         fixture.detectChanges();
 
         expect(store.constructStreamUrl).toHaveBeenCalledWith(target);
-        expect(window.history.state).toEqual({});
+        // The handoff leaves the entry; the channel it played stays on it.
+        expect(Object.keys(window.history.state)).toEqual([
+            XTREAM_LIVE_VIEW_STATE_KEY,
+        ]);
     });
 
     it('keeps waiting while the shared store still serves another playlist', () => {
@@ -247,7 +251,10 @@ describe('Xtream live auto-open playback queue', () => {
 
         expect(store.constructStreamUrl).toHaveBeenCalledWith(arrived);
         expect(autoOpenState().pendingItemId()).toBeNull();
-        expect(window.history.state).toEqual({});
+        // The handoff leaves the entry; the channel it played stays on it.
+        expect(Object.keys(window.history.state)).toEqual([
+            XTREAM_LIVE_VIEW_STATE_KEY,
+        ]);
     });
 
     it('never plays a colliding id from the previous playlist catalog', () => {

@@ -1,111 +1,74 @@
+@use '@angular/material' as mat;
+@use '../../../../../../../ui/styles/tv-kit' as kit;
+
 :host {
     display: block;
     width: 100%;
     min-height: 0;
 }
 
+// The redesign's state message (`_tv-kit.scss`, as `lib-page-state` draws
+// it on the redesigned pages): no illustration, the 16px/600 title over a
+// quieter line, and the actions as 36px pills. A host that stands the view
+// in for a section's content draws the dashed box round it.
 .error-view {
-    --error-view-illustration-size: var(
-        --error-empty-illustration-size,
-        clamp(170px, 28vw, 260px)
-    );
-    --error-view-copy-width: var(--error-empty-max-width, 420px);
-    --error-view-copy-gap: var(--error-empty-copy-gap, 8px);
-    --error-view-title-size: var(--error-empty-title-size, 1.55rem);
-    --error-view-title-weight: var(--error-empty-title-weight, 600);
-    --error-view-title-spacing: var(--error-empty-title-spacing, -0.012em);
-    --error-view-description-size: var(--error-empty-description-size, 0.98rem);
-    --error-view-description-line-height: var(
-        --error-empty-description-line-height,
-        1.4
-    );
-    --error-view-description-opacity: var(
-        --error-empty-description-opacity,
-        0.88
-    );
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    @include kit.state-stack;
     justify-content: center;
     width: 100%;
     min-height: 100%;
-    padding: clamp(12px, 2.2vw, 26px);
-    gap: 14px;
-    text-align: center;
+    padding: 32px 24px;
     box-sizing: border-box;
-    color: var(--app-body-color, var(--mat-sys-on-surface-variant));
 
-    img {
-        width: min(100%, var(--error-view-illustration-size));
-        height: auto;
-        filter: invert(80%);
+    img,
+    .icon {
+        display: none;
     }
 }
 
-.icon {
-    font-size: clamp(72px, 11vw, 112px);
-    height: clamp(72px, 11vw, 112px);
-    width: clamp(72px, 11vw, 112px);
-    opacity: 0.45;
-}
-
-.error-view--empty-category .error-view__illustration {
-    margin-top: clamp(0px, 1vh, 8px);
-}
-
-.error-view--text-only {
-    gap: 6px;
-}
-
 .error-view__copy {
-    max-width: var(--error-view-copy-width);
     display: grid;
-    gap: var(--error-view-copy-gap);
+    justify-items: center;
+    gap: 6px;
+    max-width: 560px;
 }
 
 .error-view__title {
-    margin: 0;
-    font-size: var(--error-view-title-size);
-    font-weight: var(--error-view-title-weight);
-    line-height: 1.12;
-    color: var(--app-heading-color, var(--mat-sys-on-surface));
-    letter-spacing: var(--error-view-title-spacing);
+    @include kit.state-title;
     text-wrap: balance;
+
+    // A message that starts in lower case still reads as a title.
+    &::first-letter {
+        text-transform: uppercase;
+    }
 }
 
 .error-view__description {
-    margin: 0;
-    font-size: var(--error-view-description-size);
-    line-height: var(--error-view-description-line-height);
-    color: inherit;
-    opacity: var(--error-view-description-opacity);
+    @include kit.state-detail;
+    // A host may tune the line (the grid's empty state does); the workspace
+    // context panel's own error view reads the same two hooks.
+    font-size: var(--error-empty-description-size, 14px);
+    line-height: var(--error-empty-description-line-height, 1.45);
     text-wrap: balance;
 }
 
 .error-view__actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-}
+    @include kit.state-actions;
 
-@media (max-width: 1024px) {
-    .error-view {
-        --error-view-title-size: var(--error-empty-title-size, 1.4rem);
-        --error-view-description-size: var(
-            --error-empty-description-size,
-            0.92rem
-        );
+    button:not(.app-destructive-button) {
+        @include kit.state-action($variants: (outlined));
     }
-}
 
-::ng-deep {
-    .dark-theme {
-        .error-view {
-            img {
-                filter: invert(10%) !important;
-            }
-        }
+    // The danger pill keeps its tint (`.app-destructive-button`), at the
+    // state's height.
+    .app-destructive-button {
+        @include mat.button-overrides(
+            (
+                outlined-container-height: 36px,
+                outlined-horizontal-padding: 16px,
+                outlined-label-text-size: 13.5px,
+                outlined-label-text-weight: 600,
+                outlined-icon-spacing: 6px,
+            )
+        );
     }
 }

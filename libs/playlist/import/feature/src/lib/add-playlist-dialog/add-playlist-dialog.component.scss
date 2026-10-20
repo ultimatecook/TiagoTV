@@ -1,22 +1,16 @@
 @use '../../../../../../ui/styles/focus-ring';
 
+// The method tiles are glass cards in the glass dialog (`--app-card-*`),
+// a step lighter under the pointer; the light theme overrides them below.
 .apd {
-    --apd-border: var(--app-widget-header-border);
+    --apd-border: var(--app-card-border);
     --apd-heading: var(--app-heading-color);
     --apd-body: var(--app-body-color);
     --apd-muted: var(--app-muted-color);
     --apd-surface-raised: var(--app-widget-header-bg);
     --apd-accent: var(--app-selection-color);
-    --apd-segment-track: color-mix(
-        in srgb,
-        var(--app-shell-bg) 70%,
-        transparent
-    );
-    --apd-segment-active: color-mix(
-        in srgb,
-        var(--app-widget-header-bg) 70%,
-        white 14%
-    );
+    --apd-segment-track: var(--app-card-bg);
+    --apd-segment-active: var(--app-card-hover-bg);
 }
 
 // ─── Dialog head (title + helper subtitle) ──────────────────────────────────
@@ -43,8 +37,8 @@
     appearance: none;
     background: var(--apd-segment-track);
     border: 1px solid var(--apd-border);
-    border-radius: 10px;
-    padding: 10px 11px 12px;
+    border-radius: 14px;
+    padding: 12px 12px 13px;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -190,6 +184,7 @@
 // ─── Light-theme segmented control tweak ────────────────────────────────────
 // `.dark-theme` is on <body>, so target light mode via `body:not(...)`.
 body:not(.dark-theme) .apd {
+    --apd-border: var(--app-widget-header-border);
     --apd-segment-track: color-mix(
         in srgb,
         var(--app-content-bg) 70%,

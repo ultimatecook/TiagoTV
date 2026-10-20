@@ -2,6 +2,8 @@
 @use '../../../../../../ui/styles/panel-header' as panel;
 @use '../../../../../../ui/styles/portal-layout' as portal;
 @use '../../../../../../ui/styles/portal-sidebar';
+@use '../../../../../../ui/styles/scrollbar';
+@use '../../../../../../ui/styles/tv-kit' as kit;
 
 @include portal.live-layout;
 
@@ -41,8 +43,10 @@
     width: 100%;
 }
 
+// The redesign's section title over its count, at the pane gutter beside
+// the category panel (`_tv-kit.scss`), as the catalog grids have it.
 .category-content-header {
-    @include panel.standard-panel-header($sticky: true);
+    @include kit.pane-header;
 
     // The paginator does not shrink, so on any window narrow enough that it
     // and the category meta cannot share a line it took the whole row and the
@@ -60,6 +64,25 @@
 
 .category-subtitle {
     @include panel.standard-panel-subtitle();
+}
+
+.live-all-items-content {
+    .category-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .category-title {
+        @include kit.section-title;
+    }
+
+    .category-subtitle {
+        @include kit.meta;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+    }
 }
 
 mat-paginator {
@@ -90,10 +113,9 @@ app-grid-list.live-all-items-grid {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 16px 20px 20px;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--app-muted-color) 55%, transparent)
-        transparent;
+    // Room for the first row's hover lift.
+    padding: 6px kit.$pane-x kit.$pane-x;
+    @include scrollbar.thin;
 }
 
 .loading-indicator {
@@ -106,8 +128,8 @@ app-grid-list.live-all-items-grid {
     margin: 12px 12px 0;
     padding: 12px 14px;
     border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--app-on-surface) 8%, transparent);
-    background: var(--app-widget-bg);
+    border: 1px solid var(--app-card-border);
+    background: var(--app-card-bg);
     box-shadow: var(--app-widget-shadow);
 }
 

@@ -1,3 +1,5 @@
+@use '../../../../../../../ui/styles/tv-kit' as kit;
+
 :host {
     display: flex;
     flex: 1;
@@ -5,53 +7,47 @@
 }
 
 .empty-state-container {
-    display: flex;
+    // The redesign's state message (`_tv-kit.scss`, as `lib-page-state`):
+    // the 16px/600 title over a quieter line, centred where the player or
+    // the list would be. A small muted glyph above it says what goes here.
+    @include kit.state-stack;
     flex: 1;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
     min-height: 0;
-    text-align: center;
-    color: var(--mat-sys-on-surface-variant);
+    padding: 32px 24px;
+    box-sizing: border-box;
     animation: portal-empty-state-fade-in 220ms ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
 }
 
 .empty-state-icon {
-    font-size: 72px;
-    width: 72px;
-    height: 72px;
-    margin-bottom: 24px;
-    opacity: 0.35;
-    animation: portal-empty-state-float 2.8s ease-in-out infinite;
+    width: 36px;
+    height: 36px;
+    margin-bottom: 8px;
+    color: var(--app-muted-color);
+    font-size: 36px;
+    opacity: 0.7;
 }
 
 .empty-state-title {
-    font-size: 1.05rem;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    margin: 0;
-    opacity: 0.6;
+    @include kit.state-title;
+    max-width: 560px;
+    text-wrap: balance;
 }
 
 .empty-state-hint {
-    margin: 8px 0 0;
-    max-width: 36ch;
-    font-size: 0.88rem;
-    line-height: 1.4;
+    @include kit.state-detail;
+    max-width: 40ch;
     text-wrap: balance;
-    opacity: 0.55;
 }
 
-// The action is the one element here that must not fade into the backdrop:
-// it is the way out of the state, so it keeps full opacity and a real
-// hit target while the icon and copy stay muted.
+// The action is the way out of the state: the white pill.
 .empty-state-action {
-    margin-top: 20px;
-    min-height: 40px;
-
-    mat-icon {
-        margin-right: 6px;
-    }
+    margin-top: 10px;
+    @include kit.state-action($accent: true, $variants: (outlined));
 }
 
 @keyframes portal-empty-state-fade-in {
@@ -62,15 +58,5 @@
     to {
         opacity: 1;
         transform: translateY(0);
-    }
-}
-
-@keyframes portal-empty-state-float {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-4px);
     }
 }

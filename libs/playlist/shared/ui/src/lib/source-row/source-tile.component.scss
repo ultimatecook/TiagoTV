@@ -3,7 +3,8 @@
 // background, so the dot reads as cut out of the tile in every state.
 :host {
     // Defaults a row or trigger overrides on the `app-source-tile` element.
-    --source-tile-bg: var(--app-widget-bg);
+    // A glass tile on the row (an opaque well read as a slab on the glass).
+    --source-tile-bg: var(--app-card-hover-bg);
     --source-tile-color: var(--app-body-color);
     --source-tile-ring: var(--app-content-bg);
     --source-tile-size: 36px;

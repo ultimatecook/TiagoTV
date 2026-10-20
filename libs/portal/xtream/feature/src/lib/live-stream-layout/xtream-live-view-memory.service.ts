@@ -178,7 +178,10 @@ export class XtreamLiveViewMemoryService {
             timer = setTimeout(() => {
                 timer = null;
                 const memory = recallXtreamLiveView(window.history.state);
-                if (memory?.playlistId === this.store.currentPlaylist()?.id) {
+                if (
+                    memory &&
+                    memory.playlistId === this.store.currentPlaylist()?.id
+                ) {
                     rememberXtreamLiveView({
                         ...memory,
                         listOffset: Math.round(viewport.measureScrollOffset()),

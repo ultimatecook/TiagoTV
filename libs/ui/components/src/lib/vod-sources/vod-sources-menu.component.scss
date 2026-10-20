@@ -22,9 +22,12 @@ $font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
     min-height: 0;
     max-height: 100%;
     padding: 8px;
-    border-radius: 14px;
-    background: var(--app-widget-bg, #161a22);
-    outline: 1px solid var(--app-widget-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--tv-radius-menu);
+    // The floating surfaces' ground and sheen (`--app-overlay-*`); inside the
+    // chip's popover the panel draws them instead.
+    background-color: var(--app-overlay-bg);
+    background-image: var(--app-overlay-sheen);
+    outline: 1px solid var(--app-overlay-border);
     color: var(--app-on-surface);
 }
 

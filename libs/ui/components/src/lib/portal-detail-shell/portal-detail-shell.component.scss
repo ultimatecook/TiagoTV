@@ -23,7 +23,10 @@
         transparent
     );
     --poster-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
-    --content-max-width: 1400px;
+    // One inline gutter for the title page: the hero's text, the player in
+    // watch state and every section below it (`content-hero` reads it too).
+    // The redesign's page gutter; 20px in a narrow pane.
+    --detail-page-x: var(--tv-page-x);
 
     display: block;
     height: 100%;
@@ -107,19 +110,14 @@
 // ============================================================================
 
 .shell__player {
-    max-width: var(--content-max-width);
-    margin: 0 auto;
-
     &--active {
-        padding: 16px 40px 0;
+        padding: 16px var(--detail-page-x) 0;
         animation: shell-fade-in 300ms ease 50ms both;
     }
 }
 
 .shell__episodes {
-    max-width: var(--content-max-width);
-    margin: 0 auto;
-    padding: 0 32px;
+    padding: 0 var(--detail-page-x);
 
     &:empty {
         display: none;
@@ -137,9 +135,7 @@
 // and after the last one, 16px between a section's header and its content
 // (app-detail-section-header).
 .shell__extras {
-    max-width: var(--content-max-width);
-    margin: 0 auto;
-    padding: 0 32px 56px;
+    padding: 0 var(--detail-page-x) 56px;
 
     &:empty {
         display: none;
@@ -173,17 +169,25 @@
     }
 }
 
+// A narrow pane (beside the categories panel, phones) takes the narrow
+// gutter; its children read it, the host is the container.
+@container detail (max-width: 760px) {
+    .shell__hero,
+    .shell__player,
+    .shell__episodes,
+    .shell__about,
+    .shell__extras {
+        --detail-page-x: 20px;
+    }
+}
+
 @media (max-width: 800px) {
     .shell__player--active {
         padding: 8px 12px 0;
     }
 
-    .shell__episodes {
-        padding: 0 20px;
-    }
-
     .shell__extras {
-        padding: 0 20px 40px;
+        padding-bottom: 40px;
     }
 }
 

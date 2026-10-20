@@ -1,4 +1,5 @@
 @use '@angular/material' as mat;
+@use '../../../../../../../ui/styles/tv-kit' as kit;
 
 :host {
     display: flex;
@@ -48,26 +49,18 @@
 }
 
 .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 64px 24px;
-    flex: 1;
-    text-align: center;
-    color: var(--mat-sys-on-surface-variant);
+    // Nothing of this type, or nothing matches the search: the state
+    // message in its dashed box at the page gutter (`_tv-kit.scss`).
+    flex: none;
+    margin: 6px var(--tv-page-x) var(--tv-page-bottom);
+    @include kit.state-box;
+    @include kit.state-stack;
 
     .empty-icon {
-        font-size: 48px;
-        height: 48px;
-        width: 48px;
-        margin-bottom: 16px;
-        opacity: 0.5;
+        display: none;
     }
 
     .empty-title {
-        font-size: 14px;
-        font-weight: 500;
-        margin: 0;
+        @include kit.state-title;
     }
 }

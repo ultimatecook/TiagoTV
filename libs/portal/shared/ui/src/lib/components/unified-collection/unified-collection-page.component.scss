@@ -1,6 +1,7 @@
 @use '@angular/material' as mat;
 @use '../../../../../../../ui/styles/app-controls' as controls;
 @use '../../styles/skeleton';
+@use '../../../../../../../ui/styles/tv-kit' as kit;
 
 :host {
     display: flex;
@@ -200,28 +201,27 @@ app-unified-live-tab {
     }
 }
 
-// ── TiagoTV: Mi lista and Vistos recientemente ───────────────────────────
-// The workspace's own collections (`app-global-collection-route`) read
-// like the redesign's pages: the page gutter, the 32px title, En vivo's
-// glass chips for the toggles and glass panels where the list was opaque.
-// A portal's own favourites keep the kit's look.
-:host(.collection-page--tv) {
-    --collection-grid-padding: 0 var(--tv-page-x) var(--tv-page-bottom);
-    color: var(--tv-text);
+// ── TiagoTV: favourites and recently watched ─────────────────────────────
+// Every collection reads like the redesign's pages: the workspace's own
+// (Mi lista, Vistos recientemente: `app-global-collection-route`) and a
+// source's own favourites and recent items. The page gutter, the 32px
+// title, En vivo's glass chips for the toggles, glass panels where the list
+// was opaque and the state message's dashed box when there is nothing.
+:host {
+    // The posters lift 4px on hover: the grid's top padding keeps the first
+    // row's lift inside its scroller.
+    --collection-grid-padding: 6px var(--tv-page-x) var(--tv-page-bottom);
+    color: var(--app-heading-color);
 
     .collection-header {
         flex-wrap: wrap;
         gap: 16px 24px;
-        padding: var(--tv-page-top) var(--tv-page-x) 24px;
+        padding: var(--tv-page-top) var(--tv-page-x) 18px;
         border-bottom: 0;
     }
 
     .collection-title {
-        font-size: 32px;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-        line-height: 1.1;
-        color: var(--tv-text);
+        @include kit.page-title;
     }
 
     .collection-header-toggles {
@@ -231,17 +231,6 @@ app-unified-live-tab {
     .collection-reload-bar {
         left: var(--tv-page-x);
         right: var(--tv-page-x);
-    }
-
-    .content-toggle,
-    .scope-toggle {
-        @include glass-chips;
-    }
-
-    .toggle-placeholder {
-        height: 34px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
     }
 
     .skeleton-grid {
@@ -265,4 +254,52 @@ app-unified-live-tab {
         border-radius: 20px;
         background: var(--tv-list-bg);
     }
+
+    // Nothing saved yet: the state message in its dashed box, where the
+    // grid would be.
+    .collection-content > app-empty-state {
+        flex: none;
+        width: auto;
+        height: auto;
+        margin: 0 var(--tv-page-x) var(--tv-page-bottom);
+        @include kit.state-frame;
+    }
+
+    .empty-state {
+        flex: none;
+        margin: 0 var(--tv-page-x) var(--tv-page-bottom);
+        @include kit.state-box;
+        @include kit.state-stack;
+
+        .empty-icon {
+            display: none;
+        }
+
+        .empty-title {
+            @include kit.state-title;
+        }
+    }
+}
+
+// En vivo's glass chips are drawn for the dark glass window; the light
+// theme keeps the kit's segmented control.
+:host-context(.dark-theme) {
+    .content-toggle,
+    .scope-toggle {
+        @include glass-chips;
+    }
+
+    .toggle-placeholder {
+        height: 34px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+// Mi lista and Vistos recientemente start under the bar's spacer in the
+// shell's scroller: the page is that scroller's height less the bar, so the
+// page never scrolls by the bar's height and its grid is the one scroller,
+// with the last row reachable.
+:host(.collection-page--tv) {
+    height: calc(100% - var(--tv-topbar-h));
 }

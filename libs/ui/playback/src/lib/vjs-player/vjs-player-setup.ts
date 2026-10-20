@@ -9,7 +9,7 @@ export function createVjsPlayerOptions(
     isMpegTs: boolean,
     sharedControls: boolean,
     /** Video.js's own overlay and control text; see `vjs-language`. */
-    language: string = 'en'
+    language = 'en'
 ): VideoPlayerOptions {
     const baseOptions = isMpegTs
         ? { ...options, language, sources: [], autoplay: false }

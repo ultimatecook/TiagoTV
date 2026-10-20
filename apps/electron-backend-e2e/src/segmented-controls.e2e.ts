@@ -175,6 +175,10 @@ test.describe('Electron segmented controls', () => {
             const contentToggle = header.locator('.content-toggle');
             const scopeToggle = header.locator('.scope-toggle');
             await expect(contentToggle).toBeVisible({ timeout: 20_000 });
+            // The dark theme draws these toggles as En vivo's glass chips
+            // (the collection page's redesign); the light theme keeps the
+            // kit's segmented control, measured here.
+            await applyTheme(page, 'light');
             for (const toggle of [contentToggle, scopeToggle]) {
                 expect(await frame(toggle)).toEqual({
                     height: 32,

@@ -1,4 +1,5 @@
 @use '../../../../../../ui/styles/focus-ring';
+@use '../../../../../../ui/styles/tv-kit' as kit;
 
 // A page's message (`PageStateComponent`): the title, the line under it,
 // "Retry". Plain, it reads from the left; boxed, it stands centred in a
@@ -12,28 +13,20 @@
     color: var(--tv-text);
 }
 
+// The values are the shared state recipe (`_tv-kit.scss`), which the
+// older screens' empty and error views take too.
 :host(.page-state--boxed) {
     align-items: center;
-    padding: 32px 24px;
-    border: 1px dashed rgba(255, 255, 255, 0.14);
-    border-radius: 18px;
+    @include kit.state-box;
     text-align: center;
 }
 
 .page-state__title {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.35;
+    @include kit.state-title(var(--tv-text));
 }
 
 .page-state__detail {
-    max-width: 560px;
-    margin: 0;
-    color: var(--tv-meta);
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.45;
+    @include kit.state-detail(var(--tv-meta));
 }
 
 .page-state__retry {

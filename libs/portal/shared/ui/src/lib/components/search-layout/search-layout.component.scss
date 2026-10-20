@@ -1,4 +1,5 @@
 @use '../../styles/content-grid' as grid;
+@use '../../../../../../../ui/styles/tv-kit' as kit;
 
 :host {
     display: flex;
@@ -22,16 +23,16 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    padding: 0 20px 0 20px;
+    // The redesign's page gutter (`_tv-kit.scss`): the search has no side
+    // panel, so it lines up with the other pages under the bar.
+    padding: 0 kit.$page-x;
 }
 
 .header {
     position: sticky;
     top: 0;
     z-index: 100;
-    padding: 20px 0 10px 0;
-    margin-bottom: 2px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    padding: var(--tv-page-top) 0 20px 0;
 
     display: flex;
     flex-direction: column;
@@ -48,27 +49,29 @@
     .header-left {
         display: flex;
         align-items: center;
-        gap: 32px;
+        gap: 16px 28px;
         flex: 1;
         flex-wrap: wrap;
 
         h2 {
-            margin: 0;
+            @include kit.page-title;
             white-space: nowrap;
-            font-size: 1.2rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
         }
 
         .type-filters {
             display: flex;
-            gap: 20px;
+            flex-wrap: wrap;
+            gap: 8px;
             align-items: center;
-
-            ::ng-deep mat-checkbox {
-                margin: 0;
-            }
         }
+    }
+
+    // The type filters and the options are the pages' chips: a glass pill,
+    // the chosen one solid (the checkboxes stay, out of sight, for the
+    // keyboard and the label).
+    ::ng-deep mat-checkbox {
+        margin: 0;
+        @include kit.checkbox-chip;
     }
 
     .header-right {
@@ -77,8 +80,8 @@
         gap: 16px;
 
         .results-count {
-            font-size: 0.85rem;
-            padding: 6px 12px;
+            @include kit.meta;
+            padding: 6px 0;
             white-space: nowrap;
             display: flex;
             align-items: center;
@@ -99,51 +102,29 @@
     padding: 4rem 2rem;
 }
 
+// Nothing to show yet, or nothing found: the redesign's state message in
+// its dashed box (`_tv-kit.scss`), where the results would be.
 .no-items {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4rem 2rem;
-    text-align: center;
+    @include kit.state-box;
+    margin: 4px 0 var(--tv-page-bottom);
 
     mat-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        margin-bottom: 1.5rem;
-        opacity: 0.5;
+        display: none;
     }
 
     .no-items-content {
+        @include kit.state-stack;
+
         h3 {
-            margin: 0 0 0.5rem;
-            font-size: 1.05rem;
-            font-weight: 500;
-            letter-spacing: -0.01em;
-            color: var(--app-heading-color);
+            @include kit.state-title;
         }
 
         p {
-            font-size: 0.85rem;
-            margin: 0;
-            opacity: 0.65;
+            @include kit.state-detail;
         }
 
         .search-term-note {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            font-style: italic;
-            opacity: 0.6;
-        }
-    }
-
-    &.initial-state {
-        opacity: 0.8;
-
-        mat-icon {
-            color: var(--app-selection-color);
-            opacity: 0.6;
+            margin-top: 4px;
         }
     }
 }

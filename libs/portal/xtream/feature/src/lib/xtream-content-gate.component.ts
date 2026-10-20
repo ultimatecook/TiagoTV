@@ -52,9 +52,22 @@ import { XtreamCachedOfflineNoticeComponent } from './xtream-cached-offline-noti
         `
             .xtream-content-gate {
                 display: grid;
-                gap: 16px;
+                gap: 12px;
                 justify-items: center;
                 padding: 24px;
+            }
+
+            /* A platform's title page runs up under the top bar (the
+               shell drops its spacer there): the message starts below it. */
+            :host-context([data-platform-theme]) .xtream-content-gate {
+                padding-top: var(--tv-topbar-h);
+            }
+
+            /* Retry follows the message's own actions as one row of the
+               state (the view keeps its top padding, not its bottom). */
+            .xtream-content-gate ::ng-deep .error-view {
+                min-height: 0;
+                padding-bottom: 0;
             }
 
             .xtream-content-gate__actions {

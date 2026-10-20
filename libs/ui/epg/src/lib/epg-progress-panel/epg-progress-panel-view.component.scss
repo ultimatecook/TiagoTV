@@ -1,5 +1,6 @@
 @use '@angular/material' as mat;
 @use '../../../../styles/app-controls' as controls;
+@use '../../../../styles/scrollbar';
 
 :host {
     // Status colours: the app's accent, success and danger text; the queue
@@ -74,9 +75,7 @@
     overflow: hidden auto;
     overscroll-behavior: contain;
     padding: 4px 0;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--app-muted-color) 55%, transparent)
-        transparent;
+    @include scrollbar.thin;
 }
 
 .import-item {

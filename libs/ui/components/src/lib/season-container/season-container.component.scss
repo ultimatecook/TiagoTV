@@ -14,9 +14,9 @@
     // The theme's panel surface (white in light, raised slate in dark) and
     // on-surface hairlines, so the panel shows in both themes; white tints
     // vanished on the light content background.
-    border: 1px solid color-mix(in srgb, var(--app-on-surface) 8%, transparent);
+    border: 1px solid var(--app-card-border);
     border-radius: 16px;
-    background: var(--app-widget-bg);
+    background: var(--app-card-bg);
     box-shadow: var(--app-widget-shadow);
     text-align: center;
 

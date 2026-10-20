@@ -125,12 +125,10 @@
     gap: 6px;
     padding: 12px 14px;
     border-radius: 12px;
-    border: 1px solid var(--app-widget-border, transparent);
-    background: var(--app-widget-bg, var(--mat-sys-surface-container));
+    // A glass card in the glass dialog (`--app-card-*`).
+    border: 1px solid var(--app-card-border);
+    background: var(--app-card-bg);
     box-shadow: var(--app-widget-shadow, none);
-    // Subtle inset highlight matching widget-shell pattern
-    outline: 1px solid rgba(255, 255, 255, 0.04);
-    outline-offset: -1px;
 }
 
 .account-stat__icon {
@@ -206,11 +204,9 @@
     gap: 14px;
     padding: 16px;
     border-radius: 16px;
-    border: 1px solid var(--app-widget-border, transparent);
-    background: var(--app-widget-bg, var(--mat-sys-surface-container-low));
+    border: 1px solid var(--app-card-border);
+    background: var(--app-card-bg);
     box-shadow: var(--app-widget-shadow, none);
-    outline: 1px solid rgba(255, 255, 255, 0.04);
-    outline-offset: -1px;
     align-content: start;
 }
 
@@ -378,7 +374,7 @@
     padding: 36px 20px;
     border-radius: 16px;
     border: 1px dashed var(--app-separator);
-    background: var(--app-widget-bg, var(--mat-sys-surface-container-low));
+    background: var(--app-card-bg);
     text-align: center;
 }
 

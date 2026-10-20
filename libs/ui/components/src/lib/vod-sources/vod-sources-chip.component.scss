@@ -89,13 +89,24 @@ $font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
     width: 660px;
     max-width: calc(100vw - 32px);
     box-shadow:
+        var(--app-overlay-highlight),
         0 24px 70px rgba(0, 0, 0, 0.45),
         0 4px 18px rgba(0, 0, 0, 0.3);
-    border-radius: 14px;
-    // Opaque here as well as on the inner surface: a CDK overlay floats over
-    // arbitrary page content, so a missing background is not a cosmetic bug —
-    // it makes the whole panel unreadable.
-    background: var(--app-widget-bg, #161a22);
+    border: 1px solid var(--app-overlay-border);
+    border-radius: var(--tv-radius-menu);
+    // The floating surfaces' frame (`--app-overlay-*`): glass over a dark
+    // ground in dark, the white widget in light. A CDK overlay floats over
+    // arbitrary page content, so the ground is never transparent; the menu
+    // inside draws none of its own here.
+    background-color: var(--app-overlay-bg);
+    background-image: var(--app-overlay-sheen);
+    -webkit-backdrop-filter: var(--app-overlay-filter);
+    backdrop-filter: var(--app-overlay-filter);
+
+    ::ng-deep .sources-menu {
+        background: transparent;
+        outline: 0;
+    }
 }
 
 // The pane carries these classes (per-position `panelClass`), so they must
@@ -116,7 +127,7 @@ $font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
     right: 60px;
     width: 11px;
     height: 11px;
-    background: var(--app-widget-bg, #161a22);
+    background: var(--app-overlay-bg);
     transform: rotate(45deg);
     pointer-events: none;
 }

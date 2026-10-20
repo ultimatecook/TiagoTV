@@ -1,3 +1,6 @@
+@use 'player-palette' as palette;
+@use '../../../../styles/scrollbar';
+
 // The settings panel / bottom sheet. Reads the `--pc-*` palette that the
 // controls host declares and places itself inside that host (the
 // `player-controls` container): beside the video as a panel, or rising from
@@ -139,7 +142,8 @@
     gap: 18px;
     min-height: 0;
     overflow-y: auto;
-    scrollbar-width: thin;
+    @include palette.scrollbar-token;
+    @include scrollbar.thin;
 }
 
 :host(.player-settings--sheet) .player-settings__body {

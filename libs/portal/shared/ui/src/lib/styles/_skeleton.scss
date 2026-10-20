@@ -11,7 +11,8 @@
     position: relative;
     width: 100%;
     aspect-ratio: 2 / 3;
-    border-radius: 10px;
+    // The poster frame's radius (`_tv-kit.scss`), as the cards it precedes.
+    border-radius: 14px;
     overflow: hidden;
     background: color-mix(
         in srgb,

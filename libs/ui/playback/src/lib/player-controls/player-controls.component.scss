@@ -711,7 +711,11 @@
     max-height: min(calc(100cqh - 120px), 70vh);
     padding: 10px 12px;
     overflow-y: auto;
-    scrollbar-width: thin;
+    // The dark theme's thin bar (`styles.scss` gives every scroller the
+    // pseudo-elements; a `scrollbar-width` of its own would opt out of
+    // them), its thumbs in the overlay's light text. Not `scrollbar.thin`:
+    // this stylesheet is at its size budget.
+    @include palette.scrollbar-token;
     z-index: 3;
 }
 

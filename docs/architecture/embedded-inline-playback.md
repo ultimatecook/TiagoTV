@@ -1201,7 +1201,10 @@ refused or hanging live start:
   mini-player from `WebPlayerViewComponent.ngOnDestroy`, which runs after its
   engine (a child) was destroyed, so the mini-player opens only after the
   page's request was aborted. Only web engines hand over (`dockable`, never
-  Embedded MPV). The other way, a page player that starts ends the
+  Embedded MPV). A navigation under way, a moved URL, or a history entry
+  other than the one the player started on (Navigation API key; Back from a
+  collection's inline detail keeps the URL) counts as leaving the page; a
+  `replaceState` keeps the key, so closing the player on its page stops it. The other way, a page player that starts ends the
   mini-player session and renders no engine while the bar's player still
   holds the stream (`NowPlayingDockService.playerMounted()`); the bar reports
   it gone from its own `ngOnDestroy`, after that engine aborted. Opening the

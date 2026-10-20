@@ -118,6 +118,7 @@ import {
     type XtreamLiveChannelItem,
 } from './xtream-live-channel-navigation.service';
 import { createXtreamLiveFeeds } from './xtream-live-feeds';
+import { XtreamLiveViewMemoryService } from './xtream-live-view-memory.service';
 
 const LIVE_CHANNEL_SORT_STORAGE_KEY = 'xtream-live-channel-sort-mode';
 
@@ -128,6 +129,7 @@ const LIVE_CHANNEL_SORT_STORAGE_KEY = 'xtream-live-channel-sort-mode';
     providers: [
         LiveStreamAutoOpenStateService,
         XtreamLiveChannelNavigationService,
+        XtreamLiveViewMemoryService,
         // The fullscreen channel panel inside the player renders this
         // category's channel list (see the `fullscreenChannelPanel` template).
         {
@@ -190,6 +192,9 @@ export class LiveStreamLayoutComponent
     private readonly parentalLock = inject(ParentalLockService);
     private readonly databaseService = inject(DatabaseService);
     private readonly liveAutoOpenState = inject(LiveStreamAutoOpenStateService);
+    private readonly liveViewMemory = inject(XtreamLiveViewMemoryService);
+    /** The sidebar's channel list (the first one in the template). */
+    private readonly channelsList = viewChild(PortalChannelsListComponent);
 
     readonly categories = this.xtreamStore.getCategoriesBySelectedType;
     readonly categoryItemCounts = this.xtreamStore.getCategoryItemCounts;
@@ -602,6 +607,15 @@ export class LiveStreamLayoutComponent
             this.liveAutoOpenState.clearHistoryState();
         });
 
+        // Back, Forward or a reload onto this entry: the channel and the
+        // list scroll the page showed. A way in that asks for one wins.
+        this.liveViewMemory.connect({
+            pendingItemId: this.pendingAutoOpenLiveItemId,
+            channels: () => this.getAllLiveStreams(),
+            open: (item, play) => this.reopenLive(item, play),
+            listViewport: computed(() => this.channelsList()?.viewport()),
+        });
+
         effect(() => {
             const remoteControl = this.remoteControlBridge;
             if (!remoteControl?.updateRemoteControlStatus) {
@@ -690,6 +704,7 @@ export class LiveStreamLayoutComponent
         this.playbackRequestId += 1;
         const streamUrl = this.xtreamStore.constructStreamUrl(item);
         this.channelNavigation.capture(item, displayedChannels, remote);
+        this.liveViewMemory.rememberChannel(item.xtream_id);
         this.activeCatchupProgram.set(null);
         // Keep both root/recently-added playback and same-category replays in
         // sync with the category rail. For already-selected channels this is a
@@ -969,6 +984,25 @@ export class LiveStreamLayoutComponent
                 .catch(() => undefined);
         }
         return 'unknown';
+    }
+
+    /**
+     * The remembered channel, played again only in an embedded player that
+     * may take the stream (MPV or VLC never launch from Back or Forward).
+     */
+    private reopenLive(item: XtreamLiveChannelItem, play: boolean): void {
+        if (play && this.usesEmbeddedPlayer()) {
+            this.playLive(
+                item,
+                undefined,
+                this.channelNavigation.channelsForAutoOpen(item)
+            );
+        } else {
+            this.selectLiveItemCategory(item);
+        }
+        this.xtreamStore.setSelectedItem(
+            item as unknown as Record<string, unknown>
+        );
     }
 
     private selectLiveItemCategory(item: XtreamLiveChannelItem): void {

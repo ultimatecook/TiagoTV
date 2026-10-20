@@ -1,5 +1,9 @@
 @use '../../../../../libs/ui/styles/focus-ring';
 
+// The rail beside the content column, and the gap between them.
+$rail-width: 232px;
+$rail-gap: 56px;
+
 // Settings page (TiagoTV redesign, handoff 07 · Ajustes): the rail beside
 // one content column of titled cards. Every row is a label column plus one
 // right-aligned control column, so selects, switches and segmented controls
@@ -16,13 +20,16 @@
     // Rows stack by the pane's width, not the viewport's. This block is not
     // the scroll owner, so inline-size containment costs it nothing.
     container-type: inline-size;
+    // Where the content column starts in this pane (the save bar lines up
+    // with the now-playing pill from it, below).
+    --settings-column-x: calc(var(--tv-page-x) + #{$rail-width + $rail-gap});
     color: var(--tv-text);
 }
 
 .settings-layout {
     display: grid;
-    grid-template-columns: 232px minmax(0, 1fr);
-    gap: 56px;
+    grid-template-columns: $rail-width minmax(0, 1fr);
+    gap: $rail-gap;
     align-items: start;
     box-sizing: border-box;
     padding: var(--tv-page-top) var(--tv-page-x)
@@ -575,6 +582,26 @@
     }
 }
 
+// With the now-playing pill floating at the window's foot, the save bar
+// takes the pill's width and centre (the shell's `.workspace-now-playing`:
+// 32px in from the window's content on each side, at most 1080px wide,
+// centred), so the two float as one stack instead of two bars out of line.
+// The pane is the window's content width (`100cqi`); the bar moves out of
+// its column by the column's own offset. Phones keep the column's bar.
+// (This stylesheet is not encapsulated: the shell's class is a plain
+// ancestor selector.)
+@media (min-width: 641px) {
+    .workspace-shell.has-now-playing .unsaved-bar {
+        --settings-pill-width: min(100cqi - 64px, 1080px);
+        width: var(--settings-pill-width);
+        max-width: none;
+        margin-left: calc(
+            (100cqi - var(--settings-pill-width)) / 2 -
+                var(--settings-column-x)
+        );
+    }
+}
+
 @keyframes unsaved-bar-enter {
     from {
         opacity: 0;
@@ -629,6 +656,10 @@
 // Below 900px of window the rail stacks over the content (the rail's own
 // stylesheet turns its sections into a strip).
 @media (max-width: 900px) {
+    .settings-container {
+        --settings-column-x: var(--tv-page-x);
+    }
+
     .settings-layout {
         grid-template-columns: minmax(0, 1fr);
         gap: 24px;

@@ -15,7 +15,6 @@
 :host {
     --poster-width: 190px;
     --poster-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
-    --content-max-width: 1400px;
     // Opaque: the hero's scrims fade the artwork into it.
     --surface-bg: var(--app-content-solid, #161a22);
     --text-primary: var(--app-heading-color, #e7ecf3);
@@ -163,9 +162,10 @@
         align-items: flex-end;
         gap: 32px;
         width: 100%;
-        max-width: var(--content-max-width);
-        margin: 0 auto;
-        padding: 48px 32px 32px;
+        // The page gutter of the title page (`--detail-page-x`, set by the
+        // detail shell), shared by the sections below: the text starts
+        // where the episodes, the cast and the similar titles do.
+        padding: 48px var(--detail-page-x, var(--tv-page-x)) 32px;
         box-sizing: border-box;
     }
 
@@ -436,7 +436,7 @@
     }
 
     .hero__content {
-        padding: 40px 20px 24px;
+        padding-block: 40px 24px;
     }
 
     .details {
@@ -449,10 +449,6 @@
 }
 
 @media (max-width: 640px) {
-    .hero__content {
-        padding-inline: 16px;
-    }
-
     .details__title {
         font-size: 1.5rem;
     }

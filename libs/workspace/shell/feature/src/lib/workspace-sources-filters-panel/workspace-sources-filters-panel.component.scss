@@ -1,5 +1,6 @@
 @use '../../../../../../ui/styles/app-controls' as controls;
 @use '../../../../../../ui/styles/side-list';
+@use '../../../../../../ui/styles/scrollbar';
 
 :host {
     display: flex;
@@ -45,7 +46,7 @@
     gap: 14px;
     min-height: 0;
     overflow-y: auto;
-    scrollbar-width: thin;
+    @include scrollbar.thin;
 }
 
 .side-list__group {

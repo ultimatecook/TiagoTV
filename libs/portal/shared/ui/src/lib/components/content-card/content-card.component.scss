@@ -1,13 +1,17 @@
 @use '../../styles/content-grid' as grid;
+@use '../../../../../../../ui/styles/tv-kit' as kit;
 
+// The redesign's poster card (`_tv-kit.scss`), as the catalog grids draw
+// it: the artwork in a glass frame that lifts and takes the white ring on
+// hover, the title and meta under it in the pages' type.
 .content-card {
-    @include grid.content-card;
     position: relative;
+    border-radius: kit.$poster-radius;
+    cursor: pointer;
 
     // Keyboard/pointer activation surface; the Remove button is a sibling
     // absolutely positioned over the poster's corner. The focus ring is
-    // drawn on this outer card: `overflow: hidden` here would clip an
-    // outline on the inner surface on every edge.
+    // drawn on this outer card, round the poster and its caption.
     .content-card__activation {
         border-radius: inherit;
         outline: none;
@@ -23,10 +27,23 @@
 
     .remove-button {
         @include grid.remove-button;
+        top: 8px;
+        right: 8px;
+        z-index: 3;
     }
 
     .thumbnail-wrapper {
         @include grid.thumbnail-wrapper;
+        @include kit.poster-frame;
+
+        .poster-placeholder {
+            background: transparent;
+            color: var(--app-muted-color);
+
+            mat-icon {
+                opacity: 0.6;
+            }
+        }
 
         .cover-title-overlay {
             @include grid.cover-title-overlay;
@@ -38,11 +55,40 @@
     }
 
     .card-info {
-        @include grid.card-info;
+        padding: 10px 2px 2px;
+
+        h3 {
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            @include kit.poster-title;
+        }
+
+        .date-info {
+            margin: 3px 0 0;
+            @include kit.meta;
+            font-size: 12.5px;
+        }
     }
+}
+
+.content-card:hover .thumbnail-wrapper {
+    @include kit.poster-hover;
 }
 
 .content-card:hover .cover-title-overlay,
 .content-card__activation:focus-visible .cover-title-overlay {
     opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .content-card .thumbnail-wrapper {
+        transition: none;
+    }
+
+    .content-card:hover .thumbnail-wrapper {
+        transform: none;
+    }
 }

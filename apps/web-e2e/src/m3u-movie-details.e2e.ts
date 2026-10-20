@@ -425,13 +425,14 @@ test('@web @m3u @tmdb browse and watch keep the adjusted volume', async ({
     await expect(inlineVideo(page)).toHaveCount(0);
     await expect(headerBack).toHaveCount(1);
     await expect(headerBack).not.toHaveAttribute('aria-keyshortcuts');
-    // The hero keeps its own inset (32px, or 20px in a pane narrower than
-    // 760px) in both states.
+    // The hero keeps the title page's gutter (`--detail-page-x`: the page
+    // gutter, 56px, or 20px in a pane narrower than 760px or a narrow
+    // window) in both states.
     expect(
         await shell
             .locator('.hero__content')
             .evaluate((el) => getComputedStyle(el).paddingInlineStart)
-    ).toMatch(/^(20|32)px$/);
+    ).toMatch(/^(20|56)px$/);
     await shell.focus();
     await page.keyboard.press('Escape');
     await expect(playButton).toBeVisible();

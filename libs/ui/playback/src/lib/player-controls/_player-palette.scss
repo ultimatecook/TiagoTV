@@ -36,3 +36,12 @@ $focus-ring: #fbf7ee;
 @mixin focus-ring-token {
     --app-focus-ring: #{$focus-ring};
 }
+
+// The thin scrollbar's thumbs (`libs/ui/styles/_scrollbar.scss`) over video:
+// the overlay's light text at low alpha in both themes, as the lists over
+// the picture always drew them. Included on such a list's scroller, beside
+// `scrollbar.thin`.
+@mixin scrollbar-token {
+    --app-scrollbar-thumb: rgba(255, 255, 255, 0.24);
+    --app-scrollbar-thumb-hover: rgba(255, 255, 255, 0.38);
+}

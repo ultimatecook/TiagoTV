@@ -116,8 +116,13 @@ Use the app's own surface tokens for neutral surfaces (defined for both themes
 in `apps/web/src/m3-theme.scss`):
 
 - `--app-shell-bg` / `--app-rail-bg` / `--app-header-bg` / `--app-content-bg`
-- `--app-widget-bg` / `--app-widget-header-bg` — opaque cards and in-place
-  popovers / a raised tint (a white 4% glass tint in dark)
+- `--app-widget-bg` / `--app-widget-header-bg` — the opaque surface for what
+  must not show the window through (EPG cells, text on a filled accent) / a
+  raised tint (a white 4% glass tint in dark)
+- `--app-card-bg` / `--app-card-border` — a card on a page or in a dialog (a
+  poster's frame, a details or account card, the add-source method tiles):
+  the white widget in light, the redesign's glass card (`--tv-card-bg`,
+  `--tv-card-border`) in dark
 - `--app-card-hover-bg` — raised or hovered rows
 - `--app-focus-ring` — the keyboard focus ring (see Keyboard Focus)
 - `--app-widget-border` / `--app-rail-border` — hairlines
@@ -246,7 +251,7 @@ use `:host-context(.dark-theme)` for a rule that only one theme needs. The
 class is on `<body>`, not the root, so `:root:not(.dark-theme)` always
 matches. On a surface, a hairline or thin fill written as white `rgba()`
 vanishes on light backgrounds: mix `--app-on-surface` at the same alpha, and
-use `--app-widget-bg` for a card. Every `var(--name)` read needs a
+use `--app-card-bg` for a card. Every `var(--name)` read needs a
 declaration somewhere, or it silently falls back;
 `pnpm run styles:theme-references:validate` (CI) rejects both undeclared
 reads and colour-scheme queries.
@@ -280,8 +285,10 @@ The dark theme is warm graphite glass, not a hue (`m3-theme.scss`;
   detail heroes' scrims and page (`content-hero`, `portal-detail-shell`,
   `_detail-view.scss`). `--app-widget-header-bg` is a white 4% tint, so a
   panel header (`_panel-header.scss`) is no longer a grey band; none of its
-  consumers is sticky over a scroller. `--app-widget-bg` stays the opaque
-  card and in-place popover surface.
+  consumers is sticky over a scroller. `--app-widget-bg` stays opaque for
+  what must not show the window through; cards take `--app-card-bg` (a
+  glass tint), and an in-place popover (the "…" menu, the alternative
+  sources panel) the floating surfaces' frame below.
 - **Floating surfaces.** Dialogs, menus, select panels, toasts, tooltips,
   floating panels, the command palette, the programme dialog and the source
   switcher take the overlay frame: `--app-overlay-bg` (dark:
@@ -311,12 +318,65 @@ The dark theme is warm graphite glass, not a hue (`m3-theme.scss`;
   scroller includes `scrollbar.thin`. Chromium ignores the
   `::-webkit-scrollbar` pseudo-elements once `scrollbar-width` or
   `scrollbar-color` is set and then draws its native bar with arrows, so
-  the mixin resets both where the pseudo-elements exist. The redesigned
-  pages' scroller hides its bar.
+  the mixin resets both where the pseudo-elements exist. A component never
+  sets `scrollbar-width: thin` or a `scrollbar-color` of its own; a list
+  drawn over video (the episode and Up Next panels, the player settings and
+  stats) points the thumbs at the overlay's light text with the player
+  palette's `scrollbar-token`, beside `scrollbar.thin` (the stats popover,
+  whose stylesheet is at its size budget, relies on the dark theme's global
+  pseudo-elements alone). The redesigned pages' scroller hides its bar.
 - **Form controls.** `styles.scss` gives `button`, `input`, `select` and
   `textarea` `font: inherit` and `letter-spacing: inherit` (and a button the
   text colour around it) at zero specificity, so no control falls back to
   the system font (Arial 13.33px).
+
+### The older screens on the redesign
+
+The portal, collection, source and download views that predate the
+redesign take its recipes from one partial, `libs/ui/styles/_tv-kit.scss`
+(the dashboard's `_page-ui.scss` forwards its card hover from there):
+
+- **Gutters.** A page without a side panel starts its content and its
+  header at the page gutter, `--tv-page-x` (56px; Favourites and Recently
+  watched, in a source and across sources, the Xtream search, Downloads).
+  The content area beside a side panel (a category, channel or filter
+  list: the Xtream and Stalker live, movie and series views, Sources) takes
+  the pane gutter, `--tv-pane-x` (28px, 16px in a narrow window), on both
+  of its sides, so its right edge meets the bar's circles. A side panel's
+  own lists start 20px in (the channel list header,
+  `_channel-list-layout.scss`).
+- **Type.** A page's title is 32px/600/−0.02em (`page-title`), a pane's
+  header (a category's title over its count) the section title, 20px/600
+  (`section-title`) over the 13px meta line in `--app-muted-color`
+  (`meta`); the pane header draws no band (`pane-header`).
+- **Cards.** Poster and logo cards (`app-grid-list`, `app-content-card`)
+  frame the artwork in the glass card fill and hairline at a 14px radius
+  (`poster-frame`); the hover lifts the card 4px and draws the white 2px
+  ring over the artwork, the title (13.5px/600) and meta (12.5px muted) sit
+  under it, read from the left. A grid card lifts as a whole: its
+  `content-visibility` paint containment would clip a frame lifted inside
+  it, and its badges move with it.
+- **States.** An empty, error or no-results message is the redesigned
+  pages' `lib-page-state` look (the dashboard component cannot be imported
+  from the portal libraries): a 16px/600 title in the heading colour, a
+  14px line in `--app-muted-color` under it, the actions as 36px pills
+  (white for the way out, `state-action`), no illustration or large icon.
+  Where it stands in for a section's content it sits in the dashed box
+  (`state-box`, `state-frame`) at the page or pane gutter; the "select a
+  channel" placeholder over an empty player keeps a 36px muted glyph.
+- **Filters as chips.** A row of checkboxes that filter a page (the Xtream
+  search's types and options) is drawn as the pages' chips
+  (`checkbox-chip`): the checkbox stays in the DOM, out of sight, so the
+  input keeps its label, keyboard and focus, whose ring moves to the pill.
+- **Title pages.** The hero's text and every section under it (episodes,
+  cast, similar titles, About, the player in watch state) share one inline
+  gutter, `--detail-page-x` (the page gutter; 20px in a pane narrower than
+  760px), with no centred 1400px column, so the text starts where the
+  episodes do. The platform-dressed title pages keep it: 56px matches their
+  own pages' gutters closely enough.
+- **Floating pairs.** While the now-playing pill floats, the settings
+  page's save bar takes the pill's width and centre (`min(100cqi − 64px,
+  1080px)`, centred in the window), so the two stack as one.
 
 Do not hardcode unrelated accent colors for selected state when these tokens already exist.
 
@@ -730,8 +790,10 @@ row under VOD and series covers so the grid shows more rows per screen.
   poster corner — an interactive control nested inside a `role="button"`
   is an invalid accessibility structure. Its ring is drawn on the OUTER
   `.content-card` via `:has(> .content-card__activation:focus-visible)`,
-  because the card's `overflow: hidden` would clip an outline on the inner
-  surface on every edge. Poster `alt` is the title, not a literal.
+  round the poster and its caption: the poster's frame clips its artwork
+  (`overflow: hidden`, see "The older screens on the redesign"), which
+  would cut an outline drawn inside it. Poster `alt` is the title, not a
+  literal.
 
 ## EPG Views
 
@@ -1251,9 +1313,11 @@ per-theme tokens in `apps/web/src/_settings-theme.scss`.
 - Destructive actions keep the confirm dialog from the Dialogs section.
 - The save bar is a sticky glass pill (24px from the bottom of the content
   column) while the form is dirty, with an amber dot, the change count,
-  Discard and Save (Cmd/Ctrl+S); the rail marks pages with staged edits. A
-  saved change that waits for a restart shows a sticky notice under the top
-  bar.
+  Discard and Save (Cmd/Ctrl+S); the rail marks pages with staged edits.
+  While the now-playing pill floats, the bar leaves its column for the
+  pill's width and centre (`--settings-column-x` is the column's offset in
+  the pane), so the two stack as one. A saved change that waits for a
+  restart shows a sticky notice under the top bar.
 
 ### Light Theme
 

@@ -497,22 +497,48 @@
 
 // Two rows when even the compact row does not fit, and always at 760px and
 // below: the circles move up beside Back and the capsule takes a row of its
-// own, centred, scrolling sideways when the tabs do not fit. The first row
-// sits on the macOS lights' centre line (the shell's
-// `--workspace-topbar-stacked-top`, which also sizes the bar).
+// own, centred, scrolling sideways when the tabs do not fit. A wrapping
+// flex row, not the grid: a capsule spanning the grid's columns would
+// stretch them to its tabs' width and push the circles off a phone. The
+// first row sits on the macOS lights' centre line (the shell's
+// `--workspace-topbar-stacked-top`, which also sizes the bar: 52px, the
+// capsule's 6px gap and 40px row, then 6px below).
 :host(.is-stacked) {
-    grid-template-columns: auto minmax(min-content, 1fr);
-    grid-template-rows: 52px 40px;
-    grid-template-areas:
-        'leading trailing'
-        'tabs tabs';
-    align-content: start;
-    row-gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: center;
+    row-gap: 0;
     padding: var(--workspace-topbar-stacked-top, 4px) var(--topbar-pad-end)
         6px var(--topbar-pad-start);
 
+    // Ends the first row whatever room is left on it.
+    &::after {
+        content: '';
+        order: 2;
+        flex-basis: 100%;
+        height: 0;
+    }
+
+    .topbar__group--leading {
+        flex: none;
+        order: 0;
+        height: 52px;
+    }
+
+    // Never narrower than what it holds: past the bar's edge, not over
+    // Back.
+    .topbar__group--trailing {
+        flex: 1 1 auto;
+        order: 1;
+        height: 52px;
+    }
+
     .topbar__tabs {
-        justify-self: center;
+        flex: 0 1 auto;
+        order: 3;
+        max-width: 100%;
+        margin: 6px auto 0;
         padding: 3px;
     }
 

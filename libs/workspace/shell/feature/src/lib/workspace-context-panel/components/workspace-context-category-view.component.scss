@@ -101,9 +101,11 @@ mat-card-content {
     box-sizing: border-box;
 
     app-workspace-context-error-view {
-        --error-empty-illustration-size: clamp(132px, 15vw, 180px);
+        // The redesign's state message: 16/600 title, a muted 14px line.
+        --error-empty-illustration-size: 96px;
         --error-empty-max-width: min(270px, 100%);
-        --error-empty-title-size: clamp(1.15rem, 1.35vw, 1.4rem);
+        --error-empty-title-size: 16px;
+        --error-empty-description-size: 14px;
         --error-empty-title-weight: 600;
         --error-empty-title-spacing: -0.006em;
         --error-empty-copy-gap: 4px;

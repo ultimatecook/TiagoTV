@@ -437,6 +437,7 @@ Navigation API. A modified click keeps the link's default.
 | Portal, collection, offline and recording details | `PortalDetailShellComponent` while `backAvailable()` | the host's `backClicked` | replaces the drawer toggle |
 | Xtream and Stalker Discover and actor pages | `DiscoverViewComponent`, `ActorViewComponent` | the route's history Back; parent: the catalog section Discover lists (`vod` for movies, `series` for TV), the portal's default section for actor | (no drawer) |
 | In-portal search, Xtream and Stalker | `SearchLayoutComponent` while `backAvailable()` and no inline detail replaces the results | history Back; parent: the portal's default section | (no drawer) |
+| TiagoTV platform page, a row shown whole (`?row=`) | `PlatformPageComponent` while a row is open | history Back; parent: the platform's overview | (no drawer) |
 | Settings | `SettingsRailComponent`, the settings page's rail, which exists exactly while the settings route shows; it also leaves settings on Escape, listened to in the capture phase because a showing tooltip (the Ajustes circle's) hides on Escape and stops it at `<body>`; overlays with a backdrop, fields, fullscreen and an inert page (the full-window player) keep the key | history Back; parent: the first workspace view (`WorkspaceStartupPreferencesService.resolveDashboardPath()`: the dashboard, or sources when it is hidden) | (no drawer) |
 
 Detail-page semantics (Escape, browse and watch) are in
@@ -479,7 +480,15 @@ Portal pages build their parent with `workspacePortalCommands()`
 (`@iptvnator/portal/shared/util`) from the route's `:id`; without a section,
 the portal route's `redirectTo` picks the default section within the same
 navigation, so the replacement still applies. Detail pages keep their own
-return logic (`backClicked`).
+return logic (`backClicked`). The Xtream title pages' is
+`injectXtreamDetailBack()`: this parent fallback with the title's tab page as
+parent (`/workspace/movies`, `/workspace/series`), so a deep link, a fresh
+tab or an entry from before a reload never leaves or reloads the app. It
+never closes a playing player first: the navigation tears the page down and
+hands the stream to the mini-player (Escape in watch mode stays the explicit
+close). A collection's inline detail (Mi lista, Recientes) closes in its
+collection instead (`XTREAM_INLINE_DETAIL_CLOSE`): history Back to the list,
+or the list in place when the detail opened the session.
 
 When there is nowhere to go, the slot is empty rather than a disabled arrow.
 Sessions often start on a page that never navigates (an M3U playlist or live

@@ -1,5 +1,6 @@
 @use '../player-controls/player-palette' as palette;
 @use '../../../../styles/focus-ring';
+@use '../../../../styles/scrollbar';
 
 // Stamped into the fullscreen panel's body, which is its single flex child;
 // the list below is the body's only scroll owner. The panel wears the
@@ -84,8 +85,8 @@
     padding: 8px;
     list-style: none;
     overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
+    @include palette.scrollbar-token;
+    @include scrollbar.thin;
 }
 
 .episode-panel__row {
