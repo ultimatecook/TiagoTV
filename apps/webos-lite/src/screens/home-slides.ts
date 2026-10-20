@@ -50,8 +50,11 @@ function continueSlides(app: App): HeroSlide[] {
         .concat(resume.recent('episode', CONTINUE_SLIDES))
         .sort((a, b) => b.updatedAt - a.updatedAt)
         .slice(0, CONTINUE_SLIDES);
+    // Their backdrops come from the titles' pages, as the desktop's.
+    void app.store.probeBackdrops(entries.map(titleOfResume));
     return entries.map((entry) => {
         const title = titleOfResume(entry);
+        const backdrop = app.store.backdropOf(title);
         return {
             key: `continue:${entry.kind}:${entry.id}`,
             eyebrow: t('WORKSPACE.DASHBOARD.KEEP_WATCHING'),
@@ -59,7 +62,7 @@ function continueSlides(app: App): HeroSlide[] {
             title: title.title,
             meta: resumeMeta(entry),
             progress: entry.duration > 0 ? entry.position / entry.duration : 0,
-            backdrop: null,
+            backdrop: tmdbSized(backdrop, 'w1280'),
             keyart: tmdbSized(entry.poster, 'w500'),
             hue: hueOf(title.title),
             actions: [

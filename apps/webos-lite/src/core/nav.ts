@@ -172,7 +172,16 @@ export class Nav {
             }
         }
         const from = current.getBoundingClientRect();
-        let candidates = this.candidates(group);
+        const all = this.candidates(group);
+        // The page's own first, even scrolled out of view (Up from the
+        // first row goes back to the hero, not to the tabs above it).
+        const page = this.pageOf(current);
+        const own = page ? all.filter((candidate) => page.contains(candidate.item)) : [];
+        return this.moveTo(from, own, direction) || this.moveTo(from, all, direction);
+    }
+
+    /** Focuses the best of `candidates` that takes focus, if any. */
+    private moveTo(from: Rect, candidates: Candidate<HTMLElement>[], direction: Direction): boolean {
         // A group with nothing to focus yet (a row still loading) is passed.
         for (let tries = 0; tries < 8; tries++) {
             const best = bestCandidate(from, candidates, direction);
@@ -189,6 +198,18 @@ export class Nav {
             candidates = candidates.filter((candidate) => candidate.item !== best);
         }
         return false;
+    }
+
+    /** The scrolling page (a registered revealer) that holds `el`. */
+    private pageOf(el: HTMLElement): HTMLElement | null {
+        let node: HTMLElement | null = el.parentElement;
+        while (node && node !== this.scope) {
+            if (revealers.has(node)) {
+                return node;
+            }
+            node = node.parentElement;
+        }
+        return null;
     }
 
     private candidates(exclude: Group | null): Candidate<HTMLElement>[] {

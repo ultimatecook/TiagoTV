@@ -174,7 +174,18 @@ export class ShellScreen implements Screen {
 
     onKey(action: Action): boolean {
         const page = this.page;
-        return !!page && !!page.onKey && page.onKey(action);
+        if (page && page.onKey && page.onKey(action)) {
+            return true;
+        }
+        // Up with nothing above it on the page reaches the bar, wherever the
+        // page's top row sits (En vivo's country chips are level with it).
+        if (action === 'up' && !this.inBar()) {
+            if (!nav.move('up')) {
+                nav.focus(this.activeItem());
+            }
+            return true;
+        }
+        return false;
     }
 
     onBack(): boolean {

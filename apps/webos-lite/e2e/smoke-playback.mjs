@@ -41,6 +41,10 @@ export async function liveSuite(h) {
     check('OK plays in the stage behind the page', stage.inStage && stage.playing);
     check('activity is preview (fewer images at once)', state.activity === 'preview', state.activity);
     await shot('24-en-vivo');
+    // Watching: Up climbs past the chips to the bar, and Down comes back.
+    const toBar = await h.pressUntil('ArrowUp', /\btab\b.*\| En vivo/, 6);
+    check('watching: Up reaches the bar', toBar, `${await h.focusedClass()} | ${await h.focused()}`);
+    check('watching: back down to the playing channel', await h.pressUntil('ArrowDown', /card--channel/, 6));
 
     mark = (await h.stats()).streams.length;
     await press('Enter');

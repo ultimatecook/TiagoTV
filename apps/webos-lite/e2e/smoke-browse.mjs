@@ -90,6 +90,13 @@ export async function homeSuite(h) {
     await h.pressUntil('ArrowDown', /Empezar/, 4);
     await shot('09-inicio-series');
     check('Inicio: "Series para ti" offers Empezar T1 · E1', /Empezar T1 · E1/.test(await h.focused()));
+    // Up goes back through the rows to the hero, not to the tabs above it.
+    const backToHero = await h.pressUntil('ArrowUp', /Más info|Continuar/, 12);
+    const heroShown = await h.page.evaluate(() => {
+        const hero = document.querySelector('.page--home .hero');
+        return !!hero && hero.getBoundingClientRect().top >= -10;
+    });
+    check('Inicio: Up from the rows returns to the hero', backToHero && heroShown, await h.focused());
 }
 
 export async function catalogSuite(h) {
