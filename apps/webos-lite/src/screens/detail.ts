@@ -50,6 +50,8 @@ export class DetailScreen implements Screen {
     private series: SeriesDetails | null = null;
     private season = 0;
     private token = 0;
+    /** The episode to focus when the player closes (it re-renders). */
+    private restore: number | null = null;
 
     constructor(
         private readonly app: App,
@@ -99,7 +101,10 @@ export class DetailScreen implements Screen {
     }
 
     initialFocus(): HTMLElement | null {
-        return nav.first(this.actions);
+        const restore = this.restore;
+        this.restore = null;
+        const row = restore !== null ? (this.episodesEl.children[restore] as HTMLElement | undefined) : undefined;
+        return row ?? nav.first(this.actions);
     }
 
     onShow(): void {
@@ -109,6 +114,11 @@ export class DetailScreen implements Screen {
             this.renderEpisodes(false);
         }
         this.page.updateNear();
+    }
+
+    onHide(): void {
+        const focused = nav.focused;
+        this.restore = focused && this.episodesEl.contains(focused) ? Array.prototype.indexOf.call(this.episodesEl.children, focused) : null;
     }
 
     private get isSeries(): boolean {
@@ -254,7 +264,9 @@ export class DetailScreen implements Screen {
         clear(this.episodesEl);
         episodes.forEach((episode, index) => {
             this.episodesEl.appendChild(
-                onActivate(episodeRow(episode), () => this.playback.playEpisode(episodes, index, this.episodesEl))
+                onActivate(episodeRow(episode), () =>
+                    this.playback.playEpisode(episodes, index, this.episodesEl, false, (next) => (this.restore = next))
+                )
             );
         });
         const target = focusedIndex >= 0 ? focusedIndex : focus ? 0 : -1;

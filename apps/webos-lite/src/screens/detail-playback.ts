@@ -54,7 +54,13 @@ export class DetailPlayback {
     }
 
     /** Plays `episodes[index]`; Back returns to the episode it ended on. */
-    playEpisode(episodes: readonly Episode[], index: number, list: HTMLElement | null, fromStart = false): void {
+    playEpisode(
+        episodes: readonly Episode[],
+        index: number,
+        list: HTMLElement | null,
+        fromStart = false,
+        onIndex?: (index: number) => void
+    ): void {
         const items = this.items(episodes);
         const item = items[index];
         if (!item) {
@@ -67,6 +73,7 @@ export class DetailPlayback {
             onIndexChange: (next) => {
                 const row = list ? (list.children[next] as HTMLElement | undefined) : undefined;
                 this.app.stack.setReturnFocus(row ?? null);
+                onIndex?.(next);
             },
         });
     }

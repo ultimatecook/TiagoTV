@@ -209,3 +209,17 @@ export class Nav {
 }
 
 export const nav = new Nav();
+
+/** The focusable of `container` an arrow leads to from `from`, if any. */
+export function moveWithin(container: HTMLElement, direction: Direction, from: HTMLElement): HTMLElement | null {
+    const nodes = container.querySelectorAll('.f');
+    const candidates: Candidate<HTMLElement>[] = [];
+    for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i] as HTMLElement;
+        const rect = node.getBoundingClientRect();
+        if (node !== from && isShown(rect)) {
+            candidates.push({ rect, item: node });
+        }
+    }
+    return bestCandidate(from.getBoundingClientRect(), candidates, direction);
+}

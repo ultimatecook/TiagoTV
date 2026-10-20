@@ -1,6 +1,6 @@
 import { clear, h } from '../core/dom';
 import { requestErrorText } from '../core/http';
-import { nav, onActivate, onFocus } from '../core/nav';
+import { moveWithin, nav, onActivate, onFocus, registerGroup } from '../core/nav';
 import { resume } from '../data/resume';
 import { t } from '../data/strings';
 import type { App } from '../app';
@@ -71,6 +71,23 @@ export class SettingsPage implements Page {
         this.rail.appendChild(h('div', 'rail__rule'));
         this.rail.appendChild(this.railItems.about);
         this.el = h('div', 'page page--settings', this.rail, this.panel);
+        // Left out of the cards goes back to the section they belong to.
+        registerGroup({
+            el: this.panel,
+            enter: () => nav.first(this.panel),
+            move: (direction, from) => {
+                const next = moveWithin(this.panel, direction, from);
+                if (next) {
+                    nav.focus(next);
+                    return true;
+                }
+                if (direction === 'left') {
+                    nav.focus(this.railItems[this.section]);
+                    return true;
+                }
+                return null;
+            },
+        });
         this.render();
     }
 

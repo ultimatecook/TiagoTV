@@ -36,6 +36,7 @@ export class SportsPage implements Page {
     private readonly later = new Block(t('WORKSPACE.SPORTS.LATER'), 'block--later');
     private readonly timer = new Slot('sports-refresh');
     private counts = new Map<string, number>();
+    private shown: SportsData | null = null;
     private visible = false;
     private loading = false;
 
@@ -111,6 +112,11 @@ export class SportsPage implements Page {
     }
 
     private render(data: SportsData): void {
+        if (data === this.shown) {
+            // The same board: its cards (and the focused one) stay.
+            return;
+        }
+        this.shown = data;
         const now = new Date();
         const focused = nav.focused;
         this.counts = liveCounts(data, now);

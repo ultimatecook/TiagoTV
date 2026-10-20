@@ -212,7 +212,17 @@ export class LivePage implements Page {
 
     private play(index: number): void {
         const items = this.items();
-        this.stage.play({ items, index, onIndexChange: (next) => nav.focus(this.channels.cardAt(next)) });
+        this.stage.play({ items, index, onIndexChange: (next) => this.follow(next) });
+    }
+
+    /** The channel zapped to takes focus (or will, after the full screen). */
+    private follow(index: number): void {
+        const card = this.channels.cardAt(index);
+        if (this.stage.handingOff) {
+            this.app.stack.setReturnFocus(card);
+        } else {
+            nav.focus(card);
+        }
     }
 
     private markPlaying(item: PlayItem | null, index: number): void {

@@ -100,6 +100,10 @@ export class Row<T> implements Group {
     }
 
     setItems(items: readonly T[], keepIndex = false): void {
+        if (keepIndex && !this.statusCard && this.same(items)) {
+            // Nothing changed: the cards (and the focused one) stay.
+            return;
+        }
         const hadFocus = this.hasFocus();
         this.removeStatus();
         this.clearCards();
@@ -113,6 +117,18 @@ export class Row<T> implements Group {
         if (hadFocus) {
             nav.focus(this.enter());
         }
+    }
+
+    private same(items: readonly T[]): boolean {
+        if (items.length !== this.items.length) {
+            return false;
+        }
+        for (let i = 0; i < items.length; i++) {
+            if (items[i] !== this.items[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** A card in place of the items: "Cargando…", an error (OK retries). */
