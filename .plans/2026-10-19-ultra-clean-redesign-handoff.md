@@ -190,6 +190,23 @@ opaque `--app-widget-bg`; dialogs with their own max height (account info)
 don't use the traffic-lights clearance; the HTML5 player ignores the saved
 start position (pre-existing).
 
+## "Solo Netflix" in Series / Películas / Buscar (2026-10-20)
+
+- Cause: the Electron import stores each title with one category (the
+  provider's `category_id`), while the provider files a title in several
+  (`category_ids`: a platform's and genre ones). Titles whose stored
+  category is a genre's ("|EN| ✪ SERIES") belonged to no platform, so the
+  stored catalog was mostly Netflix. The Prime Video movies ("✪ ORIGINAL
+  AMAZON  MULTI", no language code) were also dropped by the ES/EN filter.
+- Fix (renderer only, ships over the air): `catalog/catalog-membership.ts`
+  refreshes the platforms' own category lists in the background (one
+  request at a time, at most twice a day, persisted in
+  `tiagotv:platform-members:v1`); `storedPlatformLists` files each stored
+  row in every platform that lists it, and Buscar labels hits the same way.
+  `isKeptPlatformCategory` keeps a platform's no-code MULTI category.
+- Not done: storing `category_ids` in SQLite (a main-process schema change
+  that would need a new installer).
+
 ## Questions still open with the user
 
 - Should Series/Películas also include kept-language titles that are on no

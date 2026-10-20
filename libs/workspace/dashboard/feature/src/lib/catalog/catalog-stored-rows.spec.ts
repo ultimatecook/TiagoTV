@@ -83,9 +83,21 @@ describe('stored catalog rows', () => {
     it("reads the browser's session rows as the panel sent them", () => {
         const data = toStoredVodCatalog(
             [
-                { category_id: '2331', category_name: '|ES| ✪ NETFLIX SERIES' },
-                { category_id: '1720', category_name: '|ES| ✪ DISNEY+' },
-                { category_id: '1066', category_name: '|EN| ✪ HORROR' },
+                {
+                    category_id: '2331',
+                    category_name: '|ES| ✪ NETFLIX SERIES',
+                    parent_id: 0,
+                },
+                {
+                    category_id: '1720',
+                    category_name: '|ES| ✪ DISNEY+',
+                    parent_id: 0,
+                },
+                {
+                    category_id: '1066',
+                    category_name: '|EN| ✪ HORROR',
+                    parent_id: 0,
+                },
             ],
             [
                 {
@@ -150,5 +162,43 @@ describe('stored catalog rows', () => {
         );
 
         expect(list.titles[0].genres).toEqual(['horror', 'thriller']);
+    });
+
+    it('files a row stored under a genre in the platforms that list it', () => {
+        const data = toStoredVodCatalog(
+            [
+                dbCategory(601, 1270, '|EN| ✪ AMAZON-PRIME'),
+                dbCategory(602, 482, '|EN| ✪ NETFLIX'),
+                dbCategory(603, 577, '|EN| ✪ CRIME  DRAME THRILLER'),
+            ],
+            [
+                // The import keeps one category per title: the genre's.
+                { xtream_id: 5, title: 'The Boys', category_id: 603 },
+                { xtream_id: 6, title: 'Dark', category_id: 602 },
+            ],
+            true
+        );
+        const members = new Map([['1270', new Set([5])]]);
+
+        const without = storedPlatformLists(data, 'series');
+        const lists = storedPlatformLists(data, 'series', members);
+
+        expect(without.map((list) => list.titles.length)).toEqual([1, 0]);
+        expect(
+            lists.map((list) => [
+                list.platform.id,
+                list.titles.map((title) => title.title),
+            ])
+        ).toEqual([
+            ['netflix', ['Dark']],
+            ['prime-video', ['The Boys']],
+        ]);
+        // Its stored genre category still names its genres.
+        expect(lists[1].titles[0].genres).toEqual(
+            expect.arrayContaining(['crime', 'thriller'])
+        );
+        expect(
+            aggregateCatalog(lists, 'series').map((title) => title.platform.id)
+        ).toEqual(expect.arrayContaining(['netflix', 'prime-video']));
     });
 });

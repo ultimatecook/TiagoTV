@@ -266,6 +266,14 @@ describe('search results', () => {
             ]);
         });
 
+        it("keeps a platform's multi-language category", () => {
+            const kept = languageFilter(
+                new Map([...names, ['4', '✪ ORIGINAL AMAZON  MULTI']]),
+                'movie'
+            );
+            expect(kept('4')).toBe(true);
+        });
+
         it('does not filter a catalog without language codes', () => {
             const kept = languageFilter(new Map([['1', 'Drama']]), 'series');
             expect(kept('1')).toBe(true);

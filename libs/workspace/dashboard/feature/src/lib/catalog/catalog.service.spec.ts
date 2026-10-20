@@ -48,6 +48,7 @@ describe('CatalogService', () => {
     let service: CatalogService;
 
     beforeEach(() => {
+        localStorage.clear();
         stored = { read: jest.fn(), version: signal(0) };
         api = {
             getVodInfo: jest.fn().mockResolvedValue({
@@ -106,13 +107,14 @@ describe('CatalogService', () => {
         service = TestBed.inject(CatalogService);
     });
 
-    it('reads the stored catalog and asks the provider nothing', async () => {
+    it('shows the stored catalog before the provider is asked anything', async () => {
         stored.read.mockResolvedValue(
             toStoredVodCatalog(
                 [
                     {
                         category_id: '1610',
                         category_name: '|ES| ✪ ORIGINAL NETFLIX',
+                        parent_id: 0,
                     },
                 ],
                 [{ stream_id: 7, name: 'EL HOYO', category_id: '1610' }],
@@ -121,6 +123,11 @@ describe('CatalogService', () => {
         );
 
         expect(service.status('movie')).toBe('loading');
+        let askedFirst = false;
+        platforms.loadShelves.mockImplementation(async () => {
+            askedFirst = service.titles('movie') === null;
+            platforms.shelves.set(SHELVES);
+        });
         await service.load('movie');
 
         expect(stored.read).toHaveBeenCalledWith(
@@ -136,12 +143,78 @@ describe('CatalogService', () => {
             'EL HOYO',
         ]);
         expect(service.status('movie')).toBe('ready');
-        expect(platforms.loadShelves).not.toHaveBeenCalled();
+        // Only then, in the background: the platforms' lists, not their pages.
+        expect(askedFirst).toBe(false);
         expect(platforms.loadTitles).not.toHaveBeenCalled();
 
         // Fresh: a second visit reads nothing again.
         await service.load('movie');
         expect(stored.read).toHaveBeenCalledTimes(1);
+    });
+
+    it('files a stored title in the platform whose list carries it', async () => {
+        // The import kept "The Boys" in a genre's category, not Prime's.
+        stored.read.mockResolvedValue(
+            toStoredVodCatalog(
+                [
+                    {
+                        category_id: '2331',
+                        category_name: '|ES| ✪ NETFLIX SERIES',
+                        parent_id: 0,
+                    },
+                    {
+                        category_id: '1270',
+                        category_name: '|EN| ✪ AMAZON-PRIME',
+                        parent_id: 0,
+                    },
+                    {
+                        category_id: '99',
+                        category_name: '|EN| ✪ SERIES',
+                        parent_id: 0,
+                    },
+                ],
+                [
+                    { series_id: 6, name: 'DARK', category_id: '2331' },
+                    { series_id: 5, name: 'The Boys', category_id: '99' },
+                ],
+                false
+            )
+        );
+        const shelves = buildPlatformShelves(
+            [],
+            [
+                { category_id: '2331', category_name: '|ES| ✪ NETFLIX SERIES' },
+                { category_id: '1270', category_name: '|EN| ✪ AMAZON-PRIME' },
+            ]
+        );
+        platforms.loadShelves.mockImplementation(async () =>
+            platforms.shelves.set(shelves)
+        );
+        platforms.categoryTitles.mockImplementation(async (category) =>
+            toPlatformTitles(
+                category,
+                category.id === '1270'
+                    ? [{ series_id: 5, name: 'The Boys' }]
+                    : [{ series_id: 6, name: 'DARK' }]
+            )
+        );
+
+        await service.load('series');
+        expect(service.titles('series')?.map((title) => title.title)).toEqual([
+            'DARK',
+        ]);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(
+            service
+                .titles('series')
+                ?.map((title) => [title.title, title.platform.id])
+        ).toEqual(
+            expect.arrayContaining([
+                ['DARK', 'netflix'],
+                ['The Boys', 'prime-video'],
+            ])
+        );
     });
 
     it("asks the platforms' categories one at a time when nothing is stored", async () => {
@@ -209,6 +282,7 @@ describe('CatalogService', () => {
                     {
                         category_id: '1610',
                         category_name: '|ES| ✪ ORIGINAL NETFLIX',
+                        parent_id: 0,
                     },
                 ],
                 [{ stream_id: 7, name: 'EL HOYO', category_id: '1610' }],

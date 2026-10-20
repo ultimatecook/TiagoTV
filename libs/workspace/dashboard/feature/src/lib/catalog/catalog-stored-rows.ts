@@ -15,6 +15,7 @@ import {
     buildPlatformShelves,
     type PlatformCatalogCategory,
 } from '../platforms/streaming-platforms';
+import { categoriesById, type CategoryMembers } from './catalog-members';
 import type { CatalogKind, PlatformTitleList } from './catalog-titles';
 
 /**
@@ -88,12 +89,16 @@ export function toStoredVodCatalog(
 
 /**
  * The platforms' titles of one kind in the stored catalog, one list per
- * platform. A title its own row names no genre of borrows those of the
+ * platform. A row sits in one category, so the platforms' own lists
+ * (`members`) add the platforms that list it elsewhere ("The Boys", stored
+ * under "|EN| ✪ SERIES", is on "|EN| ✪ AMAZON-PRIME"). A title its own row
+ * names no genre of borrows those of its row's genre category, or of the
  * same-named title in the source's genre categories ("|ES| ✪ COMEDIA").
  */
 export function storedPlatformLists(
     data: StoredVodCatalogData,
-    kind: CatalogKind
+    kind: CatalogKind,
+    members: CategoryMembers = new Map()
 ): PlatformTitleList[] {
     const shelves = buildPlatformShelves(
         kind === 'movie' ? data.categories : [],
@@ -106,15 +111,21 @@ export function storedPlatformLists(
             wanted.add(category.id);
         }
     }
+    const listedIn = categoriesById(members, wanted);
     const rowsOf = new Map<string, PlatformCatalogItem[]>();
     const named = new Map<string, Set<PlatformGenre>>();
     for (const row of data.rows) {
         const categoryId = String(row.category_id ?? '');
+        const homes = new Set(listedIn.get(Number(rowId(row, kind))));
         if (wanted.has(categoryId)) {
-            const list = rowsOf.get(categoryId) ?? [];
+            homes.add(categoryId);
+        }
+        for (const home of homes) {
+            const list = rowsOf.get(home) ?? [];
             list.push(toCatalogItem(row, kind));
-            rowsOf.set(categoryId, list);
-        } else {
+            rowsOf.set(home, list);
+        }
+        if (!wanted.has(categoryId)) {
             const genres = genreCategories.get(categoryId);
             const key = genres ? storedNameKey(row) : '';
             if (genres && key) {
@@ -191,8 +202,7 @@ function toCatalogItem(
     row: StoredVodRow,
     kind: CatalogKind
 ): PlatformCatalogItem {
-    const id =
-        row.xtream_id ?? (kind === 'movie' ? row.stream_id : row.series_id);
+    const id = rowId(row, kind);
     const poster = row.stream_icon || row.cover || row.poster_url || undefined;
     const added = String(row.added ?? row.last_modified ?? '');
     return {
@@ -204,7 +214,10 @@ function toCatalogItem(
         added,
         last_modified: row.last_modified ?? added,
         genre: row.genre ?? null,
-        category_ids: row.category_ids ?? null,
+        // A row stored in a genre's category is of that genre too.
+        category_ids:
+            row.category_ids ??
+            (row.category_id != null ? [row.category_id] : null),
         rating: row.rating ?? null,
         plot: row.plot ?? null,
         backdrop_path: row.backdrop_path ?? row.backdrop_url ?? null,
@@ -214,4 +227,12 @@ function toCatalogItem(
         releaseDate: row.releaseDate ?? null,
         release_date: row.release_date ?? null,
     };
+}
+
+/** The row's stream (movie) or series id: the provider's, in either shape. */
+function rowId(
+    row: StoredVodRow,
+    kind: CatalogKind
+): number | string | undefined {
+    return row.xtream_id ?? (kind === 'movie' ? row.stream_id : row.series_id);
 }

@@ -2,6 +2,7 @@ import {
     buildGenreCategories,
     buildPlatformShelves,
     findStreamingPlatform,
+    isKeptPlatformCategory,
     platformLanguage,
 } from './streaming-platforms';
 
@@ -37,6 +38,33 @@ describe('streaming platforms', () => {
             { id: '482', kind: 'series', language: 'EN' },
             { id: '2331', kind: 'series', language: 'ES' },
         ]);
+    });
+
+    it("keeps a platform's multi-language category without a code", () => {
+        const shelves = buildPlatformShelves(
+            [
+                {
+                    category_id: 1535,
+                    category_name: '✪ ORIGINAL AMAZON  MULTI',
+                },
+                { category_id: 1536, category_name: '✪ NORDIC MULTI' },
+                { category_id: 1537, category_name: '|FR| ✪ NETFLIX MULTI' },
+            ],
+            []
+        );
+
+        expect(shelves).toEqual([
+            {
+                platform: expect.objectContaining({ id: 'prime-video' }),
+                categories: [{ id: '1535', kind: 'movie', language: 'EN' }],
+            },
+        ]);
+        expect(
+            isKeptPlatformCategory('✪ ORIGINAL AMAZON  MULTI', 'movie')
+        ).toBe(true);
+        expect(isKeptPlatformCategory('✪ ORIGINAL TABII MULTI', 'movie')).toBe(
+            false
+        );
     });
 
     it('reads |LAT| as Spanish', () => {

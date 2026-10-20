@@ -185,6 +185,26 @@ export function platformLanguage(categoryName: string): PlatformLanguage {
     return code === 'ES' || code === 'LAT' ? 'ES' : 'EN';
 }
 
+/**
+ * A platform category the catalog keeps: Spanish or English, or one with
+ * no language code that carries several ("✪ ORIGINAL AMAZON  MULTI", the
+ * provider's only Prime Video movies), shown as English.
+ */
+export function isKeptPlatformCategory(
+    name: string,
+    kind: PlatformTitleKind
+): boolean {
+    if (isSpanishOrEnglishCategory(name, kind === 'movie' ? 'vod' : 'series')) {
+        return true;
+    }
+    const code = categoryLanguageCode(name);
+    return (
+        (code === null || code === 'MULTI') &&
+        /\bmulti\b/i.test(name) &&
+        STREAMING_PLATFORMS.some((platform) => platform.category.test(name))
+    );
+}
+
 /** The platforms the source carries, each with its ES/EN categories. */
 export function buildPlatformShelves(
     vod: readonly PlatformCatalogCategory[],
@@ -197,12 +217,7 @@ export function buildPlatformShelves(
     ) => {
         for (const category of categories) {
             const name = category.category_name ?? '';
-            if (
-                !isSpanishOrEnglishCategory(
-                    name,
-                    kind === 'movie' ? 'vod' : 'series'
-                )
-            ) {
+            if (!isKeptPlatformCategory(name, kind)) {
                 continue;
             }
             const platform = STREAMING_PLATFORMS.find((candidate) =>

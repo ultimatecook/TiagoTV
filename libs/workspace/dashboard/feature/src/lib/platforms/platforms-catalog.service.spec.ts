@@ -8,7 +8,9 @@ import { toPlatformTitles } from './platform-titles';
 import { mergePlatformTitles } from './platform-versions';
 
 describe('PlatformsCatalogService', () => {
-    const navigate = jest.fn(() => Promise.resolve(true));
+    const navigate = jest.fn<Promise<boolean>, [unknown[], unknown?]>(() =>
+        Promise.resolve(true)
+    );
     const api: {
         getCategories?: jest.Mock;
         getSeriesStreams?: jest.Mock;

@@ -1,11 +1,13 @@
 import {
     categoryLanguageCode,
     displayTitle,
-    isSpanishOrEnglishCategory,
 } from '@iptvnator/shared/interfaces';
 import type { TvCountry } from '../countries/countries-catalog';
 import type { RowLabel } from '../countries/country-rows';
-import { STREAMING_PLATFORMS } from '../platforms/streaming-platforms';
+import {
+    isKeptPlatformCategory,
+    STREAMING_PLATFORMS,
+} from '../platforms/streaming-platforms';
 import { dayOffset } from '../sports/match-days';
 import {
     followedTeamOf,
@@ -314,9 +316,10 @@ export interface TitleHit {
 }
 
 /**
- * The categories a kind keeps (Spanish and English, see
- * `isSpanishOrEnglishCategory`): a catalog that tags none of its categories
- * with a language is not filtered, so it never comes out empty.
+ * The categories a kind keeps (Spanish and English, and the platforms'
+ * multi-language ones, see `isKeptPlatformCategory`): a catalog that tags
+ * none of its categories with a language is not filtered, so it never
+ * comes out empty.
  */
 export function languageFilter(
     names: ReadonlyMap<string, string>,
@@ -328,10 +331,9 @@ export function languageFilter(
     if (!tagged) {
         return () => true;
     }
-    const contentKind = kind === 'movie' ? 'vod' : 'series';
     return (categoryId) => {
         const name = names.get(categoryId);
-        return !!name && isSpanishOrEnglishCategory(name, contentKind);
+        return !!name && isKeptPlatformCategory(name, kind);
     };
 }
 

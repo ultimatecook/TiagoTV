@@ -7,6 +7,7 @@ import {
 } from '@iptvnator/portal/xtream/data-access';
 import { RuntimeCapabilitiesService } from '@iptvnator/services';
 import type { XtreamCategory } from '@iptvnator/shared/interfaces';
+import { CatalogMembership } from '../catalog/catalog-membership';
 import { primaryXtreamSource, xtreamSourceCredentials } from '../xtream-source';
 import {
     catalogQuery,
@@ -37,6 +38,7 @@ const CATEGORY_TYPE: Record<TitleKind, 'vod' | 'series'> = {
 export class SearchTitlesService {
     private readonly dataSource = inject(XTREAM_DATA_SOURCE);
     private readonly runtime = inject(RuntimeCapabilitiesService);
+    private readonly membership = inject(CatalogMembership);
     private readonly playlists = inject(Store).selectSignal(
         selectAllPlaylistsMeta
     );
@@ -69,18 +71,23 @@ export class SearchTitlesService {
         if (!source || !(await this.dataSource.hasContent(source._id, kind))) {
             return null;
         }
+        void this.membership.refresh(kind);
         const [items, names] = await Promise.all([
             this.dataSource.searchContent(source._id, catalogQuery(query), [
                 kind,
             ]),
             this.namesOf(source._id, kind),
         ]);
+        // The platform that lists the title, wherever its row is stored.
         return toTitleHits(
             items as unknown as TitleSearchItem[],
             kind,
             names,
             term
-        );
+        ).map((hit) => {
+            const platform = this.membership.platformOf(kind, hit.xtreamId);
+            return platform ? { ...hit, platform: platform.name } : hit;
+        });
     }
 
     /**

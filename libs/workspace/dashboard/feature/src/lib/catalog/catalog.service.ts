@@ -6,13 +6,19 @@ import { PlatformsCatalogService } from '../platforms/platforms-catalog.service'
 import { xtreamSourceCredentials } from '../xtream-source';
 import { catalogExtras, type CatalogExtras } from './catalog-extras';
 import { CatalogImport } from './catalog-import';
+import { CatalogMembership } from './catalog-membership';
 import { CatalogPlatformLists } from './catalog-platform-lists';
 import { StoredVodCatalog } from './catalog-stored';
-import { storedPlatformLists, withKnownGenres } from './catalog-stored-rows';
+import {
+    storedPlatformLists,
+    withKnownGenres,
+    type StoredVodCatalogData,
+} from './catalog-stored-rows';
 import {
     aggregateCatalog,
     type CatalogKind,
     type CatalogTitle,
+    type PlatformTitleList,
 } from './catalog-titles';
 
 /** The stored copy changes with the app's imports, not by the minute. */
@@ -25,10 +31,10 @@ const OPTIONS = { suppressErrorLog: true };
  */
 export const MIN_ANSWERED_PLATFORMS = 3;
 
-interface StoredTitles {
+interface StoredCatalog {
     readonly playlistId: string;
     readonly lockVersion: number;
-    readonly titles: readonly CatalogTitle[];
+    readonly data: StoredVodCatalogData;
     readonly at: number;
 }
 
@@ -42,7 +48,10 @@ export type CatalogStatus = 'no-source' | 'loading' | 'ready' | 'failed';
  * Xtream views would (`CatalogImport`), and reads it then; the browser
  * build, or a failed import, takes the platforms' own lists
  * (`CatalogPlatformLists`, the platforms taking turns), shown once several
- * platforms answered. A title's page is asked once, for the hero.
+ * platforms answered. The stored rows sit in one category each, so the
+ * platforms' lists, refreshed in the background (`CatalogMembership`),
+ * say which platforms carry them. A title's page is asked once, for the
+ * hero.
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
@@ -50,10 +59,11 @@ export class CatalogService {
     private readonly stored = inject(StoredVodCatalog);
     private readonly importer = inject(CatalogImport);
     private readonly lists = inject(CatalogPlatformLists);
+    private readonly membership = inject(CatalogMembership);
     private readonly api = inject(XtreamApiService);
 
     private readonly storedTitles = signal<
-        ReadonlyMap<CatalogKind, StoredTitles>
+        ReadonlyMap<CatalogKind, StoredCatalog>
     >(new Map());
     /** The kinds read from the platforms' lists: nothing was stored. */
     private readonly fromPlatforms = signal<ReadonlySet<CatalogKind>>(
@@ -192,7 +202,7 @@ export class CatalogService {
         }
         const stored = this.storedTitles().get(kind);
         if (stored?.playlistId === source._id) {
-            return stored.titles;
+            return aggregateCatalog(this.storedLists(kind, stored.data), kind);
         }
         // While the import runs, lists the platform pages already loaded
         // may show, on the same terms; nothing is asked for them.
@@ -224,6 +234,7 @@ export class CatalogService {
     private async read(kind: CatalogKind, source: PlaylistMeta): Promise<void> {
         this.busy.update((kinds) => new Set(kinds).add(kind));
         if (await this.readStoredOnce(kind, source)) {
+            void this.membership.refresh(kind);
             return;
         }
         this.storedTitles.update((state) => {
@@ -240,6 +251,7 @@ export class CatalogService {
                     kind
                 );
                 if (imported && (await this.readStored(kind, source))) {
+                    void this.membership.refresh(kind);
                     return;
                 }
             } finally {
@@ -276,25 +288,35 @@ export class CatalogService {
         const data = await this.stored
             .read(source._id, credentials, kind)
             .catch(() => null);
-        if (!data) {
-            return false;
-        }
-        const lists = withKnownGenres(storedPlatformLists(data, kind), (list) =>
-            this.platforms.titlesOf(list.platform.id)
-        );
-        const titles = aggregateCatalog(lists, kind);
-        if (titles.length === 0) {
+        if (
+            !data ||
+            this.storedLists(kind, data).every((list) => !list.titles.length)
+        ) {
             return false;
         }
         this.storedTitles.update((state) =>
             new Map(state).set(kind, {
                 playlistId: source._id,
                 lockVersion: this.stored.version(),
-                titles,
+                data,
                 at: Date.now(),
             })
         );
         return true;
+    }
+
+    /**
+     * The stored titles per platform: in the platforms their own lists
+     * file them in too, with the genres the platform pages already know.
+     */
+    private storedLists(
+        kind: CatalogKind,
+        data: StoredVodCatalogData
+    ): PlatformTitleList[] {
+        return withKnownGenres(
+            storedPlatformLists(data, kind, this.membership.members(kind)),
+            (list) => this.platforms.titlesOf(list.platform.id)
+        );
     }
 
     private isFresh(kind: CatalogKind, playlistId: string): boolean {

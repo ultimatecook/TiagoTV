@@ -218,6 +218,10 @@ describe('Series and Películas on a first run', () => {
         // The Home's hero reads the stored copy alone: it does not wait.
         await expect(service.loadStored('series')).resolves.toBeUndefined();
         expect(service.titles('series')).toBeNull();
+        // Two requests for the whole catalog, none per platform category:
+        // the platforms' lists (see CatalogMembership) wait for it.
+        expect(platforms.categoryTitles).not.toHaveBeenCalled();
+        expect(platforms.loadShelves).not.toHaveBeenCalled();
 
         finish();
         await Promise.all([page, home]);
@@ -234,9 +238,6 @@ describe('Series and Películas on a first run', () => {
             'series'
         );
         expect(statuses.get('series')).toBe('completed');
-        // Two requests for the whole catalog, none per platform category.
-        expect(platforms.categoryTitles).not.toHaveBeenCalled();
-        expect(platforms.loadShelves).not.toHaveBeenCalled();
 
         const titles = service.titles('series');
         expect(service.status('series')).toBe('ready');
@@ -310,9 +311,11 @@ describe('Series and Películas on a first run', () => {
             new Set(['netflix', 'prime-video', 'hbo-max'])
         );
         // Netflix is the newest, yet it leads only the first turn.
-        expect(
-            seen[3]?.slice(0, 3).map((title) => title.platform.id)
-        ).toEqual(['netflix', 'prime-video', 'hbo-max']);
+        expect(seen[3]?.slice(0, 3).map((title) => title.platform.id)).toEqual([
+            'netflix',
+            'prime-video',
+            'hbo-max',
+        ]);
         expect(platformsIn(service.titles('series')).size).toBe(5);
         expect(service.status('series')).toBe('ready');
     });
