@@ -18,16 +18,16 @@ import type { XtreamCategory } from '../xtream/client';
  *
  *   - the kept (Spanish and English) categories that hold event channels
  *     ("Live | …", "Next | …") are asked on every refresh, first;
- *   - the kept competition categories without any ("|ES| ✪ DAZN LA LIGA")
- *     reuse their channel list for a day;
+ *   - the kept competition categories without any reuse their channel
+ *     list for a day;
  *   - other languages' categories are read for their fixtures only (a
- *     LaLiga match only "FR| ✪ DAZN LALIGA ES" names), when their name or
+ *     LaLiga match that only a French feed names), when their name or
  *     what they named before ties them to a competition the viewer's
  *     channels show, and the rest of their event categories are looked
  *     through every few hours.
  *
- * Nothing is capped by count: 0.2.1 took the first 30 and lost "|ES| ✪
- * DAZN SERIE A" and "|LAT| ✪ ARGENTINA LIGA PROFESIONAL".
+ * Nothing is capped by count: 0.2.1 took the first 30, event categories
+ * first, and lost competitions' categories that held matches or channels.
  */
 const EVENT_CATEGORY = /\b(events?|eventos?|ppv)\b/i;
 const HOUR = 3600 * 1000;

@@ -144,6 +144,8 @@ export interface SportsLoadOptions {
     readonly onPartial?: (data: SportsData) => void;
     /** Other languages' event categories looked through after the load. */
     readonly onDiscovered?: (data: SportsData) => void;
+    /** The clock (tools/sports-snapshot-check.mjs replays a snapshot's day). */
+    readonly now?: () => number;
 }
 
 export async function loadSports(
@@ -153,6 +155,8 @@ export async function loadSports(
 ): Promise<SportsData> {
     const { notes } = options;
     const priority = options.priority ?? SPORTS;
+    const clock = options.now ?? Date.now;
+    const build = (complete: boolean, stats: SportsStats) => buildSportsData(categories, streams(), complete, stats, new Date(clock()));
     const kept = new Set(categories.filter(isKeptLive).map((category) => String(category.category_id)));
     const fresh = new Map<string, SportsCatalogStream[]>();
     let requested = 0;
@@ -167,7 +171,7 @@ export async function loadSports(
                     (list) => {
                         const streams = list.map(compactStream);
                         fresh.set(id, streams);
-                        notes.record(id, streams, kept.has(id), Date.now());
+                        notes.record(id, streams, kept.has(id), clock());
                     },
                     (error) => {
                         failed++;
@@ -176,7 +180,7 @@ export async function loadSports(
                 );
             })
         );
-    const plan = planKept(categories, notes, Date.now());
+    const plan = planKept(categories, notes, clock());
     const streams = () => {
         const all: SportsCatalogStream[] = [];
         plan.stored.forEach((list, id) => {
@@ -193,23 +197,23 @@ export async function loadSports(
     if (fresh.size === 0 && plan.stored.size === 0 && plan.others.length === 0 && failed > 0) {
         throw firstError || new Error('no sports categories');
     }
-    options.onPartial?.(buildSportsData(categories, streams(), false, stats(0)));
+    options.onPartial?.(build(false, stats(0)));
     await fetchAll(plan.others, priority);
-    const followed = sectionsWithChannels(buildSportsData(categories, streams(), false, stats(0)).catalog);
-    const foreign = planForeign(categories, notes, followed, Date.now());
+    const followed = sectionsWithChannels(build(false, stats(0)).catalog);
+    const foreign = planForeign(categories, notes, followed, clock());
     await fetchAll(foreign.fixtures, priority);
     notes.save();
     if (fresh.size === 0 && plan.stored.size === 0) {
         throw firstError || new Error('no sports categories');
     }
-    const data = buildSportsData(categories, streams(), true, stats(foreign.fixtures.length));
+    const data = build(true, stats(foreign.fixtures.length));
     if (foreign.discover.length > 0) {
         // Looked through in the background, behind the catalog.
         void fetchAll(foreign.discover, PREFETCH).then(() => {
             notes.save();
             const found = foreign.discover.some((id) => (notes.get(id)?.named ?? []).some((section) => followed.has(section)));
             if (found) {
-                options.onDiscovered?.(buildSportsData(categories, streams(), true, stats(foreign.fixtures.length + foreign.discover.length)));
+                options.onDiscovered?.(build(true, stats(foreign.fixtures.length + foreign.discover.length)));
             }
         });
     }

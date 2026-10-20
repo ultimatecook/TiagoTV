@@ -39,6 +39,8 @@ import type { Page } from './shell';
 const REFRESH_MS = 1500;
 /** The first titles (kept from the last launch, or the first list) show at once. */
 const FIRST_MS = 120;
+/** A list past its time is asked again at most this often (it may keep failing). */
+const RETRY_STALE_MS = 10 * 60 * 1000;
 
 export class HomePage implements Page {
     private readonly page = new VPage('page page--home', 130);
@@ -55,6 +57,7 @@ export class HomePage implements Page {
     private visible = false;
     private dirty = false;
     private started = false;
+    private refreshedAt = Date.now();
 
     constructor(private readonly app: App) {
         this.hero = new Hero('hero--home', () => this.page.scrolled < 200);
@@ -120,8 +123,14 @@ export class HomePage implements Page {
         if (!this.started) {
             this.started = true;
             this.startLoads();
-        } else if (!this.app.sports.fresh() && !this.app.sports.loading) {
-            this.loadSports();
+        } else {
+            if (!this.app.sports.fresh() && !this.app.sports.loading) {
+                this.loadSports();
+            }
+            if (this.app.store.refreshDue() && Date.now() - this.refreshedAt > RETRY_STALE_MS) {
+                this.refreshedAt = Date.now();
+                void this.app.store.load(['movie', 'series'], undefined, PREFETCH);
+            }
         }
         this.renderRecent();
         if (this.dirty) {
@@ -154,8 +163,8 @@ export class HomePage implements Page {
             (error) => this.platforms.setStatus(requestErrorText(error), () => this.startLoads())
         );
         void store.load(['movie', 'series'], undefined, PREFETCH).then(
-            () => this.loaded(),
-            () => this.loaded()
+            () => this.loaded(null),
+            (error) => this.loaded(error)
         );
         this.loadSports();
     }
@@ -176,15 +185,18 @@ export class HomePage implements Page {
     }
 
     /** Everything settled: a row still empty says why, and offers a retry. */
-    private loaded(): void {
+    private loaded(failure: unknown): void {
         const store = this.app.store;
         const retry = () => {
             this.top10.setStatus(t('WORKSPACE.CATALOG.LOADING'));
             this.series.say(t('WORKSPACE.CATALOG.LOADING'));
-            void store.load(['movie', 'series'], undefined, PREFETCH).then(() => this.loaded(), () => this.loaded());
+            void store.load(['movie', 'series'], undefined, PREFETCH).then(
+                () => this.loaded(null),
+                (error) => this.loaded(error)
+            );
         };
         const why = (kind: 'movie' | 'series') => {
-            const error = store.errorOf(kind);
+            const error = failure ?? store.errorOf(kind);
             return error
                 ? `${requestErrorText(error)} ${t('WORKSPACE.CATALOG.FAILED')}`
                 : t(kind === 'movie' ? 'WORKSPACE.CATALOG.EMPTY_MOVIES' : 'WORKSPACE.CATALOG.EMPTY_SERIES');

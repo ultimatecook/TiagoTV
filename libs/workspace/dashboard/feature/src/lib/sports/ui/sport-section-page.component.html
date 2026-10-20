@@ -5,6 +5,8 @@
             class="page__stage"
             [section]="section"
             [cards]="cards()"
+            [feeds]="feeds()"
+            [match]="focus()"
             [liveCount]="liveMatches().length"
             (more)="showMore()"
         />
@@ -15,7 +17,7 @@
                     <lib-featured-match
                         [match]="match"
                         [section]="section"
-                        (watch)="watch($event)"
+                        (watch)="watch($event, match)"
                     />
                 }
                 <div class="page__grid" [class.page__grid--table]="showTable()">
@@ -52,7 +54,7 @@
                                 @for (match of rest(); track match.key) {
                                     <lib-sport-match-row
                                         [match]="match"
-                                        (watch)="watch($event)"
+                                        (watch)="watch($event, match)"
                                     />
                                 }
                             </div>

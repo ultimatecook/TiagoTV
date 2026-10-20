@@ -1,6 +1,7 @@
 import {
     eventCategoryIds,
     fixtureCategoryIds,
+    listingCategoryIds,
     reloadedAll,
     reloadEventCategories,
     streamsByCategory,
@@ -48,6 +49,8 @@ export interface ReloadOptions {
     readonly sections: () => ReadonlySet<SportSectionId>;
     /** A match only other languages' feeds name is on now. */
     readonly foreignMatchOn: boolean;
+    /** The competitions with a match on now (see listingCategoryIds). */
+    readonly liveSections?: ReadonlySet<SportSectionId>;
     readonly fetchCategory: (
         categoryId: string
     ) => Promise<readonly SportsCatalogStream[]>;
@@ -56,7 +59,8 @@ export interface ReloadOptions {
 /**
  * The event categories of a playlist's live catalog, reloaded from the
  * panel one at a time (see reloadEventCategories): the kept (Spanish and
- * English) ones every FRESH_MS, then other languages' fixture categories.
+ * English) ones every FRESH_MS, with the numbered listings of the
+ * competitions on now, then other languages' fixture categories.
  */
 export class EventRefresh {
     private held: Held | null = null;
@@ -93,8 +97,13 @@ export class EventRefresh {
         const fixtureIds = fixturesDue
             ? fixtureCategoryIds(stored, options.sections(), previous)
             : [];
+        const eventIds = eventCategoryIds(stored);
+        const listingIds = listingCategoryIds(
+            stored,
+            options.liveSections ?? new Set()
+        ).filter((id) => !eventIds.includes(id));
         const streams = await reloadEventCategories(
-            eventCategoryIds(stored).concat(fixtureIds),
+            eventIds.concat(listingIds, fixtureIds),
             options.fetchCategory,
             previous,
             GAP_MS

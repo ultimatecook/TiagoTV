@@ -99,6 +99,11 @@ export class EmbeddedMpvPlayerComponent implements OnDestroy {
 
     readonly timeUpdate = output<PlayerTimeUpdate>();
     readonly playbackEnded = output<void>();
+    /**
+     * The stream failed, or a live one ended with no reload left: the
+     * host may move on (a match's page tries its next signal).
+     */
+    readonly playbackLost = output<void>();
     readonly previousEpisodeRequested = output<void>();
     readonly nextEpisodeRequested = output<void>();
     /** Clean recording stop — the host answers with EPG stop enrichment. */
@@ -357,6 +362,7 @@ export class EmbeddedMpvPlayerComponent implements OnDestroy {
     private mutedVolume = 0;
     private recordingMessageTimer: number | null = null;
     private lastEndedSessionId: string | null = null;
+    private lost = false;
     private readonly recordingTick = signal(Date.now());
     private readonly recordingMessage = signal<string | null>(null);
     private readonly legacyInteractions: EmbeddedMpvLegacyInteractions;
@@ -591,6 +597,16 @@ export class EmbeddedMpvPlayerComponent implements OnDestroy {
 
             this.lastEndedSessionId = session.id;
             this.playbackEnded.emit();
+        });
+
+        effect(() => {
+            const lost =
+                (this.isErrored() || this.isLiveEnded()) &&
+                !this.isReconnecting();
+            if (lost && !this.lost) {
+                untracked(() => this.playbackLost.emit());
+            }
+            this.lost = lost;
         });
 
         effect((onCleanup) => {

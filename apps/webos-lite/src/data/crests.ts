@@ -90,6 +90,11 @@ export class CrestBook {
         });
     }
 
+    /** Crests kept from earlier lookups (this launch's or before). */
+    keptCount(): number {
+        return Object.keys(this.book).filter((key) => !!this.book[key].u).length;
+    }
+
     private key(team: string, section: SportSectionId | null): string {
         return `${section ?? '-'}:${teamKey(team)}`;
     }
@@ -151,7 +156,11 @@ export class CrestBook {
                 this.failedNow++;
                 continue;
             }
-            const row = rowsOf(table).find((entry) => isSameTeam(teamKey(entry.team), wanted));
+            // The same name first: "Paris FC" is not "Paris Saint-Germain".
+            const rows = rowsOf(table);
+            const row =
+                rows.find((entry) => teamKey(entry.team) === wanted) ??
+                rows.find((entry) => isSameTeam(teamKey(entry.team), wanted));
             if (row && row.badge) {
                 this.stats.espn++;
                 return row.badge.replace(ESPN_SIZE, '$1w=128&h=128');

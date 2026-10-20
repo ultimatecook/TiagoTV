@@ -171,6 +171,17 @@ export async function sportsSuite(h) {
     }));
     check('Deportes: Tus equipos', hub.teams.join(',') === "Real Madrid,Newell's Old Boys,West Ham United", hub.teams.join(', '));
     check('Deportes: En vivo ahora', hub.live >= 3, String(hub.live));
+    // The crests come from ESPN's tables (fixtures here): every followed team's, and the live cards'.
+    await page
+        .waitForFunction(() => document.querySelectorAll('.team-pill .crest--image').length === 3 && document.querySelectorAll('.match-card .crest--image').length >= 6, null, { timeout: 10000 })
+        .catch(() => undefined);
+    const crests = await page.evaluate(() => ({
+        teams: document.querySelectorAll('.team-pill .crest--image').length,
+        cards: document.querySelectorAll('.match-card .crest--image').length,
+        sides: document.querySelectorAll('.match-card .crest').length,
+    }));
+    check('Tus equipos: their crests', crests.teams === 3, `${crests.teams} of 3`);
+    check('En vivo ahora: the teams\' crests', crests.cards >= 6, `${crests.cards} of ${crests.sides}`);
     await shot('16-deportes');
     await h.pressUntil('ArrowDown', /match-card/, 4);
     await shot('17-deportes-envivo');
@@ -265,6 +276,8 @@ export async function settingsSuite(h) {
     await press('Enter');
     check('Normal is stored', (await page.evaluate(() => localStorage.getItem('tiagotv.lite.fluidez'))) === 'normal');
     await h.pressUntil('ArrowLeft', /rail__item/, 4);
+    await press('ArrowDown');
+    check('Diagnóstico after Reproducción', /Cola de cargas/.test(await page.textContent('.settings__panel')));
     await press('ArrowDown');
     await shot('23-ajustes-acerca');
     check('Acerca de: the version', /TiagoTV liviano/.test(await page.textContent('.settings__panel')));

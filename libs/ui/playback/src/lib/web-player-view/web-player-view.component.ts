@@ -170,6 +170,11 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
     readonly alternativeSourceRequested = output<string>();
     readonly sourceCheckRequested = output<string>();
     readonly playbackFailed = output<PlaybackDiagnosticCode>();
+    /**
+     * Embedded MPV lost the stream (it failed, or a live one ended with no
+     * reload left). Only the web engines raise `playbackFailed`.
+     */
+    readonly playbackLost = output<void>();
     readonly playbackEnded = output<void>();
     readonly previousEpisodeRequested = output<void>();
     readonly nextEpisodeRequested = output<void>();

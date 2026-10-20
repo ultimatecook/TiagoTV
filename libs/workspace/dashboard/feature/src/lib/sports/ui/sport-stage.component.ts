@@ -20,10 +20,14 @@ import { WebPlayerViewComponent } from '@iptvnator/ui/playback';
 import { CountryTvControls } from '../../countries/country-tv-controls';
 import { OVERLAY_IDLE_MS } from '../../countries/country-tv-idle';
 import { liveKeyAction, onLivePage } from '../../countries/country-tv-keys';
+import { nextFeed, type MatchFeed } from '../match-feeds';
 import type { SignalCard } from '../signal-cards';
+import { SportFeedFallback } from '../sport-feed-fallback';
 import type { SportSection } from '../sport-sections';
+import type { SportChannel, SportMatch } from '../sports-catalog';
 import { SportTvGuide } from '../sport-tv-guide';
 import { SportTvPlayback } from '../sport-tv-playback';
+import { injectFeedLanguage } from './feed-language';
 import { SportSignalCardComponent } from './sport-signal-card.component';
 
 /** In full screen, the overlay steps aside after this long without a move. */
@@ -37,6 +41,11 @@ const IDLE_MS = OVERLAY_IDLE_MS;
  * row of signals, one of which plays. The controls (and Space/K, M, F
  * while the stage is in view) drive the player the way "En vivo" does
  * (`CountryTvControls`): the player's own bar stays hidden.
+ *
+ * With a match in focus, the row is that match's signals in every
+ * language ("Señales de este partido", `feeds`), the competition's
+ * channels a click away; when the playing one fails, the next is offered
+ * ("Probar otra señal"), or played at once (see SportFeedFallback).
  */
 @Component({
     selector: 'lib-sport-stage',
@@ -61,14 +70,39 @@ export class SportStageComponent {
 
     readonly section = input.required<SportSection>();
     readonly cards = input<readonly SignalCard[]>([]);
+    /** The signals of the match in focus (see `feedCards`). */
+    readonly feeds = input<readonly SignalCard[]>([]);
+    /** The match in focus, if any. */
+    readonly match = input<SportMatch | null>(null);
     readonly liveCount = input(0);
     /** "Matches and table": the page below. */
     readonly more = output<void>();
 
-    /** The signal on the stage, when it is one of the row's. */
+    private readonly fallback = inject(SportFeedFallback);
+    private readonly feedLanguage = injectFeedLanguage();
+    /** The competition's channels instead of the match's signals. */
+    readonly allChannels = linkedSignal({
+        source: () => this.match()?.key ?? null,
+        computation: () => false,
+    });
+    /** The row lists the match's signals: it has more than one. */
+    readonly feedsView = computed(
+        () => this.feeds().length > 1 && !this.allChannels()
+    );
+    readonly rowCards = computed(() =>
+        this.feedsView() ? this.feeds() : this.cards()
+    );
+    private readonly feedList = computed(() =>
+        this.feeds()
+            .map((card) => card.feed)
+            .filter((feed): feed is MatchFeed => !!feed)
+    );
+
+    /** The signal on the stage, when it is one of the rows'. */
     readonly card = computed(() => {
         const streamId = this.tv.selection()?.streamId;
-        return this.cards().find((card) => card.channel.streamId === streamId);
+        const on = (card: SignalCard) => card.channel.streamId === streamId;
+        return this.feeds().find(on) ?? this.cards().find(on);
     });
     readonly title = computed(
         () =>
@@ -76,11 +110,35 @@ export class SportStageComponent {
             this.tv.selection()?.title ??
             this.section().title
     );
-    /** The match it carries, else the guide's programme on now. */
-    readonly programme = computed(
-        () =>
-            this.card()?.match?.title ?? this.guide.nowNext()?.now?.title ?? ''
-    );
+    /** The match it carries (and its language), else the guide's programme. */
+    readonly programme = computed(() => {
+        const card = this.card();
+        const match = card?.match?.title;
+        const language = this.feedLanguage(card?.feed);
+        return match
+            ? [match, language].filter(Boolean).join(' · ')
+            : (this.guide.nowNext()?.now?.title ?? '');
+    });
+    /**
+     * The match's playing signal failed: the next one to try, or null
+     * when every other one failed too.
+     */
+    readonly failure = computed(() => {
+        const streamId = this.tv.selection()?.streamId ?? null;
+        const feeds = this.feedList();
+        return streamId !== null &&
+            feeds.length > 0 &&
+            this.fallback.failed() === streamId
+            ? { next: nextFeed(feeds, streamId, this.fallback.broken()) }
+            : null;
+    });
+    /** The signal played on its own after one failed, while it plays. */
+    readonly switched = computed(() => {
+        const feed = this.fallback.switched();
+        return feed && feed.channel.streamId === this.tv.selection()?.streamId
+            ? this.feedText(feed)
+            : '';
+    });
     readonly progress = computed(
         () => this.guide.nowNext()?.now?.progress ?? null
     );
@@ -150,17 +208,68 @@ export class SportStageComponent {
     }
 
     play(card: SignalCard): void {
-        this.tv.play(card.channel);
+        this.playChannel(card.channel, true);
     }
 
     /** Play when nothing plays yet; else pause or play the picture. */
     playPause(): void {
         const selection = this.tv.selection();
         if (!this.tv.playback() && selection) {
-            this.tv.play(selection);
+            this.playChannel(selection, false);
         } else {
             this.controls.togglePlay();
         }
+    }
+
+    /** "Probar otra señal": the next signal of the match. */
+    tryNext(): void {
+        const next = this.failure()?.next;
+        if (next) {
+            this.playChannel(next.channel, true);
+        }
+    }
+
+    /**
+     * The player gave up on the stream (its diagnostic, or Embedded MPV's
+     * lost stream): the match's next signal plays, when the viewer had
+     * not picked this one; else it is offered.
+     */
+    playbackFailed(): void {
+        const selection = this.tv.selection();
+        if (!selection) {
+            return;
+        }
+        const next = this.fallback.fail(selection.streamId, this.feedList());
+        if (next) {
+            this.playChannel(next.channel, false);
+        }
+    }
+
+    /** The picture moves: a stream that had failed plays again. */
+    timeUpdate(event: { currentTime: number; playing?: boolean }): void {
+        const streamId = this.tv.selection()?.streamId;
+        if (
+            streamId !== undefined &&
+            event.currentTime > 0 &&
+            event.playing !== false
+        ) {
+            this.fallback.recovered(streamId);
+        }
+    }
+
+    /** "Inglés (UK) · TNT Sports 1". */
+    feedText(feed: MatchFeed): string {
+        return `${this.feedLanguage(feed)} · ${feed.name}`;
+    }
+
+    /** A signal of the match that failed while it was in focus. */
+    isBroken(card: SignalCard): boolean {
+        return !!card.feed && this.fallback.broken().has(card.channel.streamId);
+    }
+
+    private playChannel(channel: SportChannel, explicit: boolean): void {
+        this.fallback.played(channel.streamId, explicit);
+        this.tv.play(channel);
     }
 
     /** A move over the stage brings the overlay back for a while. */

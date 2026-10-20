@@ -384,11 +384,120 @@
 }
 
 .stage__row-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
     color: var(--tv-text-2);
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+}
+
+.stage__row-count {
+    color: var(--tv-text-3);
+    letter-spacing: 0.02em;
+    text-transform: none;
+}
+
+.stage__row-actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 20px;
+}
+
+// A match's signal failed: what to try next, in glass over the picture.
+.stage__fallback {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    align-self: flex-start;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 10px 10px 10px 14px;
+    border: 1px solid color-mix(in srgb, var(--tv-live-red) 55%, transparent);
+    border-radius: 14px;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.14) 0%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(20px) saturate(160%);
+    color: var(--tv-text);
+    pointer-events: auto;
+}
+
+.stage__fallback--info {
+    border-color: rgba(255, 255, 255, 0.2);
+    padding-right: 16px;
+}
+
+.stage__fallback-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    color: var(--tv-live-red);
+    font-size: 20px;
+
+    .stage__fallback--info & {
+        color: var(--tv-text-2);
+    }
+}
+
+.stage__fallback-text {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.stage__fallback-try {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    height: 36px;
+    box-sizing: border-box;
+    padding: 0 14px 0 10px;
+    border: 0;
+    border-radius: 10px;
+    background: #fff;
+    color: #0b0b09;
+    font: inherit;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: background-color 160ms ease;
+
+    mat-icon {
+        flex: none;
+        width: 18px;
+        height: 18px;
+        font-size: 18px;
+    }
+
+    &:hover {
+        background: #e9e6df;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 2px);
+    }
+}
+
+.stage__fallback-action {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.stage__fallback-feed {
+    min-width: 0;
+    overflow: hidden;
+    color: #3c3a35;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .stage__more {

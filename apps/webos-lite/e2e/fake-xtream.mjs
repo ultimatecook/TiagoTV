@@ -55,10 +55,40 @@ function art(name, width, height) {
 
 const hueOf = (text) => [...String(text)].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360;
 
+/** Prime Video's series (2350), padded to a provider-sized list. */
+const BIG_CATEGORY = '2350';
+
+function bigSeries(base) {
+    const plot = 'Una serie de relleno del panel local, para probar una lista enorme como las de los proveedores. '.repeat(18);
+    const cast = 'Actriz Uno, Actor Dos, Actriz Tres, Actor Cuatro, Actriz Cinco, Actor Seis';
+    const old = Math.floor(Date.now() / 1000) - 400 * 86400;
+    return Array.from({ length: 1500 }, (_, index) => ({
+        num: 80000 + index,
+        series_id: 80000 + index,
+        name: `RELLENO ${String(index + 1).padStart(4, '0')} (2015)`,
+        cover: `${base}/poster/RELLENO%20${index + 1}.svg`,
+        plot,
+        cast,
+        director: 'Directora de prueba',
+        genre: 'Drama',
+        releaseDate: '2015-01-01',
+        last_modified: String(old - index * 3600),
+        rating: '6.1',
+        backdrop_path: [`${base}/backdrop/RELLENO%20${index + 1}.svg`, `${base}/backdrop/RELLENO%20${index + 1}b.svg`],
+        youtube_trailer: '',
+        episode_run_time: '45',
+        category_id: BIG_CATEGORY,
+        category_ids: [Number(BIG_CATEGORY)],
+        tmdb: String(900000 + index),
+    }));
+}
+
 export function startFakeXtream({ port = 0, media = null, segment = null } = {}) {
-    const stats = { open: 0, maxOpen: 0, streams: [], api: [], refused: 0, segments: 0 };
+    const stats = { open: 0, maxOpen: 0, streams: [], api: [], calls: [], refused: 0, segments: 0 };
     let busy = false;
     let stall = false;
+    let big = false;
+    const slow = new Map();
     let base = '';
     const logo = (name) => `${base}/logo/${encodeURIComponent(name)}.svg`;
     const live = () =>
@@ -82,6 +112,7 @@ export function startFakeXtream({ port = 0, media = null, segment = null } = {})
     function api(query) {
         const action = query.get('action') ?? '';
         stats.api.push(action || 'account');
+        stats.calls.push({ action: action || 'account', category: query.get('category_id'), at: Date.now() });
         if (query.get('username') !== ACCOUNT.username || query.get('password') !== ACCOUNT.password) {
             return { user_info: { auth: 0 } };
         }
@@ -113,8 +144,10 @@ export function startFakeXtream({ port = 0, media = null, segment = null } = {})
                 return byCategory(live());
             case 'get_vod_streams':
                 return category ? catalog.vod[category] ?? [] : Object.values(catalog.vod).flat();
-            case 'get_series':
-                return category ? catalog.series[category] ?? [] : Object.values(catalog.series).flat();
+            case 'get_series': {
+                const list = category ? catalog.series[category] ?? [] : Object.values(catalog.series).flat();
+                return big && category === BIG_CATEGORY ? list.concat(bigSeries(base)) : list;
+            }
             case 'get_vod_info': {
                 const id = Number(query.get('vod_id'));
                 const item = Object.values(catalog.vod).flat().find((entry) => entry.stream_id === id);
@@ -214,7 +247,20 @@ export function startFakeXtream({ port = 0, media = null, segment = null } = {})
         const url = new URL(req.url, 'http://local');
         const path = url.pathname;
         if (path === '/player_api.php') {
-            send(res, 200, api(url.searchParams));
+            const body = api(url.searchParams);
+            const action = url.searchParams.get('action') ?? '';
+            const delay = /^get_(vod_streams|series)$/.test(action)
+                ? slow.get(url.searchParams.get('category_id')) ?? slow.get('all') ?? 0
+                : slow.get(url.searchParams.get('category_id')) ?? 0;
+            if (delay > 0) {
+                setTimeout(() => {
+                    if (!res.destroyed) {
+                        send(res, 200, body);
+                    }
+                }, delay);
+            } else {
+                send(res, 200, body);
+            }
         } else if (/^\/(live|movie|series)\//.test(path)) {
             stream(req, res, path);
         } else if (path.startsWith('/hls/')) {
@@ -234,13 +280,25 @@ export function startFakeXtream({ port = 0, media = null, segment = null } = {})
                   : svg(name, 400, 200, hueOf(name));
             send(res, 200, body, 'image/svg+xml');
         } else if (path === '/__stats') {
-            send(res, 200, { ...stats, busy, stall });
+            send(res, 200, { ...stats, busy, stall, big });
         } else if (path === '/__busy') {
             busy = url.searchParams.get('on') === '1';
             send(res, 200, { busy });
         } else if (path === '/__stall') {
             stall = url.searchParams.get('on') === '1';
             send(res, 200, { stall });
+        } else if (path === '/__slow') {
+            const ms = Number(url.searchParams.get('ms') ?? 0);
+            const id = url.searchParams.get('category') ?? 'all';
+            if (ms > 0) {
+                slow.set(id, ms);
+            } else {
+                slow.delete(id);
+            }
+            send(res, 200, { slow: [...slow.entries()] });
+        } else if (path === '/__big') {
+            big = url.searchParams.get('on') === '1';
+            send(res, 200, { big });
         } else {
             send(res, 404, 'Not found', 'text/plain');
         }

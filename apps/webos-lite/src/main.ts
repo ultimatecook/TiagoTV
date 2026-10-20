@@ -4,6 +4,7 @@ import { imageQueueSize } from './core/image-queue';
 import { actionOf, isDirection, KEY } from './core/keys';
 import { nav } from './core/nav';
 import { redact } from './core/redact';
+import { requestLog } from './core/request-log';
 import { kickRequestQueue, requestQueueSize, requestQueueState } from './core/request-queue';
 import { ScreenStack } from './core/screens';
 import { activeTimers } from './core/timers';
@@ -164,14 +165,15 @@ function boot(): void {
         }
     });
 
-    // For ares-inspect and the smoke run: what runs in the background, and
-    // how the latest streams opened (labels only, never a URL).
+    // For ares-inspect and the smoke run: what runs in the background, how
+    // the latest streams opened and requests went (labels only, never a URL).
     (window as unknown as { __tiagotv: object }).__tiagotv = {
         timers: activeTimers,
         activity,
         images: imageQueueSize,
         requests: requestQueueSize,
         queue: () => requestQueueState(),
+        log: () => requestLog().slice(),
         // The smoke run shortens the provider's timeouts to test them.
         setTimeouts: (change: Partial<typeof TIMEOUTS>) => Object.assign(TIMEOUTS, change),
         attempts: () => engine.attempts.slice(),

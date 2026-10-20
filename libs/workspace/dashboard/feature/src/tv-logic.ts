@@ -152,6 +152,13 @@ export {
     sectionForCompetition,
 } from './lib/sports/sport-sections';
 export { sectionsWithChannels } from './lib/sports/match-channels';
+// A match's signals in every language (`SportMatch.feeds`), and the one to
+// try when the playing signal fails.
+export {
+    nextFeed,
+    type FeedQuality,
+    type MatchFeed,
+} from './lib/sports/match-feeds';
 export { isSameTeam, teamKey } from './lib/sports/team-names';
 export { TeamCrestResolver } from './lib/sports/team-crests';
 export { SportsApiClient } from './lib/sports/sports-api-client';

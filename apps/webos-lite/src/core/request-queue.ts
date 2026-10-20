@@ -30,13 +30,14 @@ export interface JobOptions {
     readonly priority?: Priority;
     /** What runs, for Diagnóstico ("series · ES NETFLIX"), never a URL. */
     readonly label?: string;
-    readonly limitMs?: number;
+    /** Read when the job starts (the smoke run shortens the timeouts). */
+    readonly limitMs?: number | (() => number);
 }
 
 interface Job {
     priority: Priority;
     readonly label: string;
-    readonly limitMs: number;
+    readonly limitMs: number | (() => number);
     readonly run: () => Promise<unknown>;
     readonly resolve: (value: unknown) => void;
     readonly reject: (error: unknown) => void;
@@ -71,10 +72,13 @@ function pump(): void {
         }
         pump();
     };
-    timer = window.setTimeout(() => {
-        watchdogs++;
-        settle(false, new RequestError('timeout'));
-    }, job.limitMs);
+    timer = window.setTimeout(
+        () => {
+            watchdogs++;
+            settle(false, new RequestError('timeout'));
+        },
+        typeof job.limitMs === 'function' ? job.limitMs() : job.limitMs
+    );
     let promise: Promise<unknown>;
     try {
         promise = job.run();

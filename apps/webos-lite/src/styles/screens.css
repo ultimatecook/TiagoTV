@@ -264,3 +264,111 @@
     font-size: 26px;
     line-height: 1.45;
 }
+
+/* Ajustes → Diagnóstico: a photo of what the TV loads (no URLs, no account). */
+.diag {
+    position: relative;
+    height: 900px;
+    overflow: hidden;
+}
+
+.diag__actions {
+    margin-bottom: 26px;
+}
+
+.diag__actions .button {
+    margin-right: 18px;
+}
+
+.diag__card {
+    margin-bottom: 30px;
+}
+
+.diag__row {
+    display: flex;
+    padding: 11px 30px;
+    border-top: 2px solid var(--separator);
+    font-size: 22px;
+    line-height: 1.35;
+}
+
+.diag__row:first-child {
+    border-top: 0;
+}
+
+.diag__key {
+    flex: none;
+    width: 290px;
+    color: var(--meta);
+}
+
+.diag__value {
+    flex: 1;
+    color: var(--text);
+}
+
+.diag__heading {
+    margin: 0 0 10px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.diag__entry {
+    display: flex;
+    height: 40px;
+    line-height: 40px;
+    padding: 0 18px;
+    border-radius: 12px;
+    color: var(--text-2);
+    font-size: 21px;
+    white-space: nowrap;
+}
+
+.diag__entry.focused {
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
+    color: var(--text);
+    -webkit-transform: none;
+    transform: none;
+}
+
+.diag__entry.is-error .diag__result {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.diag__at {
+    flex: none;
+    width: 130px;
+    color: var(--meta);
+}
+
+.diag__what {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.diag__ms,
+.diag__size {
+    flex: none;
+    width: 120px;
+    text-align: right;
+}
+
+.diag__result {
+    flex: none;
+    width: 140px;
+    padding-left: 24px;
+}
+
+.diag__empty {
+    color: var(--meta);
+    font-size: 22px;
+}
+
+/* "Reintentar" after a row's or a block's failure. */
+.status__retry {
+    margin-left: 24px;
+    vertical-align: middle;
+}

@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
-import { espnStandings } from './fake-espn.mjs';
+import { crestSvg, espnStandings, slugOf } from './fake-espn.mjs';
 import { startFakeXtream } from './fake-xtream.mjs';
 
 const SHIM = readFileSync(fileURLToPath(new URL('./chrome53-shim.js', import.meta.url)), 'utf8');
@@ -58,13 +58,19 @@ export async function openHarness({ shots, headed = false }) {
         }
     });
     await page.addInitScript(SHIM);
-    // Nothing leaves the machine: ESPN's standings come from a fixture,
-    // every other outside request (the player cut-outs) is refused.
-    await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) =>
-        route.request().url().includes('site.api.espn.com')
-            ? route.fulfill({ contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(espnStandings()) })
-            : route.abort()
-    );
+    // Nothing leaves the machine: ESPN's standings and its team logos (the
+    // crests) come from fixtures; every other outside request (TheSportsDB,
+    // the player cut-outs) is refused, as an unreachable host would be.
+    await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) => {
+        const url = route.request().url();
+        if (url.includes('site.api.espn.com')) {
+            return route.fulfill({ contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(espnStandings(slugOf(url))) });
+        }
+        if (url.includes('a.espncdn.com')) {
+            return route.fulfill({ contentType: 'image/svg+xml', body: crestSvg(url) });
+        }
+        return route.abort();
+    });
 
     const results = [];
     const check = (name, ok, detail = '') => {

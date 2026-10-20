@@ -200,11 +200,19 @@ export class CatalogStore {
         return promise;
     }
 
-    /** Whether `key` needs asking: not here, or a kept copy past its time. */
+    /** Whether `key` needs asking: not here, failed, or past its time. */
     private due(key: string, now: number): boolean {
         const entry = this.loaded.get(key);
-        const state = this.status.get(key)?.state;
-        return !entry || (state === 'kept' && now - entry.at > REFRESH_MS) || state === 'failed';
+        return !entry || now - entry.at > REFRESH_MS || this.status.get(key)?.state === 'failed';
+    }
+
+    /** A title list is past its time (the TV can stay on for days). */
+    refreshDue(now = Date.now()): boolean {
+        let due = false;
+        this.loaded.forEach((entry) => {
+            due = due || now - entry.at > REFRESH_MS;
+        });
+        return due;
     }
 
     private changed(): void {

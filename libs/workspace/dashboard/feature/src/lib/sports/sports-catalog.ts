@@ -1,10 +1,17 @@
 import { isSpanishOrEnglishCategory } from '@iptvnator/shared/interfaces';
 import type { MatchChannel } from './match-channels';
 import { isMatchOn, isMatchOver, startOf } from './match-clock';
+import {
+    feedQuality,
+    type FeedQuality,
+    type MatchFeed,
+    type NamedChannel,
+} from './match-feeds';
 import { buildMatches, type EventSlot } from './match-fixtures';
 import {
     isIdleEventChannel,
     isStaleSlot,
+    parseNamedMatch,
     parseSportEvent,
     type SportEvent,
 } from './sport-events';
@@ -14,13 +21,15 @@ import {
     SPORT_SECTIONS,
     type SportSectionId,
 } from './sport-sections';
+import { teamKey } from './team-names';
 
 /**
  * TiagoTV sports: the active source's live channels sorted into the Home's
  * sections, from a fresh catalog (event channels rename themselves after
  * their match, so a cached catalog names yesterday's games). Channels come
  * from the kept (Spanish and English) categories only; matches are read
- * from every language's event channels (see match-fixtures).
+ * from every language's event channels (see match-fixtures), and each
+ * lists every signal that carries it, in any language (see match-feeds).
  */
 export interface SportsCatalogCategory {
     readonly category_id: string | number;
@@ -70,6 +79,12 @@ export interface SportMatch extends SportChannel {
      * ("Premier League PPV", "DAZN"), else its first `via`'s name.
      */
     readonly channelName?: string | null;
+    /**
+     * Every signal that carries it, in any language, the owner's order
+     * first (see match-feeds): its event slots, the channels that name
+     * it, and its `via`. The match's own channel fields stay the default.
+     */
+    readonly feeds?: readonly MatchFeed[];
 }
 
 export interface SportSectionContent {
@@ -79,10 +94,15 @@ export interface SportSectionContent {
 
 export type SportsCatalog = Record<SportSectionId, SportSectionContent>;
 
-/** "|ES| DAZN LIGA 1 HD B" → "DAZN LIGA 1 B", "ES: LALIGA+ PPV 3" → "LALIGA+ PPV 3". */
 /** Sections whose events have no two sides (a race, a tennis session). */
 const INDIVIDUAL_SPORTS = new Set<SportSectionId>(['tennis', 'motor']);
 
+/** A cheap look for a match in a channel's name ("A vs B", "A v B"). */
+const VERSUS_HINT = /\sv(s\.?)?\s/i;
+/** Recordings and time-shifted copies show a match that is over. */
+const REPLAY = /\b(repl(a)?y|delay|timeshift)\b|\+1\b/i;
+
+/** "|ES| DAZN LIGA 1 HD B" → "DAZN LIGA 1 B", "ES: LALIGA+ PPV 3" → "LALIGA+ PPV 3". */
 export function cleanChannelTitle(name: string): string {
     return name
         .replace(/^\s*(\|[A-Za-z-]{2,6}\|\s*|[A-Z]{2,3}\s*[:|-]\s*)/, '')
@@ -109,10 +129,15 @@ export function buildSportsCatalog(
     }
 
     const slots = new Map<SportSectionId, EventSlot[]>();
+    const named: NamedChannel[] = [];
     const channels = new Map<SportSectionId, Map<string, SportChannel>>();
+    // Every copy of the sections' channels, for the matches' signals.
+    const copies = new Map<SportSectionId, SportChannel[]>();
+    const qualities = new Map<number, FeedQuality>();
     for (const section of SPORT_SECTIONS) {
         slots.set(section.id, []);
         channels.set(section.id, new Map());
+        copies.set(section.id, []);
     }
 
     for (const stream of streams) {
@@ -137,12 +162,19 @@ export function buildSportsCatalog(
                 kept: kept.has(categoryId),
                 categoryName,
                 namedAt: namedAt(stream.added),
+                quality: feedQuality(stream.name),
             };
             const sectionId = slotSection(slot);
             if (sectionId) {
                 slots.get(sectionId)!.push(slot);
             }
             continue;
+        }
+        const pair = VERSUS_HINT.test(stream.name)
+            ? namedChannel(channel, stream.name, categoryName, now)
+            : null;
+        if (pair) {
+            named.push(pair);
         }
         if (
             !kept.has(categoryId) ||
@@ -166,6 +198,11 @@ export function buildSportsCatalog(
               );
         for (const section of owners) {
             keepChannel(channels.get(section.id)!, channel);
+            copies.get(section.id)?.push(channel);
+        }
+        const quality = owners.length ? feedQuality(stream.name) : null;
+        if (quality) {
+            qualities.set(streamId, quality);
         }
     }
 
@@ -177,7 +214,13 @@ export function buildSportsCatalog(
                 section,
                 slots.get(section.id)!,
                 sectionChannels,
-                now
+                now,
+                {
+                    named,
+                    categoryNames: names,
+                    copies: copies.get(section.id),
+                    qualities,
+                }
             ).sort(byKickOff),
             channels: sectionChannels,
         };
@@ -202,6 +245,31 @@ function slotSection(slot: EventSlot): SportSectionId | null {
         return null;
     }
     return section.id;
+}
+
+/**
+ * A channel that names a match without being its event slot ("UEFA | 13
+ * - Aston Villa vs Ajax"), in any language, but no replay's.
+ */
+function namedChannel(
+    channel: SportChannel,
+    name: string,
+    categoryName: string,
+    now: Date
+): NamedChannel | null {
+    const match = REPLAY.test(categoryName)
+        ? null
+        : parseNamedMatch(channel.title, now);
+    return match
+        ? {
+              channel,
+              categoryName,
+              home: teamKey(match.home),
+              away: teamKey(match.away),
+              number: match.number,
+              quality: feedQuality(name),
+          }
+        : null;
 }
 
 /**

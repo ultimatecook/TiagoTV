@@ -8,6 +8,7 @@ import { FLUIDEZ_HINT, FLUIDEZ_LABEL, loadFluidez, saveFluidez, type Fluidez } f
 import { confirmDialog } from '../ui/dialog';
 import { accountProblem, connectionsLabel, expiryLabel, STATUS_LABEL, type AccountInfo } from '../xtream/account';
 import { forgetSource } from '../xtream/source';
+import { DiagnosticsView } from './diagnostics-view';
 import type { Page } from './shell';
 
 declare const __BUILD_DATE__: string;
@@ -16,9 +17,10 @@ declare const __BUILD_DATE__: string;
  * Ajustes, as the desktop's: the sections on the left (Cuenta, Reproducción,
  * Acerca de), the focused one's cards on the right. The TV keeps what it
  * can act on: the account (its state, checking it, another one), "Fluidez"
- * and "Seguir viendo", and what this build is.
+ * and "Seguir viendo", what the TV is loading (Diagnóstico) and what this
+ * build is.
  */
-type SectionId = 'account' | 'playback' | 'about';
+type SectionId = 'account' | 'playback' | 'diagnostics' | 'about';
 
 function engineLabel(): string {
     const match = /Chrome\/(\d+)/.exec(navigator.userAgent);
@@ -51,6 +53,8 @@ export class SettingsPage implements Page {
     private account: AccountInfo | null = null;
     private accountError: string | null = null;
     private checking = false;
+    private visible = false;
+    private readonly diagnostics: DiagnosticsView;
 
     constructor(private readonly app: App) {
         const item = (id: SectionId, label: string) => {
@@ -61,13 +65,16 @@ export class SettingsPage implements Page {
         this.railItems = {
             account: item('account', t('SETTINGS.NAV_SOURCES')),
             playback: item('playback', t('SETTINGS.PLAYBACK')),
+            diagnostics: item('diagnostics', 'Diagnóstico'),
             about: item('about', t('SETTINGS.ABOUT')),
         };
+        this.diagnostics = new DiagnosticsView(app);
         this.rail.appendChild(h('h1', { className: 'page__title', text: t('WORKSPACE.SHELL.RAIL_SETTINGS') }));
         this.rail.appendChild(h('div', { className: 'rail__group', text: t('SETTINGS.NAV_GROUP_ACCOUNT') }));
         this.rail.appendChild(this.railItems.account);
         this.rail.appendChild(h('div', { className: 'rail__group', text: 'Aplicación' }));
         this.rail.appendChild(this.railItems.playback);
+        this.rail.appendChild(this.railItems.diagnostics);
         this.rail.appendChild(h('div', 'rail__rule'));
         this.rail.appendChild(this.railItems.about);
         this.el = h('div', 'page page--settings', this.rail, this.panel);
@@ -96,6 +103,7 @@ export class SettingsPage implements Page {
     }
 
     show(): void {
+        this.visible = true;
         if (!this.account && !this.checking) {
             void this.check();
         }
@@ -103,7 +111,9 @@ export class SettingsPage implements Page {
     }
 
     hide(): void {
-        // Nothing runs in the background here.
+        // Diagnóstico's updates are the only thing that runs here.
+        this.visible = false;
+        this.diagnostics.stop();
     }
 
     private select(id: SectionId): void {
@@ -116,10 +126,16 @@ export class SettingsPage implements Page {
     private render(): void {
         (Object.keys(this.railItems) as SectionId[]).forEach((id) => this.railItems[id].classList.toggle('is-active', id === this.section));
         clear(this.panel);
+        this.diagnostics.stop();
         if (this.section === 'account') {
             this.renderAccount();
         } else if (this.section === 'playback') {
             this.renderPlayback();
+        } else if (this.section === 'diagnostics') {
+            this.panel.appendChild(this.diagnostics.el);
+            if (this.visible) {
+                this.diagnostics.start();
+            }
         } else {
             this.renderAbout();
         }

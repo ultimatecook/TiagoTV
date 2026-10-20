@@ -23,9 +23,10 @@ export class Backdrops {
         const wanted = titles
             .filter((title) => !title.backdrop && !this.found.has(`${title.kind}:${title.id}`))
             .slice(0, limit);
+        // All marked first: a second hero asking meanwhile does not repeat them.
+        wanted.forEach((title) => this.found.set(`${title.kind}:${title.id}`, null));
         for (const title of wanted) {
             const key = `${title.kind}:${title.id}`;
-            this.found.set(key, null);
             try {
                 const info =
                     title.kind === 'movie'

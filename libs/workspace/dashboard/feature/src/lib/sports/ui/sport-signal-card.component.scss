@@ -106,6 +106,38 @@
     text-transform: uppercase;
 }
 
+// A feed's quality ("HD", "SD"), where its name says.
+.signal__quality {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--tv-text-2);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+// A signal that failed while the match was in focus.
+.signal__failed {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    box-sizing: border-box;
+    padding: 0 7px;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--tv-live-red) 78%, #000);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
 .signal__text {
     display: flex;
     flex-direction: column;
@@ -132,6 +164,36 @@
     color: var(--tv-text-2);
     font-size: 12.5px;
     font-weight: 500;
+}
+
+// A signal of the match in focus: its language, as a chip.
+.signal__lang {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 20px;
+    box-sizing: border-box;
+    margin-right: 6px;
+    padding: 0 7px 0 5px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--tv-text);
+    font-size: 11.5px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.signal__flag {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+    object-fit: cover;
+    -webkit-user-drag: none;
+}
+
+.signal__note {
+    vertical-align: middle;
 }
 
 .signal__dot {

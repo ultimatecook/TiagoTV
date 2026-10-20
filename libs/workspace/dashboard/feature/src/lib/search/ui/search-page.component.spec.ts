@@ -186,6 +186,8 @@ describe('SearchPageComponent', () => {
                         streamId: 1,
                         title: 'Real Madrid - Barcelona',
                     }),
+                    // The match in focus: its signals on the stage.
+                    tiagotvSportsMatch: 'laliga:rm:fcb',
                 },
             }
         );

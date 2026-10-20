@@ -148,7 +148,7 @@ export class XtreamClient {
     }
 
     /** A catalog request, in the queue at `priority`, logged. */
-    private queued(params: Readonly<Record<string, string | number>>, timeoutMs: number, priority: Priority): Queued<unknown> {
+    private queued(params: Readonly<Record<string, string | number>>, timeout: () => number, priority: Priority): Queued<unknown> {
         const [action, label] = this.describe(params);
         const url = this.apiUrl(params);
         const meta: RequestMeta = { bytes: 0 };
@@ -156,9 +156,9 @@ export class XtreamClient {
         const job = enqueue(
             () => {
                 started = Date.now();
-                return this.request(url, timeoutMs, meta);
+                return this.request(url, timeout(), meta);
             },
-            { priority, label: label ? `${action} · ${label}` : action, limitMs: timeoutMs + WATCHDOG_MARGIN_MS }
+            { priority, label: label ? `${action} · ${label}` : action, limitMs: () => timeout() + WATCHDOG_MARGIN_MS }
         );
         const promise = job.promise.then(
             (value) => {
@@ -182,7 +182,7 @@ export class XtreamClient {
 
     async categories(kind: CatalogKind, priority: Priority = VIEWER): Promise<XtreamCategory[]> {
         const list = asArray<XtreamCategory>(
-            await this.queued({ action: CATEGORY_ACTION[kind] }, TIMEOUTS.categories, priority).promise
+            await this.queued({ action: CATEGORY_ACTION[kind] }, () => TIMEOUTS.categories, priority).promise
         ).filter(
             (category) =>
                 category &&
@@ -213,18 +213,18 @@ export class XtreamClient {
     streamsRequest<T = XtreamLiveStream>(kind: CatalogKind, categoryId: string | number, priority: Priority): Queued<T[]> {
         const job = this.queued(
             { action: STREAMS_ACTION[kind], category_id: categoryId },
-            kind === 'live' ? TIMEOUTS.live : TIMEOUTS.list,
+            () => (kind === 'live' ? TIMEOUTS.live : TIMEOUTS.list),
             priority
         );
         return { promise: job.promise.then((value) => asArray<T>(value)), promote: job.promote };
     }
 
     vodInfo(id: number, background = false): Promise<unknown> {
-        return this.queued({ action: 'get_vod_info', vod_id: id }, TIMEOUTS.info, background ? PREFETCH : VIEWER).promise;
+        return this.queued({ action: 'get_vod_info', vod_id: id }, () => TIMEOUTS.info, background ? PREFETCH : VIEWER).promise;
     }
 
     seriesInfo(id: number, background = false): Promise<unknown> {
-        return this.queued({ action: 'get_series_info', series_id: id }, TIMEOUTS.info, background ? PREFETCH : VIEWER).promise;
+        return this.queued({ action: 'get_series_info', series_id: id }, () => TIMEOUTS.info, background ? PREFETCH : VIEWER).promise;
     }
 
     async shortEpg(streamId: number, limit = 2): Promise<XtreamEpgListing[]> {

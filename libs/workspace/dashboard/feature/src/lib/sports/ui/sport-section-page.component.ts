@@ -15,11 +15,12 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { NowPlayingDockService } from '@iptvnator/ui/playback';
 import { groupChannelFamilies } from '../channel-families';
 import { hasLeagueTable, type LeagueTable } from '../league-tables';
-import { signalCards } from '../signal-cards';
-import { playRequest } from '../sports-board.service';
+import { feedCards, signalCards } from '../signal-cards';
+import { playRequest, playRequestMatch } from '../sports-board.service';
 import { SportsCatalogService } from '../sports-catalog.service';
+import { focusedMatch, SportFeedFallback } from '../sport-feed-fallback';
 import { findSportSection, type SportSectionId } from '../sport-sections';
-import type { SportChannel } from '../sports-catalog';
+import type { SportChannel, SportMatch } from '../sports-catalog';
 import { SportTvGuide } from '../sport-tv-guide';
 import { SportTvPlayback } from '../sport-tv-playback';
 import { PageStateComponent } from '../../ui-state/page-state.component';
@@ -32,7 +33,9 @@ import { SportStageComponent } from './sport-stage.component';
  * A competition's page (/workspace/sports/:sectionId): its first channel
  * playing across the top (or the one the way in asked for), the row of
  * its signals, then its first match, the others on now and to come (none
- * that is over), and its standings where it has a league table.
+ * that is over), and its standings where it has a league table. The match
+ * the way in (or a click) asked for, or the one whose feed plays, is in
+ * focus: the row lists its signals in every language (see match-feeds).
  */
 @Component({
     selector: 'lib-sport-section-page',
@@ -44,7 +47,7 @@ import { SportStageComponent } from './sport-stage.component';
         SportStageComponent,
         TranslatePipe,
     ],
-    providers: [SportTvPlayback, SportTvGuide],
+    providers: [SportTvPlayback, SportTvGuide, SportFeedFallback],
     templateUrl: './sport-section-page.component.html',
     styleUrl: './sport-section-page.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +58,7 @@ export class SportSectionPageComponent {
     private readonly host: HTMLElement = inject(ElementRef).nativeElement;
     private readonly router = inject(Router);
     private readonly dock = inject(NowPlayingDockService);
+    private readonly fallback = inject(SportFeedFallback);
 
     /** Bound from the route parameter. */
     readonly sectionId = input<string>('');
@@ -76,6 +80,19 @@ export class SportSectionPageComponent {
     readonly cards = computed(() =>
         signalCards(this.families(), this.liveMatches())
     );
+    /** The match the way in or a click asked for (its key). */
+    private readonly focusKey = signal<string | null>(null);
+    readonly focus = computed(() =>
+        focusedMatch(
+            this.matches(),
+            this.focusKey(),
+            this.tv.selection()?.streamId ?? null
+        )
+    );
+    readonly feeds = computed(() => {
+        const match = this.focus();
+        return match ? feedCards(match) : [];
+    });
     readonly featured = computed(() => this.matches()[0] ?? null);
     readonly rest = computed(() => this.matches().slice(1));
     /** The standings, once loaded; null without them. */
@@ -95,6 +112,10 @@ export class SportSectionPageComponent {
             untracked(() => this.loadTable(section?.id ?? null));
         });
         effect(() => {
+            const key = this.focus()?.key ?? null;
+            untracked(() => this.fallback.focus(key));
+        });
+        effect(() => {
             const section = this.section();
             const cards = this.cards();
             if (section && this.content() && this.opened !== section.id) {
@@ -108,8 +129,18 @@ export class SportSectionPageComponent {
         });
     }
 
-    /** A match's channel, on the stage at the top. */
-    watch(channel: SportChannel): void {
+    /**
+     * A match's channel, on the stage at the top, the match in focus; one
+     * the viewer picked from its list, not the one it plays by default,
+     * is theirs (see SportFeedFallback).
+     */
+    watch(channel: SportChannel, match: SportMatch): void {
+        this.focusKey.set(match.key);
+        const byDefault = match.via[0]?.channel ?? match;
+        this.fallback.played(
+            channel.streamId,
+            channel.streamId !== byDefault.streamId
+        );
         this.tv.play(channel);
         this.host
             .querySelector('lib-sport-stage')
@@ -137,6 +168,7 @@ export class SportSectionPageComponent {
             untracked(() => this.router.currentNavigation())?.extras.state ??
             (typeof history === 'undefined' ? null : history.state);
         const request = playRequest(state);
+        this.focusKey.set(playRequestMatch(state));
         // The mini-player's channel, when it is one of this page's: back
         // from the mini-player, the state replays the way in (the channel
         // asked for then), not the one picked later and left playing.
@@ -147,6 +179,7 @@ export class SportSectionPageComponent {
                 playRequest(this.dock.session()?.returnState ?? null)?.streamId;
         const channel = (returning ? docked : request) ?? docked ?? channels[0];
         if (channel) {
+            this.fallback.played(channel.streamId, false);
             this.tv.open(channel, !!request && !returning);
         } else {
             // Reused for another competition with no channel: the previous

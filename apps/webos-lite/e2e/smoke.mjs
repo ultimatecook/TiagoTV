@@ -12,7 +12,10 @@
  * Desktop Chromium plays neither MPEG-TS nor H.264, so the panel serves a
  * WebM clip for every stream (HLS playlists fail there, as they may on a
  * provider): what the run checks is the app's side — the candidates'
- * order, one connection at a time, zapping, the OSD, Back.
+ * order, one connection at a time, zapping, the OSD, Back. The resilience
+ * suites (smoke-resilience.mjs) then replay what a real provider and a
+ * real TV do to the catalog (slow, aborted, silent and huge answers, the
+ * player opened while it loads, a second launch) and Diagnóstico.
  */
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -21,6 +24,7 @@ import { ACCOUNT } from './fake-catalog.mjs';
 import { openHarness } from './harness.mjs';
 import { catalogSuite, homeSuite, myListSuite, searchSuite, settingsSuite, sportsSuite } from './smoke-browse.mjs';
 import { liveSuite, normalSuite } from './smoke-playback.mjs';
+import { activitySuite, diagnosticsSuite, firstLoadSuite, secondLaunchSuite } from './smoke-resilience.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const DIST = join(ROOT, 'dist', 'webos-lite');
@@ -81,7 +85,7 @@ async function main() {
     }
     const h = await openHarness({ shots, headed: process.argv.includes('--headed') });
     try {
-        for (const suite of [setupSuite, homeSuite, catalogSuite, sportsSuite, liveSuite, searchSuite, myListSuite, settingsSuite, normalSuite, exitSuite]) {
+        for (const suite of [setupSuite, homeSuite, catalogSuite, sportsSuite, liveSuite, searchSuite, myListSuite, settingsSuite, normalSuite, activitySuite, firstLoadSuite, diagnosticsSuite, secondLaunchSuite, exitSuite]) {
             await suite(h);
         }
         h.check('no page errors', h.errors.length === 0, h.errors.slice(0, 3).join(' | '));

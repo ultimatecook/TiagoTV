@@ -1,5 +1,5 @@
 import { groupChannelFamilies } from './channel-families';
-import { signalCards } from './signal-cards';
+import { feedCards, signalCards } from './signal-cards';
 import type { SportChannel, SportMatch } from './sports-catalog';
 
 const channel = (
@@ -95,5 +95,56 @@ describe('signal cards', () => {
             'LaLiga+ PPV 2',
             'LaLiga+ PPV 3',
         ]);
+    });
+});
+
+describe('feed cards', () => {
+    it('makes a card of each signal of the match, its brand’s logo first', () => {
+        const match: SportMatch = {
+            ...liveMatch(21, 'Paris Saint-Germain - Barcelona'),
+            feeds: [
+                {
+                    channel: channel(21, 'M+ Liga de Campeones'),
+                    name: 'Movistar Liga de Campeones',
+                    number: null,
+                    language: 'ES',
+                    label: 'España',
+                    flag: 'es',
+                    named: false,
+                    quality: 'HD',
+                },
+                {
+                    channel: channel(
+                        22,
+                        'UEFA | 05 - PSG vs Barcelona',
+                        'https://logos.test/uefa.png'
+                    ),
+                    name: 'UEFA Champions League',
+                    number: 5,
+                    language: 'UK',
+                    label: 'Inglés (UK)',
+                    flag: 'gb',
+                    named: true,
+                    quality: null,
+                },
+            ],
+        };
+
+        const cards = feedCards(match);
+
+        expect(cards.map((card) => [card.key, card.name, card.number])).toEqual(
+            [
+                ['feed:21', 'Movistar Liga de Campeones', null],
+                ['feed:22', 'UEFA Champions League', 5],
+            ]
+        );
+        expect(cards[0].logos[0]).toContain('movistar');
+        expect(cards[1].logos).toEqual(['https://logos.test/uefa.png']);
+        expect(cards[1].feed?.label).toBe('Inglés (UK)');
+        expect(cards.every((card) => card.match === match)).toBe(true);
+    });
+
+    it('has none for a match without signals', () => {
+        expect(feedCards(liveMatch(1, 'A - B'))).toEqual([]);
     });
 });
