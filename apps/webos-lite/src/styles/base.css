@@ -2,8 +2,15 @@
  * TiagoTV liviano, drawn for 1920x1080 on Chrome 53 (LG webOS 4), after
  * the desktop app's "ultra clean" design (apps/web/src/_tv-tokens.scss):
  * the same colours, a warm "room" behind everything, dark glass for the
- * bar and the pills, Bebas Neue for titles, DM Sans for the rest. Sizes
- * are the desktop's scaled for ten feet (text about 1.8x, body >= 26px).
+ * bar and the pills, Bebas Neue for titles, DM Sans for the rest.
+ *
+ * Ten-foot scale, after LG's own webOS kits at 1920x1080 (Moonstone, and
+ * Sandstone halved from 4K) for a 49" set seen from the sofa: nothing
+ * under 24px (22px only for bold capitals: badges, tags, table labels),
+ * meta and captions 24, body 26-28, buttons 28, section headings 34,
+ * page titles 52, hero titles in Bebas 108-118. Everything sits 80px in
+ * from the sides and 28px from the top (LG's overscan margin is 20px).
+ * Focus: a 4px white ring and a 1.05 lift (1.02-1.03 on wide cards).
  *
  * The TV gates (tools/gates.mjs) reject what that engine lacks: flex gap
  * (margins instead), CSS Grid, inset, :has/:is/:where, color-mix, hex
@@ -137,7 +144,7 @@ img {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07));
     box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
     color: var(--text);
-    font-size: 27px;
+    font-size: 28px;
     font-weight: 600;
     white-space: nowrap;
     margin-right: 18px;
@@ -153,7 +160,7 @@ img {
 .button--small {
     height: 60px;
     line-height: 60px;
-    font-size: 24px;
+    font-size: 26px;
     padding: 0 28px;
 }
 
@@ -208,7 +215,7 @@ img {
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.14);
     color: var(--text);
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: 0.02em;
     white-space: nowrap;
@@ -252,7 +259,7 @@ img {
     display: inline-block;
     margin-left: 18px;
     color: var(--meta);
-    font-size: 23px;
+    font-size: 24px;
     font-weight: 500;
 }
 

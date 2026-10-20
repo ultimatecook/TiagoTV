@@ -6,7 +6,7 @@
 }
 
 .page__title {
-    font-size: 56px;
+    font-size: 52px;
     font-weight: 600;
     letter-spacing: -0.02em;
     line-height: 1.1;
@@ -50,7 +50,7 @@
     height: 56px;
     line-height: 56px;
     border-radius: 28px;
-    font-size: 21px;
+    font-size: 22px;
 }
 
 .crest--large {
@@ -87,7 +87,7 @@
 .team-pill__status {
     margin-left: 16px;
     color: var(--text-3);
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 500;
 }
 
@@ -134,7 +134,7 @@
 
 .match-card__competition {
     color: var(--text-img-2);
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: 0.08em;
 }
@@ -144,7 +144,7 @@
     right: 30px;
     top: 26px;
     color: var(--text-2);
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 600;
 }
 
@@ -241,7 +241,7 @@
 .league__top {
     position: relative;
     height: 1080px;
-    padding-top: 640px;
+    padding-top: 590px;
 }
 
 .league__top .row__head {
@@ -250,7 +250,7 @@
 
 .league__top .heading__title {
     color: var(--text-img-3);
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 600;
     letter-spacing: 0.08em;
     line-height: 44px;
@@ -282,7 +282,7 @@
 
 .league-pill__live {
     margin-left: 18px;
-    font-size: 21px;
+    font-size: 24px;
     font-weight: 700;
 }
 
@@ -313,6 +313,17 @@
     height: 300px;
     border-radius: 40px;
     box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Wide cards lift less than the rest: the same ring, a smaller step. */
+.featured.focused {
+    -webkit-transform: scale(1.02);
+    transform: scale(1.02);
+}
+
+.match-card.focused {
+    -webkit-transform: scale(1.03);
+    transform: scale(1.03);
 }
 
 .featured__side {
@@ -355,7 +366,7 @@
     padding: 0 20px;
     border-radius: 22px;
     background: rgba(255, 255, 255, 0.14);
-    font-size: 21px;
+    font-size: 24px;
     font-weight: 600;
 }
 
@@ -450,7 +461,7 @@
 .table__title small {
     display: block;
     color: var(--text-img-3);
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 500;
 }
 
@@ -474,7 +485,7 @@
     height: 50px;
     line-height: 50px;
     color: var(--meta);
-    font-size: 19px;
+    font-size: 22px;
     font-weight: 600;
     letter-spacing: 0.06em;
 }

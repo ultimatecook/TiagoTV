@@ -62,7 +62,7 @@
 .detail__eyebrow {
     height: 40px;
     color: var(--text-img-2);
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 600;
     letter-spacing: 0.22em;
     text-transform: uppercase;
@@ -87,7 +87,7 @@
 .detail__title {
     margin-top: 12px;
     color: var(--text-img);
-    font-size: 140px;
+    font-size: 112px;
     line-height: 0.9;
     max-width: 1300px;
 }
@@ -95,7 +95,7 @@
 .detail__meta {
     margin-top: 22px;
     color: var(--text-img-2);
-    font-size: 27px;
+    font-size: 28px;
     white-space: nowrap;
 }
 
@@ -112,11 +112,11 @@
 
 .detail__lang {
     padding: 0 10px;
-    height: 32px;
-    line-height: 30px;
+    height: 36px;
+    line-height: 34px;
     border-radius: 6px;
     box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
-    font-size: 19px;
+    font-size: 22px;
     font-weight: 700;
 }
 
@@ -159,7 +159,7 @@
 .play__label small {
     display: block;
     margin-top: 4px;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 500;
     color: #3a3833;
 }
@@ -240,7 +240,7 @@
     display: block;
     margin-top: 4px;
     color: var(--meta);
-    font-size: 22px;
+    font-size: 24px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -250,7 +250,7 @@
     right: 24px;
     top: 42px;
     color: var(--meta);
-    font-size: 23px;
+    font-size: 24px;
 }
 
 .episode__progress {

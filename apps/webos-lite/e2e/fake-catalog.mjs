@@ -3,7 +3,7 @@
  * theirs ("|ES| ✪ …", "|LAT|  ✪ ARGENTINA", event channels named after
  * their match), for the smoke run. No real provider data or credentials.
  */
-export const ACCOUNT = { username: 'tiago', password: 'lite-test-pass' };
+export const ACCOUNT = { username: 'demo-user', password: 'lite-test-pass' };
 
 let nextId = 1000;
 const stream = (categoryId, name, icon = 'auto') => ({

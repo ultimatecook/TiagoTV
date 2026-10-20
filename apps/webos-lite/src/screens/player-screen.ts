@@ -134,7 +134,7 @@ export class PlayerScreen implements Screen, PlayView {
             if (next) {
                 lines.push(`Después: ${decodeEpgText(next.title)}`);
             }
-            this.osd.setSubtitle(lines.join('   '));
+            this.osd.setSubtitle(lines.join(' · '));
         } catch {
             // No guide for this channel: the OSD keeps its name.
         }

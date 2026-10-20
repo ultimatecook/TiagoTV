@@ -145,7 +145,12 @@ export class Nav {
                 if (target) {
                     return target;
                 }
-            } else if (!this.groupOf(node.parentElement)) {
+                continue;
+            }
+            // Elements of a group inside `within` are reached through it;
+            // when `within` is that group's own element, they are its own.
+            const owner = this.groupOf(node.parentElement);
+            if (!owner || owner.el === within) {
                 return node;
             }
         }

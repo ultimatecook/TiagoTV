@@ -46,15 +46,19 @@
 }
 
 .osd__logo {
-    width: 180px;
     height: 100px;
-    margin-right: 32px;
 }
 
+/* A logo that does not load leaves no empty box: the name moves left. */
 .osd__logo-pic {
     width: 180px;
     height: 100px;
+    margin-right: 32px;
     border-radius: 12px;
+}
+
+.osd__logo-pic.is-broken {
+    display: none;
 }
 
 .osd__logo-pic .pic__img {

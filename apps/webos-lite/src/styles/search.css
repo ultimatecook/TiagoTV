@@ -204,7 +204,7 @@
     display: block;
     margin-top: 2px;
     color: var(--meta);
-    font-size: 22px;
+    font-size: 24px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -214,6 +214,6 @@
     right: 24px;
     top: 34px;
     color: var(--text-3);
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 600;
 }
