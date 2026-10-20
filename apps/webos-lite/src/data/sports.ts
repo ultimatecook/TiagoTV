@@ -1,8 +1,9 @@
-import { isSpanishOrEnglishCategory } from '@iptvnator/shared/interfaces';
 import {
     buildSportsCatalog,
     followedTeamOf,
     isMatchOn,
+    KickoffMemory,
+    sectionsWithChannels,
     SPORT_SECTIONS,
     teamDisplayName,
     todaysMatches,
@@ -11,41 +12,27 @@ import {
     type SportsCatalogStream,
     type SportSectionId,
 } from '@iptvnator/workspace/dashboard/feature/tv-logic';
+import { PREFETCH, SPORTS, type Priority } from '../core/request-queue';
 import type { XtreamCategory, XtreamClient, XtreamLiveStream } from '../xtream/client';
 import { compactStream } from './live';
-import { mapSettled } from './pool';
+import { isKeptLive, planForeign, planKept, type SportsNotes } from './sports-plan';
 
 /**
  * "Deportes": today's matches and each competition's channels, read like
  * the desktop app reads them (buildSportsCatalog, todaysMatches) from the
  * provider's event channels ("Live | Real Madrid - Barcelona | LaLiga |
- * ES") and the competitions' own categories ("|ES| ✪ DAZN LA LIGA"). The
- * TV loads only the kept categories that hold them, one at a time.
+ * ES") and the competitions' own categories ("|ES| ✪ DAZN LA LIGA"), the
+ * categories chosen by sports-plan.ts. The board shows as soon as the
+ * event categories are in, and again once the rest are; kick-offs are
+ * remembered across loads (KickoffMemory) as on the desktop.
  */
-const EVENT_CATEGORY = /\b(events?|eventos?|ppv)\b/i;
-export const MAX_SPORTS_CATEGORIES = 30;
-
-export function sportsCategoryIds(
-    categories: readonly XtreamCategory[],
-    max = MAX_SPORTS_CATEGORIES
-): string[] {
-    const events: string[] = [];
-    const competitions: string[] = [];
-    for (const category of categories) {
-        const name = category.category_name;
-        if (!isSpanishOrEnglishCategory(name, 'live')) {
-            continue;
-        }
-        const id = String(category.category_id);
-        if (EVENT_CATEGORY.test(name)) {
-            events.push(id);
-        } else if (
-            SPORT_SECTIONS.some((section) => !!section.category && section.category.test(name))
-        ) {
-            competitions.push(id);
-        }
-    }
-    return events.concat(competitions).slice(0, max);
+export interface SportsStats {
+    readonly requested: number;
+    readonly failed: number;
+    /** Channel lists reused from earlier loads. */
+    readonly stored: number;
+    /** Other languages' categories read for their fixtures. */
+    readonly foreign: number;
 }
 
 export interface SportsData {
@@ -54,10 +41,32 @@ export interface SportsData {
     readonly today: readonly SportMatch[];
     readonly failed: number;
     readonly loadedAt: number;
+    /** Every category is in (not only the event ones). */
+    readonly complete: boolean;
+    readonly stats: SportsStats;
+}
+
+let kickoffs: KickoffMemory | null = null;
+
+function memory(): KickoffMemory {
+    if (!kickoffs) {
+        let storage: Storage | null = null;
+        try {
+            storage = window.localStorage;
+        } catch {
+            storage = null;
+        }
+        kickoffs = new KickoffMemory(storage);
+    }
+    return kickoffs;
+}
+
+function kickOffOf(match: SportMatch): Date | null {
+    return match.event.start ?? memory().kickOffOf(match);
 }
 
 export function isLive(match: SportMatch, now = new Date()): boolean {
-    return isMatchOn(match, null, now);
+    return isMatchOn(match, kickOffOf(match), now);
 }
 
 /** The stream a match plays: its own feed, else its competition's channel. */
@@ -97,40 +106,112 @@ export function liveCounts(data: SportsData, now = new Date()): Map<SportSection
     return counts;
 }
 
+/** Channels across the competitions (a channel in two counts twice). */
+export function channelCount(data: SportsData): number {
+    return SPORT_SECTIONS.reduce((count, section) => count + (data.catalog[section.id]?.channels.length ?? 0), 0);
+}
+
+export function buildSportsData(
+    categories: readonly XtreamCategory[],
+    streams: readonly SportsCatalogStream[],
+    complete: boolean,
+    stats: SportsStats,
+    now = new Date()
+): SportsData {
+    const catalog = buildSportsCatalog(categories, streams, now);
+    const all: SportMatch[] = [];
+    for (const section of SPORT_SECTIONS) {
+        const content = catalog[section.id];
+        if (content) {
+            all.push(...content.matches);
+        }
+    }
+    memory().remember(all, now.getTime());
+    return {
+        catalog,
+        today: todaysMatches(catalog, now, kickOffOf).filter((match) => matchStreamId(match) !== null),
+        failed: stats.failed,
+        loadedAt: Date.now(),
+        complete,
+        stats,
+    };
+}
+
+export interface SportsLoadOptions {
+    readonly notes: SportsNotes;
+    readonly priority?: Priority;
+    /** The board with the event categories in, before the rest. */
+    readonly onPartial?: (data: SportsData) => void;
+    /** Other languages' event categories looked through after the load. */
+    readonly onDiscovered?: (data: SportsData) => void;
+}
+
 export async function loadSports(
     client: XtreamClient,
     categories: readonly XtreamCategory[],
-    onProgress?: (done: number, total: number) => void,
-    background = false
+    options: SportsLoadOptions
 ): Promise<SportsData> {
-    const ids = sportsCategoryIds(categories);
-    const settled = await mapSettled(
-        ids,
-        1,
-        (id) => client.streams<XtreamLiveStream>('live', id, background),
-        onProgress
-    );
-    const streams: SportsCatalogStream[] = [];
+    const { notes } = options;
+    const priority = options.priority ?? SPORTS;
+    const kept = new Set(categories.filter(isKeptLive).map((category) => String(category.category_id)));
+    const fresh = new Map<string, SportsCatalogStream[]>();
+    let requested = 0;
     let failed = 0;
-    for (const result of settled) {
-        if (!result.ok) {
-            failed++;
-            continue;
-        }
-        for (const stream of result.value) {
-            streams.push(compactStream(stream));
-        }
-    }
-    if (failed > 0 && failed === settled.length) {
-        const first = settled[0];
-        throw first.ok ? new Error('failed') : first.error;
-    }
-    const now = new Date();
-    const catalog = buildSportsCatalog(categories, streams, now);
-    return {
-        catalog,
-        today: todaysMatches(catalog, now).filter((match) => matchStreamId(match) !== null),
-        failed,
-        loadedAt: Date.now(),
+    let firstError: unknown = null;
+    // All of a phase is queued at once: no catalog request slips between.
+    const fetchAll = (ids: readonly string[], at: Priority) =>
+        Promise.all(
+            ids.map((id) => {
+                requested++;
+                return client.streams<XtreamLiveStream>('live', id, at).then(
+                    (list) => {
+                        const streams = list.map(compactStream);
+                        fresh.set(id, streams);
+                        notes.record(id, streams, kept.has(id), Date.now());
+                    },
+                    (error) => {
+                        failed++;
+                        firstError = firstError || error;
+                    }
+                );
+            })
+        );
+    const plan = planKept(categories, notes, Date.now());
+    const streams = () => {
+        const all: SportsCatalogStream[] = [];
+        plan.stored.forEach((list, id) => {
+            if (!fresh.has(id)) {
+                all.push(...list);
+            }
+        });
+        fresh.forEach((list) => all.push(...list));
+        return all;
     };
+    const stats = (foreign: number): SportsStats => ({ requested, failed, stored: plan.stored.size, foreign });
+
+    await fetchAll(plan.events, priority);
+    if (fresh.size === 0 && plan.stored.size === 0 && plan.others.length === 0 && failed > 0) {
+        throw firstError || new Error('no sports categories');
+    }
+    options.onPartial?.(buildSportsData(categories, streams(), false, stats(0)));
+    await fetchAll(plan.others, priority);
+    const followed = sectionsWithChannels(buildSportsData(categories, streams(), false, stats(0)).catalog);
+    const foreign = planForeign(categories, notes, followed, Date.now());
+    await fetchAll(foreign.fixtures, priority);
+    notes.save();
+    if (fresh.size === 0 && plan.stored.size === 0) {
+        throw firstError || new Error('no sports categories');
+    }
+    const data = buildSportsData(categories, streams(), true, stats(foreign.fixtures.length));
+    if (foreign.discover.length > 0) {
+        // Looked through in the background, behind the catalog.
+        void fetchAll(foreign.discover, PREFETCH).then(() => {
+            notes.save();
+            const found = foreign.discover.some((id) => (notes.get(id)?.named ?? []).some((section) => followed.has(section)));
+            if (found) {
+                options.onDiscovered?.(buildSportsData(categories, streams(), true, stats(foreign.fixtures.length + foreign.discover.length)));
+            }
+        });
+    }
+    return data;
 }

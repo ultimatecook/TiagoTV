@@ -141,3 +141,17 @@ export {
     type TableZone,
 } from './lib/sports/league-table-sources';
 export type { TeamFixture } from './lib/sports/my-teams';
+
+// TiagoTV liviano's sports board: which live categories hold event
+// channels, the kick-offs remembered across loads, and the team crests,
+// as the desktop's sports service reads them.
+export { KickoffMemory } from './lib/sports/match-clock';
+export { isIdleEventChannel, parseSportEvent } from './lib/sports/sport-events';
+export {
+    channelInSection,
+    sectionForCompetition,
+} from './lib/sports/sport-sections';
+export { sectionsWithChannels } from './lib/sports/match-channels';
+export { isSameTeam, teamKey } from './lib/sports/team-names';
+export { TeamCrestResolver } from './lib/sports/team-crests';
+export { SportsApiClient } from './lib/sports/sports-api-client';

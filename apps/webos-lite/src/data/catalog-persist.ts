@@ -11,9 +11,22 @@ import { pack, unpack, type RawItem } from './catalog-items';
  * strings count twice (UTF-16), and the account, Mi lista and the rest
  * live there too: the catalog stays under about 1M characters, each
  * category under its share. A full storage is caught, never thrown.
+ * Copies are filed under the account (a hash of its server and user, never
+ * the user itself): another account's are dropped.
  */
 const LISTS = 'tiagotv-lite:lists:v1:';
 const ITEMS = 'tiagotv-lite:cat:v1:';
+
+/** A short, stable tag for an account: FNV-1a of its server and user. */
+export function accountScope(server: string, username: string): string {
+    let hash = 0x811c9dc5;
+    const text = `${server}|${username}`;
+    for (let i = 0; i < text.length; i++) {
+        hash ^= text.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193);
+    }
+    return (hash >>> 0).toString(36);
+}
 /** Kept copies older than this are not shown at all. */
 export const KEEP_MS = 14 * 24 * 3600 * 1000;
 /** Kept copies older than this are shown, and asked again in the background. */
@@ -37,11 +50,18 @@ function defaultStorage(): StorageLike | null {
 export class CatalogPersist {
     /** Writes that a full (or refusing) storage turned down. */
     refused = 0;
+    private readonly lists_: string;
+    private readonly items_: string;
 
     constructor(
+        scope: string,
         private readonly storage: StorageLike | null = defaultStorage(),
         private readonly now: () => number = Date.now
-    ) {}
+    ) {
+        this.lists_ = `${LISTS}${scope}:`;
+        this.items_ = `${ITEMS}${scope}:`;
+        this.dropOthers();
+    }
 
     private read(key: string): { at: number; value: unknown } | null {
         try {
@@ -76,7 +96,7 @@ export class CatalogPersist {
     }
 
     lists(kind: CatalogKind): Kept<XtreamCategory[]> | null {
-        const kept = this.read(LISTS + kind);
+        const kept = this.read(this.lists_ + kind);
         if (!kept || !Array.isArray(kept.value)) {
             return null;
         }
@@ -88,13 +108,13 @@ export class CatalogPersist {
 
     saveLists(kind: CatalogKind, list: readonly XtreamCategory[]): void {
         this.write(
-            LISTS + kind,
+            this.lists_ + kind,
             list.map((category) => [String(category.category_id), category.category_name])
         );
     }
 
     items(kind: PlatformTitleKind, categoryId: string): Kept<RawItem[]> | null {
-        const kept = this.read(`${ITEMS}${kind}:${categoryId}`);
+        const kept = this.read(`${this.items_}${kind}:${categoryId}`);
         if (!kept || !Array.isArray(kept.value)) {
             return null;
         }
@@ -113,14 +133,19 @@ export class CatalogPersist {
             packed = packed.slice(0, Math.floor((packed.length * share) / size * 0.95));
             size = JSON.stringify(packed).length;
         }
-        return this.write(`${ITEMS}${kind}:${categoryId}`, packed);
+        return this.write(`${this.items_}${kind}:${categoryId}`, packed);
     }
 
-    /** Forgets every kept copy (Diagnóstico → Reintentar keeps them). */
-    clear(): void {
+    /** Another account's copies: they would only take this one's room. */
+    private dropOthers(): void {
         for (const key of storageKeys(this.storage)) {
-            if (key.indexOf(ITEMS) === 0 || key.indexOf(LISTS) === 0) {
-                this.storage?.removeItem(key);
+            const catalog = key.indexOf(ITEMS) === 0 || key.indexOf(LISTS) === 0;
+            if (catalog && key.indexOf(this.items_) !== 0 && key.indexOf(this.lists_) !== 0) {
+                try {
+                    this.storage?.removeItem(key);
+                } catch {
+                    // Left for a later start.
+                }
             }
         }
     }

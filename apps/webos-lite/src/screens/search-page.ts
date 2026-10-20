@@ -22,7 +22,8 @@ import type { App, PlayItem } from '../app';
 import { channelThumb } from '../ui/cards';
 import { icon } from '../ui/icons';
 import { keyboard } from '../ui/keyboard';
-import { crest } from '../ui/match-cards';
+import { crest } from '../ui/crest';
+import { PREFETCH } from '../core/request-queue';
 import { VPage } from '../ui/vpage';
 import type { Page } from './shell';
 import { playMatches } from './sports-play';
@@ -139,10 +140,10 @@ export class SearchPage implements Page {
     /** The catalogs a search reads, loaded once in the background. */
     private prepare(): void {
         if (this.wants('titles')) {
-            void this.app.store.load(['movie', 'series'], undefined, true);
+            void this.app.store.load(['movie', 'series'], undefined, PREFETCH);
         }
         if (this.wants('teams') && !this.sports) {
-            this.app.cache.sports(undefined, true).then((data) => {
+            this.app.sports.refresh().then((data) => {
                 this.sports = data;
                 this.render();
             }, () => undefined);
@@ -226,7 +227,7 @@ export class SearchPage implements Page {
     private teamRow(hit: TeamHit): HTMLElement {
         const meta = hit.match ? `${hit.match.event.competition} · ${hit.match.event.title}` : '';
         const kind = hit.mine ? t('WORKSPACE.SEARCH.MY_TEAM') : '';
-        return onActivate(result(crest(hit.name, 'crest crest--small result__thumb'), hit.name, meta, kind), () =>
+        return onActivate(result(crest(hit.name, 'crest crest--small result__thumb', hit.sectionId), hit.name, meta, kind), () =>
             hit.match ? playMatches(this.app, [hit.match], hit.match) : this.app.openLeague(hit.sectionId)
         );
     }

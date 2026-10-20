@@ -1,4 +1,5 @@
 import { clear, h } from '../core/dom';
+import { onActivate } from '../core/nav';
 
 /**
  * A page section that is not a row of cards (the Home's "Eventos de hoy",
@@ -27,9 +28,13 @@ export class Block {
         }
     }
 
-    /** A line of text in place of the content ("Cargando…"). */
-    say(text: string): void {
-        this.fill(h('p', { className: 'status', text }));
+    /** A line of text in place of the content ("Cargando…"), with "Reintentar" if it can. */
+    say(text: string, retry?: () => void): void {
+        const line = h('p', { className: 'status', text });
+        if (retry) {
+            line.appendChild(onActivate(h('span', { className: 'button button--small status__retry', text: 'Reintentar' }), retry));
+        }
+        this.fill(line);
     }
 
     show(visible: boolean): void {

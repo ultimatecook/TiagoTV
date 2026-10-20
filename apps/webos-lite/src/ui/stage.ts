@@ -14,6 +14,23 @@ import { PlayerScreen } from '../screens/player-screen';
  */
 const IDLE_MS = 10000;
 
+/** The stages with a stream (at most one: the account has one connection). */
+const playingStages: Stage[] = [];
+
+/** Whether a page's stage holds a stream (the activity is "preview" then). */
+export function stagePlaying(): boolean {
+    return playingStages.length > 0;
+}
+
+function markPlaying(stage: Stage, playing: boolean): void {
+    const index = playingStages.indexOf(stage);
+    if (playing && index < 0) {
+        playingStages.push(stage);
+    } else if (!playing && index >= 0) {
+        playingStages.splice(index, 1);
+    }
+}
+
 export interface StageHost {
     /** The playing item changed (zapping): mark its card. */
     onItem(item: PlayItem, index: number): void;
@@ -62,6 +79,7 @@ export class Stage implements PlayView {
         const controller = new PlaybackController(this.app, this.app.engine, request);
         this.controller = controller;
         this.el.insertBefore(controller.video, this.el.firstChild);
+        markPlaying(this, true);
         setActivity('preview');
         controller.attach(this);
         void controller.start(0);
@@ -91,6 +109,7 @@ export class Stage implements PlayView {
         if (this.controller) {
             this.controller.close();
             this.controller = null;
+            markPlaying(this, false);
             setActivity('idle');
         }
         toggleClass(this.el, 'is-playing', false);

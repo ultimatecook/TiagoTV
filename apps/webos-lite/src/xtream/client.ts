@@ -2,7 +2,7 @@ import { GUARD_MS, getJson, type JsonRequest, type RequestMeta } from '../core/h
 import { cleanCategoryName, logRequest } from '../core/request-log';
 import { noteServerTime } from '../core/clock';
 import { redact } from '../core/redact';
-import { PREFETCH, serial, VIEWER, type Priority } from '../core/request-queue';
+import { enqueue, PREFETCH, VIEWER, type Priority, type Queued } from '../core/request-queue';
 import { parseAccount, type AccountInfo } from './account';
 
 /**
@@ -148,18 +148,19 @@ export class XtreamClient {
     }
 
     /** A catalog request, in the queue at `priority`, logged. */
-    private queued(params: Readonly<Record<string, string | number>>, timeoutMs: number, priority: Priority): Promise<unknown> {
+    private queued(params: Readonly<Record<string, string | number>>, timeoutMs: number, priority: Priority): Queued<unknown> {
         const [action, label] = this.describe(params);
         const url = this.apiUrl(params);
         const meta: RequestMeta = { bytes: 0 };
         let started = 0;
-        return serial(
+        const job = enqueue(
             () => {
                 started = Date.now();
                 return this.request(url, timeoutMs, meta);
             },
             { priority, label: label ? `${action} · ${label}` : action, limitMs: timeoutMs + WATCHDOG_MARGIN_MS }
-        ).then(
+        );
+        const promise = job.promise.then(
             (value) => {
                 logRequest(action, label, started, meta.bytes, null);
                 return value;
@@ -169,6 +170,7 @@ export class XtreamClient {
                 throw error;
             }
         );
+        return { promise, promote: job.promote };
     }
 
     async account(): Promise<AccountInfo> {
@@ -180,7 +182,7 @@ export class XtreamClient {
 
     async categories(kind: CatalogKind, priority: Priority = VIEWER): Promise<XtreamCategory[]> {
         const list = asArray<XtreamCategory>(
-            await this.queued({ action: CATEGORY_ACTION[kind] }, TIMEOUTS.categories, priority)
+            await this.queued({ action: CATEGORY_ACTION[kind] }, TIMEOUTS.categories, priority).promise
         ).filter(
             (category) =>
                 category &&
@@ -204,21 +206,25 @@ export class XtreamClient {
         categoryId: string | number,
         priority: Priority = VIEWER
     ): Promise<T[]> {
-        return asArray<T>(
-            await this.queued(
-                { action: STREAMS_ACTION[kind], category_id: categoryId },
-                kind === 'live' ? TIMEOUTS.live : TIMEOUTS.list,
-                priority
-            )
+        return this.streamsRequest<T>(kind, categoryId, priority).promise;
+    }
+
+    /** The same, as a queued request the viewer can move up (promote). */
+    streamsRequest<T = XtreamLiveStream>(kind: CatalogKind, categoryId: string | number, priority: Priority): Queued<T[]> {
+        const job = this.queued(
+            { action: STREAMS_ACTION[kind], category_id: categoryId },
+            kind === 'live' ? TIMEOUTS.live : TIMEOUTS.list,
+            priority
         );
+        return { promise: job.promise.then((value) => asArray<T>(value)), promote: job.promote };
     }
 
     vodInfo(id: number, background = false): Promise<unknown> {
-        return this.queued({ action: 'get_vod_info', vod_id: id }, TIMEOUTS.info, background ? PREFETCH : VIEWER);
+        return this.queued({ action: 'get_vod_info', vod_id: id }, TIMEOUTS.info, background ? PREFETCH : VIEWER).promise;
     }
 
     seriesInfo(id: number, background = false): Promise<unknown> {
-        return this.queued({ action: 'get_series_info', series_id: id }, TIMEOUTS.info, background ? PREFETCH : VIEWER);
+        return this.queued({ action: 'get_series_info', series_id: id }, TIMEOUTS.info, background ? PREFETCH : VIEWER).promise;
     }
 
     async shortEpg(streamId: number, limit = 2): Promise<XtreamEpgListing[]> {

@@ -5,7 +5,7 @@ import { isLive, matchChannel, matchSides } from '../data/sports';
 import { t } from '../data/strings';
 import { tint } from './colour';
 import { icon } from './icons';
-import { crest } from './match-cards';
+import { crest } from './crest';
 
 /**
  * A league page's featured match (its first, on now or next): the full
@@ -21,7 +21,7 @@ export function featuredMatch(match: SportMatch, section: SportSection | null, n
     const card = h(
         'div',
         'featured',
-        h('div', 'featured__side featured__side--home', h('span', { className: 'featured__name', text: home ?? match.event.title }), home ? crest(home, 'crest crest--large') : null),
+        h('div', 'featured__side featured__side--home', h('span', { className: 'featured__name', text: home ?? match.event.title }), home ? crest(home, 'crest crest--large', match.sectionId) : null),
         h(
             'div',
             'featured__middle',
@@ -29,7 +29,7 @@ export function featuredMatch(match: SportMatch, section: SportSection | null, n
             h('div', { className: 'featured__vs display', text: 'VS' }),
             h('div', 'featured__watch', icon('play'), t('WORKSPACE.SPORTS.WATCH_ON', { channels: matchChannel(match) }))
         ),
-        h('div', 'featured__side featured__side--away', away ? crest(away, 'crest crest--large') : null, h('span', { className: 'featured__name', text: away ?? '' }))
+        h('div', 'featured__side featured__side--away', away ? crest(away, 'crest crest--large', match.sectionId) : null, h('span', { className: 'featured__name', text: away ?? '' }))
     );
     const color = section ? section.tint : '#2a2a2a';
     card.style.background = `linear-gradient(120deg, ${tint(color, '#000000', 0.05, 0.96)} 0%, ${tint(color, '#000000', 0.55, 0.96)} 60%, ${tint(color, '#000000', 0.8, 0.96)} 100%)`;

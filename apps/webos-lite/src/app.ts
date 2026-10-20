@@ -2,6 +2,7 @@ import type { PlatformTitle, SportSectionId } from '@iptvnator/workspace/dashboa
 import type { ScreenStack } from './core/screens';
 import type { CatalogCache } from './data/catalog-cache';
 import type { CatalogStore } from './data/catalog-store';
+import type { SportsBoard } from './data/sports-board';
 import type { PlayerEngine } from './player/engine';
 import type { XtreamClient } from './xtream/client';
 import type { Preferences } from './xtream/source';
@@ -50,6 +51,8 @@ export interface App {
     readonly cache: CatalogCache;
     /** The platforms' catalog (Series, Películas, platform pages). */
     readonly store: CatalogStore;
+    /** Today's matches and the competitions' channels. */
+    readonly sports: SportsBoard;
     /** The one `<video>` and its single connection. */
     readonly engine: PlayerEngine;
     readonly version: string;
@@ -69,4 +72,6 @@ export interface App {
     setPrefs(change: Partial<Preferences>): void;
     /** Leaves the app (the TV's Back on the root screen). */
     exit(): void;
+    /** Asks again what failed to load (Ajustes → Diagnóstico). */
+    retryLoads(): void;
 }

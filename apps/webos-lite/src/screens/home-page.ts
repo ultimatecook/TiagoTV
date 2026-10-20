@@ -11,6 +11,7 @@ import {
     type StreamingPlatform,
 } from '@iptvnator/workspace/dashboard/feature/tv-logic';
 import { requestErrorText } from '../core/http';
+import { PREFETCH } from '../core/request-queue';
 import { nav } from '../core/nav';
 import { Slot } from '../core/timers';
 import { recentChannels, type RecentChannel } from '../data/recent-channels';
@@ -36,6 +37,8 @@ import type { Page } from './shell';
  * background, one request at a time, and the rows fill as they arrive.
  */
 const REFRESH_MS = 1500;
+/** The first titles (kept from the last launch, or the first list) show at once. */
+const FIRST_MS = 120;
 
 export class HomePage implements Page {
     private readonly page = new VPage('page page--home', 130);
@@ -101,6 +104,7 @@ export class HomePage implements Page {
         this.top10.setStatus(t('WORKSPACE.CATALOG.LOADING'));
         this.series.say(t('WORKSPACE.CATALOG.LOADING'));
         app.store.onChange(() => this.schedule());
+        app.sports.onChange((data) => this.renderSports(data));
     }
 
     get el(): HTMLElement {
@@ -116,6 +120,8 @@ export class HomePage implements Page {
         if (!this.started) {
             this.started = true;
             this.startLoads();
+        } else if (!this.app.sports.fresh() && !this.app.sports.loading) {
+            this.loadSports();
         }
         this.renderRecent();
         if (this.dirty) {
@@ -136,7 +142,8 @@ export class HomePage implements Page {
         if (!this.visible) {
             this.dirty = true;
         } else if (!this.refresh.pending) {
-            this.refresh.later(REFRESH_MS, () => this.renderCatalog());
+            const first = this.top10.itemList.length === 0 || this.series.body.childNodes.length === 0;
+            this.refresh.later(first ? FIRST_MS : REFRESH_MS, () => this.renderCatalog());
         }
     }
 
@@ -144,13 +151,51 @@ export class HomePage implements Page {
         const store = this.app.store;
         store.shelves().then(
             ({ shelves }) => this.platforms.setItems(shelves.map((shelf) => shelf.platform)),
-            (error) => this.platforms.setStatus(requestErrorText(error))
+            (error) => this.platforms.setStatus(requestErrorText(error), () => this.startLoads())
         );
-        void store.load(['series', 'movie'], undefined, true).then(() => this.schedule());
-        this.app.cache.sports(undefined, true).then(
-            (data) => this.renderSports(data),
-            () => this.events.say(t('WORKSPACE.SPORTS.FAILED'))
+        void store.load(['movie', 'series'], undefined, PREFETCH).then(
+            () => this.loaded(),
+            () => this.loaded()
         );
+        this.loadSports();
+    }
+
+    private loadSports(): void {
+        const sports = this.app.sports;
+        if (sports.data) {
+            this.renderSports(sports.data);
+        }
+        sports.refresh().then(undefined, () => {
+            if (!sports.data) {
+                this.events.say(t('WORKSPACE.SPORTS.FAILED'), () => {
+                    this.events.say(t('WORKSPACE.SPORTS.LOADING'));
+                    this.loadSports();
+                });
+            }
+        });
+    }
+
+    /** Everything settled: a row still empty says why, and offers a retry. */
+    private loaded(): void {
+        const store = this.app.store;
+        const retry = () => {
+            this.top10.setStatus(t('WORKSPACE.CATALOG.LOADING'));
+            this.series.say(t('WORKSPACE.CATALOG.LOADING'));
+            void store.load(['movie', 'series'], undefined, PREFETCH).then(() => this.loaded(), () => this.loaded());
+        };
+        const why = (kind: 'movie' | 'series') => {
+            const error = store.errorOf(kind);
+            return error
+                ? `${requestErrorText(error)} ${t('WORKSPACE.CATALOG.FAILED')}`
+                : t(kind === 'movie' ? 'WORKSPACE.CATALOG.EMPTY_MOVIES' : 'WORKSPACE.CATALOG.EMPTY_SERIES');
+        };
+        if (store.titles('movie').length === 0) {
+            this.top10.setStatus(why('movie'), retry);
+        }
+        if (store.titles('series').length === 0) {
+            this.series.say(why('series'), retry);
+        }
+        this.schedule();
     }
 
     private renderCatalog(): void {
@@ -184,6 +229,7 @@ export class HomePage implements Page {
         if (rows.length === 0) {
             this.events.show(false);
         } else {
+            this.events.show(true);
             this.events.setNote(
                 `${t('WORKSPACE.SPORTS.LIVE_COUNT', { count: liveCount })} · ${
                     data.today.length === 1

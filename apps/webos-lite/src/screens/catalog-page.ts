@@ -96,16 +96,32 @@ export class CatalogPage implements Page {
 
     private async load(): Promise<void> {
         this.loading = true;
+        let failure: unknown = null;
         try {
             await this.app.store.load([this.kind]);
-            this.complete = await this.app.store.complete([this.kind]);
+            this.complete = await this.app.store.settled([this.kind]);
         } catch (error) {
-            this.news.setStatus(`${requestErrorText(error)} ${t('WORKSPACE.CATALOG.FAILED')}`, () => void this.load());
-        } finally {
-            this.loading = false;
+            failure = error;
+        }
+        this.loading = false;
+        if (failure || (this.complete && this.app.store.titles(this.kind).length === 0)) {
+            // Never "Cargando…" for good: what failed, and a way to ask again.
+            const error = failure ?? this.app.store.errorOf(this.kind);
+            if (error) {
+                this.complete = false;
+                this.news.setStatus(`${requestErrorText(error)} ${t('WORKSPACE.CATALOG.FAILED')}`, () => this.reload());
+                return;
+            }
         }
         if (this.visible) {
             this.render();
+        }
+    }
+
+    private reload(): void {
+        if (!this.loading) {
+            this.news.setStatus(t('WORKSPACE.CATALOG.LOADING'));
+            void this.load();
         }
     }
 

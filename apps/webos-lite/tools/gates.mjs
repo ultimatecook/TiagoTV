@@ -28,6 +28,7 @@ export const POLYFILLED = [
     'String.prototype.padStart',
     'String.prototype.padEnd',
     'Array.prototype.includes',
+    'Promise.prototype.finally',
 ];
 
 const FORBIDDEN_APIS = [
@@ -44,7 +45,6 @@ const FORBIDDEN_APIS = [
     [/\bstructuredClone\b/, 'structuredClone (Chrome 98)'],
     [/\brandomUUID\b/, 'crypto.randomUUID (Chrome 92)'],
     [/\bPromise\.(allSettled|any)\b/, 'Promise.allSettled/any (Chrome 76)'],
-    [/\.finally\(/, 'Promise.prototype.finally (Chrome 63)'],
     [/\bglobalThis\b/, 'globalThis (Chrome 71)'],
     [/\bqueueMicrotask\b/, 'queueMicrotask (Chrome 71)'],
     [/\bAbortController\b/, 'AbortController (Chrome 66)'],

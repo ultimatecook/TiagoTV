@@ -1,10 +1,10 @@
 import type { App } from './app';
-import { activity } from './core/activity';
+import { activity, setActivity } from './core/activity';
 import { imageQueueSize } from './core/image-queue';
 import { actionOf, isDirection, KEY } from './core/keys';
 import { nav } from './core/nav';
 import { redact } from './core/redact';
-import { requestQueueSize } from './core/request-queue';
+import { kickRequestQueue, requestQueueSize, requestQueueState } from './core/request-queue';
 import { ScreenStack } from './core/screens';
 import { activeTimers } from './core/timers';
 import { PlayerEngine } from './player/engine';
@@ -12,9 +12,10 @@ import { loadMpegts } from './player/mpegts';
 import { PlayerScreen } from './screens/player-screen';
 import { SetupScreen } from './screens/setup';
 import { confirmDialog } from './ui/dialog';
+import { stagePlaying } from './ui/stage';
 import { startApp } from './wiring';
 import { isAccountBusy } from './xtream/account';
-import { XtreamClient, type XtreamCredentials } from './xtream/client';
+import { TIMEOUTS, XtreamClient, type XtreamCredentials } from './xtream/client';
 import { loadSource, saveSource } from './xtream/source';
 
 /**
@@ -143,11 +144,23 @@ function boot(): void {
         }
     });
 
+    // "fullscreen" holds the request queue and the images: it is only true
+    // while the player is the screen on top, whatever closed or covered it.
+    stack.onChange = () => {
+        if (activity() === 'fullscreen' && !(stack.top instanceof PlayerScreen)) {
+            setActivity(stagePlaying() ? 'preview' : 'idle');
+        }
+    };
+
     // Sent to the background (the TV's Home button): the stream must not
-    // keep the account's only connection.
+    // keep the account's only connection. Back in front, the queue goes on.
     document.addEventListener('visibilitychange', () => {
         if (document.hidden && stack.top instanceof PlayerScreen) {
             stack.pop();
+        }
+        if (!document.hidden) {
+            stack.onChange?.();
+            kickRequestQueue();
         }
     });
 
@@ -158,6 +171,9 @@ function boot(): void {
         activity,
         images: imageQueueSize,
         requests: requestQueueSize,
+        queue: () => requestQueueState(),
+        // The smoke run shortens the provider's timeouts to test them.
+        setTimeouts: (change: Partial<typeof TIMEOUTS>) => Object.assign(TIMEOUTS, change),
         attempts: () => engine.attempts.slice(),
         opened: () => engine.opened,
     };

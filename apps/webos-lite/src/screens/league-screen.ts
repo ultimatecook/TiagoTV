@@ -50,6 +50,7 @@ export class LeagueScreen implements Screen {
     private readonly table = new Block(t('WORKSPACE.SPORTS.TABLE'), 'block--table');
     private readonly section: SportSection | null;
     private playingId: number | null = null;
+    private shown: SportsData | null = null;
 
     constructor(
         private readonly app: App,
@@ -132,13 +133,33 @@ export class LeagueScreen implements Screen {
     }
 
     private async load(): Promise<void> {
+        const board = this.app.sports;
+        if (board.data) {
+            this.renderData(board.data);
+        }
         let data: SportsData;
         try {
-            data = await this.app.cache.sports();
+            data = await board.refresh();
         } catch {
-            this.channels.setStatus(t('WORKSPACE.SPORTS.FAILED'), () => void this.load());
+            if (!board.data) {
+                this.channels.setStatus(t('WORKSPACE.SPORTS.FAILED'), () => void this.load());
+            }
             return;
         }
+        this.renderData(data);
+        if (hasTable(this.sectionId)) {
+            const table = await leagueTable(this.sectionId);
+            this.table.fill(table ? tableView(table, this.section) : null);
+            this.table.show(!!table);
+        }
+        this.page.updateNear();
+    }
+
+    private renderData(data: SportsData): void {
+        if (data === this.shown) {
+            return;
+        }
+        this.shown = data;
         const content = data.catalog[this.sectionId];
         const now = new Date();
         const matches = content ? content.matches.slice() : [];
@@ -154,11 +175,6 @@ export class LeagueScreen implements Screen {
         this.renderMatches(matches, now);
         if (nav.focused && !document.body.contains(nav.focused)) {
             nav.focus(this.initialFocus());
-        }
-        if (hasTable(this.sectionId)) {
-            const table = await leagueTable(this.sectionId);
-            this.table.fill(table ? tableView(table, this.section) : null);
-            this.table.show(!!table);
         }
         this.page.updateNear();
     }

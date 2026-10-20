@@ -2,6 +2,7 @@ import {
     competitionLogo,
     findSportSection,
     type SportMatch,
+    type SportSectionId,
     type TeamFixture,
 } from '@iptvnator/workspace/dashboard/feature/tv-logic';
 import { clockTime } from '../core/format';
@@ -10,27 +11,14 @@ import { assetUrl } from '../data/images';
 import { isLive, matchChannel, matchSides } from '../data/sports';
 import { t } from '../data/strings';
 import { tint } from './colour';
+import { crest } from './crest';
 import { icon } from './icons';
 
 /**
- * The sports hub's cards, as the desktop's: a team's crest (its initials
- * in a circle where there is no crest), "Tus equipos" pills, and the
- * "En vivo ahora" cards on the competition's colour.
+ * The sports hub's cards, as the desktop's: a team's crest (ui/crest.ts),
+ * "Tus equipos" pills, and the "En vivo ahora" cards on the competition's
+ * colour.
  */
-export function initials(name: string): string {
-    const words = name.split(/[\s\-.'’&()/]+/).filter((word) => word.length > 0);
-    const significant = words.filter((word) => !/^(fc|cf|cd|rc|ud|sd|afc|ac|club|de|del|la)$/i.test(word));
-    const pick = significant.length > 0 ? significant : words;
-    return pick
-        .slice(0, 2)
-        .map((word) => word.charAt(0).toUpperCase())
-        .join('');
-}
-
-export function crest(name: string, className = 'crest'): HTMLElement {
-    return h('span', { className, text: initials(name) });
-}
-
 /** "Hoy · 19:00", "En vivo", or nothing for a team without a match. */
 function fixtureStatus(fixture: TeamFixture, now: Date): string {
     const match = fixture.match;
@@ -48,14 +36,14 @@ export function teamPill(fixture: TeamFixture, now = new Date()): HTMLElement {
     return h(
         'div',
         'team-pill',
-        crest(fixture.team.name, 'crest crest--small'),
+        crest(fixture.team.name, 'crest crest--small', fixture.team.sectionId),
         h('span', { className: 'team-pill__name', text: fixture.team.name }),
         status ? h('span', { className: `team-pill__status${fixture.match && isLive(fixture.match, now) ? ' is-live' : ''}`, text: status }) : null
     );
 }
 
-function side(name: string): HTMLElement {
-    return h('div', 'match__side', crest(name), h('div', { className: 'match__name', text: name }));
+function side(name: string, section: SportSectionId): HTMLElement {
+    return h('div', 'match__side', crest(name, 'crest', section), h('div', { className: 'match__name', text: name }));
 }
 
 /** "En vivo ahora": the competition, both sides, "Ver en {canal}". */
@@ -78,7 +66,7 @@ export function liveMatchCard(match: SportMatch, now = new Date()): HTMLElement 
             })
         ),
         home && away
-            ? h('div', 'match-card__sides', side(home), h('div', { className: 'match-card__vs display', text: 'VS' }), side(away))
+            ? h('div', 'match-card__sides', side(home, match.sectionId), h('div', { className: 'match-card__vs display', text: 'VS' }), side(away, match.sectionId))
             : h('div', { className: 'match-card__title', text: match.event.title }),
         h('div', 'match-card__watch', icon('play'), t('WORKSPACE.SPORTS.WATCH_ON', { channels: matchChannel(match) }))
     );

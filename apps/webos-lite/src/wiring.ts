@@ -1,7 +1,9 @@
 import type { App } from './app';
 import type { ScreenStack } from './core/screens';
 import { CatalogCache } from './data/catalog-cache';
+import { accountScope, CatalogPersist } from './data/catalog-persist';
 import { CatalogStore } from './data/catalog-store';
+import { SportsBoard } from './data/sports-board';
 import { PlaybackController } from './player/controller';
 import type { PlayerEngine } from './player/engine';
 import { CatalogPage } from './screens/catalog-page';
@@ -32,6 +34,14 @@ export interface WiringDeps {
     readonly exit: () => void;
 }
 
+function localStore(): Storage | null {
+    try {
+        return window.localStorage;
+    } catch {
+        return null;
+    }
+}
+
 function pagesOf(app: App): PageDefinition[] {
     return [
         { id: 'home', create: () => new HomePage(app) },
@@ -48,13 +58,18 @@ function pagesOf(app: App): PageDefinition[] {
 /** Builds the app for `client` and opens its shell on Inicio. */
 export function startApp(client: XtreamClient, deps: WiringDeps): App {
     const { stack, engine } = deps;
-    const cache = new CatalogCache(client);
+    const scope = accountScope(client.credentials.server, client.credentials.username);
+    const persist = new CatalogPersist(scope);
+    const cache = new CatalogCache(client, persist);
+    const store = new CatalogStore(cache, persist);
+    const sports = new SportsBoard(cache, scope, localStore());
     let shell: ShellScreen | null = null;
     const app: App = {
         stack,
         client,
         cache,
-        store: new CatalogStore(cache),
+        store,
+        sports,
         engine,
         version: __APP_VERSION__,
         play: (request) => stack.push(new PlayerScreen(app, new PlaybackController(app, engine, request))),
@@ -74,6 +89,11 @@ export function startApp(client: XtreamClient, deps: WiringDeps): App {
             savePrefs(change);
         },
         exit: deps.exit,
+        retryLoads: () => {
+            cache.forget('country:');
+            void store.retryFailed();
+            sports.refresh(true).then(undefined, () => undefined);
+        },
     };
     shell = new ShellScreen(pagesOf(app));
     stack.reset(shell);

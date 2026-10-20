@@ -1,15 +1,17 @@
+import { PREFETCH } from '../core/request-queue';
 import type { CatalogKind, XtreamCategory, XtreamClient } from '../xtream/client';
+import { REFRESH_MS, type CatalogPersist } from './catalog-persist';
 import { loadCountryRows, type LoadedCountry } from './live';
-import { loadSports, type SportsData } from './sports';
 
 /**
  * What the session already loaded, in memory: category lists change with
- * the provider's line-up, not by the minute; event channels rename
- * themselves after each match, so the sports board is kept briefly.
+ * the provider's line-up, not by the minute, and are kept across launches
+ * too (catalog-persist.ts): a kept list answers at once, and one older
+ * than REFRESH_MS is asked again in the background for the next start.
+ * (Today's matches are the sports board's, data/sports-board.ts.)
  */
 const CATEGORIES_MS = 30 * 60 * 1000;
 const COUNTRY_MS = 20 * 60 * 1000;
-export const SPORTS_MS = 4 * 60 * 1000;
 
 interface Entry<T> {
     readonly at: number;
@@ -23,6 +25,7 @@ export class CatalogCache {
 
     constructor(
         readonly client: XtreamClient,
+        private readonly persist: CatalogPersist,
         private readonly now: () => number = Date.now
     ) {}
 
@@ -51,27 +54,29 @@ export class CatalogCache {
     }
 
     categories(kind: CatalogKind): Promise<XtreamCategory[]> {
-        return this.remember(`categories:${kind}`, CATEGORIES_MS, () =>
-            this.client.categories(kind)
-        );
+        return this.remember(`categories:${kind}`, CATEGORIES_MS, () => {
+            const kept = this.persist.lists(kind);
+            const ask = (background: boolean) =>
+                this.client.categories(kind, background ? PREFETCH : undefined).then((list) => {
+                    if (list.length > 0) {
+                        this.persist.saveLists(kind, list);
+                    }
+                    return list;
+                });
+            if (kept && kept.value.length > 0) {
+                this.client.knowCategories(kind, kept.value);
+                if (this.now() - kept.at > REFRESH_MS) {
+                    ask(true).then(undefined, () => undefined);
+                }
+                return Promise.resolve(kept.value);
+            }
+            return ask(false);
+        });
     }
 
     country(id: string, onProgress?: Progress): Promise<LoadedCountry> {
         return this.remember(`country:${id}`, COUNTRY_MS, async () =>
             loadCountryRows(this.client, await this.categories('live'), id, onProgress)
         );
-    }
-
-    /** Today's matches and the competitions' channels (kept briefly). */
-    sports(onProgress?: Progress, background = false): Promise<SportsData> {
-        return this.remember('sports', SPORTS_MS, async () =>
-            loadSports(this.client, await this.categories('live'), onProgress, background)
-        );
-    }
-
-    /** The sports data if loaded and still fresh, without asking. */
-    sportsNow(): Promise<SportsData> | null {
-        const entry = this.entries.get('sports');
-        return entry && this.now() - entry.at < SPORTS_MS ? (entry.value as Promise<SportsData>) : null;
     }
 }

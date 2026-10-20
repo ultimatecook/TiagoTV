@@ -8,7 +8,7 @@ import {
 import { clear, h } from '../core/dom';
 import { nav, onActivate } from '../core/nav';
 import { Slot } from '../core/timers';
-import { SPORTS_MS } from '../data/catalog-cache';
+import { SPORTS_MS } from '../data/sports-board';
 import { isLive, liveCounts, type SportsData } from '../data/sports';
 import { t } from '../data/strings';
 import type { App } from '../app';
@@ -65,6 +65,11 @@ export class SportsPage implements Page {
         this.page.add(this.later.el);
         this.live.say(t('WORKSPACE.SPORTS.LOADING'));
         this.later.show(false);
+        app.sports.onChange((data) => {
+            if (this.visible) {
+                this.render(data);
+            }
+        });
     }
 
     get el(): HTMLElement {
@@ -74,11 +79,11 @@ export class SportsPage implements Page {
     show(): void {
         this.visible = true;
         this.page.updateNear();
-        const cached = this.app.cache.sportsNow();
-        if (cached) {
-            void cached.then((data) => this.render(data), () => undefined);
+        const board = this.app.sports;
+        if (board.data) {
+            this.render(board.data);
         }
-        this.schedule(cached ? SPORTS_MS : 250);
+        this.schedule(board.fresh() ? SPORTS_MS : 250);
     }
 
     hide(): void {
@@ -100,9 +105,14 @@ export class SportsPage implements Page {
         }
         this.loading = true;
         try {
-            this.render(await this.app.cache.sports());
+            this.render(await this.app.sports.refresh());
         } catch {
-            this.live.say(t('WORKSPACE.SPORTS.FAILED'));
+            if (!this.shown) {
+                this.live.say(t('WORKSPACE.SPORTS.FAILED'), () => {
+                    this.live.say(t('WORKSPACE.SPORTS.LOADING'));
+                    void this.load();
+                });
+            }
         } finally {
             this.loading = false;
             if (this.visible) {
@@ -125,6 +135,7 @@ export class SportsPage implements Page {
         const live = data.today.filter((match) => isLive(match, now));
         const later = data.today.filter((match) => !isLive(match, now));
         if (live.length === 0 && later.length === 0) {
+            this.live.show(true);
             this.live.say(t('WORKSPACE.SPORTS.NO_MATCHES'));
         } else {
             const grid = h('div', 'match-grid');

@@ -29,6 +29,8 @@ interface Entry {
 
 export class ScreenStack {
     private readonly entries: Entry[] = [];
+    /** Runs after every push and pop (main.ts keeps the activity true). */
+    onChange: (() => void) | null = null;
 
     constructor(
         private readonly root: HTMLElement,
@@ -56,6 +58,7 @@ export class ScreenStack {
         this.entries.push({ screen, lastFocus: null });
         this.root.appendChild(screen.el);
         this.enter(screen, null);
+        this.onChange?.();
     }
 
     pop(): void {
@@ -71,6 +74,7 @@ export class ScreenStack {
             below.screen.el.style.display = '';
             this.enter(below.screen, below.lastFocus);
         }
+        this.onChange?.();
     }
 
     /**

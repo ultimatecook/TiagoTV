@@ -66,6 +66,24 @@
     define(String.prototype, 'padEnd', function (length, fill) {
         return pad(String(this), length, fill, false);
     });
+    // The desktop's crest resolver (team-crests.ts) ends its lookups so.
+    if (typeof Promise === 'function') {
+        define(Promise.prototype, 'finally', function (onFinally) {
+            var run = typeof onFinally === 'function' ? onFinally : function () {};
+            return this.then(
+                function (value) {
+                    return Promise.resolve(run()).then(function () {
+                        return value;
+                    });
+                },
+                function (reason) {
+                    return Promise.resolve(run()).then(function () {
+                        throw reason;
+                    });
+                }
+            );
+        });
+    }
     define(Array.prototype, 'includes', function (value) {
         for (var i = 0; i < this.length; i++) {
             if (this[i] === value || (value !== value && this[i] !== this[i])) {

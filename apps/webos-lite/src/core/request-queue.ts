@@ -34,7 +34,7 @@ export interface JobOptions {
 }
 
 interface Job {
-    readonly priority: Priority;
+    priority: Priority;
     readonly label: string;
     readonly limitMs: number;
     readonly run: () => Promise<unknown>;
@@ -88,25 +88,51 @@ function pump(): void {
     );
 }
 
+function insert(job: Job): void {
+    let at = jobs.length;
+    while (at > 0 && jobs[at - 1].priority > job.priority) {
+        at--;
+    }
+    jobs.splice(at, 0, job);
+}
+
+/** A queued request, and a way to move it up while it waits. */
+export interface Queued<T> {
+    readonly promise: Promise<T>;
+    /** The viewer now waits for it: it runs at `priority` if that is sooner. */
+    promote(priority: Priority): void;
+}
+
 /** Runs `run` when the jobs before it (by priority) have settled. */
-export function serial<T>(run: () => Promise<T>, options: JobOptions = {}): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-        const priority = options.priority ?? VIEWER;
-        const job: Job = {
-            priority,
+export function enqueue<T>(run: () => Promise<T>, options: JobOptions = {}): Queued<T> {
+    let job: Job | null = null;
+    const promise = new Promise<T>((resolve, reject) => {
+        job = {
+            priority: options.priority ?? VIEWER,
             label: options.label ?? '',
             limitMs: options.limitMs ?? DEFAULT_LIMIT_MS,
             run,
             resolve: resolve as (value: unknown) => void,
             reject,
         };
-        let at = jobs.length;
-        while (at > 0 && jobs[at - 1].priority > priority) {
-            at--;
-        }
-        jobs.splice(at, 0, job);
-        pump();
+        insert(job);
     });
+    pump();
+    return {
+        promise,
+        promote(priority: Priority) {
+            const waiting = job ? jobs.indexOf(job) : -1;
+            if (job && waiting >= 0 && priority < job.priority) {
+                jobs.splice(waiting, 1);
+                job.priority = priority;
+                insert(job);
+            }
+        },
+    };
+}
+
+export function serial<T>(run: () => Promise<T>, options: JobOptions = {}): Promise<T> {
+    return enqueue(run, options).promise;
 }
 
 /** For tests and ares-inspect: requests waiting, and whether one is out. */
