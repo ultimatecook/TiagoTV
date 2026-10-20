@@ -5,6 +5,7 @@ export * from './lib/host-connectivity-reset';
 export * from './lib/lazy-snack-bar/lazy-snack-bar';
 export * from './lib/database-electron.service';
 export * from './lib/downloads.service';
+export * from './lib/embedded-mpv-session-options-mirror';
 export * from './lib/recordings.service';
 export * from './lib/playback-position-runtime-bridge.service';
 export * from './lib/playback-position.service';

@@ -33,9 +33,11 @@ import {
     normalizeEpgOffsetMinutes,
     normalizeDashboardRailsSettings,
     normalizeParentalLockRelockMinutes,
+    normalizePlaybackSmoothness,
     normalizeStartupWindowMode,
     DEFAULT_PARENTAL_LOCK_RELOCK_MINUTES,
 } from '@iptvnator/shared/interfaces';
+import { mirrorEmbeddedMpvSessionOptions } from './embedded-mpv-session-options-mirror';
 
 import {
     DEFAULT_SETTINGS,
@@ -96,6 +98,9 @@ export const SettingsStore = signalStore(
                                 normalizeParentalLockRelockMinutes(
                                     storedSettings.parentalLockRelockMinutes
                                 ),
+                            playbackSmoothness: normalizePlaybackSmoothness(
+                                storedSettings.playbackSmoothness
+                            ),
                         });
                         void this.sanitizeEmbeddedMpvSelection().catch(
                             (error) => {
@@ -106,6 +111,8 @@ export const SettingsStore = signalStore(
                             }
                         );
                     }
+                    // Fresh profiles too: main applies what it holds.
+                    void mirrorEmbeddedMpvSessionOptions(this.getSettings());
                     await epgSources
                         .synchronize(this.getSettings().epgUrl)
                         .catch((error) => {
@@ -160,6 +167,13 @@ export const SettingsStore = signalStore(
                                   normalizeParentalLockRelockMinutes(
                                       settings.parentalLockRelockMinutes
                                   ),
+                          }
+                        : {}),
+                    ...(settings.playbackSmoothness !== undefined
+                        ? {
+                              playbackSmoothness: normalizePlaybackSmoothness(
+                                  settings.playbackSmoothness
+                              ),
                           }
                         : {}),
                 });
@@ -259,6 +273,9 @@ export const SettingsStore = signalStore(
                         store.portalConnectivityGuard?.() !== false,
                     embeddedMpvAutoReconnect:
                         store.embeddedMpvAutoReconnect?.() !== false,
+                    playbackSmoothness: normalizePlaybackSmoothness(
+                        store.playbackSmoothness?.()
+                    ),
                     coverSize:
                         store.coverSize?.() ?? DEFAULT_SETTINGS.coverSize,
                     showCoverTitles: store.showCoverTitles?.() !== false,

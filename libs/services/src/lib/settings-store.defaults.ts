@@ -1,6 +1,7 @@
 import {
     DEFAULT_DASHBOARD_RAILS_SETTINGS,
     DEFAULT_PARENTAL_LOCK_RELOCK_MINUTES,
+    DEFAULT_PLAYBACK_SMOOTHNESS,
     DEFAULT_TMDB_SETTINGS,
     Language,
     Settings,
@@ -50,6 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
     embeddedMpvFrameCopy: false,
     embeddedMpvExtraOptions: '',
     embeddedMpvAutoReconnect: true,
+    playbackSmoothness: DEFAULT_PLAYBACK_SMOOTHNESS,
     portalConnectivityGuard: true,
     coverSize: 'medium',
     showCoverTitles: true,

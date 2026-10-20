@@ -12,6 +12,7 @@ import {
 import {
     CoverSizeOption,
     EpgViewModeOption,
+    PlaybackSmoothnessOption,
     SettingsPlayerOption,
     SettingsSection,
     StartupBehaviorOption,
@@ -105,6 +106,18 @@ export const SETTINGS_UPDATE_CHANNEL_OPTIONS: UpdateChannelOption[] = [
         labelKey: 'SETTINGS.APP_UPDATE_CHANNEL_NIGHTLY',
     },
 ];
+
+export const SETTINGS_PLAYBACK_SMOOTHNESS_OPTIONS: PlaybackSmoothnessOption[] =
+    [
+        {
+            value: 'stable',
+            labelKey: 'SETTINGS.PLAYBACK_SMOOTHNESS_STABLE',
+        },
+        {
+            value: 'normal',
+            labelKey: 'SETTINGS.PLAYBACK_SMOOTHNESS_NORMAL',
+        },
+    ];
 
 export const SETTINGS_OS_PLAYER_OPTIONS: SettingsPlayerOption[] = [
     {

@@ -2,6 +2,7 @@ import {
     AppUpdateChannel,
     CoverSize,
     EpgViewMode,
+    PlaybackSmoothness,
     StartupBehavior,
     StartupWindowMode,
     Theme,
@@ -35,6 +36,11 @@ export interface StartupWindowModeOption {
 
 export interface UpdateChannelOption {
     value: AppUpdateChannel;
+    labelKey: string;
+}
+
+export interface PlaybackSmoothnessOption {
+    value: PlaybackSmoothness;
     labelKey: string;
 }
 

@@ -45,6 +45,11 @@ import {
 } from '../web-video-support/web-video-native-source.util';
 import { WebVideoSourceTracks } from '../web-video-support/web-video-source-tracks';
 import { createMpegTsLoaderConfig } from '../web-video-support/mpegts-stream-loader';
+import {
+    createHlsBufferConfig,
+    createMpegTsBufferConfig,
+    PLAYBACK_SMOOTHNESS,
+} from '../web-video-support/playback-smoothness';
 import { attachHtmlVideoLegacyShortcuts } from './html-video-legacy-shortcuts';
 import { HtmlVideoElementSession } from './html-video-element-session';
 import {
@@ -101,6 +106,8 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
 
     readonly sharedControls = inject(WEB_PLAYER_SHARED_CONTROLS);
     readonly controlsAdapter = inject(WebVideoControlsAdapter);
+    /** "Fluidez", read when a stream starts. */
+    private readonly smoothness = inject(PLAYBACK_SMOOTHNESS);
     private readonly seriesNavigationSignal =
         signal<SeriesPlaybackNavigation | null>(null);
 
@@ -245,7 +252,13 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
                 );
                 this.mpegtsPlayer = mpegts.createPlayer(
                     { type: 'mpegts', isLive: this.isLive(), url: url },
-                    createMpegTsLoaderConfig(url)
+                    {
+                        ...createMpegTsLoaderConfig(url),
+                        ...createMpegTsBufferConfig(
+                            this.smoothness(),
+                            this.isLive()
+                        ),
+                    }
                 );
                 this.mpegtsPlayer.attachMediaElement(
                     this.videoPlayer.nativeElement
@@ -276,7 +289,7 @@ export class HtmlVideoPlayerComponent implements OnInit, OnChanges, OnDestroy {
                 // containers never reach hls.js: fed an .mkv it raised a
                 // manifest error over media the browser plays by itself.
                 debugHtmlPlayer('Starting HLS playback');
-                const hls = new Hls();
+                const hls = new Hls(createHlsBufferConfig(this.smoothness()));
                 this.hls = hls;
                 hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
                     if (this.hls !== hls) return;

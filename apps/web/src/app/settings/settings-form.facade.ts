@@ -9,6 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder } from '@angular/forms';
 import { EpgRuntimeBridgeService } from '@iptvnator/epg/data-access';
 import {
+    embeddedMpvSessionOptionsFor,
     EpgSourceReconciliationError,
     RuntimeCapabilitiesService,
 } from '@iptvnator/services';
@@ -216,7 +217,12 @@ export class SettingsFormFacade {
         }
 
         if (window.electron) {
-            window.electron.updateSettings(settings);
+            // Main applies its extra options mirror to every embedded MPV
+            // session: the user's lines plus what "Fluidez" adds.
+            window.electron.updateSettings({
+                ...settings,
+                embeddedMpvExtraOptions: embeddedMpvSessionOptionsFor(settings),
+            });
 
             if (this.runtime.supportsExternalPlayerPathSettings) {
                 window.electron.setMpvPlayerPath(settings.mpvPlayerPath);

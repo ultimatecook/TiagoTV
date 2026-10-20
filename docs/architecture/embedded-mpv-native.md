@@ -676,6 +676,16 @@ malformed lines or the keys the embed depends on
 the `SETTINGS_UPDATE` handler mirrors the text into the main-process config
 (`EMBEDDED_MPV_EXTRA_OPTIONS`), because sessions are created there.
 
+The mirrored text is not only the textarea: `Settings > Playback > Fluidez`
+(`playbackSmoothness`, "Más estable" by default) appends
+`EMBEDDED_MPV_STABLE_OPTIONS` for every key the user's lines do not set
+(`resolveEmbeddedMpvSessionExtraOptions`; `hwdec` is left out on Linux,
+whose native-view embed decodes in software). The renderer writes the
+merged text once settings load (`mirrorEmbeddedMpvSessionOptions`) and on
+Save, while its own store keeps only the user's lines, so the setting
+reaches the next session without any main-process change. "Normal" mirrors
+the user's lines alone.
+
 At session creation the IPC handler reads the mirror through
 `readEmbeddedMpvSessionOptions()` and passes
 `resolveEmbeddedMpvSessionOptionArguments()` to

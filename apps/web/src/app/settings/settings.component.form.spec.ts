@@ -2,6 +2,7 @@ import { FormArray, FormControl } from '@angular/forms';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { EpgRuntimeBridgeService } from '@iptvnator/epg/data-access';
+import { embeddedMpvSessionOptionsFor } from '@iptvnator/services';
 import {
     Language,
     StartupBehavior,
@@ -680,13 +681,24 @@ describe('SettingsComponent form', () => {
                 },
                 { retryEpgCleanup: false }
             );
+            // Main gets the extra options it applies to embedded MPV
+            // sessions: the user's lines plus "Más estable"'s.
             expect(updateSettings).toHaveBeenCalledWith({
                 ...component.settingsForm.value,
                 trustedPrivateNetworkEpgUrls: [],
                 trustedInsecureTlsHosts: [],
                 parentalLockEnabled: false,
                 parentalLockRelockMinutes: 15,
+                embeddedMpvExtraOptions: embeddedMpvSessionOptionsFor({
+                    embeddedMpvExtraOptions:
+                        component.settingsForm.value.embeddedMpvExtraOptions ??
+                        '',
+                    playbackSmoothness: 'stable',
+                }),
             });
+            expect(component.settingsForm.value.playbackSmoothness).toBe(
+                'stable'
+            );
         });
 
         it('saves a shared web controls opt-out on submit', async () => {

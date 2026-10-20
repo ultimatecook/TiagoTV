@@ -36,6 +36,7 @@ import type { SeriesPlaybackNavigation } from '../portal-inline-player/series-pl
 import { logVjsAudioTracks, setupVjsAudioTrackMenu } from './vjs-audio-tracks';
 import { VjsLegacyTracks } from './vjs-legacy-tracks';
 import { VjsMpegTsSession } from './vjs-mpegts-session';
+import { PLAYBACK_SMOOTHNESS } from '../web-video-support/playback-smoothness';
 import { attachVjsLegacyShortcuts } from './vjs-legacy-shortcuts';
 import { attachVjsPointerFocusRelease } from './vjs-pointer-focus-release';
 import { VjsPlayerControlsBridge } from './vjs-player-controls.bridge';
@@ -114,6 +115,7 @@ export class VjsPlayerComponent implements OnInit, OnChanges, OnDestroy {
         player: () => this.player,
         isLive: () => this.options().isLive !== false,
         emitPlaybackIssue: (issue) => this.playbackIssue.emit(issue),
+        smoothness: inject(PLAYBACK_SMOOTHNESS),
     });
     private readonly resetCoordinator = new VjsPlayerResetCoordinator({
         player: () => this.player,
@@ -315,9 +317,8 @@ export class VjsPlayerComponent implements OnInit, OnChanges, OnDestroy {
         this.restoreDesiredSourceAfterReset(true);
     };
 
-    private readonly handlePauseForReset = () => {
+    private readonly handlePauseForReset = () =>
         this.resetCoordinator.handlePause();
-    };
 
     private changeSource(source: VideoPlayerSource | null): void {
         this.playbackIssue.emit(null);

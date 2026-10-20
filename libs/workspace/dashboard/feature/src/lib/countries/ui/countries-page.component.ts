@@ -14,6 +14,8 @@ import {
     viewChild,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
+import { SettingsStore } from '@iptvnator/services';
+import { prefersHdCopies } from '@iptvnator/shared/interfaces';
 import { EmbeddedMpvOverlayVisibilityService } from '@iptvnator/ui/playback';
 import { findCountryDefinition } from '../countries';
 import type { TvCountry } from '../countries-catalog';
@@ -90,6 +92,7 @@ export class CountriesPageComponent {
     readonly tv = inject(CountryTvPlayback);
     readonly controls = inject(CountryTvControls);
     private readonly mpvOverlays = inject(EmbeddedMpvOverlayVisibilityService);
+    private readonly settings = inject(SettingsStore);
     private readonly live = viewChild<ElementRef<HTMLElement>>('live');
     private readonly overlayElement = viewChild(CountryTvOverlayComponent, {
         read: ElementRef,
@@ -209,7 +212,8 @@ export class CountriesPageComponent {
         rememberCountry(browserStorage(), id);
         const selection = countrySelection(
             country,
-            readMemory(browserStorage())
+            readMemory(browserStorage()),
+            this.preferHd()
         );
         if (selection) {
             this.tv.open(selection);
@@ -219,7 +223,9 @@ export class CountriesPageComponent {
     play(card: TvCard): void {
         const country = this.country();
         if (country) {
-            this.tv.play(selectionOf(country, card.row, card.channel));
+            this.tv.play(
+                selectionOf(country, card.row, card.channel, this.preferHd())
+            );
         }
     }
 
@@ -275,13 +281,19 @@ export class CountriesPageComponent {
         this.catalog.retry();
     }
 
+    /** "Fluidez: Más estable": a channel starts on HD rather than UHD. */
+    private preferHd(): boolean {
+        return prefersHdCopies(this.settings.playbackSmoothness?.());
+    }
+
     private open(countries: readonly TvCountry[]): void {
         this.opened = true;
         const routeId = findCountryDefinition(this.countryId())?.id ?? null;
         const selection = openingSelection(
             countries,
             readMemory(browserStorage()),
-            routeId
+            routeId,
+            this.preferHd()
         );
         this.chosen.set(
             selection?.country.definition.id ?? countries[0].definition.id

@@ -4,6 +4,7 @@ import {
     countryChannelName,
     groupCountryChannels,
     mergeChannelGroups,
+    startingCopy,
     type CountryChannel,
 } from './country-channels';
 
@@ -194,5 +195,45 @@ describe('mergeChannelGroups', () => {
             'La 1',
         ]);
         expect(merged.icons).toEqual(['a.png']);
+    });
+});
+
+describe('startingCopy', () => {
+    const copies = (...names: string[]) =>
+        groupCountryChannels(
+            names.map((name, index) => ({
+                streamId: index + 1,
+                categoryId: '1',
+                name,
+                icon: null,
+            })),
+            ['ES']
+        )[0].copies;
+
+    it('starts on the best copy in "normal"', () => {
+        const la1 = copies('|ES| La 1 ᴴᴰ', '|ES| La 1 ᵁᴴᴰ', '|ES| La 1 ˢᴰ');
+        expect(startingCopy(la1, false).quality).toBe('UHD');
+    });
+
+    it('starts on the HD copy before the UHD one in "Más estable"', () => {
+        const la1 = copies('|ES| La 1 ᴴᴰ', '|ES| La 1 4K', '|ES| La 1 ˢᴰ');
+        expect(startingCopy(la1, true)).toEqual(
+            expect.objectContaining({ streamId: 1, quality: 'HD' })
+        );
+        // FHD is the best of the HD copies.
+        const fhd = copies('|ES| La 1 HD', '|ES| La 1 UHD', '|ES| La 1 FHD');
+        expect(startingCopy(fhd, true).quality).toBe('FHD');
+    });
+
+    it('keeps the UHD copy when there is no HD one to start on', () => {
+        const uhdAndSd = copies('|ES| La 1 ᵁᴴᴰ', '|ES| La 1 ˢᴰ');
+        expect(startingCopy(uhdAndSd, true).quality).toBe('UHD');
+        const unbadged = copies('|ES| La 1 ᵁᴴᴰ', '|ES| La 1');
+        expect(startingCopy(unbadged, true).quality).toBe('UHD');
+    });
+
+    it('starts on the best copy when it is not UHD', () => {
+        const hd = copies('|ES| La 1 ˢᴰ', '|ES| La 1 ᴴᴰ');
+        expect(startingCopy(hd, true).quality).toBe('HD');
     });
 });

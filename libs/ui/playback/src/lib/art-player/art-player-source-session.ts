@@ -2,7 +2,10 @@ import type Artplayer from 'artplayer';
 import type { Option } from 'artplayer';
 import Hls, { type ErrorData, type ManifestParsedData } from 'hls.js';
 import mpegts from 'mpegts.js';
-import type { ChannelDrm } from '@iptvnator/shared/interfaces';
+import type {
+    ChannelDrm,
+    PlaybackSmoothness,
+} from '@iptvnator/shared/interfaces';
 import {
     InlinePlaybackPlayer,
     type PlaybackDiagnostic,
@@ -16,6 +19,10 @@ import {
 } from '@iptvnator/playback/util';
 import { isBrowserMediaTypeSupported } from '../web-video-support/browser-media-type-support';
 import { createMpegTsLoaderConfig } from '../web-video-support/mpegts-stream-loader';
+import {
+    createHlsBufferConfig,
+    createMpegTsBufferConfig,
+} from '../web-video-support/playback-smoothness';
 import type { WebVideoControlsAdapter } from '../player-controls';
 import type { ShakaModuleLoader } from '../shaka-engine/shaka-module.types';
 import { ShakaVideoSession } from '../shaka-engine/shaka-video-session';
@@ -37,6 +44,8 @@ export interface ArtPlayerSourceSessionConfig {
     getDrm?: () => ChannelDrm | undefined;
     /** Test seam for the lazily imported shaka-player module. */
     loadShaka?: ShakaModuleLoader;
+    /** "Fluidez", read per stream; absent means the stock buffering. */
+    smoothness?: () => PlaybackSmoothness;
 }
 
 /**
@@ -133,6 +142,10 @@ export class ArtPlayerSourceSession {
         this.player = null;
     }
 
+    private smoothness(): PlaybackSmoothness {
+        return this.config.smoothness?.() ?? 'normal';
+    }
+
     private startHls(
         video: HTMLVideoElement,
         url: string,
@@ -144,7 +157,7 @@ export class ArtPlayerSourceSession {
 
         this.prepareForSourceChange();
         if (Hls.isSupported()) {
-            const hls = new Hls();
+            const hls = new Hls(createHlsBufferConfig(this.smoothness()));
             this.hls = hls;
             this.hlsManifestListener = (_event, data) => {
                 if (this.destroyed || this.hls !== hls) {
@@ -184,15 +197,13 @@ export class ArtPlayerSourceSession {
         if (!mpegts.isSupported()) {
             return;
         }
+        const isLive = this.config.sharedControls ? this.config.isLive() : true;
         const engine = mpegts.createPlayer(
+            { type: 'mpegts', isLive, url },
             {
-                type: 'mpegts',
-                isLive: this.config.sharedControls
-                    ? this.config.isLive()
-                    : true,
-                url,
-            },
-            createMpegTsLoaderConfig(url)
+                ...createMpegTsLoaderConfig(url),
+                ...createMpegTsBufferConfig(this.smoothness(), isLive),
+            }
         );
         this.mpegTsPlayer = engine;
         this.mpegTsErrorListener = (type, details, info) => {

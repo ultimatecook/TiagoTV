@@ -1,5 +1,6 @@
 import type { AppUpdateChannel } from './app-update-channel.util';
 import { Language } from './language.enum';
+import type { PlaybackSmoothness } from './playback-smoothness.util';
 import { StreamFormat } from './stream-format.enum';
 import { Theme } from './theme.enum';
 import { TmdbSettings } from './tmdb.interface';
@@ -284,6 +285,15 @@ export interface Settings {
      * Captured per session, so a change applies to the next session.
      */
     embeddedMpvAutoReconnect?: boolean;
+    /**
+     * "Fluidez": `stable` (default; a missing value means it) buffers more
+     * on every inline engine and starts a channel on its HD copy before its
+     * UHD one; `normal` keeps the stock buffering. Read when a session or
+     * stream starts, so a change applies to the next one. Embedded MPV gets
+     * it through the mirrored extra options (see
+     * `resolveEmbeddedMpvSessionExtraOptions`).
+     */
+    playbackSmoothness?: PlaybackSmoothness;
     /** Desktop Xtream/Stalker request cooldown. Default on; applies on Save. */
     portalConnectivityGuard?: boolean;
     /** Cover/poster sizing preset applied across grids and rails */

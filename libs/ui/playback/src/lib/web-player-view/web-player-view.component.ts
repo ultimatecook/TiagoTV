@@ -72,6 +72,7 @@ import {
     toVideoPlayer,
 } from './web-player-recovery-policy';
 import { resolveWebPlayerSharedControls } from './web-player-shared-controls';
+import { WEB_PLAYER_PLAYBACK_SMOOTHNESS } from './web-player-playback-smoothness';
 import { injectConfiguredWebPlayer } from './vod-embedded-mpv';
 import { NowPlayingPageHandoff } from '../now-playing/now-playing-page-handoff';
 
@@ -93,6 +94,7 @@ import { NowPlayingPageHandoff } from '../now-playing/now-playing-page-handoff';
             provide: WEB_PLAYER_SHARED_CONTROLS,
             useFactory: resolveWebPlayerSharedControls,
         },
+        WEB_PLAYER_PLAYBACK_SMOOTHNESS,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,

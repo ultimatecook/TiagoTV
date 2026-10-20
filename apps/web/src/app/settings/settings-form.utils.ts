@@ -11,6 +11,7 @@ import {
     CoverSize,
     DEFAULT_APP_UPDATE_CHANNEL,
     DEFAULT_DASHBOARD_RAILS_SETTINGS,
+    DEFAULT_PLAYBACK_SMOOTHNESS,
     DEFAULT_TMDB_SETTINGS,
     EpgViewMode,
     Language,
@@ -20,7 +21,9 @@ import {
     normalizeExternalPlayerArguments,
     normalizeEpgOffsetMinutes,
     normalizeParentalLockRelockMinutes,
+    normalizePlaybackSmoothness,
     normalizeStartupWindowMode,
+    PlaybackSmoothness,
     Settings,
     StartupBehavior,
     StartupWindowMode,
@@ -126,6 +129,7 @@ export function createSettingsForm(
         embeddedMpvFrameCopy: false,
         embeddedMpvExtraOptions: ['', [embeddedMpvExtraOptionsValidator]],
         embeddedMpvAutoReconnect: true,
+        playbackSmoothness: DEFAULT_PLAYBACK_SMOOTHNESS as PlaybackSmoothness,
         portalConnectivityGuard: true,
         coverSize: 'medium' as CoverSize,
         showCoverTitles: true,
@@ -220,6 +224,9 @@ export function createSettingsFromFormValue(
             value.embeddedMpvExtraOptions
         ),
         embeddedMpvAutoReconnect: value.embeddedMpvAutoReconnect ?? true,
+        playbackSmoothness: normalizePlaybackSmoothness(
+            value.playbackSmoothness
+        ),
         portalConnectivityGuard: value.portalConnectivityGuard !== false,
         coverSize: value.coverSize ?? 'medium',
         showCoverTitles: value.showCoverTitles !== false,

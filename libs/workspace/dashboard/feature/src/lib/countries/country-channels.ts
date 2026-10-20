@@ -155,6 +155,27 @@ function withCopies(
 }
 
 /**
+ * The copy a channel starts on when none is picked: its best one, or, with
+ * `preferHd` ("Fluidez: Más estable") and both kinds present, its best HD
+ * (FHD, else HD) copy before a UHD/4K one, whose bitrate stalls far more
+ * often. Only a default: a copy picked in the panel plays as picked.
+ */
+export function startingCopy(
+    copies: readonly CountryChannel[],
+    preferHd: boolean
+): CountryChannel {
+    const best = copies[0];
+    if (!preferHd || best?.quality !== 'UHD') {
+        return best;
+    }
+    return (
+        copies.find(
+            (copy) => copy.quality === 'FHD' || copy.quality === 'HD'
+        ) ?? best
+    );
+}
+
+/**
  * A chip per copy: its quality ("UHD", "HD"), numbered where two share
  * one ("HD", "HD 2"); a copy without a badge by its place ("1", "2").
  */

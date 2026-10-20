@@ -21,6 +21,7 @@ import {
     reportsPlaybackFailures,
 } from '@iptvnator/shared/interfaces';
 import { SettingsPlayerOption } from './settings.models';
+import { SETTINGS_PLAYBACK_SMOOTHNESS_OPTIONS } from './settings-options';
 import { markSectionForCheckOnFormEvents } from './settings-section-form-render';
 import { provideFormFieldDefaults } from '@iptvnator/ui/components/form-field-defaults';
 
@@ -55,6 +56,9 @@ export class SettingsPlaybackSectionComponent {
         '--width=640',
         '--height=360',
     ].join('\n');
+
+    /** "Fluidez": Más estable (default) or Normal. */
+    readonly smoothnessOptions = SETTINGS_PLAYBACK_SMOOTHNESS_OPTIONS;
 
     readonly form = input.required<FormGroup>();
 

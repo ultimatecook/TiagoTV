@@ -236,6 +236,25 @@ describe('settings form utils — embedded MPV session options', () => {
     });
 });
 
+describe('settings form utils — playback smoothness', () => {
+    it('defaults the form to "Más estable" and carries a choice through', () => {
+        const form = createSettingsForm(new FormBuilder(), true);
+        expect(form.getRawValue().playbackSmoothness).toBe('stable');
+
+        form.patchValue({ playbackSmoothness: 'normal' });
+        expect(
+            createSettingsFromFormValue(form, {} as Settings).playbackSmoothness
+        ).toBe('normal');
+
+        form.patchValue({
+            playbackSmoothness: null as unknown as 'normal',
+        });
+        expect(
+            createSettingsFromFormValue(form, {} as Settings).playbackSmoothness
+        ).toBe('stable');
+    });
+});
+
 describe('settings form utils — EPG source control', () => {
     it.each([
         'https://epg.example.org/guide.xml.gz',

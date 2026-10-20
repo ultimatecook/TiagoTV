@@ -36,6 +36,7 @@ import {
     resolveArtPlayerIsLive,
 } from './art-player-setup';
 import { ArtPlayerSourceSession } from './art-player-source-session';
+import { PLAYBACK_SMOOTHNESS } from '../web-video-support/playback-smoothness';
 import { ArtPlayerVideoSession } from './art-player-video-session';
 import type { PlayerTimeUpdate } from '../playback-history/player-time-update';
 
@@ -80,6 +81,8 @@ export class ArtPlayerComponent implements OnInit, OnDestroy, OnChanges {
 
     readonly sharedControls = inject(WEB_PLAYER_SHARED_CONTROLS);
     readonly controlsAdapter = inject(WebVideoControlsAdapter);
+    /** "Fluidez", read when a stream starts. */
+    private readonly smoothness = inject(PLAYBACK_SMOOTHNESS);
     readonly playerRoot = viewChild<ElementRef<HTMLElement>>('playerRoot');
     private readonly artplayerContainer =
         viewChild.required<ElementRef<HTMLDivElement>>('artplayer');
@@ -163,6 +166,7 @@ export class ArtPlayerComponent implements OnInit, OnDestroy, OnChanges {
             showCaptions: () => this.showCaptions(),
             emitPlaybackIssue: (issue) => this.playbackIssue.emit(issue),
             getDrm: () => this.channel().drm,
+            smoothness: this.smoothness,
         });
         this.sourceSession = sourceSession;
 

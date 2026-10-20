@@ -58,8 +58,9 @@ export const APP_UPDATE_CHANNEL = 'APP_UPDATE_CHANNEL';
 export const TRUSTED_LOCAL_EPG_SOURCES = 'TRUSTED_LOCAL_EPG_SOURCES';
 
 /**
- * Extra libmpv options for embedded sessions, one "key=value" per line, as
- * typed in Settings > Playback. Mirrored here by the SETTINGS_UPDATE handler
+ * Extra libmpv options for embedded sessions, one "key=value" per line: the
+ * lines typed in Settings > Playback plus the ones its "Fluidez" choice adds,
+ * merged by the renderer. Mirrored here by the SETTINGS_UPDATE handler
  * because sessions are created in the main process, where the renderer's
  * IndexedDB settings are unreachable. Turned into addon arguments by
  * `readEmbeddedMpvSessionOptions()`.

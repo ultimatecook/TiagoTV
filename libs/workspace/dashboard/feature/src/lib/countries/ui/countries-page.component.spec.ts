@@ -9,7 +9,7 @@ import {
     XtreamUrlService,
 } from '@iptvnator/portal/xtream/data-access';
 import { PlaybackHistoryGate } from '@iptvnator/playback/data-access';
-import { ParentalLockService } from '@iptvnator/services';
+import { ParentalLockService, SettingsStore } from '@iptvnator/services';
 import type { PlaylistMeta } from '@iptvnator/shared/interfaces';
 import {
     EmbeddedMpvOverlayVisibilityService,
@@ -120,6 +120,10 @@ describe('CountriesPageComponent', () => {
                 {
                     provide: NowPlayingDockService,
                     useValue: { session: signal(null) },
+                },
+                {
+                    provide: SettingsStore,
+                    useValue: { playbackSmoothness: signal('stable') },
                 },
             ],
         });

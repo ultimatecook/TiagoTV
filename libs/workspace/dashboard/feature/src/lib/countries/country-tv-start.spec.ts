@@ -11,6 +11,7 @@ import {
     readMemory,
     rememberCountry,
     rememberSelection,
+    selectionOf,
     type TvMemory,
     type TvSelection,
 } from './country-tv-start';
@@ -88,6 +89,21 @@ describe('openingSelection', () => {
         expect(
             streamOf(openingSelection(COUNTRIES, { ...memory, country: 'gb' }))
         ).toBe(21);
+    });
+
+    it('starts a channel on its HD copy in "Más estable", never a remembered one', () => {
+        // Spain's first channel, La 1, comes in UHD (10) and HD (11).
+        expect(streamOf(openingSelection(COUNTRIES, NO_MEMORY, 'es'))).toBe(10);
+        expect(
+            streamOf(openingSelection(COUNTRIES, NO_MEMORY, 'es', true))
+        ).toBe(11);
+        expect(streamOf(countrySelection(country('es'), NO_MEMORY, true))).toBe(
+            11
+        );
+        // The copy watched last is the copy that plays.
+        expect(
+            streamOf(openingSelection(COUNTRIES, last(10), 'es', true))
+        ).toBe(10);
     });
 
     it('opens on the first country when Argentina has no channels', () => {
@@ -182,5 +198,22 @@ describe('the page’s memory', () => {
             )
         ).not.toThrow();
         expect(readLastChannel(null)).toBeNull();
+    });
+});
+
+describe('selectionOf', () => {
+    const spain = () => country('es');
+    const la1 = () => spain().rows[0].channels[0];
+
+    it('plays a picked channel’s best copy in "normal"', () => {
+        expect(selectionOf(spain(), spain().rows[0], la1()).copy.streamId).toBe(
+            10
+        );
+    });
+
+    it('plays a picked channel’s HD copy in "Más estable"', () => {
+        expect(
+            selectionOf(spain(), spain().rows[0], la1(), true).copy.streamId
+        ).toBe(11);
     });
 });

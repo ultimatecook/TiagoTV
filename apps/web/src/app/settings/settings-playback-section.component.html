@@ -66,6 +66,52 @@
                 </div>
             }
 
+            <!-- Every built-in player buffers by it, and the HD-first copy
+                 applies whichever player opens the channel. -->
+            <div
+                class="setting-item"
+                data-setting-id="playback-smoothness"
+                data-test-id="playback-smoothness-setting"
+            >
+                <div class="setting-item__meta">
+                    <h4 id="playback-smoothness-label">
+                        {{ 'SETTINGS.PLAYBACK_SMOOTHNESS' | translate }}
+                    </h4>
+                    <p>
+                        {{
+                            'SETTINGS.PLAYBACK_SMOOTHNESS_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control">
+                    <mat-form-field
+                        class="settings-select"
+                        appearance="outline"
+                        subscriptSizing="dynamic"
+                    >
+                        <mat-select
+                            formControlName="playbackSmoothness"
+                            aria-labelledby="playback-smoothness-label"
+                            data-test-id="select-playback-smoothness"
+                        >
+                            @for (
+                                option of smoothnessOptions;
+                                track option.value
+                            ) {
+                                <mat-option
+                                    [value]="option.value"
+                                    [attr.data-test-id]="
+                                        'playback-smoothness-' + option.value
+                                    "
+                                    >{{ option.labelKey | translate }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+
             @if (isWebPlayerSelected()) {
                 <div
                     class="setting-item"

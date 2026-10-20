@@ -718,9 +718,12 @@ switches to it.
    on their event channel or on their competition's channels ("DAZN LaLiga"),
    or a football programme in a guide already loaded. Unknown stays
    unknown: no tag, and the row's name instead of a programme. A channel's
-   other feeds ("UHD", "HD") sit beside the controls. The row renders only
-   the cards in and near its view (`country-tv-window.ts`; "All" in the United
-   States is over 1,500 channels) and is one tab stop (`role="toolbar"`):
+   other feeds ("UHD", "HD") sit beside the controls. A channel starts on
+   its best copy or, with Settings → Playback → Fluidez on "Más estable"
+   (the default), on its HD copy before a UHD one (`startingCopy`); a
+   remembered channel plays the copy watched, a chip the copy picked. The
+   row renders only the cards in and near its view (`country-tv-window.ts`;
+   "All" in the United States is over 1,500 channels) and is one tab stop (`role="toolbar"`):
    arrows, Page Up/Down, Home and End move along it, Enter plays.
 
    **Short windows** (`max-height: 700px`, a 900×600 window from 110 %):

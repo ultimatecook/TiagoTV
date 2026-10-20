@@ -90,6 +90,34 @@ describe('VjsMpegTsSession', () => {
         }
     });
 
+    it('buffers more in "Más estable", read when the stream starts', () => {
+        const restore = stubStreamingFetch();
+        try {
+            createPlayerMock.mockReturnValue(createMpegTsPlayer());
+            let smoothness: 'stable' | 'normal' = 'stable';
+            const { session } = createSession({ smoothness: () => smoothness });
+            const video = document.createElement('video');
+
+            session.start('https://example.test/live/stream.ts', video);
+            smoothness = 'normal';
+            session.start('https://example.test/live/other.ts', video);
+
+            expect(createPlayerMock.mock.calls[0][1]).toEqual({
+                customLoader: MpegTsStreamLoader,
+                enableStashBuffer: true,
+                stashInitialSize: 1536 * 1024,
+                liveBufferLatencyChasing: false,
+                liveSync: false,
+                lazyLoad: false,
+            });
+            expect(createPlayerMock.mock.calls[1][1]).toEqual({
+                customLoader: MpegTsStreamLoader,
+            });
+        } finally {
+            restore();
+        }
+    });
+
     it('handles an asynchronous autoplay rejection', () => {
         const catchRejection = jest.fn();
         const mpegTsPlayer = createMpegTsPlayer();
@@ -266,7 +294,12 @@ describe('VjsMpegTsSession', () => {
     });
 });
 
-function createSession(options: { isLive?: boolean } = {}) {
+function createSession(
+    options: {
+        isLive?: boolean;
+        smoothness?: () => 'stable' | 'normal';
+    } = {}
+) {
     let currentDuration = Number.POSITIVE_INFINITY;
     const duration = jest.fn((value?: number) => {
         if (value !== undefined) {
@@ -279,6 +312,7 @@ function createSession(options: { isLive?: boolean } = {}) {
         player: () => ({ duration }),
         isLive: () => options.isLive ?? true,
         emitPlaybackIssue,
+        smoothness: options.smoothness,
     });
 
     return { duration, emitPlaybackIssue, session };

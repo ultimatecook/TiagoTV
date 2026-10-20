@@ -90,5 +90,6 @@ function createForm(player: VideoPlayer): FormGroup {
         vlcReuseInstance: new FormControl(false),
         recordingFolder: new FormControl(''),
         vodAutoFailover: new FormControl(false),
+        playbackSmoothness: new FormControl('stable'),
     });
 }

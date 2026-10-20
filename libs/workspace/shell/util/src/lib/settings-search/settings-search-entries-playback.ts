@@ -22,6 +22,23 @@ export const PLAYBACK_SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] =
             ],
         },
         {
+            id: 'playback-smoothness',
+            section: 'playback',
+            labelKey: 'SETTINGS.PLAYBACK_SMOOTHNESS',
+            descriptionKey: 'SETTINGS.PLAYBACK_SMOOTHNESS_DESCRIPTION',
+            keywords: [
+                'fluidez',
+                'buffer',
+                'cortes',
+                'stutter',
+                'smooth',
+                'quality',
+                'calidad',
+                '4k',
+                'uhd',
+            ],
+        },
+        {
             id: 'web-player-shared-controls',
             section: 'playback',
             labelKey: 'SETTINGS.WEB_PLAYER_SHARED_CONTROLS',

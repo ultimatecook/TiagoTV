@@ -1,5 +1,9 @@
 import type { TvCountry } from './countries-catalog';
-import type { CountryChannel, CountryChannelGroup } from './country-channels';
+import {
+    startingCopy,
+    type CountryChannel,
+    type CountryChannelGroup,
+} from './country-channels';
 import type { TvRow } from './country-rows';
 
 /**
@@ -7,13 +11,15 @@ import type { TvRow } from './country-rows';
  * chosen last (kept in this browser's storage) on its last channel watched,
  * else the last channel watched on the page, else the first channel of
  * Argentina's first row. A country's own route (`/workspace/countries/es`)
- * opens on that country: its last channel watched, else its first.
+ * opens on that country: its last channel watched, else its first. A
+ * remembered channel plays the copy watched; any other starts on
+ * `startingCopy`, whose `preferHd` is the "Fluidez" setting's.
  */
 export interface TvSelection {
     readonly country: TvCountry;
     readonly row: TvRow;
     readonly channel: CountryChannelGroup;
-    /** The copy that plays: the best one, or the one picked in the panel. */
+    /** The copy that plays: the starting one, or the one picked. */
     readonly copy: CountryChannel;
 }
 
@@ -60,12 +66,13 @@ export function findSelection(
 export function openingSelection(
     countries: readonly TvCountry[],
     memory: TvMemory,
-    countryId: string | null = null
+    countryId: string | null = null,
+    preferHd = false
 ): TvSelection | null {
     const wanted =
         byId(countries, countryId) ?? byId(countries, memory.country);
     if (wanted) {
-        return countrySelection(wanted, memory);
+        return countrySelection(wanted, memory, preferHd);
     }
     const last =
         memory.lastChannel === null
@@ -75,7 +82,7 @@ export function openingSelection(
         return last;
     }
     const opening = byId(countries, OPENING_COUNTRY) ?? countries[0];
-    return opening ? firstOf(opening) : null;
+    return opening ? firstOf(opening, preferHd) : null;
 }
 
 /**
@@ -84,7 +91,8 @@ export function openingSelection(
  */
 export function countrySelection(
     country: TvCountry,
-    memory: TvMemory
+    memory: TvMemory,
+    preferHd = false
 ): TvSelection | null {
     for (const streamId of [
         memory.lastChannel,
@@ -96,16 +104,22 @@ export function countrySelection(
             return own;
         }
     }
-    return firstOf(country);
+    return firstOf(country, preferHd);
 }
 
-/** A channel picked on the page: its best copy. */
+/** A channel picked on the page: its starting copy. */
 export function selectionOf(
     country: TvCountry,
     row: TvRow,
-    channel: CountryChannelGroup
+    channel: CountryChannelGroup,
+    preferHd = false
 ): TvSelection {
-    return { country, row, channel, copy: channel.copies[0] };
+    return {
+        country,
+        row,
+        channel,
+        copy: startingCopy(channel.copies, preferHd),
+    };
 }
 
 export function readMemory(storage: Storage | null): TvMemory {
@@ -200,8 +214,8 @@ function byId(
         : null;
 }
 
-function firstOf(country: TvCountry): TvSelection | null {
+function firstOf(country: TvCountry, preferHd: boolean): TvSelection | null {
     const row = country.rows[0];
     const channel = row?.channels[0];
-    return row && channel ? selectionOf(country, row, channel) : null;
+    return row && channel ? selectionOf(country, row, channel, preferHd) : null;
 }

@@ -47,6 +47,7 @@ export * from './lib/playlist.interface';
 export * from './lib/portal-activity-item.interface';
 export * from './lib/portal-debug.interface';
 export * from './lib/playlist-display-label.util';
+export * from './lib/playback-smoothness.util';
 export * from './lib/portal-playback.interface';
 export * from './lib/provider-import-detection.util';
 export * from './lib/source-type-icons.util';

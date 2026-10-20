@@ -8,7 +8,9 @@ import {
     createPlaybackSourceMetadata,
     getPlaybackMediaExtensionFromUrl,
 } from '@iptvnator/playback/util';
+import type { PlaybackSmoothness } from '@iptvnator/shared/interfaces';
 import { createMpegTsLoaderConfig } from '../web-video-support/mpegts-stream-loader';
+import { createMpegTsBufferConfig } from '../web-video-support/playback-smoothness';
 
 interface VjsDurationPlayer {
     duration(value?: number): unknown;
@@ -18,6 +20,8 @@ export interface VjsMpegTsSessionConfig {
     player: () => VjsDurationPlayer;
     isLive: () => boolean;
     emitPlaybackIssue: (issue: PlaybackDiagnostic) => void;
+    /** "Fluidez", read per stream; absent means the stock buffering. */
+    smoothness?: () => PlaybackSmoothness;
 }
 
 const VOD_DURATION_EVENTS = [
@@ -49,7 +53,13 @@ export class VjsMpegTsSession {
         const isLive = this.config.isLive();
         const engine = mpegts.createPlayer(
             { type: 'mpegts', isLive, url },
-            createMpegTsLoaderConfig(url)
+            {
+                ...createMpegTsLoaderConfig(url),
+                ...createMpegTsBufferConfig(
+                    this.config.smoothness?.() ?? 'normal',
+                    isLive
+                ),
+            }
         );
         this.engine = engine;
         this.video = video;

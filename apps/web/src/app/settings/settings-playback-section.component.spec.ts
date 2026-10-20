@@ -127,6 +127,38 @@ describe('SettingsPlaybackSectionComponent', () => {
         ).not.toBeNull();
     });
 
+    it.each([VideoPlayer.VideoJs, VideoPlayer.EmbeddedMpv, VideoPlayer.MPV])(
+        'offers the smoothness choice for %s, bound to the form',
+        async (player) => {
+            const form = createForm(player);
+            fixture.componentRef.setInput('form', form);
+            fixture.detectChanges();
+
+            expect(
+                queryByTestId('playback-smoothness-setting')?.textContent
+            ).toContain('SETTINGS.PLAYBACK_SMOOTHNESS');
+            (
+                queryByTestId('select-playback-smoothness') as HTMLElement
+            ).click();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(
+                document.body.querySelector(
+                    '[data-test-id="playback-smoothness-stable"]'
+                )?.textContent
+            ).toContain('SETTINGS.PLAYBACK_SMOOTHNESS_STABLE');
+            (
+                document.body.querySelector(
+                    '[data-test-id="playback-smoothness-normal"]'
+                ) as HTMLElement
+            ).click();
+            fixture.detectChanges();
+
+            expect(form.value.playbackSmoothness).toBe('normal');
+        }
+    );
+
     it('offers automatic Xtream stream format selection', async () => {
         fixture.detectChanges();
 
@@ -474,5 +506,6 @@ function createForm(player = VideoPlayer.VideoJs): FormGroup {
         vlcReuseInstance: new FormControl(false),
         recordingFolder: new FormControl(''),
         vodAutoFailover: new FormControl(false),
+        playbackSmoothness: new FormControl('stable'),
     });
 }

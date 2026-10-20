@@ -121,6 +121,7 @@ export const DEFAULT_SETTINGS = {
     embeddedMpvFrameCopy: false,
     embeddedMpvExtraOptions: '',
     embeddedMpvAutoReconnect: true,
+    playbackSmoothness: 'stable',
     portalConnectivityGuard: true,
     coverSize: 'medium',
     showCoverTitles: true,
