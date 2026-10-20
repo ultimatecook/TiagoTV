@@ -12,7 +12,10 @@
  * (a stalled channel).
  *
  * A live `.m3u8` is a real HLS playlist over `segment` (an MPEG-TS file),
- * as panels serve it; every other stream sends `media`.
+ * as panels serve it; episodes send `episodeMedia` (two audio tracks)
+ * when given, every other stream sends `media`. Episode 1 of each season
+ * lists two subtitle files in its info, as some panels do: Spanish SRT
+ * (saved as Windows-1252, like many) and English WebVTT, under `/subs/`.
  *
  *   node apps/webos-lite/e2e/fake-xtream.mjs [port] [--media <file>] [--segment <file>]
  *
@@ -26,6 +29,19 @@ import { ACCOUNT, LIVE_CATEGORIES, liveStreams, SERIES_CATEGORIES, VOD_CATEGORIE
 const LIVE_HOLD_MS = 60000;
 /** What a stalled live stream sends before it stops: about 3 s of the clip. */
 const STALL_BYTES = 160 * 1024;
+
+/** A subtitle file: a line every two seconds for a minute. */
+function subtitleFile(language) {
+    const vtt = language === 'en';
+    const stamp = (seconds) => `00:00:${String(Math.floor(seconds)).padStart(2, '0')}${vtt ? '.' : ','}${seconds % 1 ? '800' : '000'}`;
+    const blocks = [];
+    for (let start = 0; start < 60; start += 2) {
+        const line = vtt ? `Where is it? Line ${start / 2 + 1}` : `¿Dónde está? Línea ${start / 2 + 1}`;
+        blocks.push(`${vtt ? '' : `${start / 2 + 1}\n`}${stamp(start)} --> ${stamp(start + 1.8)}\n${vtt ? line : `<i>${line}</i>`}`);
+    }
+    const text = `${vtt ? 'WEBVTT\n\n' : ''}${blocks.join('\n\n')}\n`;
+    return vtt ? Buffer.from(text, 'utf8') : Buffer.from(text, 'latin1');
+}
 
 function hlsPlaylist(base, segments = 6) {
     const lines = ['#EXTM3U', '#EXT-X-VERSION:3', '#EXT-X-TARGETDURATION:2', '#EXT-X-MEDIA-SEQUENCE:0'];
@@ -83,8 +99,8 @@ function bigSeries(base) {
     }));
 }
 
-export function startFakeXtream({ port = 0, media = null, segment = null } = {}) {
-    const stats = { open: 0, maxOpen: 0, streams: [], api: [], calls: [], refused: 0, segments: 0 };
+export function startFakeXtream({ port = 0, media = null, segment = null, episodeMedia = null } = {}) {
+    const stats = { open: 0, maxOpen: 0, streams: [], api: [], calls: [], refused: 0, segments: 0, subtitles: [] };
     let busy = false;
     let stall = false;
     let big = false;
@@ -169,14 +185,20 @@ export function startFakeXtream({ port = 0, media = null, segment = null } = {})
                 const id = Number(query.get('series_id'));
                 const episodes = {};
                 for (const season of [1, 2]) {
-                    episodes[String(season)] = [1, 2, 3, 4].map((number) => ({
-                        id: String(id * 100 + season * 10 + number),
-                        episode_num: number,
-                        title: `Capítulo ${number}`,
-                        container_extension: 'mp4',
-                        season,
-                        info: { duration_secs: 2700, plot: `Episodio ${number} de la temporada ${season}.` },
-                    }));
+                    episodes[String(season)] = [1, 2, 3, 4].map((number) => {
+                        const episodeId = id * 100 + season * 10 + number;
+                        return {
+                            id: String(episodeId),
+                            episode_num: number,
+                            title: `Capítulo ${number}`,
+                            container_extension: 'mp4',
+                            season,
+                            info: { duration_secs: 2700, plot: `Episodio ${number} de la temporada ${season}.`, audio: { codec_name: 'vorbis', tags: { language: 'eng' } } },
+                            ...(number === 1
+                                ? { subtitles: [{ url: `${base}/subs/${episodeId}.es.srt`, language: 'spa', label: 'Español' }, { file: `${base}/subs/${episodeId}.en.vtt`, lang: 'eng' }] }
+                                : {}),
+                        };
+                    });
                 }
                 return { info: { name: 'Serie', plot: 'Una serie de prueba.', releaseDate: '2019-01-01', genre: 'Drama', rating: '8.1' }, episodes };
             }
@@ -228,7 +250,8 @@ export function startFakeXtream({ port = 0, media = null, segment = null } = {})
             body.pipe(res, { end: false });
             return;
         }
-        const size = statSync(media).size;
+        const source = kind === 'series' && episodeMedia ? episodeMedia : media;
+        const size = statSync(source).size;
         const range = /bytes=(\d+)-(\d*)/.exec(req.headers.range ?? '');
         const start = range ? Number(range[1]) : 0;
         const end = range && range[2] ? Number(range[2]) : size - 1;
@@ -240,7 +263,7 @@ export function startFakeXtream({ port = 0, media = null, segment = null } = {})
             'Content-Length': end - start + 1,
             ...(range ? { 'Content-Range': `bytes ${start}-${end}/${size}` } : {}),
         });
-        createReadStream(media, { start, end }).pipe(res);
+        createReadStream(source, { start, end }).pipe(res);
     }
 
     const server = createServer((req, res) => {
@@ -263,6 +286,10 @@ export function startFakeXtream({ port = 0, media = null, segment = null } = {})
             }
         } else if (/^\/(live|movie|series)\//.test(path)) {
             stream(req, res, path);
+        } else if (/^\/subs\/\d+\.(es\.srt|en\.vtt)$/.test(path)) {
+            stats.subtitles.push(path.slice(6));
+            res.writeHead(200, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
+            res.end(subtitleFile(path.endsWith('.vtt') ? 'en' : 'es'));
         } else if (path.startsWith('/hls/')) {
             stats.segments++;
             if (!segment) {

@@ -1,5 +1,6 @@
 /**
- * JSON over XMLHttpRequest: Chrome 53 has fetch but no AbortController,
+ * JSON (and subtitle files, as text) over XMLHttpRequest: Chrome 53 has
+ * fetch but no AbortController,
  * and a provider that hangs must time out. The packaged webOS app reaches
  * the provider directly (cross-origin requests work without CORS there).
  *
@@ -45,11 +46,57 @@ export const DEFAULT_TIMEOUT_MS = 20000;
 export const GUARD_MS = 5000;
 
 export const getJson: JsonRequest = (url, timeoutMs = DEFAULT_TIMEOUT_MS, meta) =>
-    new Promise((resolve, reject) => {
+    send(url, timeoutMs, '', (xhr) => {
+        const text = xhr.responseText || '';
+        if (meta) {
+            meta.bytes = text.length;
+        }
+        return text;
+    }).then((text) => {
+        try {
+            return JSON.parse(text) as unknown;
+        } catch {
+            throw new RequestError('parse', 200);
+        }
+    });
+
+/**
+ * A text file (a subtitle file): UTF-8, or Windows-1252 when its bytes
+ * are not UTF-8 (many SRT files are saved that way).
+ */
+export function getText(url: string, timeoutMs = DEFAULT_TIMEOUT_MS, meta?: RequestMeta): Promise<string> {
+    return send(url, timeoutMs, 'arraybuffer', (xhr) => {
+        const bytes = xhr.response instanceof ArrayBuffer ? xhr.response : new ArrayBuffer(0);
+        if (meta) {
+            meta.bytes = bytes.byteLength;
+        }
+        return decodeText(bytes);
+    });
+}
+
+export function decodeText(bytes: ArrayBuffer): string {
+    try {
+        return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch {
+        try {
+            return new TextDecoder('windows-1252').decode(bytes);
+        } catch {
+            return '';
+        }
+    }
+}
+
+function send(
+    url: string,
+    timeoutMs: number,
+    responseType: XMLHttpRequestResponseType,
+    read: (xhr: XMLHttpRequest) => string
+): Promise<string> {
+    return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         let settled = false;
         let guard = 0;
-        const finish = (error: RequestError | null, value?: unknown) => {
+        const finish = (error: RequestError | null, value = '') => {
             if (settled) {
                 return;
             }
@@ -63,22 +110,12 @@ export const getJson: JsonRequest = (url, timeoutMs = DEFAULT_TIMEOUT_MS, meta) 
             }
         };
         xhr.onload = () => {
-            const text = xhr.responseText || '';
-            if (meta) {
-                meta.bytes = text.length;
-            }
+            const text = read(xhr);
             if (xhr.status < 200 || xhr.status >= 300) {
                 finish(new RequestError('http', xhr.status));
                 return;
             }
-            let value: unknown;
-            try {
-                value = JSON.parse(text);
-            } catch {
-                finish(new RequestError('parse', xhr.status));
-                return;
-            }
-            finish(null, value);
+            finish(null, text);
         };
         xhr.onerror = () => finish(new RequestError('network'));
         xhr.ontimeout = () => finish(new RequestError('timeout'));
@@ -94,11 +131,15 @@ export const getJson: JsonRequest = (url, timeoutMs = DEFAULT_TIMEOUT_MS, meta) 
         try {
             xhr.open('GET', url, true);
             xhr.timeout = timeoutMs;
+            if (responseType) {
+                xhr.responseType = responseType;
+            }
             xhr.send();
         } catch {
             finish(new RequestError('network'));
         }
     });
+}
 
 /** The short result Diagnóstico lists: ok, timeout, http 500, red, json… */
 export function resultLabel(error: unknown): string {

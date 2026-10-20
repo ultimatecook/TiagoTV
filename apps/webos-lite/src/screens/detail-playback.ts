@@ -1,5 +1,5 @@
 import type { PlatformTitle, PlatformTitleVersion } from '@iptvnator/workspace/dashboard/feature/tv-logic';
-import type { Episode, SeriesDetails, TitleDetails } from '../data/details';
+import type { Episode, MovieDetails, SeriesDetails, TitleDetails } from '../data/details';
 import { resume } from '../data/resume';
 import type { App, PlayItem } from '../app';
 
@@ -18,7 +18,7 @@ export class DetailPlayback {
 
     playMovie(startAt: number): void {
         const version = this.version();
-        const details = this.details() as { extension?: string | null; durationSeconds?: number } | null;
+        const details = this.details() as Partial<MovieDetails> | null;
         const extension = this.app.store.extensions.get(version.id) ?? details?.extension ?? 'mp4';
         this.app.play({
             items: [
@@ -29,6 +29,8 @@ export class DetailPlayback {
                     extension,
                     poster: this.title.poster,
                     duration: details?.durationSeconds,
+                    subtitles: details?.subtitles ?? [],
+                    audioLanguage: details?.audioLanguage ?? null,
                 },
             ],
             index: 0,
@@ -50,6 +52,8 @@ export class DetailPlayback {
             season: episode.season,
             episode: episode.number,
             duration: episode.durationSeconds,
+            subtitles: episode.subtitles,
+            audioLanguage: episode.audioLanguage,
         }));
     }
 

@@ -6,7 +6,7 @@
  * catalog requests). "Fluidez" decides HLS or TS first.
  */
 // Timers the player itself may hold; any other is a page left running.
-const PLAYER_TIMERS = ['osd', 'osd-fade', 'stall-watch', 'zap', 'live-idle'];
+const PLAYER_TIMERS = ['osd', 'osd-fade', 'stall-watch', 'zap', 'live-idle', 'track-notice'];
 
 export async function toLive(h) {
     await h.press('Backspace');

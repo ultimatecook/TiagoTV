@@ -155,6 +155,14 @@ export const ES = {
     'PORTALS.NO_EPISODES': 'No hay episodios disponibles',
     'XTREAM.RESUME': 'Continuar',
 
+    'EMBEDDED_MPV.PLAYER.SUBTITLES': 'Subtítulos',
+    'EMBEDDED_MPV.PLAYER.SUBTITLES_OFF': 'Desactivados',
+    'EMBEDDED_MPV.PLAYER.SUBTITLES_TOOLTIP': 'Subtítulos: {{subtitles}}',
+    'EMBEDDED_MPV.PLAYER.SUBTITLE_TRACK_FALLBACK': 'Subtítulo {{index}}',
+    'EMBEDDED_MPV.PLAYER.AUDIO_TRACKS': 'Pistas de audio',
+    'EMBEDDED_MPV.PLAYER.AUDIO_TRACK_FALLBACK': 'Audio {{index}}',
+    'EMBEDDED_MPV.PLAYER.STATS_AUDIO': 'Audio',
+
     'SETTINGS.NAV_GROUP_ACCOUNT': 'Cuenta',
     'SETTINGS.NAV_SOURCES': 'Fuentes y cuentas',
     'SETTINGS.PLAYBACK': 'Reproducción',

@@ -5,7 +5,8 @@ import type { PlayItem } from '../app';
 
 /**
  * The player's on-screen display: the channel (logo, number in the row,
- * name, programme) and the clock on top, a VOD's progress below. Hidden,
+ * name, programme) and the clock on top, a VOD's progress below and the
+ * track buttons (ui/track-menu.ts) bottom right. Hidden,
  * it leaves the DOM's layout (display: none), so nothing is drawn over the
  * video; it fades in and out with opacity only.
  */
@@ -23,6 +24,8 @@ export class Osd {
     private readonly progress: HTMLElement;
     private hideTimer: Stop | null = null;
     private visible = false;
+    /** It shows or starts to hide (the subtitles move with it). */
+    onToggle: ((visible: boolean) => void) | null = null;
 
     constructor() {
         this.progress = h('div', 'osd__progress', h('div', 'osd__bar', this.barFill), this.time);
@@ -35,6 +38,11 @@ export class Osd {
 
     get shown(): boolean {
         return this.visible;
+    }
+
+    /** The track buttons, under the progress bar. */
+    setControls(el: HTMLElement): void {
+        this.el.appendChild(el);
     }
 
     render(item: PlayItem, index: number, count: number): void {
@@ -68,6 +76,9 @@ export class Osd {
                 // A reflow first, so the fade runs from display: none.
                 void this.el.offsetWidth;
             }
+            if (!this.visible) {
+                this.onToggle?.(true);
+            }
             this.visible = true;
             this.el.classList.add('is-visible');
             if (!sticky) {
@@ -79,6 +90,7 @@ export class Osd {
             return;
         }
         this.visible = false;
+        this.onToggle?.(false);
         this.el.classList.remove('is-visible');
         this.hideTimer = later('osd-fade', FADE_MS, () => {
             this.hideTimer = null;

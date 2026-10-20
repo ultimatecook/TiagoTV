@@ -10,6 +10,7 @@ import { every, type Stop } from '../core/timers';
 import { storageUse } from '../data/catalog-persist';
 import { crestBook } from '../data/crests';
 import { channelCount, isLive } from '../data/sports';
+import { tracksSummary } from '../player/tracks';
 import type { App } from '../app';
 
 /**
@@ -109,6 +110,7 @@ export class DiagnosticsView {
             ['queue', 'Cola de cargas'],
             ['clock', 'Reloj'],
             ['text', 'Texto con acentos'],
+            ['tracks', 'Pistas (último título)'],
             ['movies', 'Películas'],
             ['series', 'Series'],
             ['errors', 'Categorías con error'],
@@ -162,6 +164,7 @@ export class DiagnosticsView {
         );
         this.set('clock', offsetText(serverOffset()));
         this.set('text', accentsOk() ? 'Bien' : 'Sin normalize: los nombres con acentos pueden no cruzarse');
+        this.set('tracks', tracksSummary());
         this.catalog();
         this.sports(now);
         const book = crestBook();

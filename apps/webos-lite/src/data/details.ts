@@ -1,4 +1,5 @@
 import { webImage } from './images';
+import { audioLanguage, subtitleFields, subtitleSources, type SubtitleSource } from './media-info';
 
 /**
  * A title's own page from the provider (`get_vod_info`,
@@ -17,11 +18,17 @@ export interface TitleDetails {
     readonly cast: string | null;
 }
 
-export interface MovieDetails extends TitleDetails {
+/** What the provider says about a file's languages (media-info.ts). */
+export interface FileLanguages {
+    readonly subtitles: readonly SubtitleSource[];
+    readonly audioLanguage: string | null;
+}
+
+export interface MovieDetails extends TitleDetails, FileLanguages {
     readonly extension: string | null;
 }
 
-export interface Episode {
+export interface Episode extends FileLanguages {
     readonly id: number;
     readonly season: number;
     readonly number: number;
@@ -111,9 +118,12 @@ function titleDetails(info: Raw): TitleDetails {
 export function parseVodInfo(raw: unknown): MovieDetails {
     const answer = asObject(raw);
     const data = asObject(answer['movie_data']);
+    const info = asObject(answer['info']);
     return {
-        ...titleDetails(asObject(answer['info'])),
+        ...titleDetails(info),
         extension: text(data['container_extension']),
+        subtitles: subtitleSources(...subtitleFields(answer, info), ...subtitleFields(data, {})),
+        audioLanguage: audioLanguage(info),
     };
 }
 
@@ -134,6 +144,8 @@ function toEpisode(raw: unknown, fallbackSeason: number): Episode | null {
         durationSeconds: parseDuration(info),
         plot: text(info['plot']),
         image: webImage(info['movie_image']),
+        subtitles: subtitleSources(...subtitleFields(entry, info)),
+        audioLanguage: audioLanguage(info),
     };
 }
 

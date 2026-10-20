@@ -5,7 +5,10 @@ import type { Action } from '../core/keys';
 import type { Screen } from '../core/screens';
 import type { App, PlayItem } from '../app';
 import { ZAP_DELAY_MS, type PlaybackController, type PlayState, type PlayView } from '../player/controller';
+import { MediaTracks } from '../player/tracks';
+import { CueOverlay } from '../ui/cue-overlay';
 import { Osd } from '../ui/osd';
+import { TrackMenu } from '../ui/track-menu';
 import { decodeEpgText, type XtreamEpgListing } from '../xtream/client';
 
 /**
@@ -14,7 +17,8 @@ import { decodeEpgText, type XtreamEpgListing } from '../xtream/client';
  * shows it again. Movies and episodes: left/right seek, play/pause keys,
  * and the position is kept for "Continuar". Back (or Stop) leaves; the
  * one stream is always closed first, unless the stream came from En
- * vivo's stage, which takes it back.
+ * vivo's stage, which takes it back. Down reaches "Subtítulos" and
+ * "Audio" (ui/track-menu.ts); a track switch never reopens the stream.
  *
  * While it shows, the screens below are display: none (ScreenStack) and
  * the app is "fullscreen" (core/activity.ts): no image downloads, no
@@ -36,9 +40,13 @@ function span(entry: XtreamEpgListing): string {
 
 export class PlayerScreen implements Screen, PlayView {
     readonly el: HTMLElement;
+    readonly ownFocus = true;
     private readonly osd = new Osd();
     private readonly message = h('div', 'player__message');
     private readonly video: HTMLVideoElement;
+    private readonly tracks: MediaTracks;
+    private readonly cues: CueOverlay;
+    private readonly menu: TrackMenu;
     private programmeFor: PlayItem | null = null;
     private started = false;
     private readonly onTime = () => this.tick();
@@ -54,7 +62,23 @@ export class PlayerScreen implements Screen, PlayView {
         private readonly options: PlayerScreenOptions = {}
     ) {
         this.video = controller.video;
-        this.el = h('div', 'screen player', this.video, this.osd.el, this.message);
+        this.tracks = new MediaTracks(this.video);
+        this.cues = new CueOverlay(this.video, () => this.tracks.lines());
+        this.menu = new TrackMenu(this.tracks, {
+            shown: () => this.osd.shown,
+            hold: () => this.osd.show(true, true),
+            release: () => this.osd.show(true),
+            listed: (open) => this.el.classList.toggle('is-listing', open),
+        });
+        this.tracks.onChange = () => {
+            this.menu.render();
+            this.cues.follow(this.tracks.chosenTrack);
+            this.cues.update();
+        };
+        this.tracks.onNotice = (text) => this.cues.say(text);
+        this.osd.onToggle = (visible) => this.cues.raise(visible);
+        this.osd.setControls(this.menu.controls);
+        this.el = h('div', 'screen player', this.video, this.cues.el, this.osd.el, this.menu.panel, this.message);
         this.message.style.display = 'none';
         this.video.addEventListener('timeupdate', this.onTime);
         this.video.addEventListener('ended', this.onEnded);
@@ -82,6 +106,8 @@ export class PlayerScreen implements Screen, PlayView {
 
     destroy(): void {
         this.osd.destroy();
+        this.tracks.destroy();
+        this.cues.destroy();
         this.video.removeEventListener('timeupdate', this.onTime);
         this.video.removeEventListener('ended', this.onEnded);
         if (this.options.onExit) {
@@ -92,12 +118,16 @@ export class PlayerScreen implements Screen, PlayView {
         }
     }
 
+    /** Back closes a track list, then the buttons, then the player. */
     onBack(): boolean {
-        return false;
+        return this.menu.onBack();
     }
 
     showItem(item: PlayItem, index: number, count: number): void {
         this.programmeFor = null;
+        this.menu.leave();
+        this.menu.alwaysSubtitles = item.kind !== 'live';
+        this.tracks.setItem(item);
         this.osd.render(item, index, count);
         this.osd.show(true);
     }
@@ -112,15 +142,28 @@ export class PlayerScreen implements Screen, PlayView {
             }
         }
         if (state === 'playing') {
-            this.osd.show(false);
+            this.tracks.ready();
+            if (!this.menu.active) {
+                this.osd.show(false);
+            }
             const item = this.controller.item;
             if (item.kind === 'live' && this.programmeFor !== item) {
                 this.programmeFor = item;
                 void this.loadProgramme(item);
             }
         } else if (this.controller.failed) {
+            this.menu.leave();
             this.osd.show(true, true);
         }
+    }
+
+    /** Down: the track buttons, while something plays (false if none). */
+    private openControls(): boolean {
+        if (this.controller.state !== 'playing' || !this.menu.hasButtons) {
+            return false;
+        }
+        this.osd.show(true, true);
+        return this.menu.enter();
     }
 
     private async loadProgramme(item: PlayItem): Promise<void> {
@@ -186,6 +229,9 @@ export class PlayerScreen implements Screen, PlayView {
     }
 
     onKey(action: Action): boolean {
+        if (this.menu.onKey(action)) {
+            return true;
+        }
         switch (action) {
             case 'ok':
                 if (this.controller.failed) {
@@ -198,9 +244,15 @@ export class PlayerScreen implements Screen, PlayView {
             case 'info':
                 this.osd.show(true);
                 return true;
-            case 'up':
             case 'down':
-                this.zap(action === 'up', false);
+                // Live: Down zaps, unless the OSD is up with buttons to reach.
+                if ((!this.controller.isLive || this.osd.shown) && this.openControls()) {
+                    return true;
+                }
+                this.zap(false, false);
+                return true;
+            case 'up':
+                this.zap(true, false);
                 return true;
             case 'channelUp':
             case 'channelDown':

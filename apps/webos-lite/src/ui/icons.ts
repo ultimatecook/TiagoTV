@@ -2,7 +2,7 @@
  * The few icons the TV draws, as inline SVG (no icon font to load):
  * search, settings, play, info, heart, check, back, backspace.
  */
-export type IconName = 'search' | 'settings' | 'play' | 'info' | 'heart' | 'heart-on' | 'back' | 'backspace' | 'space';
+export type IconName = 'search' | 'settings' | 'play' | 'info' | 'heart' | 'heart-on' | 'check' | 'back' | 'backspace' | 'space';
 
 const STROKE = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
 
@@ -16,6 +16,7 @@ const PATHS: Readonly<Record<IconName, string>> = {
     heart: `<path d="M12 20.3l-1.3-1.2C6 14.9 3 12.2 3 8.8 3 6.1 5.1 4 7.8 4c1.5 0 3 .7 4.2 1.9C13.2 4.7 14.7 4 16.2 4 18.9 4 21 6.1 21 8.8c0 3.4-3 6.1-7.7 10.3z" ${STROKE}/>`,
     'heart-on':
         '<path d="M12 20.3l-1.3-1.2C6 14.9 3 12.2 3 8.8 3 6.1 5.1 4 7.8 4c1.5 0 3 .7 4.2 1.9C13.2 4.7 14.7 4 16.2 4 18.9 4 21 6.1 21 8.8c0 3.4-3 6.1-7.7 10.3z" fill="currentColor"/>',
+    check: `<path d="M5 12.5l4.5 4.5L19 7.5" ${STROKE}/>`,
     back: `<path d="M15 5l-7 7 7 7" ${STROKE}/>`,
     backspace: `<path d="M21 5H9l-6 7 6 7h12z" ${STROKE}/><path d="M17 9.5l-5 5M12 9.5l5 5" ${STROKE}/>`,
     space: `<path d="M4 10v4h16v-4" ${STROKE}/>`,

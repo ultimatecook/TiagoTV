@@ -6,7 +6,7 @@
  */
 const HERO_TITLE = '.hero__title';
 
-async function toTab(h, id) {
+export async function toTab(h, id) {
     await h.press('Backspace');
     await h.page.waitForTimeout(200);
     const ok = await h.pressUntil('ArrowLeft', /\| Inicio$/, 9);
@@ -218,7 +218,7 @@ function keyAt(char) {
     return null;
 }
 
-async function typeOnKeyboard(h, word, from = { row: 0, col: 0 }) {
+export async function typeOnKeyboard(h, word, from = { row: 0, col: 0 }) {
     let at = from;
     for (const char of word) {
         const to = keyAt(char);

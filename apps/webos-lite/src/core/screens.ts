@@ -13,6 +13,12 @@ export interface Screen {
     readonly overlay?: boolean;
     /** The element to focus when the screen opens (or its focus is gone). */
     initialFocus(): HTMLElement | null;
+    /**
+     * The screen moves the focus itself (the player: its track buttons
+     * take it only on Down): with no initial focus, nothing is focused,
+     * rather than the first focusable.
+     */
+    readonly ownFocus?: boolean;
     /** Keys the screen handles itself (the player's); true if handled. */
     onKey?(action: Action): boolean;
     /** Back: true if the screen handled it (closing a panel of its own). */
@@ -116,6 +122,6 @@ export class ScreenStack {
                 ? lastFocus
                 : screen.initialFocus();
         nav.focus(null);
-        nav.focus(target ?? nav.first());
+        nav.focus(target ?? (screen.ownFocus ? null : nav.first()));
     }
 }

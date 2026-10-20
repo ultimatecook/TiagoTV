@@ -2,6 +2,7 @@ import type { PlatformTitle, SportSectionId } from '@iptvnator/workspace/dashboa
 import type { ScreenStack } from './core/screens';
 import type { CatalogCache } from './data/catalog-cache';
 import type { CatalogStore } from './data/catalog-store';
+import type { SubtitleSource } from './data/media-info';
 import type { SportsBoard } from './data/sports-board';
 import type { PlayerEngine } from './player/engine';
 import type { XtreamClient } from './xtream/client';
@@ -29,6 +30,10 @@ export interface PlayItem {
     readonly season?: number;
     readonly episode?: number;
     readonly duration?: number;
+    /** Subtitle files the provider lists (its title page), in memory only. */
+    readonly subtitles?: readonly SubtitleSource[];
+    /** The file's audio language as the provider probed it ("eng"). */
+    readonly audioLanguage?: string | null;
 }
 
 export interface PlayRequest {
