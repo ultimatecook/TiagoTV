@@ -34,6 +34,7 @@ import {
     PortalDetailShellComponent,
     castMembersFromNames,
 } from '@iptvnator/ui/components';
+import { formatRating } from '@iptvnator/pipes';
 import { formatDurationLabel } from '@iptvnator/portal/shared/util';
 import { PortalInlinePlayerComponent } from '@iptvnator/ui/playback';
 import {
@@ -161,11 +162,15 @@ export class M3uVodDetailComponent {
         return this.translate.instant('WORKSPACE.DASHBOARD.TYPE_MOVIE');
     });
     readonly rating = computed(() => {
+        this.languageTick();
         const details = this.tmdb();
         const average = details?.vote_average ?? 0;
         const count = details?.vote_count ?? 0;
         return average > 0 && count > 0
-            ? (Math.round(average * 10) / 10).toFixed(1)
+            ? formatRating(
+                  average,
+                  this.translate.currentLang || this.translate.defaultLang
+              )
             : '';
     });
     readonly cast = computed(() => {

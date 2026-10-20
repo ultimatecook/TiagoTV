@@ -81,7 +81,11 @@
             <h2 class="hero__releases-title" [id]="releasesId">
                 {{ 'WORKSPACE.CATALOG.NEW' | translate }}
             </h2>
-            <lib-catalog-strip class="hero__strip" [labelledBy]="releasesId">
+            <lib-catalog-strip
+                class="hero__strip"
+                memoryKey="catalog-releases"
+                [labelledBy]="releasesId"
+            >
                 @for (
                     release of releases();
                     track key(release);

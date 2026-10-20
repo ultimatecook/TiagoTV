@@ -653,7 +653,7 @@ test.describe('Electron Settings', () => {
             await secondLaunch.mainWindow.waitForURL(/\/workspace\/sources$/);
             await expect(
                 secondLaunch.mainWindow.getByRole('link', {
-                    name: 'Dashboard',
+                    name: 'Home',
                     exact: true,
                 })
             ).toHaveCount(0);
@@ -719,7 +719,7 @@ test.describe('Electron Settings', () => {
             ).toHaveCount(0);
             await expect(
                 app.mainWindow
-                    .getByRole('link', { name: 'Dashboard', exact: true })
+                    .getByRole('link', { name: 'Home', exact: true })
                     .and(app.mainWindow.locator('.portal-rail-link'))
             ).toBeVisible();
         } finally {

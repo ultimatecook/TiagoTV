@@ -71,6 +71,7 @@ import {
     timelineTickStepForScale,
     timelineZoomLevelForScale,
 } from './epg-timeline.utils';
+import { commandModifierLabel } from '@iptvnator/portal/shared/util';
 
 type RenderState = 'loading' | 'ribbon' | EpgTimelineEmptyReason;
 
@@ -91,6 +92,9 @@ export type { EpgTimelineSummary } from './epg-summary.util';
     ],
 })
 export class EpgTimelineComponent {
+    /** The wheel-zoom modifier: "⌘" on macOS, "Ctrl" elsewhere. */
+    readonly zoomModifier = commandModifierLabel();
+
     readonly programs = input<EpgProgram[]>([]);
     readonly channelName = input('');
     readonly channelLogo = input('');

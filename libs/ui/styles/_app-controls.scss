@@ -7,19 +7,24 @@
 //   dropdown trigger (label + 12px chevron, opening a `mat-menu`);
 // - `ghost-button` (`mat-button`) and `ghost-icon-button`
 //   (`mat-icon-button`): row and header actions.
-// No outline, no ripple: hover changes the fill only, and a disabled button
-// is the same button at 40% opacity. Focus keeps the app's ring
-// (`styles.scss` rings every `.mat-mdc-button-base`).
+// Text buttons are pills (the redesign's buttons): the accent is the white
+// pill with ink text in dark, the secondary a glass pill. No outline, no
+// ripple: hover changes the fill only, and a disabled button is the same
+// button at 40% opacity. Focus keeps the app's ring (`styles.scss` rings
+// every `.mat-mdc-button-base`).
 @use 'sass:map';
 @use '@angular/material' as mat;
 
+// Segmented controls and square icon actions.
 $radius: 10px;
 $radius-sm: 8px;
+// Text buttons of every size.
+$button-radius: 999px;
 
 $_sizes: (
     md: (
         height: 40px,
-        radius: $radius,
+        radius: $button-radius,
         padding: 16px,
         icon-padding: 14px,
         text: 13.5px,
@@ -28,7 +33,7 @@ $_sizes: (
     ),
     sm: (
         height: 32px,
-        radius: $radius-sm,
+        radius: $button-radius,
         padding: 12px,
         icon-padding: 10px,
         text: 12.5px,
@@ -57,9 +62,12 @@ $_sizes: (
     }
 }
 
-/// `$size`: `md` (40px) or `sm` (32px).
+/// `$size`: `md` (40px) or `sm` (32px). The fill, its sheen and the ring
+/// (a hairline and the top highlight in dark) are `--app-secondary-button-*`
+/// per theme; Material sets neither `background-image` nor `box-shadow` on
+/// a flat button, so they are plain properties here.
 @mixin secondary-button($size: md) {
-    $fill: color-mix(in srgb, var(--app-on-surface) 10%, transparent);
+    $fill: var(--app-secondary-button-bg);
     @include mat.button-overrides(
         (
             filled-container-color: $fill,
@@ -80,19 +88,23 @@ $_sizes: (
             filled-ripple-color: transparent,
         )
     );
+    background-image: var(--app-secondary-button-sheen);
+    box-shadow: var(--app-secondary-button-ring);
     @include _icon-size(_size($size, icon));
     @include _disabled;
 }
 
-/// The one accent action of a dialog or form: the selection blue, 40px,
-/// 10px radius, no ripple. Disabled keeps the fill at 40% opacity.
+/// The one accent action of a dialog or form: a 40px pill, the selection
+/// blue in light and the redesign's white with ink text in dark
+/// (`--app-accent-button-*`), no ripple. Disabled keeps the fill at 40%
+/// opacity.
 @mixin accent-button($size: md) {
     @include mat.button-overrides(
         (
-            filled-container-color: var(--app-selection-color),
-            filled-disabled-container-color: var(--app-selection-color),
-            filled-label-text-color: var(--app-selection-on-color),
-            filled-disabled-label-text-color: var(--app-selection-on-color),
+            filled-container-color: var(--app-accent-button-bg),
+            filled-disabled-container-color: var(--app-accent-button-bg),
+            filled-label-text-color: var(--app-accent-button-fg),
+            filled-disabled-label-text-color: var(--app-accent-button-fg),
             filled-container-height: _size($size, height),
             filled-container-shape: _size($size, radius),
             filled-horizontal-padding: _size($size, padding),
@@ -100,7 +112,7 @@ $_sizes: (
             filled-label-text-weight: 600,
             filled-label-text-tracking: 0,
             filled-icon-spacing: _size($size, gap),
-            filled-state-layer-color: var(--app-selection-on-color),
+            filled-state-layer-color: var(--app-accent-button-fg),
             filled-hover-state-layer-opacity: 0.1,
             filled-focus-state-layer-opacity: 0.1,
             filled-pressed-state-layer-opacity: 0.16,
@@ -194,7 +206,9 @@ $_sizes: (
     color: var(--app-body-color);
 }
 
-/// The `mat-menu` panel; `styles.scss` applies it to every menu.
+/// The `mat-menu` panel; `styles.scss` applies it to every menu. The
+/// overlay frame (glass over a dark ground in dark, `--app-overlay-*`) at
+/// the menu radius.
 /// Items: 36px, 13px, 16px icons in the body colour; destructive items
 /// carry `app-menu-item--danger` and sit after a `<mat-divider>`; a
 /// keyboard hint is a trailing `kbd.app-menu-item__kbd`. A long list stays
@@ -202,8 +216,8 @@ $_sizes: (
 @mixin menu-panel {
     @include mat.menu-overrides(
         (
-            container-color: var(--app-widget-bg),
-            container-shape: $radius,
+            container-color: var(--app-overlay-bg),
+            container-shape: var(--tv-radius-menu),
             item-label-text-color: var(--app-heading-color),
             item-label-text-size: 13px,
             item-label-text-weight: 400,
@@ -232,8 +246,12 @@ $_sizes: (
     min-width: 240px;
     max-width: min(360px, calc(100vw - 24px));
     max-height: min(480px, calc(100vh - 32px));
-    border: 1px solid var(--app-line-strong);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--app-overlay-border);
+    background-image: var(--app-overlay-sheen);
+    box-shadow:
+        var(--app-overlay-highlight),
+        0 18px 40px rgba(0, 0, 0, 0.35);
+    backdrop-filter: var(--app-overlay-filter);
 
     .mat-mdc-menu-content {
         padding: 6px;
@@ -241,7 +259,7 @@ $_sizes: (
 
     .mat-mdc-menu-item {
         min-height: 36px;
-        border-radius: 6px;
+        border-radius: 8px;
 
         .mat-icon {
             font-size: 16px;
@@ -423,15 +441,20 @@ $_segment-text-size: 12.5px;
 }
 
 /// A floating, non-modal card anchored to a viewport corner (the EPG import
-/// panel, the update notification): the dialog's surface and shadow, the
-/// menu's hairline, a 12px radius between the two. The panel keeps its own
-/// anchor, width, z-index and entrance.
+/// panel, the update notification): the overlay frame of dialogs and menus
+/// (glass over a dark ground in dark) at the panel radius, between the
+/// menu's and the dialog's, with the popover shadow. The panel keeps its
+/// own anchor, width, z-index and entrance.
 @mixin floating-panel {
     overflow: hidden;
-    border: 1px solid var(--app-line-strong);
-    border-radius: 12px;
-    background: var(--app-widget-bg);
-    box-shadow: var(--app-popover-shadow);
+    border: 1px solid var(--app-overlay-border);
+    border-radius: var(--tv-radius-panel);
+    background-color: var(--app-overlay-bg);
+    background-image: var(--app-overlay-sheen);
+    box-shadow:
+        var(--app-overlay-highlight),
+        var(--app-popover-shadow);
+    backdrop-filter: var(--app-overlay-filter);
     color: var(--app-body-color);
 }
 

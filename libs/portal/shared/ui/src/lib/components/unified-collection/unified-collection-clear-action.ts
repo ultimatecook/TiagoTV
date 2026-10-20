@@ -26,6 +26,7 @@ export function createClearCollectionAction(options: {
     mode: Signal<CollectionMode>;
     /** Rows of the tab on screen — the ones this clears. */
     items: Signal<UnifiedCollectionItem[]>;
+    /** The tab's type as a noun inside a sentence ("las películas"). */
     typeLabelKey: Signal<string>;
     /** Whether those rows came from a single playlist; names the wording. */
     isPlaylistScope: () => boolean;

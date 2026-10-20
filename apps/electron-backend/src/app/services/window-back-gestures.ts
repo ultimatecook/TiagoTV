@@ -1,6 +1,7 @@
 import {
     ElectronBridgeBackGestureSource,
     WINDOW_BACK_REQUESTED,
+    WINDOW_FORWARD_REQUESTED,
 } from '@iptvnator/shared/interfaces';
 
 /** `app-command` for mouse Back buttons and the Browser Back key. */
@@ -15,14 +16,19 @@ const BROWSER_BACK_KEY = 'BrowserBack';
  */
 const SWIPE_BACK = 'left';
 
+/** The `swipe` direction that means Forward. */
+const SWIPE_FORWARD = 'right';
+
 /**
  * Forwards the window's platform Back gestures to the renderer, which runs
  * the workspace header's Back (`WorkspaceBackGesturesService`) or ignores
  * the request. Both listeners are attached on every platform: Electron
  * emits `app-command` only on Windows and Linux and `swipe` only on macOS.
- * Forward (`browser-forward`, `swipe` right) is deliberately not forwarded:
- * Stalker inline details are not history entries, so Forward would skip
- * them.
+ * The trackpad swipe right asks for history Forward
+ * (`WINDOW:FORWARD_REQUESTED`), which the renderer runs only towards an
+ * in-app entry. `browser-forward` is not forwarded: Chromium already steps
+ * Forward on the mouse button that raises it, so one press would step
+ * twice.
  */
 export function attachWindowBackGestures(
     win: Electron.BrowserWindow,
@@ -38,6 +44,10 @@ export function attachWindowBackGestures(
     });
     win.on('swipe', (_event, direction) => {
         if (direction === SWIPE_BACK) requestBack('swipe');
+        if (direction === SWIPE_FORWARD) {
+            if (win.isDestroyed() || win.webContents.isDestroyed()) return;
+            win.webContents.send(WINDOW_FORWARD_REQUESTED, 'swipe');
+        }
     });
 
     if (platform === 'linux') {

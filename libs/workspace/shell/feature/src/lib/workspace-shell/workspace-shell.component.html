@@ -5,6 +5,7 @@
         (facade.showExternalPlaybackBar() && !!facade.externalPlaybackSession())
     "
     [class.has-traffic-lights]="facade.isMacOS"
+    [class.has-stacked-bar]="barStacked()"
     [class.is-framed]="topBarPage().layout === 'framed'"
     appPlaylistDropZone
     #dropZone="playlistDropZone"
@@ -74,6 +75,7 @@
             (backRequested)="facade.goBack()"
             (sportsHubRequested)="facade.goUpToSportsHub()"
             (activeTabReselected)="onTabReselected()"
+            (densityChange)="onTopBarDensity($event)"
             (contextDrawerToggleRequested)="contextDrawer.toggle()"
             (headerShortcutRequested)="facade.runHeaderShortcut()"
             (headerSidebarToggleRequested)="facade.toggleLiveSidebar()"

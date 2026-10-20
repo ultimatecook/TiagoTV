@@ -1,0 +1,75 @@
+// The app's scrollbars, in the redesign's thin overlay look: a 6px thumb on
+// a transparent track, no arrow buttons, shown while the pointer is over the
+// scroller or focus is inside it, and stronger under the pointer. The thumb
+// colours are `--app-scrollbar-thumb` and `--app-scrollbar-thumb-hover`,
+// declared per theme in `apps/web/src/m3-theme.scss`. The redesigned pages'
+// own scroller hides its bar entirely (`scrollbar-width: none`).
+//
+// Chromium ignores the `::-webkit-scrollbar*` pseudo-elements on an element
+// that sets `scrollbar-width` or `scrollbar-color`, and then draws its own
+// bar (10px, with arrow buttons on Linux and Windows). `thin` therefore
+// resets both to `auto` where the pseudo-elements exist, and gives other
+// engines the standard properties instead.
+//
+// `apps/web/src/styles.scss` applies `thin` to `.app-scrollbar` and the dark
+// theme's other scrollers; a component includes it on a scroller of its own.
+
+$size: 6px;
+
+/// The pseudo-elements alone, for a selector that matches the scroller
+/// (`&`).
+@mixin pseudo-elements {
+    &::-webkit-scrollbar {
+        width: $size;
+        height: $size;
+    }
+
+    &::-webkit-scrollbar-track,
+    &::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-button {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        min-height: 32px;
+        border-radius: 999px;
+        background-color: transparent;
+    }
+
+    &:hover::-webkit-scrollbar-thumb,
+    &:focus-within::-webkit-scrollbar-thumb {
+        background-color: var(--app-scrollbar-thumb);
+    }
+
+    &::-webkit-scrollbar-thumb:hover,
+    &::-webkit-scrollbar-thumb:active {
+        background-color: var(--app-scrollbar-thumb-hover);
+    }
+}
+
+/// `$important`: for a utility class that must beat a component's own
+/// `scrollbar-width` / `scrollbar-color` (component rules carry an extra
+/// attribute selector).
+@mixin thin($important: false) {
+    @supports selector(::-webkit-scrollbar) {
+        @if $important {
+            scrollbar-width: auto !important;
+            scrollbar-color: auto !important;
+        } @else {
+            scrollbar-width: auto;
+            scrollbar-color: auto;
+        }
+    }
+
+    @supports not selector(::-webkit-scrollbar) {
+        scrollbar-width: thin;
+        scrollbar-color: var(--app-scrollbar-thumb) transparent;
+    }
+
+    @include pseudo-elements;
+}

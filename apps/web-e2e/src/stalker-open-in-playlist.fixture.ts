@@ -40,7 +40,7 @@ export async function verifyStalkerOpenInPlaylist(
     await page.goto('/workspace/global-favorites');
     const allPlaylists = page
         .locator('.scope-toggle')
-        .getByRole('radio', { name: 'All playlists' });
+        .getByRole('radio', { name: 'All sources' });
     if (await allPlaylists.count()) {
         await allPlaylists.click();
     }

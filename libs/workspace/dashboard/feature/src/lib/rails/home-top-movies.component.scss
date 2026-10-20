@@ -1,6 +1,7 @@
 // "Top 10 películas hoy" (README 01 · Inicio, 5): a snapping row of big
 // outlined place numbers, each under the edge of its poster.
 @use '../../../../../../ui/styles/focus-ring';
+@use '../ui-state/page-ui';
 @use '../../../../../../ui/styles/skeleton-shimmer' as shimmer;
 
 :host {
@@ -12,13 +13,17 @@
 
 // The places are sized from the section's width (`cqi`): about four and a
 // half in view, each a 2:3 poster (≈ 250px at the design's 1512px) and its
-// number. The number and the overlap follow the poster, so every poster is
+// number; past the rows' width limit they stop growing and more come into
+// view. The number and the overlap follow the poster, so every poster is
 // as wide whether its number is "1" or "10".
 .top {
     --top-per-view: 4.6;
     --top-gap: 16px;
     --top-place: calc(
-        (100cqi - (var(--top-per-view) - 1) * var(--top-gap)) /
+        (
+                min(100cqi, #{page-ui.$row-width-max}) -
+                    (var(--top-per-view) - 1) * var(--top-gap)
+            ) /
             var(--top-per-view)
     );
     // A place is its poster, its number (0.36 of the number's size for a
@@ -74,10 +79,15 @@
     font: inherit;
     text-align: left;
     cursor: pointer;
-    transition: transform 220ms ease;
+    transition: transform page-ui.$card-ease;
 
+    // The pages' card hover: a lift and the white ring on the poster.
     &:hover {
-        transform: translateY(-4px);
+        transform: page-ui.$card-lift;
+
+        .top__poster {
+            @include page-ui.ring-shown;
+        }
     }
 
     &:focus-visible {
@@ -120,6 +130,7 @@
         hsl(var(--poster-hue) 30% 9%) 100%
     );
     box-shadow: -18px 0 30px -12px rgba(0, 0, 0, 0.6);
+    @include page-ui.ring-layer(2);
 
     &--skeleton {
         @include shimmer.block(18px);

@@ -45,10 +45,18 @@ import {
     SearchTitlesService,
     type TitleSearch,
 } from '../search-titles.service';
+import {
+    pageMemoryState,
+    recallPageChoice,
+    rememberPageChoice,
+} from '../../ui-state/page-memory';
+import { PageStateComponent } from '../../ui-state/page-state.component';
 
 /** A typed term is searched (and written to `q`) this long after typing. */
 export const SEARCH_INPUT_DEBOUNCE_MS = 250;
 const TITLES_SHOWN = { all: 12, kind: 40 };
+/** The history entry's memory of the scope picked (`rememberPageChoice`). */
+export const SEARCH_SCOPE_MEMORY = 'search-scope';
 
 /**
  * The global search (`/workspace/search`, handoff 05 · Buscador): a large
@@ -61,7 +69,7 @@ const TITLES_SHOWN = { all: 12, kind: 40 };
  */
 @Component({
     selector: 'lib-search-page',
-    imports: [MatIcon, TeamCrestComponent, TranslatePipe],
+    imports: [MatIcon, PageStateComponent, TeamCrestComponent, TranslatePipe],
     providers: [SearchTitlesService],
     templateUrl: './search-page.component.html',
     styleUrl: './search-page.component.scss',
@@ -81,7 +89,10 @@ export class SearchPageComponent {
     private titlesRequest = 0;
 
     readonly scopes = SEARCH_SCOPES;
-    readonly scope = signal<SearchScope>('all');
+    /** The scope picked; Back to the entry brings it again (the term is `q`). */
+    readonly scope = signal<SearchScope>(
+        recallPageChoice(SEARCH_SCOPE_MEMORY, isSearchScope) ?? 'all'
+    );
     private readonly routeQuery = toSignal(
         this.route.queryParamMap.pipe(map((params) => params.get('q') ?? '')),
         { initialValue: this.route.snapshot.queryParamMap.get('q') ?? '' }
@@ -223,6 +234,11 @@ export class SearchPageComponent {
         this.remember(term);
     }
 
+    pickScope(scope: SearchScope): void {
+        this.scope.set(scope);
+        rememberPageChoice(SEARCH_SCOPE_MEMORY, scope);
+    }
+
     clearRecent(): void {
         this.recent.set([]);
         writeRecentSearches(browserStorage(), []);
@@ -354,6 +370,8 @@ export class SearchPageComponent {
             queryParams: { q: term || null },
             queryParamsHandling: 'merge',
             replaceUrl: true,
+            // The entry is replaced: the scope picked stays on it.
+            state: pageMemoryState(),
         });
     }
 
@@ -377,4 +395,8 @@ export class SearchPageComponent {
             this.debounce = null;
         }
     }
+}
+
+function isSearchScope(value: unknown): value is SearchScope {
+    return SEARCH_SCOPES.some((scope) => scope.id === value);
 }

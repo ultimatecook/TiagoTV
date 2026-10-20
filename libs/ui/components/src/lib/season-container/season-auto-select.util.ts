@@ -12,6 +12,11 @@ export interface AutoSeasonContext {
     keys: readonly string[];
     /** Season of the inline-playing episode, if it is in the loaded set. */
     playingSeasonKey: string | null;
+    /**
+     * The host's season when nothing plays inline (see
+     * `SeasonContainerComponent.preferredSeasonKey`); ignored unless loaded.
+     */
+    preferredSeasonKey?: string | null;
     seasons: Record<string, XtreamSerieEpisode[]>;
     positionOf: (
         episode: XtreamSerieEpisode
@@ -46,6 +51,12 @@ export function resolveAutoSelectedSeason(
     }
     if (context.playingSeasonKey) {
         return context.playingSeasonKey;
+    }
+    if (
+        context.preferredSeasonKey &&
+        keys.includes(context.preferredSeasonKey)
+    ) {
+        return context.preferredSeasonKey;
     }
     const unloaded = new Set(context.unloadedSeasonKeys ?? []);
     const runKeys = keys.filter(

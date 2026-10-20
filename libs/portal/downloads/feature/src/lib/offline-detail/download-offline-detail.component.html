@@ -27,7 +27,7 @@
             @if (metadata()?.rating; as rating) {
                 @if (positiveFinite(rating)) {
                     <app-meta-chip variant="rating">
-                        <span aria-hidden="true">★</span> {{ rating }}
+                        <span aria-hidden="true">★</span> {{ rating | appRating }}
                     </app-meta-chip>
                 }
             }

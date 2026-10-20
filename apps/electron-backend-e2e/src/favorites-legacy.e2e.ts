@@ -122,8 +122,8 @@ test('@critical @persistence @xtream @electron recovers legacy pending favorites
             catalogActions.map((action) => proxy.responseCount(action))
         ).toEqual(catalogRequestsBefore);
 
-        await openWorkspaceSection(app.mainWindow, 'Global favorites');
-        await switchUnifiedCollectionScope(app.mainWindow, 'All playlists');
+        await openWorkspaceSection(app.mainWindow, 'My List');
+        await switchUnifiedCollectionScope(app.mainWindow, 'All sources');
         for (const title of [savedTitle, fallbackTitle]) {
             const card = contentCardByTitle(app.mainWindow, title);
             await expect(card).toHaveCount(1);
@@ -190,8 +190,8 @@ test('@critical @persistence @xtream @electron recovers legacy pending favorites
                 exact: true,
             })
         ).toBeVisible();
-        await openWorkspaceSection(app.mainWindow, 'Global favorites');
-        await switchUnifiedCollectionScope(app.mainWindow, 'All playlists');
+        await openWorkspaceSection(app.mainWindow, 'My List');
+        await switchUnifiedCollectionScope(app.mainWindow, 'All sources');
         await expect(
             contentCardByTitle(app.mainWindow, fallbackTitle)
         ).toContainText('Catalog status unknown');
@@ -260,7 +260,7 @@ require(${JSON.stringify(electronMainPath)});`
         app = await launchElectronApp(dataDir, { entryPoint: wrapper });
         for (let startup = 0; startup < 2; startup++) {
             if (startup) app = await restartElectronApp(app, dataDir);
-            await openWorkspaceSection(app.mainWindow, 'Global favorites');
+            await openWorkspaceSection(app.mainWindow, 'My List');
             await expect(
                 contentCardByTitle(app.mainWindow, 'Legacy saved movie')
             ).toHaveCount(1);

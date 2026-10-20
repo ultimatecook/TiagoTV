@@ -1,8 +1,12 @@
 import {
+    commandModifierLabel,
+    commandShortcutLabel,
+    formatShortcutLabel,
     APP_KEYBOARD_SHORTCUTS,
     getKeyboardShortcutGroups,
     isKeyboardShortcutHelpTrigger,
     isWorkspaceBackShortcut,
+    isWorkspaceForwardShortcut,
     resolveZoomShortcutAction,
 } from './keyboard-shortcuts';
 
@@ -78,8 +82,8 @@ describe('keyboard shortcuts registry', () => {
             ['Ctrl', '0'],
         ]);
         expect(findChordLabels(macGroups, 'zoom-in-out')).toEqual([
-            ['Cmd', '+'],
-            ['Cmd', '−'],
+            ['⌘', '+'],
+            ['⌘', '−'],
         ]);
     });
 
@@ -102,9 +106,92 @@ describe('keyboard shortcuts registry', () => {
                 ['Alt', '←'],
             ]);
             expect(findChordLabels(macGroups, 'navigate-back')).toEqual([
-                ['Cmd', '['],
+                ['⌘', '['],
+            ]);
+            expect(
+                linuxGroups.find((group) => group.id === 'navigation')?.items[1]
+                    ?.id
+            ).toBe('navigate-forward');
+            expect(findChordLabels(linuxGroups, 'navigate-forward')).toEqual([
+                ['Alt', '→'],
+            ]);
+            expect(findChordLabels(macGroups, 'navigate-forward')).toEqual([
+                ['⌘', ']'],
             ]);
         }
+    });
+
+    describe('isWorkspaceForwardShortcut', () => {
+        const press = (init: KeyboardEventInit) =>
+            new KeyboardEvent('keydown', init);
+        const other = { isMac: false };
+        const mac = { isMac: true };
+
+        it('matches Cmd+] on macOS and Alt+ArrowRight elsewhere', () => {
+            expect(
+                isWorkspaceForwardShortcut(
+                    press({ key: ']', code: 'BracketRight', metaKey: true }),
+                    mac
+                )
+            ).toBe(true);
+            // A layout that types something else on that key position.
+            expect(
+                isWorkspaceForwardShortcut(
+                    press({ key: '+', code: 'BracketRight', metaKey: true }),
+                    mac
+                )
+            ).toBe(true);
+            expect(
+                isWorkspaceForwardShortcut(
+                    press({ key: 'ArrowRight', altKey: true }),
+                    other
+                )
+            ).toBe(true);
+            expect(
+                isWorkspaceForwardShortcut(
+                    press({ key: 'ArrowRight', altKey: true }),
+                    mac
+                )
+            ).toBe(false);
+            expect(
+                isWorkspaceForwardShortcut(
+                    press({ key: ']', code: 'BracketRight', metaKey: true }),
+                    other
+                )
+            ).toBe(false);
+        });
+
+        it('rejects Back, extra modifiers and AltGr', () => {
+            expect(
+                isWorkspaceForwardShortcut(
+                    press({ key: '[', code: 'BracketLeft', metaKey: true }),
+                    mac
+                )
+            ).toBe(false);
+            expect(
+                isWorkspaceForwardShortcut(
+                    press({ key: 'ArrowLeft', altKey: true }),
+                    other
+                )
+            ).toBe(false);
+            expect(
+                isWorkspaceForwardShortcut(
+                    press({
+                        key: '}',
+                        code: 'BracketRight',
+                        metaKey: true,
+                        shiftKey: true,
+                    }),
+                    mac
+                )
+            ).toBe(false);
+            expect(
+                isWorkspaceForwardShortcut(
+                    press({ key: 'ArrowRight', altKey: true, ctrlKey: true }),
+                    other
+                )
+            ).toBe(false);
+        });
     });
 
     describe('isWorkspaceBackShortcut', () => {
@@ -319,11 +406,23 @@ describe('keyboard shortcuts registry', () => {
         });
 
         expect(findChordLabels(macGroups, 'open-command-palette')).toEqual([
-            ['Cmd', 'K'],
+            ['⌘', 'K'],
         ]);
         expect(findChordLabels(linuxGroups, 'open-command-palette')).toEqual([
             ['Ctrl', 'K'],
         ]);
+    });
+
+    it('writes a chord the same way everywhere: symbols on macOS, Ctrl elsewhere', () => {
+        expect(commandShortcutLabel('B', true)).toBe('⌘B');
+        expect(commandShortcutLabel('B', false)).toBe('Ctrl+B');
+        expect(formatShortcutLabel(['Cmd', 'Shift', 'K'], true)).toBe('⌘⇧K');
+        expect(formatShortcutLabel(['Ctrl', 'Shift', 'K'], false)).toBe(
+            'Ctrl+Shift+K'
+        );
+        expect(formatShortcutLabel(['Alt', 'ArrowLeft'], true)).toBe('⌥←');
+        expect(commandModifierLabel(true)).toBe('⌘');
+        expect(commandModifierLabel(false)).toBe('Ctrl');
     });
 
     it('normalizes display labels for compact keycaps', () => {

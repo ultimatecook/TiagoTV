@@ -83,12 +83,12 @@
             }
             @if (serial.info.rating_imdb) {
                 <app-meta-chip variant="rating"
-                    >★ {{ serial.info.rating_imdb }}</app-meta-chip
+                    >★ {{ serial.info.rating_imdb | appRating }}</app-meta-chip
                 >
             }
             @if (serial.info.rating_kinopoisk) {
                 <app-meta-chip
-                    >KP {{ serial.info.rating_kinopoisk }}</app-meta-chip
+                    >KP {{ serial.info.rating_kinopoisk | appRating }}</app-meta-chip
                 >
             }
         </ng-template>

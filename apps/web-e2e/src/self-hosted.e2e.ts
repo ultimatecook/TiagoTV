@@ -25,7 +25,7 @@ async function installRuntimeConfig(page: Page): Promise<void> {
 }
 
 async function addXtreamPortal(page: Page): Promise<void> {
-    await page.getByRole('button', { name: 'Add playlist' }).click();
+    await page.getByRole('button', { name: 'Add source' }).click();
     const dialog = page.locator('mat-dialog-container');
     await expect(dialog).toBeVisible();
     // v0.22 redesign: tabs were replaced with a flat 5-card radio picker.
@@ -37,14 +37,14 @@ async function addXtreamPortal(page: Page): Promise<void> {
     await dialog.locator('#password').fill('pass1');
 
     await dialog
-        .getByRole('button', { name: 'Add playlist', exact: true })
+        .getByRole('button', { name: 'Add source', exact: true })
         .click();
     await expect(dialog).toBeHidden();
     await page.waitForURL(/xtreams.*vod/);
 }
 
 async function addM3uPlaylist(page: Page): Promise<void> {
-    await page.getByRole('button', { name: 'Add playlist' }).click();
+    await page.getByRole('button', { name: 'Add source' }).click();
     const dialog = page.locator('mat-dialog-container');
     await expect(dialog).toBeVisible();
 
@@ -58,14 +58,14 @@ async function addM3uPlaylist(page: Page): Promise<void> {
     );
 
     await dialog
-        .getByRole('button', { name: 'Add playlist', exact: true })
+        .getByRole('button', { name: 'Add source', exact: true })
         .click();
     await expect(dialog).toBeHidden();
     await page.waitForURL(/playlists.*all/);
 }
 
 async function addStalkerPortal(page: Page): Promise<void> {
-    await page.getByRole('button', { name: 'Add playlist' }).click();
+    await page.getByRole('button', { name: 'Add source' }).click();
     const dialog = page.locator('mat-dialog-container');
     await expect(dialog).toBeVisible();
     // v0.22 redesign: tabs were replaced with a flat 5-card radio picker.
@@ -76,7 +76,7 @@ async function addStalkerPortal(page: Page): Promise<void> {
     await setInputValue(dialog.locator('input#macAddress'), DEFAULT_MAC);
 
     const addButton = dialog.getByRole('button', {
-        name: 'Add playlist',
+        name: 'Add source',
         exact: true,
     });
     await expect(addButton).toBeEnabled({ timeout: 10_000 });
@@ -227,7 +227,7 @@ test('@self-hosted M3U User-Agent reaches the provider on import and refresh', a
     const url = `http://127.0.0.1:${address.port}/protected.m3u`;
     try {
         expect((await fetch(url)).status).toBe(403);
-        await page.getByRole('button', { name: 'Add playlist' }).click();
+        await page.getByRole('button', { name: 'Add source' }).click();
         const dialog = page.locator('mat-dialog-container');
         await setInputValue(
             dialog.getByRole('textbox', { name: /Playlist URL/ }),
@@ -242,7 +242,7 @@ test('@self-hosted M3U User-Agent reaches the provider on import and refresh', a
             `  ${userAgent}  `
         );
         await dialog
-            .getByRole('button', { name: 'Add playlist', exact: true })
+            .getByRole('button', { name: 'Add source', exact: true })
             .click();
         await page.waitForURL(/playlists.*all/);
         await expect(page.getByText('1. Initial UA Channel')).toBeVisible();

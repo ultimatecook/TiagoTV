@@ -1,4 +1,5 @@
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../ui-state/page-ui';
 
 // The overlay's channel row: glass cards 196px wide running through the
 // overlay's gutters to the picture's edges (handoff 04). `--before` and
@@ -65,11 +66,20 @@
     cursor: pointer;
     transition:
         background-color 200ms ease,
-        border-color 200ms ease;
+        border-color 200ms ease,
+        box-shadow page-ui.$card-ease,
+        transform page-ui.$card-ease;
     app-region: no-drag;
 
+    // The pages' card hover: a lift (the row's padding holds it) and the
+    // white ring.
     &:hover {
         background: rgba(255, 255, 255, 0.18);
+        box-shadow:
+            page-ui.$card-ring,
+            inset 0 1px 0 rgba(255, 255, 255, 0.18),
+            0 12px 28px -14px rgba(0, 0, 0, 0.7);
+        transform: page-ui.$card-lift;
     }
 
     &:focus-visible {
@@ -210,7 +220,8 @@
     background: var(--tv-live-red);
 }
 
-@media (max-width: 640px) {
+// A phone, or a short window (the overlay keeps the picture its room).
+@media (max-width: 640px), (max-height: 700px) {
     :host {
         --card-w: 156px;
         --card-gap: 12px;
@@ -224,5 +235,9 @@
 @media (prefers-reduced-motion: reduce) {
     .card {
         transition: none;
+
+        &:hover {
+            transform: none;
+        }
     }
 }

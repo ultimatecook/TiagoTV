@@ -25,7 +25,7 @@
             type="button"
             class="sidebar-collapse-toggle"
             [attr.aria-label]="'LAYOUT.HIDE_CHANNELS_LIST' | translate"
-            [matTooltip]="'LAYOUT.TOGGLE_SIDEBAR_TOOLTIP' | translate"
+            [matTooltip]="'LAYOUT.TOGGLE_SIDEBAR_TOOLTIP' | translate: { shortcut: sidebarShortcut }"
             [attr.aria-pressed]="isSidebarCollapsed()"
             (click)="toggleSidebar()"
         >
@@ -69,7 +69,7 @@
             type="button"
             class="sidebar-restore"
             [attr.aria-label]="'LAYOUT.SHOW_CHANNELS_LIST' | translate"
-            [matTooltip]="'LAYOUT.TOGGLE_SIDEBAR_TOOLTIP' | translate"
+            [matTooltip]="'LAYOUT.TOGGLE_SIDEBAR_TOOLTIP' | translate: { shortcut: sidebarShortcut }"
             [attr.aria-pressed]="isSidebarCollapsed()"
             (click)="toggleSidebar()"
         >

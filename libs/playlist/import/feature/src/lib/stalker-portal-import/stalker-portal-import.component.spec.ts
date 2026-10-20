@@ -10,6 +10,16 @@ import {
 } from '@iptvnator/portal/stalker/data-access';
 import { Playlist } from '@iptvnator/shared/interfaces';
 import { StalkerPortalImportComponent } from './stalker-portal-import.component';
+import { formatWithIntl } from '@iptvnator/pipes';
+
+/** How the snackbar writes an expiry: the app language (`en` here). */
+const shortDate = (date: Date) =>
+    formatWithIntl(date, {
+        locale: 'en',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
 
 describe('StalkerPortalImportComponent identity handling', () => {
     let component: StalkerPortalImportComponent;
@@ -440,7 +450,7 @@ describe('StalkerPortalImportComponent identity handling', () => {
 
         expect(translate.instant).toHaveBeenCalledWith(
             'HOME.STALKER_PORTAL.VALIDATED_EXPIRES',
-            { date: new Date(1893456000 * 1000).toLocaleDateString() }
+            { date: shortDate(new Date(1893456000 * 1000)) }
         );
         expect(snackBar.open).toHaveBeenCalledWith(
             'HOME.STALKER_PORTAL.VALIDATED_EXPIRES',
@@ -495,7 +505,7 @@ describe('StalkerPortalImportComponent identity handling', () => {
 
         expect(translate.instant).toHaveBeenCalledWith(
             'HOME.STALKER_PORTAL.VALIDATED_EXPIRES',
-            { date: new Date(2030, 0, 15).toLocaleDateString() }
+            { date: 'Jan 15, 2030' }
         );
     });
 

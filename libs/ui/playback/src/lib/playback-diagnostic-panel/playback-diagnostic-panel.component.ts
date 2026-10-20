@@ -24,6 +24,7 @@ import type {
     ResolvedPortalPlayback,
     VodSourceDescriptor,
 } from '@iptvnator/shared/interfaces';
+import { redactSensitiveData } from '@iptvnator/shared/logging';
 import { VodSourceRowComponent } from '@iptvnator/ui/components';
 import type {
     ExternalRecoveryStates,
@@ -102,6 +103,14 @@ export class PlaybackDiagnosticPanelComponent {
             ? 'PLAYBACK_DIAGNOSTICS.REPORT_COPIED'
             : 'PLAYBACK_DIAGNOSTICS.COPY_FAILED';
     });
+
+    /**
+     * The address Copy URL puts on the clipboard, as its hover title: the
+     * copy is the person's explicit ask, the title is on screen.
+     */
+    readonly streamUrlTitle = computed(() =>
+        String(redactSensitiveData(this.playback().streamUrl))
+    );
 
     onReportCopied(success: boolean): void {
         this.copyResult.set({ issue: this.diagnostic(), success });

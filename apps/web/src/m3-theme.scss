@@ -44,11 +44,122 @@ $light-theme: mat.define-theme(
     )
 );
 
+// TiagoTV's dark theme is warm graphite glass, not a hue: every Material
+// colour role comes from the `--tv-*` neutrals (`_tv-tokens.scss`). The
+// palette keeps the M3 shape (`mat.$red-palette`'s keys, which
+// `define-theme` validates); only the tones the dark scheme reads matter:
+// primary 80 is the white CTA with ink (20) on it, neutral 90 and
+// neutral-variant 90 are `--tv-text` and `--tv-text-2`, neutral-variant 60
+// (the outline) is `--tv-meta`, error 80 is `--tv-danger`. The tones in
+// between keep the order of a tonal scale. Tertiary stays cyan for the EPG
+// "now" surfaces.
+$tv-dark-palette: map.deep-merge(
+    mat.$red-palette,
+    (
+        0: #000000,
+        10: #050504,
+        20: #0b0b09,
+        25: #1f1f1d,
+        30: #3a3935,
+        35: #46453f,
+        40: #5c5a54,
+        50: #76736b,
+        60: #918d84,
+        70: #aeaa9d,
+        80: #fbf8f2,
+        90: #f4f1ea,
+        95: #faf8f3,
+        98: #fdfcf9,
+        99: #fefefc,
+        100: #ffffff,
+        secondary: (
+            0: #000000,
+            10: #0b0b09,
+            20: #1b1b19,
+            25: #262624,
+            30: #3b3a36,
+            35: #47463f,
+            40: #5c5a54,
+            50: #76736b,
+            60: #918d84,
+            70: #aeaa9d,
+            80: #d6d2c6,
+            90: #f4f1ea,
+            95: #faf8f3,
+            98: #fdfcf9,
+            99: #fefefc,
+            100: #ffffff,
+        ),
+        neutral: (
+            0: #000000,
+            4: #0b0b0a,
+            6: #121211,
+            10: #1a1a19,
+            12: #1e1e1d,
+            17: #282827,
+            20: #2f2f2d,
+            22: #333331,
+            24: #383836,
+            25: #3a3a38,
+            30: #474643,
+            35: #53524e,
+            40: #5f5e59,
+            50: #787670,
+            60: #918e86,
+            70: #aca99f,
+            80: #c8c4b9,
+            87: #e0ddd4,
+            90: #f4f1ea,
+            92: #f6f4ee,
+            94: #f8f6f1,
+            95: #f9f7f3,
+            96: #faf9f5,
+            98: #fcfbf9,
+            99: #fefdfc,
+            100: #ffffff,
+        ),
+        neutral-variant: (
+            0: #000000,
+            10: #161614,
+            20: #2b2a27,
+            25: #36352f,
+            30: #4a4843,
+            35: #56544e,
+            40: #625f58,
+            50: #7b7870,
+            60: #a39f93,
+            70: #aaa69a,
+            80: #b4b0a4,
+            90: #bdb9ad,
+            95: #d6d2c6,
+            98: #f4f1ea,
+            99: #fbf8f2,
+            100: #ffffff,
+        ),
+        error: (
+            80: #ff7b7f,
+        ),
+    )
+);
+
+// The dark scheme's surface containers as the redesign's glass tints, for
+// the app styles that read `--mat-sys-surface-container*` (cards, chips,
+// list rows on the glass window). Material's own components keep the
+// palette's opaque graphite tones: the kit restyles every overlay they draw.
+$tv-dark-system-overrides: (
+    surface-container-lowest: rgba(0, 0, 0, 0.2),
+    surface-container-low: rgba(255, 255, 255, 0.03),
+    surface-container: rgba(255, 255, 255, 0.05),
+    surface-container-high: rgba(255, 255, 255, 0.07),
+    surface-container-highest: rgba(255, 255, 255, 0.1),
+    surface-bright: rgba(255, 255, 255, 0.12),
+);
+
 $dark-theme: mat.define-theme(
     (
         color: (
             theme-type: dark,
-            primary: mat.$red-palette,
+            primary: $tv-dark-palette,
             tertiary: mat.$cyan-palette,
         ),
         typography: (
@@ -240,11 +351,45 @@ html {
     --app-popover-shadow: 0 24px 70px rgba(15, 20, 28, 0.18);
     --app-popover-backdrop: rgba(20, 24, 32, 0.28);
 
+    // Floating surfaces: dialogs, menus, select panels, toasts, floating
+    // panels, the command palette and the source switcher. A ground colour
+    // (`background-color`), a sheen over it (`background-image`), a backdrop
+    // filter, a hairline and an inset highlight (first in a `box-shadow`
+    // list). Light keeps the plain widget surface; the dark theme makes
+    // them glass. Radii come from `--tv-radius-*` (`_tv-tokens.scss`).
+    --app-overlay-bg: #ffffff;
+    --app-overlay-sheen: none;
+    --app-overlay-filter: none;
+    --app-overlay-border: rgba(0, 0, 0, 0.12);
+    --app-overlay-highlight: 0 0 #0000;
+    --app-tooltip-bg: var(--mat-sys-inverse-surface);
+    --app-tooltip-fg: var(--mat-sys-inverse-on-surface);
+
+    // An opaque pane where the window must not show through: a sticky cell
+    // over scrolling content, text on a filled accent, the fades and scrims
+    // of the detail heroes. The content surface itself in light.
+    --app-content-solid: #f5f6f8;
+    // The well of an outlined form field, a step above its surface.
+    --app-field-bg: color-mix(in srgb, #ffffff 85%, white 7%);
+    // Scrollbar thumbs (`libs/ui/styles/_scrollbar.scss`), shown on hover.
+    --app-scrollbar-thumb: rgba(0, 0, 0, 0.22);
+    --app-scrollbar-thumb-hover: rgba(0, 0, 0, 0.36);
+    // Kit buttons (`_app-controls.scss`): the accent pill, and the
+    // secondary pill's fill, sheen and ring.
+    --app-accent-button-bg: #2f7bff;
+    --app-accent-button-fg: #eef4ff;
+    --app-secondary-button-bg: rgba(29, 27, 30, 0.1);
+    --app-secondary-button-sheen: none;
+    --app-secondary-button-ring: 0 0 #0000;
+
     .dark-theme {
         @include component-colors($dark-theme);
         // Only the color roles differ per theme: the elevation shadows are
         // the same black in both, so html's declarations already apply here.
-        @include mat.system-level-colors($dark-theme);
+        @include mat.system-level-colors(
+            $dark-theme,
+            $tv-dark-system-overrides
+        );
 
         // ── TiagoTV cinematic glass theme ─────────────────────────────────
         // A neutral graphite glass window: its colour comes from whatever
@@ -272,8 +417,10 @@ html {
         --app-glass-highlight: rgba(255, 255, 255, 0.14);
         --app-rail-bg: transparent;
         --app-header-bg: transparent;
-        // Opaque fallback for sticky bars and panels that sit over content.
-        --app-content-bg: #262625;
+        // Panes lie on the glass window like the redesigned pages: no slab
+        // of their own. What must stay opaque reads `--app-content-solid`.
+        --app-content-bg: transparent;
+        --app-content-solid: #262625;
         --app-rail-border: transparent;
         --app-on-surface: #f2efe8;
         --app-hover-overlay: rgba(255, 255, 255, 0.07);
@@ -302,9 +449,11 @@ html {
         // Content area
         --app-content-shadow: none;
 
-        // Widget surfaces: menus, dialogs, cards on glass
+        // Widget surfaces: opaque cards and in-place popovers. Overlays use
+        // the glass `--app-overlay-*` tokens below; a panel header is a
+        // glass tint on the window, not a grey band.
         --app-widget-bg: #2b2b2a;
-        --app-widget-header-bg: #323231;
+        --app-widget-header-bg: rgba(255, 255, 255, 0.04);
         --app-widget-border: transparent;
         --app-widget-shadow: none;
         --app-widget-header-border: rgba(255, 255, 255, 0.06);
@@ -351,14 +500,40 @@ html {
 
         // Source lists and popovers
         --app-line-strong: rgba(255, 255, 255, 0.12);
-        --app-danger-text: #ff8d93;
-        --app-danger-surface: rgba(255, 90, 95, 0.14);
+        // The redesign's one danger red, as text and as a tint.
+        --app-danger-text: var(--tv-danger);
+        --app-danger-surface: color-mix(
+            in srgb,
+            var(--tv-danger) 14%,
+            transparent
+        );
         --app-neutral-tag-surface: rgba(255, 255, 255, 0.09);
         --app-list-selected-bg: var(--app-selection-surface);
         --app-list-selected-fg: var(--app-heading-color);
         --app-list-selected-outline: transparent;
         --app-popover-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
         --app-popover-backdrop: rgba(6, 6, 4, 0.5);
+
+        // Floating surfaces: the redesign's glass over a dark ground.
+        --app-overlay-bg: var(--tv-glass-ground);
+        --app-overlay-sheen: var(--tv-glass-bg);
+        --app-overlay-filter: var(--tv-glass-filter);
+        --app-overlay-border: var(--tv-glass-border);
+        --app-overlay-highlight: var(--tv-glass-highlight);
+        --app-tooltip-bg: rgba(20, 20, 19, 0.86);
+        --app-tooltip-fg: var(--tv-text);
+
+        --app-field-bg: rgba(0, 0, 0, 0.2);
+        --app-scrollbar-thumb: rgba(255, 255, 255, 0.18);
+        --app-scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+        // The white pill with ink text of the redesign; the secondary pill
+        // is glass.
+        --app-accent-button-bg: var(--tv-text-on-image);
+        --app-accent-button-fg: #0b0b09;
+        --app-secondary-button-bg: rgba(255, 255, 255, 0.04);
+        --app-secondary-button-sheen: var(--tv-glass-bg);
+        --app-secondary-button-ring:
+            inset 0 0 0 1px var(--tv-glass-border), var(--tv-glass-highlight);
     }
 }
 
@@ -414,12 +589,11 @@ html {
         );
     }
 
-    // Inputs sit slightly above the surrounding surface. color-mix is inlined
-    // here (not via a custom property on html) so var(--app-widget-bg)
-    // resolves at the wrapper — inside .dark-theme — rather than being
-    // locked to the light-mode value at html-level inheritance.
+    // Inputs sit in a well a step off the surrounding surface: near-white in
+    // light, a dark glass well (the settings controls' ground) in dark.
+    // `--app-field-bg` is declared in both theme contexts above.
     .mat-form-field-appearance-outline .mat-mdc-text-field-wrapper {
-        background: color-mix(in srgb, var(--app-widget-bg) 85%, white 7%);
+        background: var(--app-field-bg);
         border-radius: 10px;
     }
 
@@ -429,19 +603,22 @@ html {
     }
 
     // A select stays inside a form; its option panel follows the kit menu:
-    // a bordered 10px panel with 6px padding, 36px rows at 13px and the
-    // chosen row on the list-selection tokens. The overrides sit on the
-    // panel, which renders in the overlay container inside the theme
-    // context, so the `--app-*` values resolve per theme. The selector is
-    // doubled because Material sets the panel's padding and attached
+    // the glass overlay frame at the menu radius with 6px padding, 36px rows
+    // at 13px and the chosen row on the list-selection tokens. The overrides
+    // sit on the panel, which renders in the overlay container inside the
+    // theme context, so the `--app-*` values resolve per theme. The selector
+    // is doubled because Material sets the panel's padding and attached
     // corners from `div.mat-mdc-select-panel` and
     // `.mat-mdc-select-panel-above div.mat-mdc-select-panel`, injected after
     // the global stylesheet.
     div.mat-mdc-select-panel.mat-mdc-select-panel {
         @include mat.select-overrides(
             (
-                panel-background-color: var(--app-widget-bg),
-                container-elevation-shadow: 0 18px 40px rgba(0, 0, 0, 0.35),
+                panel-background-color: var(--app-overlay-bg),
+                container-elevation-shadow: (
+                    var(--app-overlay-highlight),
+                    0 18px 40px rgba(0, 0, 0, 0.35),
+                ),
             )
         );
         @include mat.option-overrides(
@@ -463,27 +640,34 @@ html {
             )
         );
         padding: 6px;
-        border: 1px solid var(--app-line-strong);
-        border-radius: 10px;
+        border: 1px solid var(--app-overlay-border);
+        border-radius: var(--tv-radius-menu);
+        background-image: var(--app-overlay-sheen);
+        backdrop-filter: var(--app-overlay-filter);
 
         .mat-mdc-option {
             min-height: 36px;
             padding: 0 10px;
-            border-radius: 6px;
+            border-radius: 8px;
         }
     }
 
-    // Every dialog shares one frame: the kit's 16px panel on the widget
-    // surface, a hairline border and the popover shadow. The tokens sit on
-    // the container, inside the overlay, so the `--app-*` values resolve
-    // per theme. A dialog that draws its own surface (the command palette,
-    // the programme dialog) strips this frame through its panel class.
+    // Every dialog shares one frame: the overlay surface (glass over a dark
+    // ground in dark) at the dialog radius, its hairline and highlight and
+    // the popover shadow. The tokens sit on the container, inside the
+    // overlay, so the `--app-*` values resolve per theme. A dialog that draws
+    // its own surface (the command palette, the programme dialog) strips
+    // this frame through its panel class. The blur is the dialog's size,
+    // over the already dimmed and blurred backdrop.
     .mat-mdc-dialog-container {
         @include mat.dialog-overrides(
             (
-                container-shape: 16px,
-                container-color: var(--app-widget-bg),
-                container-elevation-shadow: var(--app-popover-shadow),
+                container-shape: var(--tv-radius-dialog),
+                container-color: var(--app-overlay-bg),
+                container-elevation-shadow: (
+                    var(--app-overlay-highlight),
+                    var(--app-popover-shadow),
+                ),
                 subhead-color: var(--app-heading-color),
                 supporting-text-color: var(--app-body-color),
             )
@@ -491,22 +675,25 @@ html {
     }
 
     .mat-mdc-dialog-surface {
-        border: 1px solid var(--app-line-strong);
+        border: 1px solid var(--app-overlay-border);
+        background-image: var(--app-overlay-sheen);
+        backdrop-filter: var(--app-overlay-filter);
     }
 
     // ─── Destructive actions ───────────────────────────────────────────────
     // Material only emits `.mat-warn` button colors for M2 themes, so the
     // `warn` color input is a no-op with this M3 theme. Buttons that remove or
     // discard user data opt in with this class instead. The kit draws them as
-    // a red tint (`--app-danger-*`, declared per theme context above), never
-    // a solid error fill: hover changes the fill only, the ripple is off and
-    // a disabled button is the same button at 40% opacity.
+    // a red tint pill (`--app-danger-*`, declared per theme context above;
+    // `--tv-danger` in dark), never a solid error fill: hover changes the
+    // fill only, the ripple is off and a disabled button is the same button
+    // at 40% opacity.
     .app-destructive-button {
         @include mat.button-overrides(
             (
-                filled-container-shape: 10px,
-                text-container-shape: 10px,
-                outlined-container-shape: 10px,
+                filled-container-shape: 999px,
+                text-container-shape: 999px,
+                outlined-container-shape: 999px,
                 filled-container-color: var(--app-danger-surface),
                 filled-disabled-container-color: var(--app-danger-surface),
                 filled-label-text-color: var(--app-danger-text),

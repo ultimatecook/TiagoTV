@@ -5,7 +5,9 @@
     display: flex;
     box-sizing: border-box;
     border-bottom: 1px solid $line;
-    background: var(--app-content-bg);
+    // Opaque: the sticky channel cell inherits it, and programmes scroll
+    // under that cell.
+    background: var(--app-content-solid);
 
     &:hover {
         background: $surface-3;

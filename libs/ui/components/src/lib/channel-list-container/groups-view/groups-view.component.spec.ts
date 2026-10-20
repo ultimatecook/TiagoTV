@@ -541,7 +541,8 @@ describe('GroupsViewComponent', () => {
                         { key: 'Sports', count: 2 },
                     ]),
                 }),
-                maxHeight: 'calc(100vh - 32px)',
+                maxHeight:
+                    'calc(100vh - 2 * max(16px, var(--traffic-lights-clear-y, 0px)))',
                 maxWidth: 'calc(100vw - 32px)',
                 width: '560px',
             })

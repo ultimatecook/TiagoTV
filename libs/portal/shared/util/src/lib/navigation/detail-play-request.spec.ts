@@ -1,9 +1,11 @@
 import {
+    clearCollectionDetailSeriesResume,
     clearDetailPlayRequest,
     DETAIL_PLAY_REQUEST_STATE_KEY,
     readDetailPlayRequest,
     withDetailPlayRequest,
 } from './detail-play-request';
+import { OPEN_COLLECTION_DETAIL_STATE_KEY } from './workspace-portal-navigation';
 
 describe('detail play request', () => {
     afterEach(() => window.history.replaceState(null, ''));
@@ -60,5 +62,35 @@ describe('detail play request', () => {
         clearDetailPlayRequest();
 
         expect(window.history.state).toEqual({ keep: true });
+    });
+
+    it('takes a series resume off the entry, keeping its inline detail', () => {
+        const item = { uid: 'xtream::p::series:9', name: 'S' };
+        window.history.replaceState(
+            {
+                keep: true,
+                [OPEN_COLLECTION_DETAIL_STATE_KEY]: {
+                    item,
+                    seriesResume: {
+                        seriesXtreamId: 9,
+                        contentXtreamId: 92,
+                        seasonNumber: 1,
+                        episodeNumber: 2,
+                    },
+                },
+            },
+            ''
+        );
+
+        clearCollectionDetailSeriesResume();
+
+        expect(window.history.state).toEqual({
+            keep: true,
+            [OPEN_COLLECTION_DETAIL_STATE_KEY]: { item },
+        });
+        // Nothing to take: the entry stays as it is.
+        const before = window.history.state;
+        clearCollectionDetailSeriesResume();
+        expect(window.history.state).toBe(before);
     });
 });

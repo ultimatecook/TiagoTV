@@ -18,6 +18,7 @@ import { SportTvPlayback } from '../sport-tv-playback';
 import { FeaturedMatchComponent } from './featured-match.component';
 import { LeagueTableComponent } from './league-table.component';
 import { SportMatchRowComponent } from './sport-match-row.component';
+import { PageStateComponent } from '../../ui-state/page-state.component';
 import { SportSectionPageComponent } from './sport-section-page.component';
 
 /** The stage without its web player. */
@@ -140,6 +141,7 @@ describe('SportSectionPageComponent', () => {
                 imports: [
                     FeaturedMatchComponent,
                     LeagueTableComponent,
+                    PageStateComponent,
                     SportMatchRowComponent,
                     StageStub,
                     TranslatePipe,
@@ -275,7 +277,7 @@ describe('SportSectionPageComponent', () => {
 
         expect(sports.tables.table).not.toHaveBeenCalled();
         expect(query('.page__grid--table')).toBeNull();
-        expect(query('.page__empty')?.textContent).toContain(
+        expect(query('lib-page-state')?.textContent).toContain(
             'WORKSPACE.SPORTS.NO_MATCHES'
         );
     });

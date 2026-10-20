@@ -293,7 +293,7 @@ test.describe('Electron Xtream Responsiveness', () => {
             await playlistRow.locator('.source-row__more').click();
             await app.mainWindow
                 .locator('.cdk-overlay-pane [mat-menu-item]')
-                .filter({ hasText: 'Remove playlist' })
+                .filter({ hasText: 'Remove source' })
                 .click();
 
             await waitForDbOperationEvent(app.mainWindow, {

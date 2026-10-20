@@ -70,7 +70,7 @@
         }
         @if (meta.ratingImdb) {
             <app-meta-chip variant="rating"
-                >★ {{ meta.ratingImdb }}</app-meta-chip
+                >★ {{ meta.ratingImdb | appRating }}</app-meta-chip
             >
         }
         @if (isDownloaded()) {
@@ -92,7 +92,7 @@
                 <span class="label">{{
                     'XTREAM.KINOPOISK_RATING' | translate
                 }}</span>
-                <span class="value">{{ meta.ratingKinopoisk }}</span>
+                <span class="value">{{ meta.ratingKinopoisk | appRating }}</span>
             </div>
         }
     </ng-template>

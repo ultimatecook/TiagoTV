@@ -44,7 +44,7 @@
                 [class.search-scope--active]="scope() === option.id"
                 [attr.aria-checked]="scope() === option.id"
                 [attr.data-test-id]="'search-scope-' + option.id"
-                (click)="scope.set(option.id)"
+                (click)="pickScope(option.id)"
             >
                 {{ option.labelKey | translate }}
             </button>
@@ -328,17 +328,15 @@
             }
 
             @if (nothingFound()) {
-                <div class="search-empty" data-test-id="search-empty">
-                    <p class="search-empty__title">
-                        {{
-                            'WORKSPACE.SEARCH.NO_RESULTS'
-                                | translate: { query: applied() }
-                        }}
-                    </p>
-                    <p class="search-empty__hint">
-                        {{ 'WORKSPACE.SEARCH.NO_RESULTS_HINT' | translate }}
-                    </p>
-                </div>
+                <lib-page-state
+                    boxed
+                    data-test-id="search-empty"
+                    [message]="
+                        'WORKSPACE.SEARCH.NO_RESULTS'
+                            | translate: { query: applied() }
+                    "
+                    [detail]="'WORKSPACE.SEARCH.NO_RESULTS_HINT' | translate"
+                />
             }
         </div>
     }

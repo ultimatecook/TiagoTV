@@ -43,6 +43,7 @@ import {
     MenuItemRadioCheckDirective,
     MenuItemRadioDirective,
 } from '../../menu-item-radio/menu-item-radio.directive';
+import { commandShortcutLabel } from '@iptvnator/portal/shared/util';
 
 const ALL_CHANNELS_SORT_STORAGE_KEY = 'm3u-all-channels-sort-mode';
 
@@ -68,6 +69,9 @@ export type { ChannelEpgMetadata } from '../epg-enrichment.util';
     ],
 })
 export class AllChannelsViewComponent {
+    /** Cmd/Ctrl+B, written the way the shortcuts dialog writes it. */
+    readonly sidebarShortcut = commandShortcutLabel('B');
+
     private readonly dialog = inject(MatDialog);
     private readonly epgBridge = inject(EpgRuntimeBridgeService);
     private readonly settingsStore = inject(SettingsStore);

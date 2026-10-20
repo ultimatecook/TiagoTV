@@ -27,6 +27,7 @@ import {
 import type { PlaybackFallbackRequest } from '@iptvnator/playback/util';
 import type { PlaybackDiagnosticCode } from '@iptvnator/playback/util';
 import { SettingsStore } from '@iptvnator/services';
+import { redactSensitiveData } from '@iptvnator/shared/logging';
 import { applyChannelNameStrip } from '@iptvnator/shared/m3u-utils';
 import type { PlayerMediaTitle, PlayerUpNextItem } from '../player-controls';
 import {
@@ -146,6 +147,10 @@ export class PortalInlinePlayerComponent {
         )
     );
     readonly streamUrl = computed(() => this.playback()?.streamUrl ?? '');
+    /** Copy keeps the full address; its hover title must not show it. */
+    readonly streamUrlTitle = computed(() =>
+        String(redactSensitiveData(this.streamUrl()))
+    );
     readonly startTime = computed(() => this.playback()?.startTime ?? 0);
     /**
      * Poster used for the "Ambient mode" fill behind the player. Live channels

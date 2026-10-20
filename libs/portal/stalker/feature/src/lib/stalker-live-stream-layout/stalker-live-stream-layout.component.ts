@@ -82,6 +82,7 @@ import {
 import { LiveEpgPanelSummary } from '@iptvnator/ui/shared-portals';
 import { EpgRuntimeBridgeService } from '@iptvnator/epg/data-access';
 import {
+    commandShortcutLabel,
     createLivePanelsController,
     LiveLayoutSidebarStateService,
     PORTAL_PLAYER,
@@ -188,6 +189,9 @@ import { StalkerWorkspaceRouteSession } from '../stalker-workspace-route-session
 export class StalkerLiveStreamLayoutComponent
     implements OnDestroy, FullscreenChannelPanelHost
 {
+    /** Cmd/Ctrl+B, written the way the shortcuts dialog writes it. */
+    readonly sidebarShortcut = commandShortcutLabel('B');
+
     readonly stalkerStore = inject(StalkerStore);
     private readonly parentalLock = inject(ParentalLockService);
     private readonly playlistService = inject(PlaylistsService);

@@ -80,6 +80,42 @@ describe('NowPlayingPageHandoff', () => {
         expect(TestBed.inject(NowPlayingDockService).session()).not.toBeNull();
     });
 
+    describe('with the Navigation API', () => {
+        const entry = { key: 'list' };
+        beforeEach(() =>
+            Object.defineProperty(window, 'navigation', {
+                configurable: true,
+                value: { currentEntry: entry },
+            })
+        );
+        afterEach(() => delete (window as { navigation?: unknown }).navigation);
+
+        it('hands over when history leaves the entry it played on, URL unchanged', () => {
+            // Mi lista's inline detail is a pushed entry of the list's URL;
+            // Back to the list tears the player down with no route change.
+            entry.key = 'detail';
+            const page = create();
+            page.record({ currentTime: 42, duration: 3600, playing: true });
+
+            entry.key = 'list';
+            page.release(SNAPSHOT);
+
+            expect(
+                TestBed.inject(NowPlayingDockService).session()
+            ).not.toBeNull();
+        });
+
+        it('lets the stream stop when the page closes it on the same entry', () => {
+            entry.key = 'detail';
+            const page = create();
+            page.record({ currentTime: 42, duration: 3600, playing: true });
+
+            page.release(SNAPSHOT);
+
+            expect(TestBed.inject(NowPlayingDockService).session()).toBeNull();
+        });
+    });
+
     it('lets the stream stop when the page closes its own player', () => {
         const page = create();
         page.record({ currentTime: 42, duration: 3600, playing: true });

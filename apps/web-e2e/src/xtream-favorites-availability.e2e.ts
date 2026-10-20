@@ -73,7 +73,7 @@ test('@xtream @collections absent saved items recover on sparse return without l
     await expect.poll(() => loaded.has('get_live_streams')).toBe(true);
     await expect.poll(() => loaded.has('get_vod_streams')).toBe(true);
     await page
-        .getByRole('link', { name: 'Global favorites', exact: true })
+        .getByRole('link', { name: 'My List', exact: true })
         .click();
     const card = page.getByRole('button', {
         name: 'Saved absent favorite',
@@ -154,7 +154,7 @@ test('@xtream @collections absent saved items recover on sparse return without l
     });
     await page.goto(`${playlistPath}/vod`);
     await page
-        .getByRole('link', { name: 'Global favorites', exact: true })
+        .getByRole('link', { name: 'My List', exact: true })
         .click();
     await expect(card).not.toHaveAttribute('aria-disabled', 'true');
     await page.reload();
@@ -691,7 +691,7 @@ test('@xtream @collections catalog hydration cannot replace pending backup ident
     );
     // Client-side navigation performs a collection read without restarting the pending import.
     await page
-        .getByRole('link', { name: 'Global favorites', exact: true })
+        .getByRole('link', { name: 'My List', exact: true })
         .click();
     await expect
         .poll(() =>

@@ -2,6 +2,7 @@ import {
     genreLabelKey,
     type PlatformGenre,
 } from '../platforms/platform-genres';
+import { formatRating } from '@iptvnator/pipes';
 import { runningTime, type CatalogExtras } from './catalog-extras';
 import type { CatalogTitle } from './catalog-titles';
 
@@ -69,7 +70,7 @@ export function posterMeta(
         parts.push([translated(genreLabelKey(genre))]);
     }
     if (title.rating) {
-        parts.push([plain(`★ ${title.rating.toFixed(1)}`)]);
+        parts.push([plain(`★ ${formatRating(title.rating)}`)]);
     }
     return parts.length > 0 ? parts : [[plain(title.platform.name)]];
 }

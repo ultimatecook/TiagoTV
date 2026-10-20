@@ -200,18 +200,32 @@ describe('player controls overlay palette', () => {
         }
     });
 
-    it('points the app focus ring over video at the overlay text colour', () => {
+    it('points the app focus ring over video at the shared warm white', () => {
         // Surfaces beside the controls host (the fullscreen panels, the Up
-        // Next rail, vendor chrome) have no `--pc-text`, so the ring token
-        // carries the colour itself.
+        // Next rail, vendor chrome, the live picture's picker) have no
+        // `--pc-text`, so the ring token carries the colour itself: the dark
+        // theme's `--app-focus-ring`, so a ring reads the same on and off
+        // the picture.
         const text = PALETTE_STYLES.match(/\$text:\s*(#[0-9a-f]{6});/i)?.[1];
         expect(text?.toLowerCase()).toBe(
             HOST_STYLES.match(
                 /--pc-text:\s*(#[0-9a-f]{6});/i
             )?.[1].toLowerCase()
         );
+        const ring = PALETTE_STYLES.match(
+            /\$focus-ring:\s*(#[0-9a-f]{6});/i
+        )?.[1];
+        const theme = readFileSync(
+            resolve(process.cwd(), 'apps/web/src/m3-theme.scss'),
+            'utf8'
+        );
+        const darkRing = /\.dark-theme\s*\{[\s\S]*?--app-focus-ring:\s*(#[0-9a-f]{6});/i.exec(
+            theme
+        )?.[1];
+        expect(ring).toBeDefined();
+        expect(ring?.toLowerCase()).toBe(darkRing?.toLowerCase());
         expect(PALETTE_STYLES).toMatch(
-            /@mixin focus-ring-token\s*\{\s*--app-focus-ring:\s*#\{\$text\};/
+            /@mixin focus-ring-token\s*\{\s*--app-focus-ring:\s*#\{\$focus-ring\};/
         );
         expect(HOST_STYLES).toMatch(/@include palette\.focus-ring-token;/);
     });

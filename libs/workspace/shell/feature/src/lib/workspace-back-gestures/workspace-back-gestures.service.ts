@@ -17,6 +17,12 @@ export type WorkspaceBackGestureSource =
  */
 export type WorkspaceBackGestureResult = 'back' | 'blocked' | 'none';
 
+/**
+ * What a Forward gesture does now: `forward`, history Forward to the in-app
+ * entry ahead; `blocked` and `none` as for Back (no in-app entry ahead).
+ */
+export type WorkspaceForwardGestureResult = 'forward' | 'blocked' | 'none';
+
 /** `MouseEvent.button` of the mouse Back button. */
 const MOUSE_BACK_BUTTON = 3;
 
@@ -123,12 +129,19 @@ export class WorkspaceBackGesturesService {
                   this.goBack(source);
               })
             : undefined;
+        // The macOS swipe right; a preload older than it sends nothing.
+        const unsubscribeForward = this.runtime.supportsWindowForwardGestures
+            ? window.electron?.onWindowForwardRequested?.(() => {
+                  this.goForward();
+              })
+            : undefined;
 
         inject(DestroyRef).onDestroy(() => {
             doc.removeEventListener('mousedown', this.onMouseDown, true);
             doc.removeEventListener('mouseup', this.onMouseUp, true);
             doc.removeEventListener('auxclick', this.onAuxClick, true);
             unsubscribe?.();
+            unsubscribeForward?.();
         });
     }
 
@@ -147,6 +160,17 @@ export class WorkspaceBackGesturesService {
         return source === 'app-command'
             ? this.onWindowCommand()
             : this.runBack();
+    }
+
+    /**
+     * History Forward for a gesture (the chord, the macOS swipe right):
+     * only to an in-app entry ahead, and not while something sits above the
+     * page. Unless the result is `none`, the caller prevents the browser's
+     * default.
+     */
+    goForward(): WorkspaceForwardGestureResult {
+        if (this.isBlocked()) return 'blocked';
+        return this.backNavigation.goForward() ? 'forward' : 'none';
     }
 
     private onWindowCommand(): WorkspaceBackGestureResult {

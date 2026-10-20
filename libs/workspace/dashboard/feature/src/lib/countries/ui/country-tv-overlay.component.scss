@@ -1,13 +1,16 @@
 @use '../../../../../../../ui/styles/focus-ring';
 @use '../../../../../../../ui/playback/src/lib/player-controls/player-palette';
+@use '../../ui-state/page-ui';
 
 // The overlay at the foot of the picture (handoff 04): the veil from
-// transparent to black, then the channel, the controls, the progress, the
-// chips and the cards. Over video the focus ring is the player's.
+// transparent to black (`--overlay-veil` tall), then the channel, the
+// controls, the progress, the chips and the cards. Over video the focus
+// ring is the player's.
 :host {
     @include player-palette.focus-ring-token;
+    --overlay-veil: 140px;
     display: block;
-    padding: 140px var(--tv-page-x) 32px;
+    padding: var(--overlay-veil) var(--tv-page-x) 32px;
     background: linear-gradient(
         180deg,
         transparent 0%,
@@ -170,26 +173,27 @@
     gap: 8px;
 }
 
+// One line, scrolled sideways through the gutters; the block padding is
+// the focus ring's room (the scroller clips at its edge).
+@mixin chips-one-line {
+    .chips {
+        flex-wrap: nowrap;
+        margin: -4px calc(-1 * var(--tv-page-x));
+        padding: 4px var(--tv-page-x);
+        overflow-x: auto;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+}
+
 .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 34px;
-    padding: 0 14px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(16px);
-    color: var(--tv-text-img-1);
-    font: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-    cursor: pointer;
-    app-region: no-drag;
+    @include page-ui.chip;
 
     &:hover:not(.chip--on) {
-        background: rgba(255, 255, 255, 0.14);
+        @include page-ui.chip-hover;
     }
 
     &:focus-visible {
@@ -198,9 +202,7 @@
 }
 
 .chip--on {
-    border-color: var(--tv-text);
-    background: var(--tv-text);
-    color: #0b0b09;
+    @include page-ui.chip-on;
 }
 
 .chip__count {
@@ -210,9 +212,30 @@
     opacity: 0.6;
 }
 
+// A short window (a 900×600 one at 110 % and up): a lower veil, tighter
+// rows and one line of chips at any width, so the overlay leaves the
+// picture, and the country's button, their room.
+@media (max-height: 700px) {
+    :host {
+        --overlay-veil: 64px;
+        padding-bottom: 20px;
+    }
+
+    .overlay {
+        gap: 12px;
+    }
+
+    .head__name {
+        font-size: 28px;
+    }
+
+    @include chips-one-line;
+}
+
 @media (max-width: 640px) {
     :host {
-        padding: 96px var(--tv-page-x) 20px;
+        --overlay-veil: 96px;
+        padding-bottom: 20px;
     }
 
     .overlay {
@@ -229,13 +252,32 @@
         font-size: 24px;
     }
 
-    // One line of chips, scrolled sideways.
-    .chips {
-        flex-wrap: nowrap;
-        margin: 0 calc(-1 * var(--tv-page-x));
-        padding: 0 var(--tv-page-x);
-        overflow-x: auto;
-        scrollbar-width: none;
+    @include chips-one-line;
+}
+
+// The channel failed and the player's diagnostic shows (what went wrong,
+// Retry, the other players): on a window too short for both, the overlay
+// keeps only the channels' cards, to pick another, and the diagnostic
+// takes the room; on a very short one the cards go too.
+@media (max-height: 900px) {
+    :host-context(.live:has(app-playback-diagnostic-panel)) {
+        --overlay-veil: 24px;
+
+        .head,
+        .progress,
+        .chips {
+            display: none;
+        }
+    }
+}
+
+@media (max-height: 560px) {
+    :host-context(.live:has(app-playback-diagnostic-panel)) {
+        padding-bottom: 0;
+
+        lib-country-tv-cards {
+            display: none;
+        }
     }
 }
 

@@ -331,7 +331,7 @@ test.describe('Settings', () => {
         // Trying to leave the settings area surfaces the dialog.
         await page
             .locator('app-workspace-shell-rail')
-            .getByRole('link', { name: 'Dashboard', exact: true })
+            .getByRole('link', { name: 'Home', exact: true })
             .click();
         const dialog = page.getByRole('dialog');
         await expect(dialog).toBeVisible();
@@ -347,7 +347,7 @@ test.describe('Settings', () => {
         // Leave without saving: the staged edit is discarded.
         await page
             .locator('app-workspace-shell-rail')
-            .getByRole('link', { name: 'Dashboard', exact: true })
+            .getByRole('link', { name: 'Home', exact: true })
             .click();
         await page
             .getByRole('dialog')
@@ -375,7 +375,7 @@ test.describe('Settings', () => {
 
         await page
             .locator('app-workspace-shell-rail')
-            .getByRole('link', { name: 'Dashboard', exact: true })
+            .getByRole('link', { name: 'Home', exact: true })
             .click();
         await page
             .getByRole('dialog')

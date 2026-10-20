@@ -53,6 +53,7 @@ import {
     GroupManagementDialogGroup,
 } from './group-management-dialog/group-management-dialog.component';
 import { dialogSize } from '../../dialog-shell/dialog-size';
+import { commandShortcutLabel } from '@iptvnator/portal/shared/util';
 
 const GROUP_CHANNEL_SORT_STORAGE_KEY = 'm3u-groups-channel-sort-mode';
 /** Rail width inside the fullscreen channel panel; see the `compact` input. */
@@ -94,6 +95,9 @@ interface FilteredGroupView {
     ],
 })
 export class GroupsViewComponent {
+    /** Cmd/Ctrl+B, written the way the shortcuts dialog writes it. */
+    readonly sidebarShortcut = commandShortcutLabel('B');
+
     private readonly dialog = inject(MatDialog);
     private readonly parentalLock = inject(ParentalLockService);
     private readonly epgBridge = inject(EpgRuntimeBridgeService);

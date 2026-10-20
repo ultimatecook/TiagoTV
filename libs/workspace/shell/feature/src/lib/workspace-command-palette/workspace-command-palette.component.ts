@@ -17,6 +17,7 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
+    commandShortcutLabel,
     WorkspaceCommandGroup,
     WorkspaceCommandSelection,
     WorkspaceResolvedCommandItem,
@@ -61,6 +62,8 @@ export class WorkspaceCommandPaletteComponent implements AfterViewInit {
     private readonly queryInputRef =
         viewChild<ElementRef<HTMLInputElement>>('queryInput');
 
+    /** The palette's own chord, as the shortcuts dialog shows it. */
+    readonly paletteShortcut = commandShortcutLabel('K');
     readonly query = signal(this.data?.query ?? '');
     readonly selectedIndex = signal(0);
 

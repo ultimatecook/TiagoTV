@@ -3,7 +3,7 @@ import type { WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
     XtreamApiService,
     XtreamStore,
@@ -164,6 +164,53 @@ describe('AccountInfoComponent', () => {
 
         expect(component.isActive()).toBe(true);
         expect(component.userDetails()[0]?.tone).toBe('positive');
+    });
+
+    it('shows the status and dates in the app language', () => {
+        TestBed.inject(TranslateService).use('es');
+        component.accountInfo.set({
+            user_info: {
+                active_cons: '0',
+                allowed_output_formats: [],
+                auth: 1,
+                created_at: '1700000000',
+                exp_date: '1900000000',
+                is_trial: '0',
+                max_connections: '1',
+                message: '',
+                password: 'dialog-pass',
+                status: 'Active',
+                username: 'dialog-user',
+            },
+            server_info: {
+                https_port: '443',
+                port: '80',
+                rtmp_port: '1935',
+                server_protocol: 'http',
+                time_now: '2026-10-18 12:00:00',
+                timestamp_now: 1792324800,
+                timezone: 'Europe/Madrid',
+                url: 'dialog.example.test',
+            },
+        });
+        fixture.detectChanges();
+
+        const row = (labelKey: string) =>
+            [...component.userDetails(), ...component.serverDetails()].find(
+                (detail) => detail.labelKey === labelKey
+            );
+        expect(row('XTREAM.ACCOUNT_INFO.STATUS')).toMatchObject({
+            value: 'XTREAM.ACCOUNT_INFO.STATUS_VALUE.ACTIVE',
+            translateValue: true,
+        });
+        expect(row('XTREAM.ACCOUNT_INFO.EXPIRES')?.value).toBe('17 mar 2030');
+        expect(row('XTREAM.ACCOUNT_INFO.SERVER_TIME')?.value).toBe(
+            '18 oct 2026, 12:00'
+        );
+        expect(
+            fixture.nativeElement.querySelector('.account-dialog__status-pill')
+                ?.textContent
+        ).toContain('XTREAM.ACCOUNT_INFO.STATUS_VALUE.ACTIVE');
     });
 
     it('clears the connectivity guard before the Retry button re-reads the account', async () => {

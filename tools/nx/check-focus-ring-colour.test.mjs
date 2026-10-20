@@ -141,29 +141,27 @@ test('checks every colour on its own, inside color-mix() too', () => {
 });
 
 test('counts an exception as used only where it excuses a focus indicator', () => {
-    const diagnostic = RING_EXCEPTIONS.find(({ value }) => value === '#ffb24c');
-    const others = RING_EXCEPTIONS.filter(
-        (exception) => exception !== diagnostic
-    ).map(({ file, value }) => ({
+    const [exception, ...rest] = RING_EXCEPTIONS;
+    const others = rest.map(({ file, value }) => ({
         file,
         source: `.x:focus-visible { outline: 2px solid ${value}; }`,
     }));
-    // The amber stays as a text colour after its ring moved to the token.
+    // The colour as plain text, beside a ring on the token, uses nothing.
     const textOnly = {
-        file: diagnostic.file,
+        file: exception.file,
         source: [
-            '.label { color: #ffb24c; }',
+            `.label { color: ${exception.value}; }`,
             '.button:focus-visible { outline: 2px solid var(--app-focus-ring); }',
         ].join('\n'),
     };
 
-    assert.deepEqual(findUnusedExceptions([...others, textOnly]), [diagnostic]);
+    assert.deepEqual(findUnusedExceptions([...others, textOnly]), [exception]);
     assert.deepEqual(
         findUnusedExceptions([
             ...others,
             {
-                file: diagnostic.file,
-                source: '.button:focus-visible { outline: 2px solid #ffb24c; }',
+                file: exception.file,
+                source: `.button:focus-visible { outline: 2px solid ${exception.value}; }`,
             },
         ]),
         []

@@ -69,7 +69,7 @@ export async function selectPlayer(
 /** Imports the playlist and returns the URL of its channel list. */
 export async function importPlaylist(page: Page): Promise<string> {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Add playlist' }).click();
+    await page.getByRole('button', { name: 'Add source' }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await dialog.getByRole('radio', { name: /Raw m3u text/i }).click();
@@ -77,7 +77,7 @@ export async function importPlaylist(page: Page): Promise<string> {
     await Promise.all([
         page.waitForURL(/\/workspace\/playlists\/.+\/all$/),
         dialog
-            .getByRole('button', { name: 'Add playlist', exact: true })
+            .getByRole('button', { name: 'Add source', exact: true })
             .click(),
     ]);
     await expect(page.getByText('1 channel', { exact: false })).toBeVisible();

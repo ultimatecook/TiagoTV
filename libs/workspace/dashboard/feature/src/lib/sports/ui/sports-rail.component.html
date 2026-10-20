@@ -12,7 +12,7 @@
             >
         </header>
     }
-    <div class="sports__row">
+    <div class="sports__row" libRememberScroll="sports-rail">
         @for (section of sections; track section.id) {
             @let live = board.liveCounts().get(section.id) ?? 0;
             <a

@@ -10,6 +10,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { SportsBoardService } from '../sports-board.service';
 import { SportsCatalogService } from '../sports-catalog.service';
 import { SPORTS_ROW } from '../sport-sections';
+import { RememberScrollDirective } from '../../ui-state/remember-scroll.directive';
 
 /**
  * The league cards (the Home's "Deportes" row and the sports hub's): one
@@ -19,7 +20,7 @@ import { SPORTS_ROW } from '../sport-sections';
  */
 @Component({
     selector: 'lib-sports-rail',
-    imports: [RouterLink, TranslatePipe],
+    imports: [RememberScrollDirective, RouterLink, TranslatePipe],
     templateUrl: './sports-rail.component.html',
     styleUrl: './sports-rail.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

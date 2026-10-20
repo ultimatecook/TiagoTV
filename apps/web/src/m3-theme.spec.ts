@@ -133,13 +133,18 @@ function rgbaToken(
     return { color, percent: Number(rgba[4]) * 100 };
 }
 
+/** Whether the theme leaves a surface token transparent. */
+function isTransparent(context: string, name: string): boolean {
+    return new RegExp(`${name}:\\s*transparent;`).test(context);
+}
+
 /**
- * A surface as the opaque colour it shows: the dark glass leaves the rail
- * and header transparent over the shell, and lays hover overlays on the
- * content.
+ * A surface as the opaque colour it shows: the dark glass leaves the rail,
+ * header and content panes transparent over the shell, and lays hover and
+ * header tints on the pane (on the shell, where the pane is glass).
  */
 function surfaceColor(context: string, name: string): string {
-    if (new RegExp(`${name}:\\s*transparent;`).test(context)) {
+    if (isTransparent(context, name)) {
         return hexToken(context, '--app-shell-bg');
     }
     const overlay = rgbaToken(context, name);
@@ -147,7 +152,7 @@ function surfaceColor(context: string, name: string): string {
         return mix(
             overlay.color,
             overlay.percent,
-            hexToken(context, '--app-content-bg')
+            surfaceColor(context, '--app-content-bg')
         );
     }
     return hexToken(context, name);
@@ -161,6 +166,7 @@ describe('m3-theme focus ring token', () => {
         '--app-rail-bg',
         '--app-header-bg',
         '--app-content-bg',
+        '--app-content-solid',
         '--app-widget-bg',
         '--app-widget-header-bg',
         '--app-card-hover-bg',
@@ -190,5 +196,78 @@ describe('m3-theme focus ring token', () => {
                 }
             }
         }
+    });
+});
+
+/** The body of the parenthesised group that opens at `open` (a `(`). */
+function parenthesised(source: string, open: number): string {
+    let depth = 0;
+    for (let index = open; index < source.length; index++) {
+        if (source[index] === '(') depth++;
+        if (source[index] === ')' && --depth === 0) {
+            return source.slice(open + 1, index);
+        }
+    }
+    throw new Error('Unbalanced parentheses in m3-theme.scss');
+}
+
+/** The body of the nested Sass map `key: (…)` inside `source`. */
+function sassMap(source: string, key: string): string {
+    const start = source.indexOf(`${key}: (`);
+    expect(start).toBeGreaterThan(-1);
+    return parenthesised(source, source.indexOf('(', start));
+}
+
+/** The overrides `$tv-dark-palette` merges into the red palette's shape. */
+function darkPalette(): string {
+    const start = THEME.indexOf('$tv-dark-palette:');
+    expect(start).toBeGreaterThan(-1);
+    const shape = THEME.indexOf('mat.$red-palette,', start);
+    return parenthesised(THEME, THEME.indexOf('(', shape));
+}
+
+/** A tone of a palette map body, dropping its nested maps. */
+function tone(map: string, step: number): string {
+    const flat = map.replace(/[\w-]+:\s*\([^()]*\),?/g, '');
+    const value = new RegExp(`(?:^|[\\s,(])${step}:\\s*(#[0-9a-f]{6})`, 'i').exec(
+        flat
+    )?.[1];
+    expect(value).toBeDefined();
+    return (value ?? '').toLowerCase();
+}
+
+describe('m3-theme dark Material roles', () => {
+    // The dark scheme reads primary 80/20, neutral 90 and neutral-variant
+    // 90/60 for primary, on-primary, on-surface (and body text),
+    // on-surface-variant and outline: TiagoTV's dark theme takes them from
+    // the redesign's neutrals instead of a red hue.
+    const TV = readFileSync(
+        resolve(process.cwd(), 'apps/web/src/_tv-tokens.scss'),
+        'utf8'
+    );
+    const tv = (name: string) =>
+        (
+            new RegExp(`${name}:\\s*(#[0-9a-f]{6});`, 'i').exec(TV)?.[1] ?? ''
+        ).toLowerCase();
+
+    it('builds the dark theme from the TiagoTV palette, not a hue', () => {
+        expect(THEME).toMatch(
+            /\$dark-theme:\s*mat\.define-theme\([\s\S]*?primary:\s*\$tv-dark-palette,/
+        );
+    });
+
+    it('maps text, primary, outline and danger roles to --tv-* tokens', () => {
+        const palette = darkPalette();
+        expect(tone(palette, 80)).toBe(tv('--tv-text-on-image'));
+        expect(tone(palette, 20)).toBe('#0b0b09');
+        expect(tone(sassMap(palette, 'neutral'), 90)).toBe(tv('--tv-text'));
+        const variant = sassMap(palette, 'neutral-variant');
+        expect(tone(variant, 90)).toBe(tv('--tv-text-2'));
+        expect(tone(variant, 60)).toBe(tv('--tv-meta'));
+        expect(tone(sassMap(palette, 'error'), 80)).toBe(tv('--tv-danger'));
+        // On-primary ink on the white primary.
+        expect(contrast(tone(palette, 80), tone(palette, 20))).toBeGreaterThan(
+            7
+        );
     });
 });

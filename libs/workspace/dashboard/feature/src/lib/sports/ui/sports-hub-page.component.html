@@ -14,7 +14,7 @@
                     [class.days__day--on]="on"
                     [attr.aria-pressed]="on"
                     [attr.data-test-id]="'sports-day-' + day.offset"
-                    (click)="offset.set(day.offset)"
+                    (click)="pickDay(day.offset)"
                 >
                     {{
                         day.name.key
@@ -90,24 +90,31 @@
             @if (later().length > 0) {
                 <lib-sport-events-list [matches]="later()" />
             } @else {
-                <p class="block__empty">
-                    {{
+                <lib-page-state
+                    boxed
+                    [message]="
                         (offset() === 0
                             ? 'WORKSPACE.SPORTS.NO_MATCHES'
                             : 'WORKSPACE.SPORTS.NO_MATCHES_DAY'
                         ) | translate
-                    }}
-                </p>
+                    "
+                />
             }
         </section>
+    } @else if (sports.failed() && !sports.loading()) {
+        <lib-page-state
+            boxed
+            role="alert"
+            data-test-id="sports-failed"
+            [message]="'WORKSPACE.SPORTS.FAILED' | translate"
+            [retryable]="true"
+            (retry)="retry()"
+        />
     } @else {
-        <p class="block__empty" role="status">
-            {{
-                (sports.failed()
-                    ? 'WORKSPACE.SPORTS.FAILED'
-                    : 'WORKSPACE.SPORTS.LOADING'
-                ) | translate
-            }}
-        </p>
+        <lib-page-state
+            boxed
+            role="status"
+            [message]="'WORKSPACE.SPORTS.LOADING' | translate"
+        />
     }
 </div>

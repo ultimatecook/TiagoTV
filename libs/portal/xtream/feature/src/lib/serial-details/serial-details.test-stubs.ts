@@ -26,6 +26,7 @@ export class StubSeasonContainerComponent {
     readonly openingEpisodeId = input<number | null>(null);
     readonly activeEpisodeId = input<number | null>(null);
     readonly playingEpisodeId = input<number | null>(null);
+    readonly preferredSeasonKey = input<string | null>(null);
     readonly seasonDescriptions = input<unknown>(null);
     readonly seriesDescription = input<unknown>(null);
     readonly seasonPosters = input<unknown>(null);

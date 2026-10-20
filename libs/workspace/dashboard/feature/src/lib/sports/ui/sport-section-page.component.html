@@ -41,9 +41,12 @@
                             }
                         </header>
                         @if (matches().length === 0) {
-                            <p class="page__empty">
-                                {{ 'WORKSPACE.SPORTS.NO_MATCHES' | translate }}
-                            </p>
+                            <lib-page-state
+                                boxed
+                                [message]="
+                                    'WORKSPACE.SPORTS.NO_MATCHES' | translate
+                                "
+                            />
                         } @else if (rest().length > 0) {
                             <div class="matches__list">
                                 @for (match of rest(); track match.key) {
@@ -73,18 +76,27 @@
                         }
                     }
                 </div>
+            } @else if (sports.failed() && !sports.loading()) {
+                <lib-page-state
+                    boxed
+                    role="alert"
+                    [message]="'WORKSPACE.SPORTS.FAILED' | translate"
+                    [retryable]="true"
+                    (retry)="retry()"
+                />
             } @else {
-                <p class="page__empty" role="status">
-                    {{
-                        (sports.failed()
-                            ? 'WORKSPACE.SPORTS.FAILED'
-                            : 'WORKSPACE.SPORTS.LOADING'
-                        ) | translate
-                    }}
-                </p>
+                <lib-page-state
+                    boxed
+                    role="status"
+                    [message]="'WORKSPACE.SPORTS.LOADING' | translate"
+                />
             }
         </div>
     </article>
 } @else {
-    <p class="page__missing">{{ 'WORKSPACE.SPORTS.NO_MATCHES' | translate }}</p>
+    <lib-page-state
+        boxed
+        class="page__missing"
+        [message]="'WORKSPACE.SPORTS.NO_MATCHES' | translate"
+    />
 }

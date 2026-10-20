@@ -75,15 +75,30 @@
     >
         @for (tab of tabs; track tab.id) {
             @let active = activeTab() === tab.id;
-            <a
-                class="topbar__tab"
-                [class.is-active]="active"
-                [routerLink]="tab.link"
-                [attr.aria-current]="active ? 'page' : null"
-                [attr.data-test-id]="'topbar-tab-' + tab.id"
-                (click)="onTabClick($event, tab.id)"
-                >{{ tab.labelKey | translate }}</a
-            >
+            @if (tab.id === 'sports' && page().isLeague) {
+                <!-- On a league page Deportes goes up to the hub, as
+                     "‹ Deportes" does: never a new hub entry for Back to
+                     bounce into the league (and restart its stream). -->
+                <a
+                    class="topbar__tab"
+                    [class.is-active]="active"
+                    [attr.href]="sportsHubHref"
+                    [attr.aria-current]="active ? 'page' : null"
+                    [attr.data-test-id]="'topbar-tab-' + tab.id"
+                    (click)="onSportsHubClick($event)"
+                    >{{ tab.labelKey | translate }}</a
+                >
+            } @else {
+                <a
+                    class="topbar__tab"
+                    [class.is-active]="active"
+                    [routerLink]="tab.link"
+                    [attr.aria-current]="active ? 'page' : null"
+                    [attr.data-test-id]="'topbar-tab-' + tab.id"
+                    (click)="onTabClick($event, tab.id)"
+                    >{{ tab.labelKey | translate }}</a
+                >
+            }
         }
     </div>
 </nav>
@@ -100,7 +115,7 @@
             [attr.aria-label]="sidebarToggle.ariaLabel"
             [attr.aria-pressed]="sidebarToggle.expanded"
         >
-            <mat-icon>view_sidebar</mat-icon>
+            <app-workspace-shell-top-bar-icon name="sidebar" />
         </button>
     }
     @if (headerShortcut(); as action) {
@@ -115,7 +130,11 @@
             [matTooltip]="action.tooltipKey | translate"
             [attr.aria-label]="action.ariaLabelKey | translate"
         >
-            <mat-icon>{{ action.icon }}</mat-icon>
+            @if (lineIcon(action.icon); as glyph) {
+                <app-workspace-shell-top-bar-icon [name]="glyph" />
+            } @else {
+                <mat-icon>{{ action.icon }}</mat-icon>
+            }
         </button>
     }
     @if (activeDownloadsCount() > 0) {

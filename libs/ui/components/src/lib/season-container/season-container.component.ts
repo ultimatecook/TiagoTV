@@ -131,6 +131,13 @@ export class SeasonContainerComponent implements OnInit {
     readonly activeEpisodeId = input<number | null>(null);
     /** Episode currently playing in the inline player. */
     readonly playingEpisodeId = input<number | null>(null);
+    /**
+     * The season to open on when nothing plays inline, before the in-progress
+     * and unwatched rules: the host's (the series page's: the season shown
+     * when its history entry was left, else the season of the episode its
+     * play button names). Read when the selection resolves, so a pick stays.
+     */
+    readonly preferredSeasonKey = input<string | null>(null);
     /** Per-season descriptions (TMDB/provider), keyed by season key. */
     readonly seasonDescriptions = input<Record<string, string> | null>(null);
     /**
@@ -202,7 +209,8 @@ export class SeasonContainerComponent implements OnInit {
     /**
      * Selected season. Auto-resolves when the season key set changes or when
      * playback positions first arrive (priority: inline-playing episode's
-     * season → most recently updated in-progress episode's season → earliest
+     * season → the host's `preferredSeasonKey` → most recently updated
+     * in-progress episode's season → earliest
      * season with unwatched episodes → latest season, with unhydrated
      * lazy-VOD seasons pinning the fallback to the first season); user tab
      * clicks write to it and stick until the auto-select
@@ -346,6 +354,7 @@ export class SeasonContainerComponent implements OnInit {
             seasons: this.seasons,
             sortedSeasonKeys: this.sortedSeasonKeys,
             playingSeasonKey: this.playingSeasonKey,
+            preferredSeasonKey: this.preferredSeasonKey,
             playbackPositions: this.playbackPositions,
             positionOf: (episode) => this.getEpisodePosition(episode),
             hasUnloadedSeasons: this.hasUnloadedSeasons,

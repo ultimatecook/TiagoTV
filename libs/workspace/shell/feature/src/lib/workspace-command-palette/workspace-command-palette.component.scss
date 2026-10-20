@@ -1,3 +1,5 @@
+@use '../../../../../../ui/styles/scrollbar';
+
 :host {
     display: block;
     width: 100%;
@@ -6,12 +8,18 @@
 }
 
 // ─── Shell ───────────────────────────────────────────────────────────────────
+// The overlay frame of every dialog (`--app-overlay-*`: glass over a dark
+// ground in dark) at the dialog radius; the global panel-class rule in
+// `styles.scss` strips Material's own surface underneath.
 .palette-shell {
-    background: var(--app-widget-bg);
+    background-color: var(--app-overlay-bg);
+    background-image: var(--app-overlay-sheen);
+    backdrop-filter: var(--app-overlay-filter);
     color: var(--mat-sys-on-surface);
-    border: 1px solid var(--app-separator);
-    border-radius: 14px;
+    border: 1px solid var(--app-overlay-border);
+    border-radius: var(--tv-radius-dialog);
     box-shadow:
+        var(--app-overlay-highlight),
         0 24px 48px -28px rgba(0, 0, 0, 0.5),
         0 10px 24px -18px rgba(0, 0, 0, 0.35);
     overflow: hidden;
@@ -94,9 +102,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--app-muted-color) 55%, transparent)
-        transparent;
+    @include scrollbar.thin;
 }
 
 // ─── Group ───────────────────────────────────────────────────────────────────

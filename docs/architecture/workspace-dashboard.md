@@ -100,7 +100,9 @@ Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
    at a time, the hero's and this section's in one queue
    (`HomeTitlePagesService`): the provider allows one connection. The Top
    10's places are sized from the section's width (`container-type:
-   inline-size`, `100cqi`): about 4.6 in view, every poster as wide
+   inline-size`, `100cqi`, up to the rows' 1800px limit — see
+   [Redesigned pages](#redesigned-pages-shared-rules-tiagotv)): about 4.6
+   in view, every poster as wide
    (≈ 250px at the design's 1512px) with its outlined number scaled to it;
    the row is tracked by place, since a snapping row re-snaps to the element
    it rested on and followed the first title one place in when the ranking
@@ -635,15 +637,21 @@ categories (`PlatformsCatalogService`):
    `tileDress` turns that into each row's `TileDress`. A row's tiles share
    out its width (`--across-*` per look, container units), the fraction left
    over showing the next tile cut by the edge; a tile never shrinks under
-   `--row-min`. The facts (rating, kind, year, genre, synopsis) come from
+   `--row-min` and stops growing past the rows' 1800px limit (`--row-width`),
+   so a very wide window shows more tiles, not 600px ones. A row's sideways
+   scroll comes back with Back and Forward (`libRememberScroll`). The facts (rating, kind, year, genre, synopsis) come from
    the list already loaded: a tile fetches nothing. They open after a short
    rest of the pointer (`--card-info-delay`) or at once on keyboard focus,
    and reduced motion drops their slide.
 5. The billboard (`platform-billboard.component.scss`; Netflix, HBO Max and
    Apple TV) runs up under the top bar and places its text from its foot.
-   At 760 px and below, where the bar takes two rows (108 px), its text
-   keeps the bar's room above it and the billboard grows instead
-   (`min-height: var(--bb-height)`), so no line sits under the bar.
+   At every width its text keeps the bar's room above it
+   (`padding-top: calc(var(--tv-topbar-h) + 12px)`) and the billboard grows
+   instead (`min-height: var(--bb-height)`), so no line sits under the bar
+   or the window's buttons on a narrow or short window. `--bb-height`
+   follows the width and, on a very wide window, keeps growing to 900px
+   (`clamp(640px, 30vw, 900px)` as its top) rather than turn the artwork
+   into a strip.
 
 ## By-Country Page (TiagoTV)
 
@@ -651,8 +659,9 @@ categories (`PlatformsCatalogService`):
 tab) is a TV: the live player fills the page, up behind the transparent top
 bar (`margin-top: calc(-1 * var(--tv-topbar-h))`, the scroller's full
 height, its top corners rounded with `--tv-window-radius`), with the
-country's button top right and an overlay at its foot. Nothing scrolls.
-`/workspace/countries/:countryId` opens the page on that country (`ie`
+country's button top right and an overlay at its foot. Nothing scrolls, at
+any height: the page has no pixel floor (a 900×600 window at 125 % is
+480px tall). `/workspace/countries/:countryId` opens the page on that country (`ie`
 opens the United Kingdom); another country's route while the page is open
 switches to it.
 
@@ -687,7 +696,10 @@ switches to it.
    order sports, events, main ("Generalistas"), news, movies and series, kids,
    documentaries, music, others, other versions. All opens on the main
    channels (La 1, BBC One, CBS…), then runs through the other kinds in the
-   chips' order (`ALL_ORDER`). A new country starts on All.
+   chips' order (`ALL_ORDER`). A new country starts on All. The chip picked
+   stays on the history entry with its country (`countries-category`, see
+   [Redesigned pages](#redesigned-pages-shared-rules-tiagotv)): Back to the
+   page returns to it.
 3. **Overlay.** The channel's name (32px) and what it shows now, the
    controls (play/pause, sound, Open in Live TV, full screen), the
    programme's 3px progress, the chips and the channels in glass cards
@@ -703,6 +715,15 @@ switches to it.
    the cards in and near its view (`country-tv-window.ts`; "All" in the United
    States is over 1,500 channels) and is one tab stop (`role="toolbar"`):
    arrows, Page Up/Down, Home and End move along it, Enter plays.
+
+   **Short windows** (`max-height: 700px`, a 900×600 window from 110 %):
+   the veil drops from 140px to 64px (`--overlay-veil`), the rows tighten,
+   the chips take one line scrolled sideways at any width (they wrap
+   otherwise; one line on phones too), the cards are 156px and the name
+   28px. The country button sits 20px under the bar (12px on a short
+   window) but never closer than 8px above the overlay's controls
+   (`top: max(bar + 4px, min(…, 100% - --live-overlay-content - 48px))`),
+   so it cannot cover them.
 4. **Country button.** A 40px glass button with the flag and the country's
    name; its menu (Spain, Argentina, the United States, the United Kingdom)
    gives each country's channel count. Choosing one closes it and plays that
@@ -748,7 +769,17 @@ switches to it.
    else straight to its `<video>`, whose events give the overlay its state;
    Embedded MPV has no `<video>` and counts as playing once mounted. Full
    screen takes the whole page, overlay included. The player's diagnostic
-   (Retry, the external players) stays above the overlay's height.
+   (what failed, Retry, Copy URL, Details, the external players) sits
+   between the country button and the overlay's controls: it is bounded by
+   `--live-overlay-content` (the overlay without its veil, which the
+   opaque panel covers), not by the overlay's whole height. While it
+   shows, on a window up to 900px tall the overlay keeps only its cards
+   (to pick another channel) and drops its veil to 24px, and up to 560px
+   tall the cards go too (`:host-context(.live:has(app-playback-diagnostic-panel))`):
+   at 900×600 and 83 % the panel had 28px, it now has about 320px, its
+   message and buttons all in view. The resting logo or name is centred
+   between the bar and the overlay's controls too (`.rest` padding from
+   `--live-overlay-content`), not 34 % of the width up.
 
    Native-view Embedded MPV (`CountryTvControls.nativeSurface`: the engine
    without its frame-copy canvas) paints a platform view over the window,
@@ -847,11 +878,22 @@ titles of that kind in one catalog, with no filters and no search of its own.
    title's own page (`get_vod_info` / `get_series_info`) is fetched once
    per title, after it has stayed
    featured 0.4 s, for its backdrop and length. Without a backdrop the hero
-   shows the poster at its right over the platform's colour.
+   shows the poster at its right over the platform's colour. It is
+   `clamp(420px, 100vh - 340px, clamp(780px, 32vw, 1000px))` tall at
+   least: on a short window (`max-height: 700px`) its spacer, gaps and
+   title (sized from the height too, two lines) tighten so "Novedades"
+   still peeks above the fold at 100–125 %, and on a very wide one it
+   grows with the width (to 1000px) instead of stopping at 780px. The
+   section's name is 22px/600, 20px under the bar, both in the hero and
+   while the page loads or fails (it no longer jumps from 32px).
 5. **Rendering.** A genre row renders its posters once it comes within
    900px of the scroller, and posters load lazily. Each row is one tab stop
    (arrows, Home and End move along it) with hover chevrons. Rows bleed
-   through the page's gutter (`--tv-page-x`).
+   through the page's gutter (`--tv-page-x`), `--tv-section-gap` apart (as
+   the hero is from the first). Each row's sideways scroll, and
+   "Novedades"', comes back with Back and Forward (`CatalogStripComponent`
+   `memoryKey`). Loading, failure (with Retry: `CatalogService.load` again),
+   no source and no titles are `PageStateComponent`s.
 
 ## Sports Hub and Competition Pages (TiagoTV)
 
@@ -863,7 +905,8 @@ else but the playing channel and its guide.
 
 1. **League cards** (`ui/sports-rail.*`, the Home's row too). The order is
    `SPORTS_ROW_ORDER` (README 01/02); Motor and the Eredivisie keep their
-   sections and pages without a card. Five and a half cards in view, the
+   sections and pages without a card. Five and a half cards in view (up to
+   the rows' 1800px limit; then about 320px cards and more of them), the
    player's head over the card in the row's top padding (a tenth of a card's
    height, never under 44px). The glass pill counts the section's matches on
    now (`SportsBoardService.liveCounts`).
@@ -873,13 +916,21 @@ else but the playing channel and its guide.
    empty). "Tus equipos" are `MY_TEAMS` (`my-teams.ts`, the one list the sports
    views bold): each pill shows "En vivo" or its next kick-off. "En vivo ahora"
    shows today's matches on now; "Más tarde" the day's others, in the same
-   60px rows as the Home's list. The provider names no score or minute, so a
-   card shows "vs" and "En vivo". No match reminder exists in the app, so the
+   60px rows as the Home's list; its cards are as many as fit at 420px or
+   more (`repeat(auto-fill, minmax(min(100%, 420px), 1fr))`), so a wide
+   window shows more, not 1000px cards, and a click anywhere on a card does
+   what its "Ver en {canal}" pill does. The day picked stays on the history
+   entry (`sports-day`): Back returns to "Mañana", a new visit opens on
+   today. The title sits as high as other pages' h1: the day picker,
+   centred on it, takes no more of the line (`margin-block: -4px`). Loading
+   and failure (with Retry) are `PageStateComponent`s. The provider names
+   no score or minute, so a card shows "vs" and "En vivo". No match reminder exists in the app, so the
    rows carry Play, not a bell. A match opens its competition's page playing
    its feed (`SportsBoardService.openMatch`, the channel in the navigation
    state, `playRequest`).
 3. **Competition page.** A full-height stage (`ui/sport-stage.*`) rises behind
-   the top bar, as tall as the scroller shows, and plays the first signal, or
+   the top bar, as tall as the scroller shows (`fitScroller`; no pixel floor,
+   so a short window does not scroll its controls away), and plays the first signal, or
    the one the way in asked for, through `SportTvPlayback` (built like "En
    vivo"'s: `XtreamUrlService`, MPEG-TS by default, Auto TS, the mini-player
    hand-over, one stream at a time). A channel the way in asked for plays even
@@ -893,7 +944,14 @@ else but the playing channel and its guide.
    included; that picture keeps clear of the top bar, the competition's pill
    and the overlay's controls (`stage--native`, `--sport-overlay-content`),
    and so does the player's diagnostic out of full screen (on a phone the
-   bar takes two rows). In full screen the overlay fades after 2 s; a
+   bar takes two rows). The diagnostic is bounded by
+   `--sport-overlay-content` (the overlay without its veil); while it
+   shows, a window up to 900px tall keeps only the signals in the overlay
+   and one up to 560px drops them too, as on "En vivo". A short window
+   (`max-height: 700px`) gets the lower veil (`--stage-veil` 64px) and
+   tighter rows, and the competition's pill stays 8px clear of the
+   controls. The resting logo and Play are centred above the overlay's
+   controls. In full screen the overlay fades after 2 s; a
    move or any key brings it back.
    The signal row (`signal-cards.ts`) lists the live
    matches' own feeds first, then every numbered feed of the section's
@@ -929,6 +987,57 @@ every word; nothing more is asked of the provider. A team row opens its
 competition's page playing the team's match when it is on today
 (`teamMatchToday`, `SportsBoardService.openMatch`), else the page as it
 opens.
+
+The page reads from the gutter and stops at 1200px of content (a wide
+window's rows no longer run 3000px). The scope chips are the pages' chip
+("En vivo"'s), the group titles the pages' 20px/600 section titles
+`--tv-title-gap` above their card and `--tv-section-gap` apart, and
+"no results" a boxed `PageStateComponent`. The scope picked stays on the
+history entry (`search-scope`) and through the term's own `replaceUrl`
+writes to `q` (they pass `pageMemoryState()` as their `state`).
+
+## Redesigned Pages' Shared Rules (TiagoTV)
+
+Inicio, Deportes, a competition's page, En vivo, Series, Películas, Buscar
+and the Home's platforms row share these (`lib/ui-state/`):
+
+1. **Rhythm.** Sections `--tv-section-gap` (44px) apart on every page (the
+   catalog's 48/56px and the competition page's 56/48px are gone), a
+   section title `--tv-title-gap` (20px) above its content, the page's foot
+   `--tv-page-bottom`.
+2. **States** (`PageStateComponent`, `lib-page-state`). One look for empty,
+   error and loading messages: a 16px/600 title, a `--tv-meta` line under
+   it and, where the page can load again, a white 36px "Reintentar" pill
+   (`retryable`, `(retry)`); `boxed` draws the dashed box where it stands
+   in for a section's content. A one-string message splits at its first
+   sentence (`splitStateMessage`: "No se pudo cargar el catálogo" over
+   "Probá de nuevo en un rato."); `detail` gives the line apart. Retry
+   reloads the page's data: `SportsCatalogService.load`, `CatalogService.load`,
+   `CountriesCatalogService.retry`.
+3. **Hover** (`_page-ui.scss`). A card lifts 4px and takes a 2px white
+   ring (`$card-lift`, `$card-ring`; a card an image fills draws the ring as
+   a layer over it, `ring-layer`/`ring-shown`): platform, sports, Top 10,
+   series and channel cards, catalog posters and "Novedades", En vivo's
+   cards, a competition's signals and Deportes' match cards. A list's row
+   (Home events, Deportes' later matches, a competition's match rows,
+   search results, standings) takes the same faint wash (`$row-wash`).
+4. **Chips.** One chip, "En vivo"'s (`chip`, `chip-hover`, `chip-on`): the
+   category chips, the search scopes and the recent searches. Action
+   buttons are 44px pills ("Ver en {canal}" included).
+5. **Rows of tiles.** A row that shares its width out among a number of
+   tiles stops growing them past 1800px (`$row-width-max`): the Home's
+   platforms (200px from 6.5 across), sports (5.5), Top 10 (4.6) and last
+   channels (4.5) and the platform pages' rows scale alike, and a wider
+   window shows more tiles.
+6. **History memory** (`page-memory.ts`). A page's own choices are kept on
+   the browser's history entry (`history.replaceState`, merged with the
+   router's keys, never a new entry): Deportes' day, En vivo's chip,
+   Buscar's scope and every sideways row's scroll
+   (`RememberScrollDirective`, `[libRememberScroll]="key"`: saved once the
+   row rests, restored when the entry comes back, retrying up to 1.5 s
+   while the row fills in, a wheel or press winning). The router keeps an
+   entry's other state keys when Back or Forward returns to it, so the page
+   reads them as it opens; a new visit starts fresh.
 
 ## Detail Play Requests
 

@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import {
+    clearCollectionDetailSeriesResume,
     clearNavigationStateKeys,
     CollectionContentType,
     getOpenCollectionDetailItemState,
@@ -99,8 +100,14 @@ export function createCollectionDetailState(options: {
         clearNavigationStateKeys([OPEN_COLLECTION_DETAIL_STATE_KEY]);
     };
 
+    // History Back to the list the detail was opened from. A detail that
+    // opened the session (a deep link, a reload) closes in place: history
+    // Back would leave the app or reload it.
     const requestClose = (): void => {
-        if (getOpenCollectionDetailItemState(window.history.state)) {
+        if (
+            getOpenCollectionDetailItemState(window.history.state) &&
+            previousEntryInApp()
+        ) {
             window.history.back();
             return;
         }
@@ -151,7 +158,14 @@ export function createCollectionDetailState(options: {
                 : savedItem);
 
         if (detailItem && canOpen(detailItem)) {
-            open(detailItem, detailState?.seriesResume);
+            // A resume handoff plays once: it leaves the entry as the detail
+            // takes it (Back, Forward or a reload onto the entry only show
+            // the series), and a later sync of the open title keeps it.
+            const resume =
+                detailState?.seriesResume ??
+                (item()?.uid === detailItem.uid ? seriesResume() : null);
+            open(detailItem, resume);
+            clearCollectionDetailSeriesResume();
             return;
         }
 
@@ -186,4 +200,15 @@ export function createCollectionDetailState(options: {
         clear,
         syncFromHistory,
     };
+}
+
+/**
+ * Whether the previous history entry belongs to this document. Without the
+ * Navigation API (older Safari and Firefox) history Back is kept.
+ */
+function previousEntryInApp(): boolean {
+    const history = window.navigation;
+    const index = history?.currentEntry?.index ?? -1;
+    if (!history || index < 0) return true;
+    return index > 0 && history.entries()[index - 1]?.sameDocument === true;
 }

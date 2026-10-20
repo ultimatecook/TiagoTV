@@ -47,7 +47,8 @@ describe('DialogService', () => {
                 }),
                 width: '440px',
                 maxWidth: 'calc(100vw - 32px)',
-                maxHeight: 'calc(100vh - 32px)',
+                maxHeight:
+                    'calc(100vh - 2 * max(16px, var(--traffic-lights-clear-y, 0px)))',
             })
         );
     });

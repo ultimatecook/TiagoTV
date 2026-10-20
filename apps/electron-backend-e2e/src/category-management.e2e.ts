@@ -553,13 +553,13 @@ async function refreshFromWorkspaceHeader(page: Page): Promise<void> {
         )
         .click();
     await page
-        .getByRole('menuitem', { name: 'Refresh playlist', exact: true })
+        .getByRole('menuitem', { name: 'Refresh source', exact: true })
         .click();
 
     const dialog = page.locator('mat-dialog-container');
     await expect(dialog).toBeVisible();
     await dialog
-        .getByRole('button', { name: 'Refresh playlist', exact: true })
+        .getByRole('button', { name: 'Refresh source', exact: true })
         .click();
 
     const refreshOverlay = page.locator('app-workspace-shell-import-overlay');

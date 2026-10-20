@@ -119,7 +119,7 @@ async function importPlaylist(
     count = 2
 ): Promise<void> {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Add playlist' }).click();
+    await page.getByRole('button', { name: 'Add source' }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await dialog.getByRole('radio', { name: /Raw m3u text/i }).click();
@@ -127,7 +127,7 @@ async function importPlaylist(
     await Promise.all([
         page.waitForURL(/\/workspace\/playlists\/.+\/all$/),
         dialog
-            .getByRole('button', { name: 'Add playlist', exact: true })
+            .getByRole('button', { name: 'Add source', exact: true })
             .click(),
     ]);
     await expect(page.getByText(`${count} channels`)).toBeVisible();
@@ -497,7 +497,7 @@ for (const theme of ['light', 'dark']) {
         await page.keyboard.press('Space');
         await expect(favorite).toBeFocused();
         await page
-            .getByRole('link', { name: 'Global favorites', exact: true })
+            .getByRole('link', { name: 'My List', exact: true })
             .click();
         const favorites = page.locator(
             'app-global-favorites-list [appChannelScrollFocus]'

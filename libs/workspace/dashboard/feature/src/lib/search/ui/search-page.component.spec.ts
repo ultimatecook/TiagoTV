@@ -13,6 +13,7 @@ import type { TitleHit } from '../search-results';
 import { SearchTitlesService } from '../search-titles.service';
 import {
     SEARCH_INPUT_DEBOUNCE_MS,
+    SEARCH_SCOPE_MEMORY,
     SearchPageComponent,
 } from './search-page.component';
 
@@ -203,6 +204,43 @@ describe('SearchPageComponent', () => {
         expect(all(element, 'search-group-teams')).toHaveLength(0);
         expect(all(element, 'search-group-titles')).toHaveLength(0);
         expect(all(element, 'search-group-channels')).toHaveLength(1);
+    });
+
+    it('keeps the scope on the history entry, through the term’s own writes', async () => {
+        const element = await render('/workspace/search?q=madrid');
+        const entries = history.length;
+        (
+            element.querySelector(
+                '[data-test-id="search-scope-channels"]'
+            ) as HTMLButtonElement
+        ).click();
+        expect(history.state.tvPageMemory[SEARCH_SCOPE_MEMORY]).toBe(
+            'channels'
+        );
+
+        // A new term replaces the entry's URL; the scope stays on it.
+        const field = element.querySelector(
+            '[data-test-id="search-page-input"]'
+        ) as HTMLInputElement;
+        field.value = 'tele';
+        field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        await fixture.whenStable();
+        expect(router.url).toBe('/workspace/search?q=tele');
+        expect(history.length).toBe(entries);
+        expect(history.state.tvPageMemory[SEARCH_SCOPE_MEMORY]).toBe(
+            'channels'
+        );
+
+        // Back to the entry: the page opens on "Channels", not "All".
+        fixture.destroy();
+        fixture = TestBed.createComponent(SearchPageComponent);
+        await settle();
+        expect(
+            fixture.nativeElement
+                .querySelector('[data-test-id="search-scope-channels"]')
+                ?.getAttribute('aria-checked')
+        ).toBe('true');
+        history.replaceState(null, '');
     });
 
     it('writes the typed term to `q` after a pause, and Enter remembers it', async () => {

@@ -17,7 +17,7 @@
             <!-- Tracked by place, not title: while the platforms load the
                  ranking reorders, and a snapping row follows the element it
                  rested on, which left it scrolled one place in. -->
-            <ol class="top__row">
+            <ol class="top__row" libRememberScroll="home-top-movies">
                 @for (item of items(); track item.rank) {
                     @let movie = item.movie;
                     <li class="top__item">

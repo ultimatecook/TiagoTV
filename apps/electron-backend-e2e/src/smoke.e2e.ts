@@ -15,7 +15,7 @@ test.describe('Electron App Smoke Test', () => {
                 .toContain('IPTVnator');
             await expect(
                 app.mainWindow.getByRole('link', {
-                    name: 'Dashboard',
+                    name: 'Home',
                     exact: true,
                 })
             ).toBeVisible();
@@ -62,7 +62,7 @@ test.describe('Electron App Smoke Test', () => {
 
         try {
             await expect(
-                app.mainWindow.getByRole('button', { name: 'Add playlist' })
+                app.mainWindow.getByRole('button', { name: 'Add source' })
             ).toBeVisible();
 
             const modifier =

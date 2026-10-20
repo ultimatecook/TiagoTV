@@ -2,6 +2,7 @@
 @use '../../../libs/ui/components/src/lib/resizable/resizable.scss';
 @use '../../../libs/ui/styles/focus-ring';
 @use '../../../libs/ui/styles/app-controls' as controls;
+@use '../../../libs/ui/styles/scrollbar';
 @use './settings-theme';
 @use './cover-size';
 @use './platform-themes';
@@ -74,46 +75,19 @@ html {
 
 // ─── Shared Components ────────────────────────────────────────────────────────
 
-// Always-visible themed scrollbar. Apply to scroll containers that should
-// reserve gutter and not rely on macOS overlay scrollbars (which auto-fade).
-// Selector is doubled (.app-scrollbar.app-scrollbar) throughout so the rules
-// outrank both component-scoped overflow declarations and the global
-// `.dark-theme ::-webkit-scrollbar` block below.
+// A list scroller that reserves its gutter, so rows never shift when the
+// list starts to overflow, with the app's thin scrollbar
+// (`libs/ui/styles/_scrollbar.scss`): a 6px thumb, no arrows, shown while
+// the pointer is over the list. Selector is doubled
+// (.app-scrollbar.app-scrollbar) so the rules outrank the global
+// `.dark-theme` scrollbar block below.
 .app-scrollbar.app-scrollbar {
-    // !important so the utility wins over component-scoped overflow rules
-    // (Angular ViewEncapsulation adds an attribute selector that pushes
-    // host specificity above the doubled class selector).
+    // !important so the utility wins over component-scoped overflow and
+    // scrollbar rules (Angular ViewEncapsulation adds an attribute selector
+    // that pushes host specificity above the doubled class selector).
     overflow-y: scroll !important;
     scrollbar-gutter: stable;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--app-muted-color) 55%, transparent)
-        transparent;
-
-    &::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background-color: color-mix(
-            in srgb,
-            var(--app-muted-color) 70%,
-            transparent
-        );
-        border-radius: 999px;
-        border: 2px solid transparent;
-        background-clip: content-box;
-        min-height: 32px;
-
-        &:hover {
-            background-color: var(--app-muted-color);
-            background-clip: content-box;
-        }
-    }
+    @include scrollbar.thin($important: true);
 }
 
 // Shared count-badge pill. Section headers (dashboard rails, content rails)
@@ -183,6 +157,22 @@ html {
 input,
 textarea {
     user-select: text;
+}
+
+// Form controls take the text around them. Browsers give `button`, `input`,
+// `select` and `textarea` a system font of their own (Arial 13.33px in
+// Chromium), so a control that set no font fell out of the DM Sans stack
+// (the palette's commands, the M3U group names). Zero specificity
+// (`:where`): every component and Material rule still wins. A button also
+// takes the text colour around it instead of the system `buttontext`;
+// fields keep theirs, which pairs with their system background.
+:where(button, input, select, textarea) {
+    font: inherit;
+    letter-spacing: inherit;
+}
+
+:where(button) {
+    color: inherit;
 }
 
 @media (display-mode: standalone) {
@@ -280,27 +270,11 @@ body.dark-theme {
 .dark-theme {
     color-scheme: dark;
 
-    // Refined scrollbar for dark mode
-    ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background-color: color-mix(
-            in srgb,
-            var(--app-muted-color) 70%,
-            transparent
-        );
-        border-radius: 999px;
-
-        &:hover {
-            background-color: var(--app-muted-color);
-        }
+    // Every other scroller in the dark theme takes the thin bar's
+    // pseudo-elements (one that sets `scrollbar-width` or `scrollbar-color`
+    // of its own opts out of them; see `_scrollbar.scss`).
+    * {
+        @include scrollbar.pseudo-elements;
     }
 }
 
@@ -337,15 +311,40 @@ body.dark-theme {
     @include controls.menu-panel;
 }
 
-// UI-kit toast for every snack-bar: the floating panel's surface, hairline
-// and shadow on a 10px panel, 13px text, the action in the accent colour
-// without a ripple. Toasts sit at Material's bottom centre; a caller adds a
-// panel class for spacing (the settings save bar), never another look.
+// UI-kit tooltip: the overlay frame at the tooltip radius. Dark glass with
+// the redesign's text in the dark theme (Material's light inverse surface
+// read as a pink slab there); Material's inverse surface in light.
+.mat-mdc-tooltip {
+    @include mat.tooltip-overrides(
+        (
+            container-color: var(--app-tooltip-bg),
+            container-shape: var(--tv-radius-tooltip),
+            supporting-text-color: var(--app-tooltip-fg),
+            supporting-text-size: 12px,
+            supporting-text-weight: 500,
+        )
+    );
+
+    .mat-mdc-tooltip-surface {
+        border: 1px solid var(--app-overlay-border);
+        background-image: var(--app-overlay-sheen);
+        backdrop-filter: var(--app-overlay-filter);
+        box-shadow:
+            var(--app-overlay-highlight),
+            0 10px 24px -10px rgba(0, 0, 0, 0.6);
+    }
+}
+
+// UI-kit toast for every snack-bar: the overlay frame (glass over a dark
+// ground in dark) at the toast radius, 13px text, the action in the accent
+// colour without a ripple. Toasts sit at Material's bottom centre; a caller
+// adds a panel class for spacing (the settings save bar), never another
+// look.
 .mat-mdc-snack-bar-container {
     @include mat.snack-bar-overrides(
         (
-            container-color: var(--app-widget-bg),
-            container-shape: 10px,
+            container-color: var(--app-overlay-bg),
+            container-shape: var(--tv-radius-toast),
             supporting-text-color: var(--app-heading-color),
             supporting-text-size: 13px,
             supporting-text-line-height: 20px,
@@ -355,8 +354,12 @@ body.dark-theme {
     );
 
     .mat-mdc-snackbar-surface {
-        border: 1px solid var(--app-line-strong);
-        box-shadow: var(--app-popover-shadow);
+        border: 1px solid var(--app-overlay-border);
+        background-image: var(--app-overlay-sheen);
+        backdrop-filter: var(--app-overlay-filter);
+        box-shadow:
+            var(--app-overlay-highlight),
+            var(--app-popover-shadow);
     }
 
     .mat-mdc-snack-bar-action {
@@ -369,14 +372,16 @@ body.dark-theme {
     }
 }
 
-// Command palette dialog — the palette-shell renders its own background, border,
-// radius and shadow, so strip MDC's dialog surface chrome to avoid a darker
-// halo peeking out behind the rounded corners.
+// Command palette dialog — the palette-shell renders its own glass frame
+// (background, filter, border, radius and shadow), so strip MDC's dialog
+// surface chrome to avoid a second blur or a halo peeking out behind the
+// rounded corners.
 .workspace-command-palette-overlay .mat-mdc-dialog-surface {
     background: transparent;
     border: 0;
     box-shadow: none;
-    border-radius: 14px;
+    backdrop-filter: none;
+    border-radius: var(--tv-radius-dialog);
     padding: 0;
     overflow: visible;
 }

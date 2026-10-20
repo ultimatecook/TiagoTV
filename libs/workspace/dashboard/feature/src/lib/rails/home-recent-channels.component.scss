@@ -1,6 +1,7 @@
 // "Últimos canales vistos" (README 01 · Inicio, 7): four and a half
 // channel cards across.
 @use '../../../../../../ui/styles/focus-ring';
+@use '../ui-state/page-ui';
 
 :host {
     --channel-progress: 0;
@@ -18,7 +19,9 @@
 .channels__row {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: calc((100% - 64px) / 4.5);
+    // Four and a half across, up to the rows' width limit: a wider
+    // window shows more channels, not bigger ones.
+    grid-auto-columns: calc((min(100%, page-ui.$row-width-max) - 64px) / 4.5);
     gap: 16px;
     // The top padding holds a lifted card's focus ring (the scroller clips
     // at its edge); the negative margin gives the room back to the layout.
@@ -58,11 +61,14 @@
     text-decoration: none;
     transition:
         background 180ms ease,
-        border-color 180ms ease;
+        box-shadow page-ui.$card-ease,
+        transform page-ui.$card-ease;
 
+    // The pages' card hover: a lift and the white ring.
     &:hover {
-        border-color: rgba(255, 255, 255, 0.16);
         background: rgba(255, 255, 255, 0.08);
+        box-shadow: page-ui.$card-ring;
+        transform: page-ui.$card-lift;
     }
 
     &:focus-visible {

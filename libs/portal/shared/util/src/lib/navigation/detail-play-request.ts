@@ -1,5 +1,6 @@
 import {
     clearNavigationStateKeys,
+    OPEN_COLLECTION_DETAIL_STATE_KEY,
     type WorkspaceNavigationTarget,
 } from './workspace-portal-navigation';
 
@@ -66,4 +67,29 @@ export function readDetailPlayRequest(
  */
 export function clearDetailPlayRequest(): void {
     clearNavigationStateKeys([DETAIL_PLAY_REQUEST_STATE_KEY]);
+}
+
+/**
+ * The other "play on arrival" handoff: the episode a series' Continue asked
+ * a collection's inline detail to resume (`seriesResume` of
+ * `OPEN_COLLECTION_DETAIL_STATE_KEY`). Taken off the current history entry
+ * once the detail took it, keeping the detail itself, so Back, Forward or a
+ * reload onto the entry show the series without starting the episode again.
+ */
+export function clearCollectionDetailSeriesResume(): void {
+    try {
+        const state = window.history.state as Record<string, unknown> | null;
+        const detail = state?.[OPEN_COLLECTION_DETAIL_STATE_KEY];
+        if (!detail || typeof detail !== 'object' || !('seriesResume' in detail)) {
+            return;
+        }
+        const kept: Record<string, unknown> = { ...detail };
+        delete kept['seriesResume'];
+        window.history.replaceState(
+            { ...state, [OPEN_COLLECTION_DETAIL_STATE_KEY]: kept },
+            document.title
+        );
+    } catch {
+        // A browser that refuses the update keeps the handoff.
+    }
 }

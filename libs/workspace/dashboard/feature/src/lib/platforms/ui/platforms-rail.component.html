@@ -8,7 +8,7 @@
             headingId="home-platforms-title"
             [title]="'WORKSPACE.PLATFORMS.TITLE' | translate"
         />
-        <ul class="platforms__row">
+        <ul class="platforms__row" libRememberScroll="home-platforms">
             @for (platform of platforms(); track platform.id) {
                 <li class="platforms__item">
                     <a

@@ -5,14 +5,17 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
     getKeyboardShortcutGroups,
     isKeyboardShortcutHelpTrigger,
+    isMacShortcutPlatform,
     isTypingInInput,
     isWorkspaceBackShortcut,
+    isWorkspaceForwardShortcut,
     resolveZoomShortcutAction,
 } from '@iptvnator/portal/shared/util';
 import { RuntimeCapabilitiesService } from '@iptvnator/services';
 import {
     WorkspaceBackGestureResult,
     WorkspaceBackGesturesService,
+    WorkspaceForwardGestureResult,
 } from '../workspace-back-gestures/workspace-back-gestures.service';
 import {
     WorkspaceKeyboardShortcutsDialogComponent,
@@ -36,12 +39,17 @@ export class WorkspaceKeyboardShortcutsService {
     private readonly backGestures = inject(WorkspaceBackGesturesService);
     private readonly onDocumentKeydown = (event: KeyboardEvent): void =>
         this.handleKeydown(event);
-    private readonly onDocumentKeydownCapture = (event: KeyboardEvent): void =>
+    private readonly onDocumentKeydownCapture = (event: KeyboardEvent): void => {
         this.handleBackShortcut(event);
+        this.handleForwardShortcut(event);
+    };
     /** The first press of the held Back chord; its repeats follow it. */
     private heldBackChord: WorkspaceBackGestureResult | null = null;
+    /** The same for the Forward chord. */
+    private heldForwardChord: WorkspaceForwardGestureResult | null = null;
     private readonly onDocumentKeyup = (): void => {
         this.heldBackChord = null;
+        this.heldForwardChord = null;
     };
 
     private dialogRef: MatDialogRef<
@@ -171,6 +179,41 @@ export class WorkspaceKeyboardShortcutsService {
     }
 
     /**
+     * Cmd+] (Alt+→ elsewhere) steps history Forward through
+     * `WorkspaceBackGesturesService.goForward()`, like the Back chord: in
+     * the capture phase, not while typing, once per held chord, swallowed
+     * while something sits above the page. Without an in-app entry ahead
+     * the chord stays the browser's.
+     */
+    private handleForwardShortcut(event: KeyboardEvent): void {
+        if (
+            event.defaultPrevented ||
+            isTypingInInput(event) ||
+            !isWorkspaceForwardShortcut(event, {
+                isMac: this.getShortcutPlatform() === 'mac',
+            })
+        ) {
+            return;
+        }
+
+        let result: WorkspaceForwardGestureResult;
+        if (event.repeat) {
+            result = this.heldForwardChord ?? 'none';
+        } else {
+            result = this.backGestures.goForward();
+            this.heldForwardChord = result;
+        }
+        if (result === 'none') {
+            return;
+        }
+
+        event.preventDefault();
+        if (result === 'forward') {
+            event.stopPropagation();
+        }
+    }
+
+    /**
      * F11 toggles OS-level window fullscreen in the desktop app. It is the
      * way out of a fullscreen launch on Windows/Linux, where the title bar is
      * hidden and the window controls hide themselves while fullscreen, so it
@@ -244,17 +287,6 @@ export class WorkspaceKeyboardShortcutsService {
     }
 
     private getShortcutPlatform(): 'mac' | 'other' {
-        if (typeof navigator === 'undefined') {
-            return 'other';
-        }
-
-        const navigatorWithUserAgentData = navigator as Navigator & {
-            userAgentData?: { platform?: string };
-        };
-        const platform =
-            navigatorWithUserAgentData.userAgentData?.platform ||
-            navigator.userAgent;
-
-        return /Mac|iPhone|iPad|iPod/i.test(platform) ? 'mac' : 'other';
+        return isMacShortcutPlatform() ? 'mac' : 'other';
     }
 }

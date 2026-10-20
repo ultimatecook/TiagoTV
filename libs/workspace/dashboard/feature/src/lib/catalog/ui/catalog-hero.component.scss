@@ -1,4 +1,5 @@
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../ui-state/page-ui';
 
 // Series / Películas' hero (README 06): it rises behind the top bar, its
 // artwork masked into the page, the featured title and "Novedades" on it.
@@ -13,7 +14,14 @@
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    min-height: clamp(560px, calc(100vh - 340px), 780px);
+    // The window's height less room for the first row; on a very wide
+    // window it grows with the width too (to 1000px), so the artwork is
+    // not a thin strip.
+    min-height: clamp(
+        420px,
+        calc(100vh - 340px),
+        clamp(780px, 32vw, 1000px)
+    );
     // The section's name 20px under the top bar.
     padding: calc(var(--tv-topbar-h) + 20px) 0 28px;
     overflow: hidden;
@@ -229,7 +237,7 @@
     z-index: 3;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--tv-title-gap);
 }
 
 .hero__releases-title {
@@ -266,11 +274,13 @@
     text-align: left;
     cursor: pointer;
     transition:
-        transform 200ms ease,
-        border-color 200ms ease;
+        transform page-ui.$card-ease,
+        border-color page-ui.$card-ease;
 
+    // The pages' card hover: a lift and the white ring (its 2px border).
     &:hover {
-        transform: translateY(-3px);
+        border-color: rgba(255, 255, 255, 0.9);
+        transform: page-ui.$card-lift;
     }
 
     &:focus-visible {
@@ -335,6 +345,36 @@
     text-transform: uppercase;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+}
+
+// A very wide window: the hero grows past 780px, the info and "Novedades"
+// still at its foot.
+@media (min-width: 2400px) {
+    .hero__spacer {
+        max-height: none;
+    }
+}
+
+// A short window (600px tall at 100 % and up): a tighter hero, its title
+// sized from the height too, so "Novedades" still shows under it.
+@media (max-height: 700px) {
+    .hero {
+        padding-bottom: 20px;
+    }
+
+    .hero__spacer {
+        min-height: 8px;
+    }
+
+    .hero__info {
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .hero__title {
+        font-size: clamp(44px, min(7.5vw, 11vh), 112px);
+        -webkit-line-clamp: 2;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -375,6 +375,14 @@ describe('RuntimeCapabilitiesService', () => {
 
         testWindow.electron = { onWindowBackRequested: jest.fn() };
         expect(service.supportsWindowBackGestures).toBe(true);
+        // The Forward swipe came later: a preload with Back only has none.
+        expect(service.supportsWindowForwardGestures).toBe(false);
+
+        testWindow.electron = {
+            onWindowBackRequested: jest.fn(),
+            onWindowForwardRequested: jest.fn(),
+        };
+        expect(service.supportsWindowForwardGestures).toBe(true);
     });
 
     it('decouples external player launch support from path-setting support', () => {

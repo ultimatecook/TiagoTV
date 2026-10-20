@@ -11,7 +11,10 @@ import {
     type SportsCatalog,
 } from '../sports-catalog';
 import { SportsCatalogService } from '../sports-catalog.service';
-import { SportsHubPageComponent } from './sports-hub-page.component';
+import {
+    SPORTS_DAY_MEMORY,
+    SportsHubPageComponent,
+} from './sports-hub-page.component';
 
 const NOW = new Date(2026, 9, 18, 12, 0);
 const pad = (value: number) => String(value).padStart(2, '0');
@@ -70,13 +73,33 @@ describe('SportsHubPageComponent', () => {
         isOver: () => false,
         kickOff: (match: SportMatch) => match.event.start,
         failed: signal(false),
+        loading: signal(false),
+        load: jest.fn(async () => undefined),
         keepFresh: jest.fn(),
         crests: { resolve: async () => null },
     };
 
+    async function render() {
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+            imports: [SportsHubPageComponent, TranslateModule.forRoot()],
+            providers: [
+                provideRouter([]),
+                { provide: SportsCatalogService, useValue: sports },
+                { provide: SportsBoardService, useValue: board },
+            ],
+        });
+        fixture = TestBed.createComponent(SportsHubPageComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+    }
+
+    afterEach(() => history.replaceState(null, ''));
+
     beforeEach(async () => {
         jest.clearAllMocks();
         catalog.set(CATALOG);
+        sports.failed.set(false);
         TestBed.configureTestingModule({
             imports: [SportsHubPageComponent, TranslateModule.forRoot()],
             providers: [
@@ -132,8 +155,30 @@ describe('SportsHubPageComponent', () => {
         query('[data-test-id="sports-day--1"]')?.click();
         fixture.detectChanges();
         expect(
-            query('[data-test-id="sports-later"] .block__empty')
-        ).not.toBeNull();
+            query('[data-test-id="sports-later"] lib-page-state')?.textContent
+        ).toContain('WORKSPACE.SPORTS.NO_MATCHES_DAY');
+    });
+
+    it('keeps the day picked on the history entry, for Back to bring it', async () => {
+        history.replaceState({ navigationId: 7 }, '');
+        query('[data-test-id="sports-day-1"]')?.click();
+        // No new entry; the router's own keys stay.
+        expect(history.state.navigationId).toBe(7);
+        expect(history.state.tvPageMemory[SPORTS_DAY_MEMORY]).toBe(1);
+
+        // Back to the entry: "Tomorrow" again, not "Today".
+        await render();
+        expect(
+            query('[data-test-id="sports-day-1"]')?.getAttribute('aria-pressed')
+        ).toBe('true');
+        expect(query('[data-test-id="sports-live-now"]')).toBeNull();
+
+        // A new entry opens on today.
+        history.replaceState({ navigationId: 8 }, '');
+        await render();
+        expect(
+            query('[data-test-id="sports-day-0"]')?.getAttribute('aria-pressed')
+        ).toBe('true');
     });
 
     it('shows each followed team’s state and opens its match', () => {
@@ -156,6 +201,20 @@ describe('SportsHubPageComponent', () => {
         expect(board.open).toHaveBeenCalledWith('liga-argentina');
     });
 
+    it('opens a live match from anywhere on its card, as its button does', () => {
+        const card = query('[data-test-id="sports-live-now"] lib-sport-match-card');
+        card?.querySelector<HTMLElement>('.match__teams')?.click();
+        expect(board.openMatch).toHaveBeenCalledTimes(1);
+        expect(board.openMatch).toHaveBeenCalledWith(
+            expect.objectContaining({ streamId: 1 }),
+            undefined
+        );
+
+        // The button itself acts once, not twice.
+        card?.querySelector<HTMLElement>('.match__watch')?.click();
+        expect(board.openMatch).toHaveBeenCalledTimes(2);
+    });
+
     it('plays a later match on its competition’s page', () => {
         all('[data-test-id="sports-later"] .event')[0].click();
         expect(board.openMatch).toHaveBeenCalledWith(
@@ -163,12 +222,21 @@ describe('SportsHubPageComponent', () => {
         );
     });
 
-    it('waits for the catalog', () => {
+    it('waits for the catalog, or offers a retry when it failed', () => {
         catalog.set(null);
         fixture.detectChanges();
         expect(query('[data-test-id="sports-later"]')).toBeNull();
-        expect(query('.block__empty')?.textContent).toContain(
+        expect(query('lib-page-state')?.textContent).toContain(
             'WORKSPACE.SPORTS.LOADING'
         );
+        expect(query('[data-test-id="page-state-retry"]')).toBeNull();
+
+        sports.failed.set(true);
+        fixture.detectChanges();
+        expect(query('[data-test-id="sports-failed"]')?.textContent).toContain(
+            'WORKSPACE.SPORTS.FAILED'
+        );
+        query('[data-test-id="page-state-retry"]')?.click();
+        expect(sports.load).toHaveBeenCalled();
     });
 });

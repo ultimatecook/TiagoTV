@@ -90,6 +90,24 @@ describe('EpgProgressPanelComponent', () => {
         ).toBeNull();
     });
 
+    it('keeps the Xtream account out of an EPG address hover title', async () => {
+        setImports([
+            {
+                url: 'http://portal.example/xmltv.php?username=fake-user&password=fake-pass',
+                status: 'loading',
+            },
+        ]);
+        await settle();
+
+        const title =
+            fixture.nativeElement
+                .querySelector('.epg-progress-panel .item-url')
+                ?.getAttribute('title') ?? '';
+        expect(title).toContain('portal.example/xmltv.php');
+        expect(title).not.toContain('fake-user');
+        expect(title).not.toContain('fake-pass');
+    });
+
     it('tells the user when the view chunk cannot be loaded during an import', async () => {
         fixture.destroy();
         TestBed.resetTestingModule();

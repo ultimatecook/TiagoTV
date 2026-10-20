@@ -119,6 +119,86 @@ describe('PwaService', () => {
         expect(TestBed.inject(LazySnackBar).open).not.toHaveBeenCalled();
     });
 
+    it('shows a failed Xtream request without the proxy URL or the credentials', async () => {
+        // The backend proxy's 500 reaches HttpClient as an HttpErrorResponse
+        // whose message is `Http failure response for <proxy URL>: 500 …`,
+        // and that URL carries the Xtream username and password.
+        const errorLog = jest
+            .spyOn(console, 'error')
+            .mockImplementation(() => undefined);
+        const pending = service.sendIpcEvent(XTREAM_REQUEST, {
+            url: 'http://portal.example',
+            params: {
+                username: 'fake-user',
+                password: 'fake-pass',
+                action: 'get_vod_info',
+                vod_id: '1',
+            },
+        });
+        http.expectOne((req) => req.url.endsWith('/provider-targets')).flush({
+            targetId: 'test-target',
+        });
+        await new Promise((resolve) => setTimeout(resolve));
+        http.expectOne((req) => req.url.endsWith('/xtream')).flush('fail', {
+            status: 500,
+            statusText: 'Internal Server Error',
+        });
+
+        expect(await pending).toEqual({
+            type: 'ERROR',
+            status: 500,
+            message: 'HTTP Error 500',
+        });
+        const open = TestBed.inject(LazySnackBar).open as jest.Mock;
+        const instant = TestBed.inject(TranslateService).instant as jest.Mock;
+        expect(open).toHaveBeenCalledWith(
+            'PORTALS.REQUEST_ERRORS.SERVER_STATUS',
+            'CLOSE',
+            { duration: 5000 }
+        );
+        expect(instant).toHaveBeenCalledWith(
+            'PORTALS.REQUEST_ERRORS.SERVER_STATUS',
+            { status: 500 }
+        );
+        const surfaced = JSON.stringify([
+            open.mock.calls,
+            instant.mock.calls,
+            errorLog.mock.calls,
+        ]);
+        expect(surfaced).not.toContain('fake-user');
+        expect(surfaced).not.toContain('fake-pass');
+    });
+
+    it('reports an unreachable backend without the request URL', async () => {
+        jest.spyOn(console, 'error').mockImplementation(() => undefined);
+        const pending = service.sendIpcEvent(XTREAM_REQUEST, {
+            url: 'http://portal.example',
+            params: {
+                username: 'fake-user',
+                password: 'fake-pass',
+                action: 'get_series_info',
+            },
+        });
+        http.expectOne((req) => req.url.endsWith('/provider-targets')).flush({
+            targetId: 'test-target',
+        });
+        await new Promise((resolve) => setTimeout(resolve));
+        http.expectOne((req) => req.url.endsWith('/xtream')).error(
+            new ProgressEvent('error'),
+            { status: 0, statusText: 'Unknown Error' }
+        );
+
+        expect(await pending).toMatchObject({
+            type: 'ERROR',
+            message: 'PORTALS.REQUEST_ERRORS.SERVER_UNREACHABLE',
+        });
+        expect(TestBed.inject(LazySnackBar).open).toHaveBeenCalledWith(
+            'PORTALS.REQUEST_ERRORS.SERVER_UNREACHABLE',
+            'CLOSE',
+            { duration: 5000 }
+        );
+    });
+
     it('ignores URL imports without a payload or URL instead of calling the backend', () => {
         service.sendIpcEvent(PLAYLIST_PARSE_BY_URL);
         service.sendIpcEvent(PLAYLIST_PARSE_BY_URL, {});

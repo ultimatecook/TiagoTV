@@ -1,4 +1,3 @@
-import { Location } from '@angular/common';
 import {
     Component,
     computed,
@@ -51,6 +50,7 @@ import {
     XtreamSerieEpisode,
     XtreamSerieInfo,
 } from '@iptvnator/shared/interfaces';
+import { injectXtreamDetailBack } from '../xtream-detail-back';
 import { injectXtreamDetailNavigation } from '../xtream-detail-navigation';
 import {
     SerialDetailsPlaybackService,
@@ -64,6 +64,8 @@ import { createSerialPlaybackSessionKey } from './serial-playback-session-key';
 import { SerialDetailsHeroPresenter } from './serial-details-hero.presenter';
 import { SerialDetailsMenuService } from './serial-details-menu.service';
 import { SerialDetailsDownloadAdapterService } from './serial-details-download-adapter.service';
+import { RatingPipe } from '@iptvnator/pipes';
+import { injectXtreamDetailsErrorText } from '../xtream-detail-error';
 
 @Component({
     selector: 'app-serial-details',
@@ -93,6 +95,7 @@ import { SerialDetailsDownloadAdapterService } from './serial-details-download-a
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        RatingPipe,
         CastCrewRowComponent,
         DetailActionButtonComponent,
         DetailActionsTemplateDirective,
@@ -113,7 +116,7 @@ import { SerialDetailsDownloadAdapterService } from './serial-details-download-a
     ],
 })
 export class SerialDetailsComponent implements OnDestroy {
-    private readonly location = inject(Location);
+    private readonly back = injectXtreamDetailBack('series');
     private readonly route = inject(ActivatedRoute);
     private readonly navigation = injectXtreamDetailNavigation('tv');
 
@@ -133,6 +136,9 @@ export class SerialDetailsComponent implements OnDestroy {
     readonly isFavorite = this.xtreamStore.isFavorite;
     readonly isLoadingDetails = this.xtreamStore.isLoadingDetails;
     readonly detailsError = this.xtreamStore.detailsError;
+    readonly detailsErrorText = injectXtreamDetailsErrorText(
+        this.detailsError
+    );
     readonly currentPlaylistId = signal('');
     private readonly downloadAdapter = inject(
         SerialDetailsDownloadAdapterService
@@ -181,6 +187,8 @@ export class SerialDetailsComponent implements OnDestroy {
     readonly seasonDescriptions = this.seasons.descriptions;
     readonly seasonPosters = this.seasons.posters;
     readonly seasonMetadataLoading = this.seasons.metadataLoading;
+    /** The season the list opens on (history entry, else the play button's). */
+    readonly preferredSeason = this.seasons.preferredSeason;
     /** Layout of the loading shell's episode placeholders. */
     readonly savedEpisodeViewMode = readSavedEpisodeViewMode();
 
@@ -195,6 +203,7 @@ export class SerialDetailsComponent implements OnDestroy {
             detailSeasonKey: computed(
                 () => this.seasonContainer()?.selectedSeason() ?? null
             ),
+            quickStart: this.quickStartAction,
         });
         this.downloadAdapter.bind(this.selectedItem);
         this.heroPresenter.bind({
@@ -366,9 +375,9 @@ export class SerialDetailsComponent implements OnDestroy {
         return info.backdrop_path?.[0];
     }
 
+    /** The player stays: leaving hands a playing episode to the mini-player. */
     goBack(): void {
-        this.playback.closeInlinePlayer();
-        this.location.back();
+        this.back();
     }
 
     showCopyNotification(): void {

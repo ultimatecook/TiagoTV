@@ -54,6 +54,13 @@ function previousInAppEntry(
     return previous?.sameDocument === true ? previous : null;
 }
 
+/** True when the next history entry belongs to this document. */
+function hasInAppNextEntry(history: WorkspaceHistoryNavigation): boolean {
+    const index = history.currentEntry?.index ?? -1;
+    const next = index >= 0 ? history.entries()[index + 1] : undefined;
+    return next?.sameDocument === true;
+}
+
 /**
  * Owns the header's Back slot. Pages register while they offer Back; the most
  * recent registration wins, so a page opened above another one takes the slot
@@ -68,6 +75,11 @@ export class WorkspaceBackNavigationService {
     private readonly history = inject(WORKSPACE_HISTORY_NAVIGATION);
     private readonly targets = signal<readonly WorkspaceBackTarget[]>([]);
     private readonly canGoBackInApp = signal(false);
+    /**
+     * History Forward stays in the app: the next entry is one the router
+     * pushed in this document (never one from before a reload).
+     */
+    readonly canGoForward = signal(false);
     /** In-app history depth where the Navigation API is missing. */
     private readonly routerDepth = this.history
         ? () => null
@@ -106,8 +118,10 @@ export class WorkspaceBackNavigationService {
         if (!history) return;
         // Fires for router pushes and replacements and for traversals,
         // including a guard-cancelled Back that the router rewrites.
-        const sync = () =>
+        const sync = () => {
             this.canGoBackInApp.set(hasInAppPreviousEntry(history));
+            this.canGoForward.set(hasInAppNextEntry(history));
+        };
         sync();
         history.addEventListener('currententrychange', sync);
         inject(DestroyRef).onDestroy(() =>
@@ -174,6 +188,16 @@ export class WorkspaceBackNavigationService {
         const target = this.target();
         if (!target) return false;
         target.run();
+        return true;
+    }
+
+    /**
+     * History Forward while the next entry is an in-app one; false (nothing
+     * runs) otherwise, and where the Navigation API is missing.
+     */
+    goForward(): boolean {
+        if (!this.canGoForward()) return false;
+        this.location.forward();
         return true;
     }
 

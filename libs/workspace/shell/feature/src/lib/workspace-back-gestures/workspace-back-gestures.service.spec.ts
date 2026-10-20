@@ -22,8 +22,15 @@ describe('WorkspaceBackGesturesService', () => {
         run: jest.fn(),
     };
     let target: ReturnType<typeof signal<WorkspaceBackTarget | null>>;
-    let backNavigation: { target: typeof target; goBack: jest.Mock };
-    let runtime: { supportsWindowBackGestures: boolean };
+    let backNavigation: {
+        target: typeof target;
+        goBack: jest.Mock;
+        goForward: jest.Mock;
+    };
+    let runtime: {
+        supportsWindowBackGestures: boolean;
+        supportsWindowForwardGestures?: boolean;
+    };
     let drawerOpen: boolean;
     let bridgeListener:
         ((source: ElectronBridgeBackGestureSource) => void) | null;
@@ -86,6 +93,7 @@ describe('WorkspaceBackGesturesService', () => {
         backNavigation = {
             target,
             goBack: jest.fn(() => target() !== null),
+            goForward: jest.fn(() => true),
         };
         runtime = { supportsWindowBackGestures: true };
         drawerOpen = false;
@@ -267,6 +275,62 @@ describe('WorkspaceBackGesturesService', () => {
 
             expect(service.peek()).toBe('back');
             expect(service.goBack('keyboard')).toBe('back');
+        });
+    });
+
+    describe('Forward', () => {
+        let forwardListener: (() => void) | null;
+        let unsubscribeForward: jest.Mock;
+
+        beforeEach(() => {
+            forwardListener = null;
+            unsubscribeForward = jest.fn();
+            runtime.supportsWindowForwardGestures = true;
+            testWindow.electron = {
+                ...testWindow.electron,
+                onWindowForwardRequested: jest.fn((listener: () => void) => {
+                    forwardListener = listener;
+                    return unsubscribeForward;
+                }),
+            };
+        });
+
+        it('steps Forward for the chord and the macOS swipe right', () => {
+            const service = createService();
+
+            expect(service.goForward()).toBe('forward');
+            forwardListener?.();
+            expect(backNavigation.goForward).toHaveBeenCalledTimes(2);
+
+            TestBed.resetTestingModule();
+            expect(unsubscribeForward).toHaveBeenCalledTimes(1);
+        });
+
+        it('leaves the gesture where no in-app entry is ahead', () => {
+            backNavigation.goForward.mockReturnValue(false);
+            const service = createService();
+
+            expect(service.goForward()).toBe('none');
+        });
+
+        it('waits while something sits above the page', () => {
+            const service = createService();
+            const popup = document.createElement('div');
+            popup.setAttribute('role', 'dialog');
+            document.body.appendChild(popup);
+
+            expect(service.goForward()).toBe('blocked');
+            forwardListener?.();
+            expect(backNavigation.goForward).not.toHaveBeenCalled();
+        });
+
+        it('does not subscribe with a preload older than the gesture', () => {
+            runtime.supportsWindowForwardGestures = false;
+            createService();
+
+            expect(
+                testWindow.electron?.['onWindowForwardRequested']
+            ).not.toHaveBeenCalled();
         });
     });
 

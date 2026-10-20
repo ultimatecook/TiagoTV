@@ -1099,7 +1099,7 @@ test.describe('@stalker full portal authentication', () => {
         const mac = getStatefulAuthMacs(testInfo).loginRequired;
         // First attempt without credentials: the import must fail with the
         // portal's actual reason, not a generic "check URL and MAC" error.
-        await page.getByRole('button', { name: 'Add playlist' }).click();
+        await page.getByRole('button', { name: 'Add source' }).click();
         const dialog = page.locator('mat-dialog-container');
         await expect(dialog).toBeVisible();
         await dialog.getByRole('radio', { name: /Stalker portal/i }).click();
@@ -1109,7 +1109,7 @@ test.describe('@stalker full portal authentication', () => {
         await setInputValue(dialog.locator('input#macAddress'), mac);
 
         const addButton = dialog.getByRole('button', {
-            name: 'Add playlist',
+            name: 'Add source',
             exact: true,
         });
         await expect(addButton).toBeEnabled({ timeout: 10_000 });
@@ -1219,7 +1219,7 @@ test.describe('@stalker full portal authentication', () => {
         ).json();
         expect(failureBody.payload).toBe('Authorization failed.');
 
-        await page.getByRole('button', { name: 'Add playlist' }).click();
+        await page.getByRole('button', { name: 'Add source' }).click();
         const dialog = page.locator('mat-dialog-container');
         await expect(dialog).toBeVisible();
         await dialog.getByRole('radio', { name: /Stalker portal/i }).click();
@@ -1232,7 +1232,7 @@ test.describe('@stalker full portal authentication', () => {
         );
 
         const addButton = dialog.getByRole('button', {
-            name: 'Add playlist',
+            name: 'Add source',
             exact: true,
         });
         await expect(addButton).toBeEnabled({ timeout: 10_000 });
@@ -1281,7 +1281,7 @@ test.describe('@stalker full portal authentication', () => {
         // below would fail for some other reason and still show an error.
         expect(pinned.js?.msg).toBeUndefined();
 
-        await page.getByRole('button', { name: 'Add playlist' }).click();
+        await page.getByRole('button', { name: 'Add source' }).click();
         const dialog = page.locator('mat-dialog-container');
         await expect(dialog).toBeVisible();
         await dialog.getByRole('radio', { name: /Stalker portal/i }).click();
@@ -1295,7 +1295,7 @@ test.describe('@stalker full portal authentication', () => {
         );
 
         const addButton = dialog.getByRole('button', {
-            name: 'Add playlist',
+            name: 'Add source',
             exact: true,
         });
         await expect(addButton).toBeEnabled({ timeout: 10_000 });

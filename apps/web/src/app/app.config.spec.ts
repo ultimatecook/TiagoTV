@@ -1,4 +1,18 @@
-import { ANIMATION_MODULE_TYPE, RendererFactory2 } from '@angular/core';
+import { Location } from '@angular/common';
+import { provideLocationMocks } from '@angular/common/testing';
+import {
+    ANIMATION_MODULE_TYPE,
+    Component,
+    RendererFactory2,
+} from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import {
+    ExtraOptions,
+    provideRouter,
+    Router,
+    ROUTER_CONFIGURATION,
+    withRouterConfig,
+} from '@angular/router';
 
 type ProviderEntry = { provide?: unknown };
 
@@ -29,6 +43,64 @@ describe('appConfig', () => {
 
         expect(tokens).not.toContain(RendererFactory2);
         expect(tokens).not.toContain(ANIMATION_MODULE_TYPE);
+    });
+});
+
+describe('appConfig router', () => {
+    @Component({ template: '' })
+    class PageComponent {}
+
+    async function routerOptions(): Promise<ExtraOptions> {
+        const { appConfig } = await import('./app.config');
+        const entry = flattenProviders(appConfig.providers).find(
+            (provider) => provider?.provide === ROUTER_CONFIGURATION
+        ) as { useValue?: ExtraOptions } | undefined;
+        return entry?.useValue ?? {};
+    }
+
+    afterEach(() => TestBed.resetTestingModule());
+
+    // Ajustes with unsaved edits cancels a history Back. Resolved by
+    // 'replace' (Angular's default), the cancelled Back rewrote the entry
+    // before Ajustes into Ajustes: the page left before was gone from
+    // history, and the next Back could not reach it.
+    it('keeps history intact when a guard cancels a Back', async () => {
+        let leave = false;
+        TestBed.configureTestingModule({
+            providers: [
+                provideLocationMocks(),
+                provideRouter(
+                    [
+                        { path: 'home', component: PageComponent },
+                        {
+                            path: 'settings',
+                            component: PageComponent,
+                            canDeactivate: [() => leave],
+                        },
+                    ],
+                    withRouterConfig(await routerOptions())
+                ),
+            ],
+        });
+        const router = TestBed.inject(Router);
+        const location = TestBed.inject(Location);
+        // Listens to the location's popstate, as the app's bootstrap does.
+        router.initialNavigation();
+        const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+        await router.navigateByUrl('/home');
+        await router.navigateByUrl('/settings');
+        location.back();
+        await settle();
+        await settle();
+        expect(location.path()).toBe('/settings');
+
+        leave = true;
+        location.back();
+        await settle();
+        await settle();
+        expect(location.path()).toBe('/home');
+        expect(router.url).toBe('/home');
     });
 });
 

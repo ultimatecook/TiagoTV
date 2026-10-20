@@ -51,6 +51,7 @@ import {
     toStalkerPlaylistIdentityFields,
 } from './stalker-import-identity';
 import { provideFormFieldDefaults } from '@iptvnator/ui/components/form-field-defaults';
+import { documentLocale, formatWithIntl } from '@iptvnator/pipes';
 
 /**
  * A MAC and the device IDs that belong to exactly it. Kept together because
@@ -475,7 +476,17 @@ export class StalkerPortalImportComponent {
                     this.snackBar.open(
                         this.translate.instant(
                             'HOME.STALKER_PORTAL.VALIDATED_EXPIRES',
-                            { date: expireDate.toLocaleDateString() }
+                            {
+                                // The app language, not the OS locale.
+                                date: formatWithIntl(expireDate, {
+                                    locale:
+                                        this.translate.currentLang ||
+                                        documentLocale(),
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric',
+                                }),
+                            }
                         ),
                         undefined,
                         { duration: 3000 }

@@ -3,6 +3,7 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
+    DestroyRef,
     effect,
     ElementRef,
     inject,
@@ -24,7 +25,16 @@ import {
 } from '@iptvnator/portal/shared/util';
 import type { PlaylistMeta } from '@iptvnator/shared/interfaces';
 import { WorkspaceHeaderSidebarToggle } from '../../services/helpers/workspace-shell-constants';
-import { WorkspaceShellTopBarIconComponent } from './workspace-shell-top-bar-icon.component';
+import {
+    workspaceTopBarLineIcon,
+    WorkspaceShellTopBarIconComponent,
+} from './workspace-shell-top-bar-icon.component';
+import {
+    initialWorkspaceTopBarDensity,
+    readWorkspaceTopBarWidths,
+    resolveWorkspaceTopBarDensity,
+    WorkspaceTopBarDensity,
+} from './workspace-top-bar-fit';
 import {
     WORKSPACE_SETTINGS_LINK,
     WORKSPACE_SPORTS_HUB_LINK,
@@ -46,7 +56,9 @@ export type WorkspaceTopBarSearchMode = 'inline' | 'page';
  * lights, then Back on deep pages ("‹ Deportes" on a league page) and the
  * phone drawer toggle; centre, the glass tab capsule; right, the page's own
  * shortcuts, Buscar, Ajustes and the profile circle, which is the source
- * switcher (⌘P).
+ * switcher (⌘P). Nothing overlaps at any width: the bar measures what it
+ * holds and takes the compact spacing, then two rows, when it must
+ * (`resolveWorkspaceTopBarDensity()`); in between, the capsule scrolls.
  */
 @Component({
     selector: 'app-workspace-shell-top-bar',
@@ -63,11 +75,14 @@ export type WorkspaceTopBarSearchMode = 'inline' | 'page';
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         '(window:resize)': 'measureTabs()',
+        '[class.is-compact]': "density() === 'compact'",
+        '[class.is-stacked]': "density() === 'stacked'",
     },
 })
 export class WorkspaceShellTopBarComponent {
     private readonly injector = inject(Injector);
     private readonly router = inject(Router);
+    private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly tabsTrack =
         viewChild<ElementRef<HTMLElement>>('tabsTrack');
     private readonly searchInput =
@@ -119,6 +134,8 @@ export class WorkspaceShellTopBarComponent {
     readonly parentalLockToggleRequested = output<void>();
     readonly addPlaylistRequested = output<void>();
     readonly accountInfoForPlaylistRequested = output<PlaylistMeta>();
+    /** The bar's layout; two rows make it taller (the shell's height). */
+    readonly densityChange = output<WorkspaceTopBarDensity>();
 
     readonly tabs = WORKSPACE_TOP_BAR_TABS;
     /** The pill's address, for a new window; a click goes up instead. */
@@ -126,6 +143,14 @@ export class WorkspaceShellTopBarComponent {
         this.router.createUrlTree([...WORKSPACE_SPORTS_HUB_LINK])
     );
     readonly settingsLink = WORKSPACE_SETTINGS_LINK;
+    /** The page shortcut's line glyph, when the bar has one for it. */
+    readonly lineIcon = workspaceTopBarLineIcon;
+    /** One row at the full or compact spacing, or two rows. */
+    readonly density = signal<WorkspaceTopBarDensity>(
+        initialWorkspaceTopBarDensity(
+            this.host.nativeElement.ownerDocument.defaultView?.innerWidth ?? 0
+        )
+    );
     /** Narrow windows: tabs hidden past either end of the capsule. */
     readonly tabsMoreStart = signal(false);
     readonly tabsMoreEnd = signal(false);
@@ -172,6 +197,34 @@ export class WorkspaceShellTopBarComponent {
                 injector: this.injector,
             });
         });
+        effect(() => this.densityChange.emit(this.density()));
+        // What the bar holds decides its fit: measure after each change.
+        effect(() => {
+            this.page();
+            this.back();
+            this.headerShortcut();
+            this.headerSidebarToggle();
+            this.showDrawerToggle();
+            this.parentalLockState();
+            this.activeDownloadsCount();
+            this.searchOpen();
+            afterNextRender(() => this.measureFit(), {
+                injector: this.injector,
+            });
+        });
+        this.watchSize();
+    }
+
+    /** Takes the density the bar's contents fit in at this width. */
+    measureFit(): void {
+        const host = this.host.nativeElement;
+        const view = host.ownerDocument.defaultView;
+        const widths = readWorkspaceTopBarWidths(host);
+        if (view && widths) {
+            this.density.set(
+                resolveWorkspaceTopBarDensity(widths, view.innerWidth)
+            );
+        }
     }
 
     /** A plain click on "‹ Deportes"; a modified one keeps the browser's. */
@@ -311,12 +364,51 @@ export class WorkspaceShellTopBarComponent {
         return document.activeElement === toggle;
     }
 
-    private revealActiveTab(): void {
+    /**
+     * The window's width, the zoom, the labels' font and language change
+     * the bar's or the capsule's size: each refits the bar.
+     */
+    private watchSize(): void {
+        const view = this.host.nativeElement.ownerDocument.defaultView;
+        if (!view || typeof view.ResizeObserver !== 'function') {
+            return;
+        }
+        let observer: ResizeObserver | null = null;
+        afterNextRender(
+            () => {
+                observer = new view.ResizeObserver(() => {
+                    this.measureFit();
+                    this.revealActiveTab(true);
+                });
+                observer.observe(this.host.nativeElement);
+                const capsule = this.tabsTrack()?.nativeElement.parentElement;
+                if (capsule) {
+                    observer.observe(capsule);
+                }
+                void view.document.fonts?.ready.then(() => this.measureFit());
+            },
+            { injector: this.injector }
+        );
+        inject(DestroyRef).onDestroy(() => observer?.disconnect());
+    }
+
+    /**
+     * Scrolls a capsule that has to yield to its lit tab; on a resize only
+     * when the tab is out of view, so the user's own scroll stays.
+     */
+    private revealActiveTab(onlyIfHidden = false): void {
         const track = this.tabsTrack()?.nativeElement;
         const active = track?.querySelector<HTMLElement>('.topbar__tab.is-active');
+        const inView =
+            !!track &&
+            !!active &&
+            active.offsetLeft >= track.scrollLeft - 1 &&
+            active.offsetLeft + active.offsetWidth <=
+                track.scrollLeft + track.clientWidth + 1;
         if (
             track &&
             active &&
+            !(onlyIfHidden && inView) &&
             track.scrollWidth > track.clientWidth &&
             typeof track.scrollTo === 'function'
         ) {

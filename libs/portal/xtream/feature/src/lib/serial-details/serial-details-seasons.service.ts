@@ -7,10 +7,15 @@ import {
     signal,
     untracked,
 } from '@angular/core';
+import type { SeriesQuickStartAction } from '@iptvnator/portal/shared/util';
 import { XtreamStore } from '@iptvnator/portal/xtream/data-access';
 import { buildSeasonDescriptions } from './season-descriptions.util';
 import { buildSeasonPosters } from './season-posters.util';
 import type { XtreamSerieDetailsView } from './serial-details-playback.service';
+import {
+    recallSeriesSeason,
+    rememberSeriesSeason,
+} from './serial-details-season-memory';
 
 interface SerialDetailsSeasonsBindings {
     readonly selectedItem: Signal<XtreamSerieDetailsView | null>;
@@ -21,6 +26,8 @@ interface SerialDetailsSeasonsBindings {
      * follow the container's own selection.
      */
     readonly detailSeasonKey?: Signal<string | null | undefined>;
+    /** The page's play button: its episode's season is the one to open on. */
+    readonly quickStart?: Signal<SeriesQuickStartAction | null>;
 }
 
 /**
@@ -40,6 +47,44 @@ export class SerialDetailsSeasonsService {
 
     /** Season selected last, in the season container or the fullscreen picker. */
     private readonly selectedSeasonKey = signal<string | null>(null);
+
+    /** `playlist:series` of the page, null until the series is in. */
+    private readonly identity = computed(
+        () => {
+            const seriesId = Number(this.selectedItem()?.series_id ?? 0);
+            const playlistId = this.xtreamStore.currentPlaylist()?.id ?? '';
+            return seriesId > 0 && playlistId ? { playlistId, seriesId } : null;
+        },
+        // A details refresh of the same series is no new visit.
+        { equal: (a, b) => (a && identityKey(a)) === (b && identityKey(b)) }
+    );
+    /** The season the history entry remembers, read as the series comes in. */
+    private readonly recalled = signal<{
+        readonly key: string;
+        readonly seasonKey: string | null;
+    } | null>(null);
+
+    /**
+     * The season the detail container opens on (see
+     * `SeasonContainerComponent.preferredSeasonKey`): the one shown when
+     * this history entry was left (Back, Forward, a reload), else the season
+     * of the episode the play button names, so the list and "Play S03E02"
+     * agree even before that episode counts as in progress.
+     */
+    readonly preferredSeason = computed(() => {
+        const identity = this.identity();
+        const recalled = this.recalled();
+        if (identity && recalled?.key === identityKey(identity)) {
+            if (recalled.seasonKey) return recalled.seasonKey;
+        }
+        const episodeId = Number(this.bindings()?.quickStart?.()?.episode.id);
+        const seasons = this.selectedItem()?.episodes ?? {};
+        return (
+            Object.keys(seasons).find((key) =>
+                seasons[key]?.some((episode) => Number(episode.id) === episodeId)
+            ) ?? null
+        );
+    });
 
     /** Season descriptions (provider text, TMDB fallback, URL junk dropped). */
     readonly descriptions = computed<Record<string, string>>(() =>
@@ -85,6 +130,36 @@ export class SerialDetailsSeasonsService {
                 );
             }
         });
+
+        // Read before the first write below for the same series.
+        effect(() => {
+            const identity = this.identity();
+            this.recalled.set(
+                identity
+                    ? {
+                          key: identityKey(identity),
+                          seasonKey: recallSeriesSeason(
+                              window.history.state,
+                              identity
+                          ),
+                      }
+                    : null
+            );
+        });
+        // The season on screen goes on the history entry (adding none).
+        effect(() => {
+            const identity = this.identity();
+            const seasonKey = this.bindings()?.detailSeasonKey?.();
+            const recalled = this.recalled();
+            if (
+                identity &&
+                seasonKey &&
+                recalled?.key === identityKey(identity) &&
+                seasonKey in (this.selectedItem()?.episodes ?? {})
+            ) {
+                untracked(() => rememberSeriesSeason(identity, seasonKey));
+            }
+        });
     }
 
     /** Connects the service to the owning component's reactive state. */
@@ -97,4 +172,11 @@ export class SerialDetailsSeasonsService {
         // on (tmdb_id, selectedSeasonKey) — see the race note there.
         this.selectedSeasonKey.set(seasonKey);
     }
+}
+
+function identityKey(identity: {
+    readonly playlistId: string;
+    readonly seriesId: number;
+}): string {
+    return `${identity.playlistId}:${identity.seriesId}`;
 }

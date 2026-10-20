@@ -134,9 +134,9 @@ test.describe('Electron Favorites', () => {
                         .click();
                 } else {
                     if (origin === 'favorites')
-                        await openWorkspaceSection(page, 'Global favorites');
+                        await openWorkspaceSection(page, 'My List');
                     else await openGlobalRecent(page);
-                    await switchUnifiedCollectionScope(page, 'All playlists');
+                    await switchUnifiedCollectionScope(page, 'All sources');
                     await contentCardByTitle(page, title).first().click();
                 }
                 await expect(page.locator('app-content-hero')).toContainText(
@@ -235,7 +235,7 @@ test.describe('Electron Favorites', () => {
                 channelItemByTitle(app.mainWindow, 'M3U Favorite Two')
             ).toHaveCount(1);
 
-            await switchUnifiedCollectionScope(app.mainWindow, 'All playlists');
+            await switchUnifiedCollectionScope(app.mainWindow, 'All sources');
             await expect(
                 channelItemByTitle(app.mainWindow, 'M3U Favorite One')
             ).toHaveCount(1);
@@ -253,7 +253,7 @@ test.describe('Electron Favorites', () => {
                 .click();
             await waitForM3uCatalog(app.mainWindow);
             await openPlaylistFavorites(app.mainWindow);
-            await switchUnifiedCollectionScope(app.mainWindow, 'All playlists');
+            await switchUnifiedCollectionScope(app.mainWindow, 'All sources');
             await expect(
                 channelItemByTitle(app.mainWindow, 'M3U Favorite One')
             ).toHaveCount(1);
@@ -405,7 +405,7 @@ test.describe('Electron Favorites', () => {
             await switchUnifiedCollectionContent(app.mainWindow, 'Series');
             await expectVisibleContentCardTitle(app.mainWindow, seriesTitle);
 
-            await switchUnifiedCollectionScope(app.mainWindow, 'All playlists');
+            await switchUnifiedCollectionScope(app.mainWindow, 'All sources');
             await switchUnifiedCollectionContent(app.mainWindow, 'Live TV');
             await expect(
                 channelItemByTitle(app.mainWindow, liveTitle)
@@ -423,7 +423,7 @@ test.describe('Electron Favorites', () => {
             await sourceRowByTitle(app.mainWindow, portalTitle).first().click();
             await waitForXtreamWorkspaceReady(app.mainWindow);
             await openPlaylistFavorites(app.mainWindow);
-            await switchUnifiedCollectionScope(app.mainWindow, 'All playlists');
+            await switchUnifiedCollectionScope(app.mainWindow, 'All sources');
             await switchUnifiedCollectionContent(app.mainWindow, 'Live TV');
             await expect(
                 channelItemByTitle(app.mainWindow, liveTitle)
@@ -514,7 +514,7 @@ test.describe('Electron Favorites', () => {
                 );
                 await switchUnifiedCollectionScope(
                     app.mainWindow,
-                    'All playlists'
+                    'All sources'
                 );
                 await expect(
                     contentCardByTitle(app.mainWindow, titles[0])
@@ -677,7 +677,7 @@ test.describe('Electron Favorites', () => {
                 ).toHaveCount(0);
                 await switchUnifiedCollectionScope(
                     app.mainWindow,
-                    'All playlists'
+                    'All sources'
                 );
                 await expect(
                     contentCardByTitle(app.mainWindow, titles[0])
@@ -774,7 +774,7 @@ test.describe('Electron Favorites', () => {
                 hostPortalTitle
             );
 
-            await switchUnifiedCollectionScope(app.mainWindow, 'All playlists');
+            await switchUnifiedCollectionScope(app.mainWindow, 'All sources');
             await switchUnifiedCollectionContent(app.mainWindow, 'Movies');
             await expectVisibleContentCardTitle(app.mainWindow, movieTitle);
             await contentCardByTitle(app.mainWindow, movieTitle)
@@ -920,7 +920,7 @@ test.describe('Electron Favorites', () => {
                 contentCardByTitle(app.mainWindow, seriesTitle)
             ).toHaveCount(1);
 
-            await switchUnifiedCollectionScope(app.mainWindow, 'All playlists');
+            await switchUnifiedCollectionScope(app.mainWindow, 'All sources');
             await switchUnifiedCollectionContent(app.mainWindow, 'Live TV');
             await expect(
                 channelItemByTitle(app.mainWindow, liveTitle)
@@ -942,7 +942,7 @@ test.describe('Electron Favorites', () => {
             await sourceRowByTitle(app.mainWindow, portalTitle).first().click();
             await waitForStalkerCatalog(app.mainWindow);
             await openPlaylistFavorites(app.mainWindow);
-            await switchUnifiedCollectionScope(app.mainWindow, 'All playlists');
+            await switchUnifiedCollectionScope(app.mainWindow, 'All sources');
             await switchUnifiedCollectionContent(app.mainWindow, 'Live TV');
             await expect(
                 channelItemByTitle(app.mainWindow, liveTitle)

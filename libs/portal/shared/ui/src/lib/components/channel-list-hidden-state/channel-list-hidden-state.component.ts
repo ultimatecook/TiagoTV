@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, output } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PortalEmptyStateComponent } from '../portal-empty-state/portal-empty-state.component';
+import { commandShortcutLabel } from '@iptvnator/portal/shared/util';
 
 /**
  * Content-area placeholder for a live layout whose channel rail is collapsed
@@ -17,7 +18,10 @@ import { PortalEmptyStateComponent } from '../portal-empty-state/portal-empty-st
         <app-portal-empty-state
             icon="view_sidebar"
             [message]="'LAYOUT.CHANNELS_LIST_HIDDEN' | translate"
-            [hint]="'LAYOUT.CHANNELS_LIST_HIDDEN_HINT' | translate"
+            [hint]="
+                'LAYOUT.CHANNELS_LIST_HIDDEN_HINT'
+                    | translate: { shortcut: sidebarShortcut }
+            "
             [actionLabel]="'LAYOUT.SHOW_CHANNELS_LIST' | translate"
             actionIcon="chevron_right"
             (action)="restore.emit()"
@@ -33,5 +37,7 @@ import { PortalEmptyStateComponent } from '../portal-empty-state/portal-empty-st
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChannelListHiddenStateComponent {
+    /** Cmd/Ctrl+B, written the way the shortcuts dialog writes it. */
+    readonly sidebarShortcut = commandShortcutLabel('B');
     readonly restore = output<void>();
 }

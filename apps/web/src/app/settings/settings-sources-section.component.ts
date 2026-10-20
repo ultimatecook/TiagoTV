@@ -29,6 +29,7 @@ import {
     WORKSPACE_SHELL_COMMANDS,
     WorkspacePlaylistType,
 } from '@iptvnator/workspace/shell/util';
+import { commandShortcutLabel } from '@iptvnator/portal/shared/util';
 
 /**
  * Settings → Sources & accounts: what the removed header bar held. The
@@ -70,10 +71,7 @@ export class SettingsSourcesSectionComponent {
     readonly openParental = output<void>();
 
     readonly hasShell = !!this.shellCommands;
-    readonly isMac =
-        typeof navigator !== 'undefined' &&
-        /Mac|iPhone|iPad|iPod/i.test(navigator.platform);
-    readonly switcherShortcut = this.isMac ? '⌘P' : 'Ctrl+P';
+    readonly switcherShortcut = commandShortcutLabel('P');
 
     readonly active = this.playlistContext.activePlaylist;
     readonly activeName = computed(() => {

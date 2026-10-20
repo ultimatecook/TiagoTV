@@ -84,6 +84,7 @@ import {
     take,
 } from 'rxjs';
 import {
+    commandShortcutLabel,
     getAdjacentChannelItem,
     getChannelItemByNumber,
     isTypingInInput,
@@ -236,6 +237,9 @@ function isInsideScrollableRegion(
 export class VideoPlayerComponent
     implements OnInit, OnDestroy, FullscreenChannelPanelHost
 {
+    /** Cmd/Ctrl+B, written the way the shortcuts dialog writes it. */
+    readonly sidebarShortcut = commandShortcutLabel('B');
+
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     private readonly dataService = inject(DataService);

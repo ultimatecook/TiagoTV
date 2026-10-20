@@ -18,6 +18,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { injectTranslationTick } from '@iptvnator/services';
+import { redactSensitiveData } from '@iptvnator/shared/logging';
 import {
     EmbeddedMpvAudioTrack,
     RecordingStartMetadata,
@@ -223,10 +224,10 @@ export class EmbeddedMpvPlayerComponent implements OnDestroy {
             });
         }
         if (session?.status === 'error') {
-            return (
-                session.error ||
-                this.translate.instant('EMBEDDED_MPV.PLAYER.PLAYBACK_FAILED')
-            );
+            // The player's own text can quote the stream URL.
+            return session.error
+                ? String(redactSensitiveData(session.error))
+                : this.translate.instant('EMBEDDED_MPV.PLAYER.PLAYBACK_FAILED');
         }
         if (session?.status === 'ended' && this.isLivePlayback()) {
             return this.translate.instant('EMBEDDED_MPV.PLAYER.STREAM_ENDED');

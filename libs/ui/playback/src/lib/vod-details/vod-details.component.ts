@@ -59,6 +59,7 @@ import type { PlaybackFallbackRequest } from '@iptvnator/playback/util';
 import { PortalInlinePlayerComponent } from '../portal-inline-player/portal-inline-player.component';
 import { createVodLocalDownloadState } from './vod-download-state.util';
 import { createVodSimilarInPortals } from './vod-similar-in-portals.state';
+import { RatingPipe } from '@iptvnator/pipes';
 
 /**
  * Unified VOD details component for both Xtream and Stalker portals.
@@ -85,6 +86,7 @@ import { createVodSimilarInPortals } from './vod-similar-in-portals.state';
     styleUrls: ['../styles/detail-view.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        RatingPipe,
         CastCrewRowComponent,
         DetailActionButtonComponent,
         DetailActionsTemplateDirective,

@@ -1,4 +1,5 @@
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../ui-state/page-ui';
 
 :host {
     display: block;
@@ -38,18 +39,26 @@
 }
 
 // One line of tall cards, five and a half in view; it runs on through
-// the page's gutters to the window's edges. The top padding is the air
-// the heads stand in: a tenth of a card's height (4.3 / 3 of its width),
-// never under the design's 44px.
+// the page's gutters to the window's edges. Past the rows' width limit
+// the cards stop growing and more come into view. The top padding is the
+// air the heads stand in: a tenth of a card's height (4.3 / 3 of its
+// width), never under the design's 44px.
 .sports__row {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: max(150px, calc((100% - 80px) / 5.5));
+    grid-auto-columns: max(
+        150px,
+        calc((min(100%, page-ui.$row-width-max) - 80px) / 5.5)
+    );
     gap: 16px;
     // The bottom padding holds the cards' shadows (the scroller clips at
     // its edge); the negative margin gives the room back to the layout.
     margin: 0 calc(-1 * var(--tv-page-x)) -16px;
-    padding: max(44px, calc((100% - 80px) * 0.0261 + 8px)) var(--tv-page-x) 24px;
+    padding: max(
+            44px,
+            calc((min(100%, page-ui.$row-width-max) - 80px) * 0.0261 + 8px)
+        )
+        var(--tv-page-x) 24px;
     scroll-padding-left: var(--tv-page-x);
     overflow-x: auto;
     // Sideways only: the wheel's vertical turn scrolls the page.

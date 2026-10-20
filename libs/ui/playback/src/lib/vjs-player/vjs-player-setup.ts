@@ -7,11 +7,13 @@ import type {
 export function createVjsPlayerOptions(
     options: VideoPlayerOptions,
     isMpegTs: boolean,
-    sharedControls: boolean
+    sharedControls: boolean,
+    /** Video.js's own overlay and control text; see `vjs-language`. */
+    language: string = 'en'
 ): VideoPlayerOptions {
     const baseOptions = isMpegTs
-        ? { ...options, sources: [], autoplay: false }
-        : { ...options, autoplay: true };
+        ? { ...options, language, sources: [], autoplay: false }
+        : { ...options, language, autoplay: true };
     if (!sharedControls) {
         // Controls must be enabled through the constructor, not a `[controls]`
         // template binding: `player.reset()` (raw MPEG-TS/live path) replaces

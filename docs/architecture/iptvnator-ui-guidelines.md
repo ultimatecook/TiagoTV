@@ -116,7 +116,8 @@ Use the app's own surface tokens for neutral surfaces (defined for both themes
 in `apps/web/src/m3-theme.scss`):
 
 - `--app-shell-bg` / `--app-rail-bg` / `--app-header-bg` / `--app-content-bg`
-- `--app-widget-bg` / `--app-widget-header-bg` — panels and popovers
+- `--app-widget-bg` / `--app-widget-header-bg` — opaque cards and in-place
+  popovers / a raised tint (a white 4% glass tint in dark)
 - `--app-card-hover-bg` — raised or hovered rows
 - `--app-focus-ring` — the keyboard focus ring (see Keyboard Focus)
 - `--app-widget-border` / `--app-rail-border` — hairlines
@@ -133,6 +134,15 @@ in `apps/web/src/m3-theme.scss`):
   `--app-neutral-tag-surface` for a neutral tag
 - `--app-font-mono` — URLs and keyboard hints (JetBrains Mono, 400/500)
 - `--app-popover-shadow` / `--app-popover-backdrop` — the switcher popover
+- `--app-overlay-bg` / `--app-overlay-sheen` / `--app-overlay-filter` /
+  `--app-overlay-border` / `--app-overlay-highlight` — the frame of every
+  floating surface (see TiagoTV dark theme mapping below);
+  `--app-tooltip-bg` / `--app-tooltip-fg` for tooltips
+- `--app-content-solid` — an opaque pane where the window must not show
+  through (a sticky cell, text on a filled accent, hero scrims)
+- `--app-field-bg` — the well of an outlined form field
+- `--app-scrollbar-thumb` / `--app-scrollbar-thumb-hover` — scrollbar thumbs
+- `--app-accent-button-*` / `--app-secondary-button-*` — the kit's pills
 
 Angular Material mixins and Material-component overrides may use the tokens
 owned by that component. Outside a Material-owned component, prefer the
@@ -244,6 +254,70 @@ reads and colour-scheme queries.
 Existing hard-coded layout and selection colors are migration debt, not
 patterns to copy.
 
+### TiagoTV dark theme mapping
+
+The dark theme is warm graphite glass, not a hue (`m3-theme.scss`;
+`m3-theme.spec.ts` pins the mapping):
+
+- **Material roles.** `$dark-theme` is built from `$tv-dark-palette`, the red
+  palette's M3 shape with the `--tv-*` neutrals (`_tv-tokens.scss`) in the
+  tones the dark scheme reads: primary is the white CTA `#fbf8f2` with ink
+  `#0b0b09` on it, on-surface (and the body text through
+  `mat.app-background`) is `--tv-text`, on-surface-variant `--tv-text-2`,
+  outline `--tv-meta`, secondary a light neutral over a graphite container,
+  error `--tv-danger`; tertiary stays cyan for the EPG "now" surfaces. The
+  `--mat-sys-surface-container*` and `-surface-bright` variables are
+  overridden (`$tv-dark-system-overrides`) to glass tints (white 3–12%,
+  lowest an ink well) for the app styles that read them; Material's own
+  tokens keep the palette's opaque graphite, and the kit restyles every
+  overlay Material draws. `--tv-red` stays the brand accent (progress, live),
+  never a Material role.
+- **Panes.** `--app-content-bg` is `transparent` in dark: panes (the M3U
+  player view, live tabs, EPG views, the startup status) lie on the glass
+  window like the redesigned pages. `--app-content-solid` (`#262625`) keeps
+  what must stay opaque: the EPG guide's rows (their sticky channel cell),
+  the toolbar switch knob, text on the live fill (`$on-live`), and the
+  detail heroes' scrims and page (`content-hero`, `portal-detail-shell`,
+  `_detail-view.scss`). `--app-widget-header-bg` is a white 4% tint, so a
+  panel header (`_panel-header.scss`) is no longer a grey band; none of its
+  consumers is sticky over a scroller. `--app-widget-bg` stays the opaque
+  card and in-place popover surface.
+- **Floating surfaces.** Dialogs, menus, select panels, toasts, tooltips,
+  floating panels, the command palette, the programme dialog and the source
+  switcher take the overlay frame: `--app-overlay-bg` (dark:
+  `--tv-glass-ground`, a dark ground at 80% so text stays legible over a
+  bright poster) as `background-color`, `--app-overlay-sheen`
+  (`--tv-glass-bg`) as `background-image`, `--app-overlay-filter`
+  (`--tv-glass-filter`, blur 22px saturate 160%) as `backdrop-filter`,
+  `--app-overlay-border` (`--tv-glass-border`) and `--app-overlay-highlight`
+  (`--tv-glass-highlight`) first in the `box-shadow`. Light keeps the plain
+  white widget surface, `none` sheen and filter. One radius scale serves
+  both themes (`--tv-radius-*`): tooltip 8, menu and select panel and
+  switcher 14, toast 14, floating panel 16, dialog and palette 20. Only
+  these small floating surfaces blur; a pane or a scroller never takes a
+  `backdrop-filter` (see the compositing budget). A dialog that draws its
+  own surface strips Material's surface filter with its panel class.
+- **Buttons.** Kit text buttons (`_app-controls.scss`) are pills
+  (`$button-radius: 999px`, 40px `md`, 32px `sm`): the accent is the white
+  pill with ink text in dark (the selection blue in light), the secondary a
+  glass pill (a 4% fill, the glass sheen, hairline and highlight).
+  `.app-destructive-button` is a `--tv-danger` tint pill everywhere
+  (`--app-danger-text` / `--app-danger-surface`). Square icon actions keep
+  their 8px radius.
+- **Scrollbars.** `libs/ui/styles/_scrollbar.scss`: a 6px thumb on a
+  transparent track, no arrow buttons, shown while the pointer is over the
+  scroller (or focus is inside it). `.app-scrollbar` (which also reserves
+  the gutter) and every other dark-theme scroller take it; a component's own
+  scroller includes `scrollbar.thin`. Chromium ignores the
+  `::-webkit-scrollbar` pseudo-elements once `scrollbar-width` or
+  `scrollbar-color` is set and then draws its native bar with arrows, so
+  the mixin resets both where the pseudo-elements exist. The redesigned
+  pages' scroller hides its bar.
+- **Form controls.** `styles.scss` gives `button`, `input`, `select` and
+  `textarea` `font: inherit` and `letter-spacing: inherit` (and a button the
+  text colour around it) at zero specificity, so no control falls back to
+  the system font (Arial 13.33px).
+
 Do not hardcode unrelated accent colors for selected state when these tokens already exist.
 
 ## Player And EPG Theme Boundaries
@@ -316,8 +390,8 @@ selection blue on its own tint is 3.3:1) and the selection colour in dark.
 ## Single-Choice Menus And Status Chips
 
 Every `mat-menu` gets the kit panel from one global rule in `styles.scss`
-(`menu-panel` in `libs/ui/styles/_app-controls.scss`): a bordered 10px panel
-with 6px padding, 240–360px wide, 36px rows at 13px with 16px icons, the
+(`menu-panel` in `libs/ui/styles/_app-controls.scss`): the overlay frame
+(glass in dark) at the 14px menu radius with 6px padding, 240–360px wide, 36px rows at 13px with 16px icons, the
 checked row on the list-selection tokens, and at most 480px tall (less in a
 short window), so a long list scrolls inside the panel. A destructive row
 carries `app-menu-item--danger` and sits after a `<mat-divider>`; a shortcut
@@ -384,7 +458,8 @@ VOD and series detail screens share `app-portal-detail-shell` and
 kind label ("Movie · playlist") → title → chips → description (three lines,
 "More") → resume bar → action row → credits, with the poster bottom-aligned
 on the left and the backdrop filling the hero behind a two-layer scrim built
-from `--app-content-bg`. The hero keeps `min(520px, 60vh)` of stage for a
+from `--app-content-solid` (the opaque page colour; the dark theme's
+`--app-content-bg` is transparent glass). The hero keeps `min(520px, 60vh)` of stage for a
 16:9 backdrop. The shell gives it a 140px `--hero-tail` and pulls the first
 section up over it, so the artwork continues under that section's heading and
 the vertical scrim ends on the exact page surface there, never as a band at
@@ -496,10 +571,13 @@ host by its padding and border on the first move.
   ring over their 12% focus state layer (global rules in `styles.scss`).
   Menu items and select options keep Material's highlight, since arrow keys,
   not Tab, move within them.
-- **Over video** the ring is the player's text colour, not the theme's:
-  the player controls, vendor chrome, the fullscreen channel and episode
-  panels and the Up Next rail include `focus-ring-token` from
-  `_player-palette.scss`.
+- **Over video** the ring is the dark theme's warm white (`$focus-ring`,
+  `#fbf7ee`) in either theme, never the light theme's blue: the player
+  controls, vendor chrome, the fullscreen channel and episode panels, the Up
+  Next rail and the live picture's country picker include `focus-ring-token`
+  from `_player-palette.scss`; the playback diagnostic (a raw-CSS sheet)
+  declares the same literal. Controls inside the player host still ring
+  with `--pc-text`.
 - **Check.** `keyboard-focus-ring.e2e.ts` (Electron) tabs through the detail
   actions and season tabs, a catalog grid with its refinement chips, the
   Sources list, the live EPG list, Settings and the command palette in both
@@ -1228,7 +1306,8 @@ per-theme tokens in `apps/web/src/_settings-theme.scss`.
   buttons take the kit look from the shell: `mat-button` ghost,
   `mat-flat-button` accent, `mat-flat-button.app-dialog__secondary`
   secondary; `.app-destructive-button` keeps its tint. The frame itself
-  (16px panel on the widget surface, hairline border, popover shadow,
+  (the overlay frame at the 20px dialog radius: glass over a dark ground in
+  dark, the widget surface in light; hairline, highlight, popover shadow,
   tinted blurred backdrop) is global in `m3-theme.scss` and reaches every
   dialog; a dialog that draws its own surface strips it through its panel
   class, as the command palette and the programme dialog do.
@@ -1295,8 +1374,8 @@ per-theme tokens in `apps/web/src/_settings-theme.scss`.
 - **Frame.** A floating, non-modal card anchored to a viewport corner (the
   EPG import panel at the bottom left, the update notification at the bottom
   right) takes `controls.floating-panel` from `_app-controls.scss`: the
-  dialog's widget surface and popover shadow, the menu's `--app-line-strong`
-  hairline, a 12px radius between the dialog's 16 and the menu's 10. The
+  overlay frame of dialogs and menus with the popover shadow, a 16px radius
+  between the dialog's 20 and the menu's 14. The
   panel keeps its own anchor, width, z-index and entrance; the notice that
   replaces a panel whose deferred chunk failed to load shares the frame.
 - **Header.** `floating-panel-header` is the row (hairline under it) and
@@ -1309,8 +1388,8 @@ per-theme tokens in `apps/web/src/_settings-theme.scss`.
   on a `mat-flat-button`), never an outlined button. The update card's
   release notes and download/install buttons are the reference.
 - **Toasts.** Every `mat-snack-bar` takes the same look from one global rule
-  in `styles.scss`: the widget surface with the hairline and shadow on a
-  10px panel, 13px text in the heading colour, the action as accent text
+  in `styles.scss`: the overlay frame with the popover shadow on a 14px
+  panel, 13px text in the heading colour, the action as accent text
   without a ripple. Toasts sit at Material's default bottom centre; a caller
   may add a panel class for spacing (`settings-snackbar` clears the save
   bar) or the error tint (`settings-snackbar--error`), never a position of
@@ -1331,7 +1410,7 @@ form field and `@angular/forms` on startup. `pnpm run
 ui:form-field-defaults:validate` (in CI) reports a missing provider.
 
 A `mat-select` belongs inside a form. Its option panel is styled once in
-`m3-theme.scss` to match the kit menu (a bordered 10px panel, 36px rows at
+`m3-theme.scss` to match the kit menu (the overlay frame at 14px, 36px rows at
 13px, the chosen row on the list-selection tokens). A picker in a toolbar is
 not a select: it is a `mat-flat-button` with the `secondary-button` mixin and
 a trailing `expand_more` chevron (`iconPositionEnd`, `trigger-chevron`) that
@@ -1569,7 +1648,8 @@ heavier faces would exceed the initial-bytes ratchet).
 
 ### Dark Theme
 
-- Slight translucency is acceptable
+- Panes are transparent over the glass window; floating surfaces are glass
+  (see TiagoTV dark theme mapping)
 - Background layers can be deeper and more cinematic
 - Keep contrast readable without going pure white everywhere
 

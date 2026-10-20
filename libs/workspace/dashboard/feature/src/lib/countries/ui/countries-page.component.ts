@@ -13,7 +13,6 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
-import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EmbeddedMpvOverlayVisibilityService } from '@iptvnator/ui/playback';
 import { findCountryDefinition } from '../countries';
@@ -42,7 +41,20 @@ import {
 } from '../country-tv-start';
 import { CountryPickerComponent } from './country-picker.component';
 import { CountryTvOverlayComponent } from './country-tv-overlay.component';
+import {
+    recallPageChoice,
+    rememberPageChoice,
+} from '../../ui-state/page-memory';
+import { PageStateComponent } from '../../ui-state/page-state.component';
 import { CountryTvStageComponent } from './country-tv-stage.component';
+
+/** The history entry's memory of the chip picked, with its country's id. */
+export const COUNTRIES_CATEGORY_MEMORY = 'countries-category';
+
+interface CategoryChoice {
+    readonly country: string;
+    readonly category: string;
+}
 
 /**
  * "En vivo" (/workspace/countries), a TV: the live player fills the page,
@@ -60,7 +72,7 @@ import { CountryTvStageComponent } from './country-tv-stage.component';
         CountryPickerComponent,
         CountryTvOverlayComponent,
         CountryTvStageComponent,
-        MatIcon,
+        PageStateComponent,
         TranslatePipe,
     ],
     providers: [
@@ -102,10 +114,20 @@ export class CountriesPageComponent {
         const country = this.country();
         return country ? countryCategories(country) : [];
     });
-    /** The chip picked; "All" again on another country. */
+    /**
+     * The chip picked; "All" again on another country. It stays on the
+     * history entry: Back to the page returns to the chip left there.
+     */
+    private readonly recalled = recallPageChoice(
+        COUNTRIES_CATEGORY_MEMORY,
+        isCategoryChoice
+    );
     readonly category = linkedSignal<string | null, TvCategoryId>({
         source: () => this.country()?.definition.id ?? null,
-        computation: () => 'all',
+        computation: (id) =>
+            id && id === this.recalled?.country
+                ? (this.recalled.category as TvCategoryId)
+                : 'all',
     });
     readonly activeCategory = computed<TvCategoryId>(() =>
         hasCategory(this.categories(), this.category())
@@ -203,6 +225,13 @@ export class CountriesPageComponent {
 
     pickCategory(category: TvCategoryId): void {
         this.category.set(category);
+        const country = this.country()?.definition.id;
+        if (country) {
+            rememberPageChoice(COUNTRIES_CATEGORY_MEMORY, {
+                country,
+                category,
+            } satisfies CategoryChoice);
+        }
     }
 
     setHovering(hovering: boolean): void {
@@ -352,6 +381,14 @@ export class CountriesPageComponent {
         this.pinned.set(false);
         this.idle.hide();
     }
+}
+
+function isCategoryChoice(value: unknown): value is CategoryChoice {
+    const choice = value as Partial<CategoryChoice> | null;
+    return (
+        typeof choice?.country === 'string' &&
+        typeof choice.category === 'string'
+    );
 }
 
 /** Focus a key moved, or a script after a key (`:focus-visible`). */

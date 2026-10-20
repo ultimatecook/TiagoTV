@@ -1,7 +1,9 @@
-// The Home's "Plataformas" row (README 01 · Inicio, 2): 200px logo cards
-// on each platform's brand colour, the row running on to the window's
-// edges.
+// The Home's "Plataformas" row (README 01 · Inicio, 2): logo cards on each
+// platform's brand colour, the row running on to the window's edges. A
+// card is the design's 200px, and grows with a wider window as the Home's
+// other rows do (six and a half across), up to the rows' width limit.
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../ui-state/page-ui';
 
 :host {
     display: block;
@@ -17,7 +19,10 @@
 .platforms__row {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 200px;
+    grid-auto-columns: max(
+        200px,
+        calc((min(100%, page-ui.$row-width-max) - 6 * 16px) / 6.5)
+    );
     gap: 16px;
     // The top padding holds a lifted card's focus ring (the scroller clips
     // at its edge); the negative margin gives the room back to the layout.
@@ -50,17 +55,17 @@
     text-decoration: none;
     --platform-wordmark-size: 26px;
     transition:
-        transform 200ms ease,
-        box-shadow 200ms ease;
+        transform page-ui.$card-ease,
+        box-shadow page-ui.$card-ease;
 
     &:hover,
     &:focus-visible {
-        transform: translateY(-3px);
+        transform: page-ui.$card-lift;
     }
 
     // The pointer's white ring; the keyboard gets the app's ring instead.
     &:hover {
-        box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+        box-shadow: page-ui.$card-ring;
     }
 
     &:focus-visible {

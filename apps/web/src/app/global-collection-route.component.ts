@@ -179,6 +179,7 @@ export class GlobalCollectionDetailHostComponent implements OnDestroy {
             <app-unified-collection-page
                 class="collection-page--tv"
                 [mode]="mode()"
+                [titleKey]="titleKey()"
                 [playlistId]="activePlaylistId() ?? undefined"
                 [portalType]="activePortalType() ?? undefined"
                 [defaultScope]="effectiveDefaultScope()"
@@ -193,6 +194,7 @@ export class GlobalCollectionDetailHostComponent implements OnDestroy {
                         <app-global-collection-detail-host
                             [item]="item"
                             [seriesResume]="seriesResume"
+                            (closeRequested)="close()"
                         />
                     } @else if (item.sourceType === 'stalker') {
                         <app-global-collection-detail-host
@@ -222,6 +224,10 @@ export class GlobalCollectionRouteComponent {
     readonly hasNoPlaylists = computed(() => this.playlists().length === 0);
 
     readonly emptyState = computed(() => EMPTY_STATE_BY_MODE[this.mode()]);
+    /** The global favorites are "Mi lista", as the top bar's tab names them. */
+    readonly titleKey = computed(() =>
+        this.mode() === 'favorites' ? 'HOME.PLAYLISTS.GLOBAL_FAVORITES' : undefined
+    );
 
     readonly activePlaylistId = computed(
         () => this.playlistContext.activePlaylist()?._id ?? null

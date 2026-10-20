@@ -107,6 +107,14 @@ export class RuntimeCapabilitiesService {
         return this.hasElectronMethod('onWindowBackRequested');
     }
 
+    /**
+     * The main process forwards the trackpad swipe right (macOS) as a
+     * Forward request; a preload older than it has no subscription.
+     */
+    get supportsWindowForwardGestures(): boolean {
+        return this.hasElectronMethod('onWindowForwardRequested');
+    }
+
     /** Desktop-only preference: PWA clients cannot configure the shared server guard. */
     get supportsPortalConnectivityGuard(): boolean {
         return (

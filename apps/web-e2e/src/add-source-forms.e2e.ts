@@ -19,7 +19,7 @@ test.beforeEach(async ({ page, request }) => {
 });
 
 async function openMethod(page: Page, method: RegExp): Promise<Locator> {
-    await page.getByRole('button', { name: 'Add playlist' }).click();
+    await page.getByRole('button', { name: 'Add source' }).click();
     const dialog = page.locator('mat-dialog-container');
     await expect(dialog).toBeVisible();
     await dialog.getByRole('radio', { name: method }).click();
@@ -69,7 +69,7 @@ test('@sources @pwa adds an Xtream source through the dialog', async ({
     await expect(dialog.locator('#password')).toHaveValue('pass1');
 
     const add = dialog.getByRole('button', {
-        name: 'Add playlist',
+        name: 'Add source',
         exact: true,
     });
     await expect(add).toBeEnabled({ timeout: 10_000 });
@@ -94,7 +94,7 @@ test('@sources @pwa explains an invalid M3U playlist URL', async ({ page }) => {
         'Enter a valid http:// or https:// URL.'
     );
     await expect(
-        dialog.getByRole('button', { name: 'Add playlist', exact: true })
+        dialog.getByRole('button', { name: 'Add source', exact: true })
     ).toBeDisabled();
 });
 
@@ -112,6 +112,6 @@ test('@sources @pwa gives the Stalker form the shared labels and a masked passwo
     await setInputValue(dialog.locator('#password'), 'secret');
     await expectPasswordToggle(dialog);
     await expect(
-        dialog.getByRole('button', { name: 'Add playlist', exact: true })
+        dialog.getByRole('button', { name: 'Add source', exact: true })
     ).toBeVisible();
 });

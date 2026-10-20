@@ -17,6 +17,7 @@ import { HomeHeadingComponent } from './home-heading.component';
 import { HomeNearDirective } from './home-near.directive';
 import { metaLine } from './home-platform-titles';
 import { HomePlatformTitlesService } from './home-platform-titles.service';
+import { RememberScrollDirective } from '../ui-state/remember-scroll.directive';
 
 /** Placeholder cards while the catalog is read. */
 const SKELETONS = [1, 2, 3, 4];
@@ -40,6 +41,7 @@ export interface HomeTopMovie {
     imports: [
         HomeHeadingComponent,
         HomeNearDirective,
+        RememberScrollDirective,
         SharpImagePipe,
         TranslatePipe,
     ],

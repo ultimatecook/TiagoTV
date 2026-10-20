@@ -148,6 +148,12 @@ export const WINDOW_STATE_CHANGED = 'WINDOW:STATE_CHANGED';
 // carrying an `ElectronBridgeBackGestureSource`. The renderer decides
 // whether Back runs; nothing flows the other way.
 export const WINDOW_BACK_REQUESTED = 'WINDOW:BACK_REQUESTED';
+// Main → renderer only: the window received a platform Forward gesture
+// (macOS trackpad `swipe` right), carrying an
+// `ElectronBridgeForwardGestureSource`. The renderer decides whether
+// history Forward runs. `browser-forward` is not sent: Chromium already
+// steps Forward on the mouse button that raises it.
+export const WINDOW_FORWARD_REQUESTED = 'WINDOW:FORWARD_REQUESTED';
 // Synchronous preload request for the persisted app zoom level (answered
 // with `event.returnValue`), and the preload's acknowledgement once it has
 // applied that level with webFrame.setZoomLevel at DOMContentLoaded

@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
+import { RememberScrollDirective } from '../../ui-state/remember-scroll.directive';
 
 /**
  * A sideways row of the catalog page: its cards (each a `[data-stop]`
@@ -18,11 +19,12 @@ import { TranslatePipe } from '@ngx-translate/core';
  * stop for the row (the arrow keys, Home and End move along it) and, for a
  * pointer, a chevron on each side that has more to show. The parent sets
  * the column width (`--strip-column`) and where the chevrons sit
- * (`--strip-chevron-top`, the middle of its artwork).
+ * (`--strip-chevron-top`, the middle of its artwork). With a `memoryKey`
+ * the row's sideways scroll comes back with Back and Forward.
  */
 @Component({
     selector: 'lib-catalog-strip',
-    imports: [MatIcon, TranslatePipe],
+    imports: [MatIcon, RememberScrollDirective, TranslatePipe],
     template: `
         <button
             type="button"
@@ -40,6 +42,7 @@ import { TranslatePipe } from '@ngx-translate/core';
             role="toolbar"
             aria-orientation="horizontal"
             [attr.aria-labelledby]="labelledBy()"
+            [libRememberScroll]="memoryKey()"
             (scroll)="updateEdges()"
         >
             <ng-content />
@@ -141,6 +144,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 export class CatalogStripComponent {
     /** The id of the row's heading, which names the toolbar. */
     readonly labelledBy = input<string | null>(null);
+    /** The history entry's key for the row's scroll; none, not kept. */
+    readonly memoryKey = input('');
     private readonly track =
         viewChild.required<ElementRef<HTMLElement>>('track');
     readonly canScrollLeft = signal(false);

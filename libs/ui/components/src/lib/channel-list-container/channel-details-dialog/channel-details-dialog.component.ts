@@ -15,6 +15,7 @@ import {
     isM3uCatchupPlaybackSupported,
 } from '@iptvnator/shared/m3u-utils';
 import { Channel } from '@iptvnator/shared/interfaces';
+import { redactSensitiveData } from '@iptvnator/shared/logging';
 import { resolveChannelEpgLookupKey } from '@iptvnator/m3u-state';
 import { EpgMappingDialogComponent } from '../epg-mapping-dialog/epg-mapping-dialog.component';
 import { DialogShellComponent } from '../../dialog-shell/dialog-shell.component';
@@ -83,6 +84,9 @@ export class ChannelDetailsDialogComponent {
     );
 
     logoError = false;
+
+    /** On screen without credentials; Copy keeps the full address. */
+    readonly displayUrl = String(redactSensitiveData(this.channel.url ?? ''));
 
     readonly hasTvgData = !!(
         this.channel.tvg?.id ||

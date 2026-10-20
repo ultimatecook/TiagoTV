@@ -1,0 +1,79 @@
+// What the redesigned pages share (handoff · Interactions and Design
+// Tokens): one hover for every card, one for a list's rows, one chip, and
+// how far a row of tiles sized from the window grows.
+
+// ─── Hover ────────────────────────────────────────────────────────────────
+// A card lifts 4px and takes a 2px white ring; a list's row takes a faint
+// wash. The keyboard's focus draws the app's ring instead (`focus-ring`).
+$card-lift: translateY(-4px);
+$card-ring: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+$card-ease: 200ms ease;
+$row-wash: rgba(255, 255, 255, 0.04);
+
+// The ring as a layer over the card's content, for a card an image fills
+// (an inset shadow would lie under the image). The card is positioned and
+// keeps its `::after` free; `ring-shown` shows the layer.
+@mixin ring-layer($layer: 1) {
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: $layer;
+        border-radius: inherit;
+        box-shadow: $card-ring;
+        opacity: 0;
+        transition: opacity $card-ease;
+        pointer-events: none;
+    }
+}
+
+@mixin ring-shown {
+    &::after {
+        opacity: 1;
+    }
+}
+
+// ─── Chips ────────────────────────────────────────────────────────────────
+// "En vivo"'s category chip, on the picture or on the page: glass, the one
+// picked solid.
+@mixin chip {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    color: var(--tv-text-img-1);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease;
+    app-region: no-drag;
+}
+
+@mixin chip-hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+@mixin chip-on {
+    border-color: var(--tv-text);
+    background: var(--tv-text);
+    color: #0b0b09;
+}
+
+// ─── Rows of tiles ────────────────────────────────────────────────────────
+// A row that shares its width out among a number of tiles (Inicio's,
+// Deportes', the platforms') stops growing them past this width: a wider
+// window shows more tiles, not bigger ones.
+$row-width-max: 1800px;

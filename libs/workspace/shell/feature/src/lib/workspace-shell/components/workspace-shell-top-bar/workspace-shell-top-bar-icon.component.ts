@@ -8,7 +8,29 @@ export type WorkspaceTopBarIconName =
     | 'menu'
     | 'download'
     | 'lock'
-    | 'lock-open';
+    | 'lock-open'
+    | 'sidebar'
+    | 'grid';
+
+/**
+ * Material ligatures a page may ask the bar for, and the bar's own line
+ * glyph (an SVG below, not a ligature) that replaces each.
+ */
+const LINE_GLYPHS: Readonly<Record<string, WorkspaceTopBarIconName>> = {
+    view_sidebar: 'sidebar',
+    grid_view: 'grid',
+    view_module: 'grid',
+};
+
+/**
+ * The bar's line glyph for a page shortcut's Material icon name, so its
+ * circle matches the others; null keeps the ligature.
+ */
+export function workspaceTopBarLineIcon(
+    materialName: string
+): WorkspaceTopBarIconName | null {
+    return LINE_GLYPHS[materialName] ?? null;
+}
 
 /**
  * The top bar's line glyphs (24px grid, 1.6px stroke, as the design draws
@@ -60,6 +82,16 @@ export type WorkspaceTopBarIconName =
                 @case ('lock-open') {
                     <rect x="5" y="10.5" width="14" height="10" rx="2.2" />
                     <path d="M8.5 10.5V8a3.5 3.5 0 0 1 6.8-1.2" />
+                }
+                @case ('sidebar') {
+                    <rect x="3.5" y="5" width="17" height="14" rx="2.6" />
+                    <path d="M9.5 5v14" />
+                }
+                @case ('grid') {
+                    <rect x="4" y="4" width="6.5" height="6.5" rx="1.6" />
+                    <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6" />
+                    <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6" />
+                    <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6" />
                 }
             }
         </svg>

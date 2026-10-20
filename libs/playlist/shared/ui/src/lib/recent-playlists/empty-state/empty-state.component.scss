@@ -40,7 +40,7 @@
     }
 
     .title {
-        font-family: Roboto, 'Helvetica Neue', sans-serif;
+        font-family: inherit;
         font-weight: 500;
         margin: 0 0 12px 0;
         background: linear-gradient(
@@ -58,7 +58,7 @@
     }
 
     .description {
-        font-family: Roboto, 'Helvetica Neue', sans-serif;
+        font-family: inherit;
         font-size: 0.95rem;
         line-height: 1.6;
         margin: 0 0 32px 0;

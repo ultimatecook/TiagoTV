@@ -3,6 +3,7 @@ import {
     PlaybackDiagnosticCode,
     getLikelyBrowserUnsupportedCodecLabels,
 } from '@iptvnator/playback/util';
+import { redactSensitiveData } from '@iptvnator/shared/logging';
 import { getDiagnosticSummaryKey } from './playback-diagnostic-summary.util';
 import { getDiagnosticEvidenceDetails } from './playback-diagnostic-evidence-view.util';
 
@@ -108,7 +109,8 @@ export function getDiagnosticDetails(
             value:
                 issue.vhs || issue.mpegTs || issue.shaka
                     ? ''
-                    : (issue.nativeErrorMessage ?? ''),
+                    : // An engine's own text may quote the stream URL.
+                      String(redactSensitiveData(issue.nativeErrorMessage ?? '')),
         },
         {
             labelKey: 'PLAYBACK_DIAGNOSTICS.DETAIL_ERROR_DETAILS',

@@ -231,6 +231,9 @@ export interface ElectronBridgeWindowState {
  */
 export type ElectronBridgeBackGestureSource = 'app-command' | 'swipe';
 
+/** The window event behind a Forward request: the macOS trackpad swipe. */
+export type ElectronBridgeForwardGestureSource = 'swipe';
+
 /**
  * Portal credentials for an auth-gated stream, passed alongside the scoped
  * header override. The main process attaches them only to requests going to
@@ -806,6 +809,14 @@ export interface ElectronBridgeApi {
      */
     onWindowBackRequested: (
         callback: (source: ElectronBridgeBackGestureSource) => void
+    ) => () => void;
+    /**
+     * Platform Forward gestures (the macOS trackpad swipe right), forwarded
+     * like `onWindowBackRequested`. Missing in a preload older than the
+     * gesture. Returns the unsubscribe.
+     */
+    onWindowForwardRequested?: (
+        callback: (source: ElectronBridgeForwardGestureSource) => void
     ) => () => void;
     /**
      * While active, the main process intercepts window close / app quit and

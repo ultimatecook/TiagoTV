@@ -8,6 +8,7 @@ import {
     signal,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
+import { formatRating } from '@iptvnator/pipes';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
 import type { PlatformLook, TileDress } from '../platform-design';
 import { genreLabelKey } from '../platform-genres';
@@ -96,7 +97,7 @@ export class PlatformTitleCardComponent {
         return rating ? Math.round(rating * 10) : null;
     });
     /** The other looks' "★ 8.0". */
-    readonly stars = computed(() => this.title().rating?.toFixed(1) ?? '');
+    readonly stars = computed(() => formatRating(this.title().rating));
     /** The synopsis the list or the title's page gave, never fetched here. */
     readonly plot = computed(
         () => this.title().plot ?? this.catalog.extrasOf(this.title())?.plot

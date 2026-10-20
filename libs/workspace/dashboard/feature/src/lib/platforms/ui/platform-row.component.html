@@ -16,7 +16,11 @@
         >
             ‹
         </button>
-        <div class="row__track" #track>
+        <div
+            class="row__track"
+            #track
+            [libRememberScroll]="'platform-row-' + row().id"
+        >
             @for (title of titles(); track title.kind + title.id) {
                 @if (row().ranked) {
                     <div class="row__item row__ranked">

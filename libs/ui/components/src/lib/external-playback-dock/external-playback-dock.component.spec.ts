@@ -179,6 +179,27 @@ describe('ExternalPlaybackDockComponent', () => {
         );
     });
 
+    it('keeps the account of an Xtream stream URL out of the raw detail tooltip', () => {
+        fixture.componentRef.setInput('session', {
+            ...session,
+            status: 'error',
+            error: 'Failed to open http://portal.example/live/fake-user/fake-pass/12.ts.',
+            errorCode: 'stream-open-failed',
+            canClose: false,
+        });
+        fixture.detectChanges();
+
+        const title =
+            (
+                fixture.debugElement.query(
+                    By.css('.external-playback-dock__status-text')
+                ).nativeElement as HTMLElement
+            ).getAttribute('title') ?? '';
+        expect(title).toContain('portal.example');
+        expect(title).not.toContain('fake-user');
+        expect(title).not.toContain('fake-pass');
+    });
+
     it('shows the generic failure, not the raw English detail, without a code', () => {
         fixture.componentRef.setInput('session', {
             ...session,

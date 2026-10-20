@@ -290,6 +290,25 @@ describe('WorkspacePlayerCommandsContributor', () => {
         });
     });
 
+    it('names the player bare, so the label never reads "player Player"', () => {
+        bootstrap({ supportsManagedExternalPlayers: true });
+
+        const videojs = getRegistered(viewCommands).find(
+            (c) => c.id === 'switch-player-videojs'
+        );
+        const labelParams =
+            typeof videojs?.labelParams === 'function'
+                ? videojs.labelParams()
+                : videojs?.labelParams;
+
+        expect(videojs?.labelKey).toBe(
+            'WORKSPACE.SHELL.COMMANDS.SWITCH_PLAYER_LABEL'
+        );
+        expect(labelParams).toEqual({
+            name: 'WORKSPACE.SHELL.COMMANDS.PLAYER_NAME.VIDEOJS',
+        });
+    });
+
     it('marks the active player command as disabled', () => {
         bootstrap({ supportsManagedExternalPlayers: true });
         settingsStore.player.set(VideoPlayer.MPV);

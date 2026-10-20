@@ -84,7 +84,9 @@ describe('CatalogPageComponent', () => {
         preparing.set(true);
         const fixture = render();
         const note = () =>
-            fixture.nativeElement.querySelector('.catalog__note')?.textContent;
+            fixture.nativeElement.querySelector(
+                '.catalog__loading lib-page-state'
+            )?.textContent;
 
         expect(catalog.preparing).toHaveBeenCalledWith('series');
         expect(note()).toContain('WORKSPACE.CATALOG.PREPARING');
@@ -92,6 +94,27 @@ describe('CatalogPageComponent', () => {
         preparing.set(false);
         fixture.detectChanges();
         expect(note()).toContain('WORKSPACE.CATALOG.LOADING');
+    });
+
+    it('offers a retry when the catalog failed to load', () => {
+        const status = catalog.status as jest.Mock<string>;
+        status.mockReturnValue('failed');
+        const fixture = render();
+        const element: HTMLElement = fixture.nativeElement;
+        expect(
+            element.querySelector('[data-test-id="catalog-failed"]')
+                ?.textContent
+        ).toContain('WORKSPACE.CATALOG.FAILED');
+        catalog.load.mockClear();
+
+        element
+            .querySelector<HTMLButtonElement>(
+                '[data-test-id="page-state-retry"]'
+            )
+            ?.click();
+
+        expect(catalog.load).toHaveBeenCalledWith('series');
+        status.mockImplementation(() => (titles() ? 'ready' : 'loading'));
     });
 
     it("keeps its hero while more platforms' lists arrive", () => {

@@ -93,7 +93,7 @@
             }
             @if (info.rating) {
                 <app-meta-chip variant="rating"
-                    >★ {{ info.rating }}</app-meta-chip
+                    >★ {{ info.rating | appRating }}</app-meta-chip
                 >
             }
         </ng-template>
@@ -193,6 +193,7 @@
             [playingEpisodeId]="
                 inlinePlayback()?.contentInfo?.contentXtreamId ?? null
             "
+            [preferredSeasonKey]="preferredSeason()"
             [seasonDescriptions]="seasonDescriptions()"
             [seasonPosters]="seasonPosters()"
             [seasonWatchBatchRunning]="seasonWatchBatchRunning()"
@@ -223,7 +224,7 @@
     </app-portal-detail-shell>
 } @else if (detailsError()) {
     <app-portal-detail-shell
-        [errorMessage]="detailsError() ?? undefined"
+        [errorMessage]="detailsErrorText()"
         (backClicked)="goBack()"
     />
 } @else {

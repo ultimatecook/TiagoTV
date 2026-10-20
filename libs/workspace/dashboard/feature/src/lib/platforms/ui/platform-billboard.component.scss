@@ -3,9 +3,11 @@
 // The full-bleed billboard of Netflix, HBO Max and Apple TV. The artwork
 // fills the page's width and fades into the page's colour (`--bb-bg`);
 // the title block sits at the lower left, `--bb-lift` of the height up.
+// Its height follows the width, and on a very wide window keeps growing
+// (to 900px) so the artwork does not turn into a thin strip.
 :host {
     --bb-bg: #141414;
-    --bb-height: clamp(420px, 46vw, 640px);
+    --bb-height: clamp(420px, 46vw, clamp(640px, 30vw, 900px));
     --bb-lift: 0.14;
     --bb-content: min(540px, 44%);
     --bb-font: inherit;
@@ -18,11 +20,17 @@
     min-width: 0;
 }
 
+// The top bar covers the top of the billboard, whose text is placed from
+// its foot: the text keeps the bar's room above it, and on a narrow or
+// short window the billboard grows rather than run it under the bar (and
+// the window's buttons).
 .billboard {
     position: relative;
     display: flex;
     align-items: flex-end;
-    height: var(--bb-height);
+    box-sizing: border-box;
+    min-height: var(--bb-height);
+    padding-top: calc(var(--tv-topbar-h) + 12px);
     overflow: hidden;
     background: var(--bb-bg);
     color: #fff;
@@ -300,7 +308,7 @@ button.billboard__language {
 // with 4px corners, the green match and the maturity band at the right.
 // The first row rides up over the artwork's faded foot.
 :host([data-look='netflix']) {
-    --bb-height: clamp(440px, 50vw, 680px);
+    --bb-height: clamp(440px, 50vw, clamp(680px, 30vw, 900px));
     --bb-lift: 0.27;
     --bb-content: min(560px, 40%);
     --bb-scrim:
@@ -436,7 +444,7 @@ button.billboard__language {
 // Black, the system font, a white pill and a frosted round button.
 :host([data-look='apple']) {
     --bb-bg: #000;
-    --bb-height: clamp(440px, 48vw, 660px);
+    --bb-height: clamp(440px, 48vw, clamp(660px, 30vw, 900px));
     --bb-lift: 0.12;
     --bb-font:
         -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue',
@@ -484,18 +492,6 @@ button.billboard__language {
         width: 7px;
         height: 7px;
         border-radius: 50%;
-    }
-}
-
-// The two-row bar (`--tv-topbar-h`, 108px there) covers the top of the
-// billboard, whose text is placed from its foot: the text keeps the bar's
-// room above it, and the billboard grows rather than run it under the bar.
-@media (max-width: 760px) {
-    .billboard {
-        box-sizing: border-box;
-        height: auto;
-        min-height: var(--bb-height);
-        padding-top: calc(var(--tv-topbar-h) + 12px);
     }
 }
 

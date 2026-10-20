@@ -8,6 +8,7 @@ import {
     effect,
     inject,
     input,
+    output,
     signal,
     untracked,
 } from '@angular/core';
@@ -32,6 +33,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { SerialDetailsComponent } from './serial-details/serial-details.component';
 import { XTREAM_SERIES_RESUME_TARGET } from './serial-details/serial-details-resume-target.token';
 import { VodDetailsRouteComponent } from './vod-details/vod-details-route.component';
+import { XTREAM_INLINE_DETAIL_CLOSE } from './xtream-detail-back';
 
 interface XtreamCollectionStateSnapshot {
     playlistId: string | null;
@@ -76,6 +78,8 @@ interface XtreamCollectionStateSnapshot {
 export class XtreamCollectionDetailComponent implements ViewInPortalHandoff {
     readonly item = input<UnifiedCollectionItem | null>(null);
     readonly seriesResume = input<SeriesResumeTarget | null>(null);
+    /** The title's Back: the collection closes its inline detail. */
+    readonly closeRequested = output<void>();
 
     private readonly parentInjector = inject(Injector);
     private readonly playlistsService = inject(PlaylistsService);
@@ -198,6 +202,10 @@ export class XtreamCollectionDetailComponent implements ViewInPortalHandoff {
                     {
                         provide: VIEW_IN_PORTAL_HANDOFF,
                         useValue: this,
+                    },
+                    {
+                        provide: XTREAM_INLINE_DETAIL_CLOSE,
+                        useValue: () => this.closeRequested.emit(),
                     },
                 ],
                 parent: this.parentInjector,

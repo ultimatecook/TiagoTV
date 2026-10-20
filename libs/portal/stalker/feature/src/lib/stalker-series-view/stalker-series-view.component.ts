@@ -123,6 +123,7 @@ import {
     type StalkerEpisodePlaybackSessionIdentity,
     type StalkerEpisodePlaybackStructuralIdentity,
 } from './stalker-episode-playback-session-key';
+import { RatingPipe } from '@iptvnator/pipes';
 
 interface StalkerSeriesPlaybackRequestContext {
     readonly generation: number;
@@ -142,6 +143,7 @@ interface StalkerSeriesPlaybackRequestContext {
     templateUrl: './stalker-series-view.component.html',
     styleUrls: ['../styles/detail-view.scss'],
     imports: [
+        RatingPipe,
         FavoritesButtonComponent,
         CastCrewRowComponent,
         DetailActionButtonComponent,

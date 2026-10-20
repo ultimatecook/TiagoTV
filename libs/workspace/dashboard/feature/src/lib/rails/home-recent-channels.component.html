@@ -13,7 +13,7 @@
             [link]="['/workspace', 'global-recent']"
             [linkState]="seeAllState"
         />
-        <ul class="channels__row">
+        <ul class="channels__row" libRememberScroll="home-recent-channels">
             @for (channel of channels(); track channel.card.id) {
                 <li class="channels__item">
                     <a

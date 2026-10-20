@@ -17,9 +17,10 @@ import {
 // (`browser-backward`, Windows/Linux) and trackpad `swipe` (macOS), which the
 // main process forwards to the renderer. Each goes back exactly one step. A
 // mouse Back press that reaches the app both as a renderer `mouseup` and as
-// an `app-command` (Windows and Linux) still goes back once. There is no
-// Forward. Gestures are ignored while typing (the chord) and while a dialog
-// is open.
+// an `app-command` (Windows and Linux) still goes back once. The macOS
+// swipe right steps Forward into the entry Back left; `browser-forward`
+// stays Chromium's own (the mouse button behind it). Gestures are ignored
+// while typing (the chord) and while a dialog is open.
 //
 // The window events are emitted on the main process's BrowserWindow, so the
 // specs run on every platform even though Electron raises each event only
@@ -149,13 +150,17 @@ test.describe('Platform Back gestures', () => {
             await emitWindowGesture(app, { event: 'swipe', value: 'left' });
             await expectBackToList(page, listUrl, listIndex);
 
-            // No Forward: Stalker inline details are not history entries.
+            // The window's browser-forward command is not forwarded
+            // (Chromium steps on the mouse button itself); the swipe right
+            // returns to the detail Back left.
             await emitWindowGesture(app, {
                 event: 'app-command',
                 value: 'browser-forward',
             });
-            await emitWindowGesture(app, { event: 'swipe', value: 'right' });
             await expectBackToList(page, listUrl, listIndex);
+            await emitWindowGesture(app, { event: 'swipe', value: 'right' });
+            await page.waitForURL(detailUrlPattern);
+            expect(await historyIndex(page)).toBe(listIndex + 1);
         } finally {
             await closeElectronApp(app);
         }

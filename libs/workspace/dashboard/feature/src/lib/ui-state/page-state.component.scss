@@ -1,0 +1,75 @@
+@use '../../../../../../ui/styles/focus-ring';
+
+// A page's message (`PageStateComponent`): the title, the line under it,
+// "Retry". Plain, it reads from the left; boxed, it stands centred in a
+// dashed box where a section's content would be.
+:host {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 0;
+    color: var(--tv-text);
+}
+
+:host(.page-state--boxed) {
+    align-items: center;
+    padding: 32px 24px;
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    text-align: center;
+}
+
+.page-state__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.page-state__detail {
+    max-width: 560px;
+    margin: 0;
+    color: var(--tv-meta);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.page-state__retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    margin-top: 10px;
+    padding: 0 16px 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: #fff;
+    color: #0b0b09;
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 160ms ease;
+
+    &:hover {
+        background: #e9e6df;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+
+    mat-icon {
+        width: 18px;
+        height: 18px;
+        font-size: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-state__retry {
+        transition: none;
+    }
+}

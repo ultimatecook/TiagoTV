@@ -227,7 +227,7 @@ for (const identityKnown of [true, false]) {
                 });
             }
 
-            await openWorkspaceSection(app.mainWindow, 'Global favorites');
+            await openWorkspaceSection(app.mainWindow, 'My List');
             const oldCard = contentCardByTitle(app.mainWindow, oldTitle);
             await oldCard
                 .getByRole('button', { name: /remove from favorites/i })
@@ -362,13 +362,13 @@ test('@persistence @xtream @electron retains a late-confirmed snapshot through c
                 return getItem.call(this, requestedKey);
             };
         }, playlistId);
-        await openWorkspaceSection(app.mainWindow, 'Global favorites');
+        await openWorkspaceSection(app.mainWindow, 'My List');
         await expect(contentCardByTitle(app.mainWindow, title)).toBeVisible();
         await expect(contentCardByTitle(app.mainWindow, oldTitle)).toHaveCount(
             0
         );
         app = await restartElectronApp(app, dataDir);
-        await openWorkspaceSection(app.mainWindow, 'Global favorites');
+        await openWorkspaceSection(app.mainWindow, 'My List');
         await expect(contentCardByTitle(app.mainWindow, title)).toBeVisible();
         expect(await readSavedFavorites(app.mainWindow, playlistId)).toEqual([
             saved,
@@ -445,7 +445,7 @@ test('@critical @persistence @xtream @electron keeps known conflicts through spa
             sourceTitle,
             'sources'
         );
-        await openWorkspaceSection(app.mainWindow, 'Global favorites');
+        await openWorkspaceSection(app.mainWindow, 'My List');
         expect(
             (await readSavedFavorites(app.mainWindow, playlistId))[0]
                 .catalog_status
@@ -458,7 +458,7 @@ test('@critical @persistence @xtream @electron keeps known conflicts through spa
         await card.dispatchEvent('click');
         await expect(app.mainWindow.locator('app-content-hero')).toHaveCount(0);
         app = await restartElectronApp(app, dataDir);
-        await openWorkspaceSection(app.mainWindow, 'Global favorites');
+        await openWorkspaceSection(app.mainWindow, 'My List');
         await expect(
             app.mainWindow.getByRole('button', {
                 name: 'Saved original before reuse',
@@ -492,7 +492,7 @@ test('@critical @persistence @xtream @electron keeps known conflicts through spa
             },
             { playlistId, xtreamId }
         );
-        await openWorkspaceSection(app.mainWindow, 'Global favorites');
+        await openWorkspaceSection(app.mainWindow, 'My List');
         const [confirmed] = await readSavedFavorites(
             app.mainWindow,
             playlistId
@@ -578,7 +578,7 @@ test('@critical @persistence @xtream @electron detail hearts use the displayed c
             },
             { playlistId, xtreamId }
         );
-        await openWorkspaceSection(app.mainWindow, 'Global favorites');
+        await openWorkspaceSection(app.mainWindow, 'My List');
         await contentCardByTitle(
             app.mainWindow,
             'Compatible duplicate movie'
@@ -606,7 +606,7 @@ test('@critical @persistence @xtream @electron detail hearts use the displayed c
             release_year: 1995,
         });
         app = await restartElectronApp(app, dataDir);
-        await openWorkspaceSection(app.mainWindow, 'Global favorites');
+        await openWorkspaceSection(app.mainWindow, 'My List');
         expect(
             (await readSavedFavorites(app.mainWindow, playlistId))[0].id
         ).toBe(compatibleId);

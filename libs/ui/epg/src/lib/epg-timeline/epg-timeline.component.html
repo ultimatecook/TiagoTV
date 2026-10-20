@@ -126,7 +126,11 @@
                 </button>
                 @let zoomTooltip =
                     'EPG.TIMELINE.ZOOM_TOOLTIP'
-                        | translate: { level: (zoomLabelKey() | translate) };
+                        | translate
+                            : {
+                                  level: (zoomLabelKey() | translate),
+                                  modifier: zoomModifier,
+                              };
                 <button
                     type="button"
                     class="epg-timeline__iconbtn epg-timeline__zoom"

@@ -39,17 +39,30 @@
             />
         </section>
     } @else {
-        <p class="state">{{ 'WORKSPACE.COUNTRIES.EMPTY' | translate }}</p>
+        <div class="state">
+            <lib-page-state
+                boxed
+                [message]="'WORKSPACE.COUNTRIES.EMPTY' | translate"
+            />
+        </div>
     }
 } @else if (!catalog.hasSource()) {
-    <p class="state">{{ 'WORKSPACE.COUNTRIES.NO_SOURCE' | translate }}</p>
+    <div class="state">
+        <lib-page-state
+            boxed
+            [message]="'WORKSPACE.COUNTRIES.NO_SOURCE' | translate"
+        />
+    </div>
 } @else if (catalog.failed() && !catalog.loading()) {
     <div class="state">
-        <p>{{ 'WORKSPACE.COUNTRIES.FAILED' | translate }}</p>
-        <button type="button" class="state__retry" (click)="retry()">
-            <mat-icon aria-hidden="true">refresh</mat-icon>
-            {{ 'RETRY' | translate }}
-        </button>
+        <lib-page-state
+            boxed
+            role="alert"
+            data-test-id="countries-failed"
+            [message]="'WORKSPACE.COUNTRIES.FAILED' | translate"
+            [retryable]="true"
+            (retry)="retry()"
+        />
     </div>
 } @else {
     <div

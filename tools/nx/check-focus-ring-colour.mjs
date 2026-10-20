@@ -203,11 +203,6 @@ export const RING_EXCEPTIONS = [
         value: '#ffffff',
         reason: 'the play button rings white around its own blue fill',
     },
-    {
-        file: 'libs/ui/playback/src/lib/playback-diagnostic-panel/playback-diagnostic-panel.component.scss',
-        value: '#ffb24c',
-        reason: "the diagnostic's amber accent on its near-black scrim (a spec loads this stylesheet as raw CSS)",
-    },
 ];
 
 /** The exception that allows this exact colour in this file, if any. */

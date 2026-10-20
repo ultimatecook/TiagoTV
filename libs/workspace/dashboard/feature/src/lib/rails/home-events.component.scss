@@ -1,5 +1,6 @@
 // "Eventos de hoy" (README 01 · Inicio, 4): one list card, 60px rows.
 @use '../../../../../../ui/styles/focus-ring';
+@use '../ui-state/page-ui';
 
 :host {
     display: block;
@@ -45,7 +46,7 @@
     transition: background 160ms ease;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.04);
+        background: page-ui.$row-wash;
     }
 
     &:focus-visible {

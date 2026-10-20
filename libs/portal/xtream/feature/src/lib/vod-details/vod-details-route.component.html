@@ -307,7 +307,7 @@
             }
             @if (info.rating_imdb) {
                 <app-meta-chip variant="rating"
-                    >★ {{ info.rating_imdb }}</app-meta-chip
+                    >★ {{ info.rating_imdb | appRating }}</app-meta-chip
                 >
             }
             @if (isDownloaded()) {
@@ -360,7 +360,7 @@
             }
             @if (fallback.rating) {
                 <app-meta-chip variant="rating"
-                    >★ {{ fallback.rating }}</app-meta-chip
+                    >★ {{ fallback.rating | appRating }}</app-meta-chip
                 >
             }
             @if (fallback.added) {
@@ -401,7 +401,7 @@
     </app-portal-detail-shell>
 } @else if (detailsError()) {
     <app-portal-detail-shell
-        [errorMessage]="detailsError() ?? undefined"
+        [errorMessage]="detailsErrorText()"
         (backClicked)="goBack()"
     />
 } @else {

@@ -47,10 +47,12 @@ import { DownloadOfflineFileCoordinatorService } from './download-offline-file-c
 import { DownloadOfflineProviderCoordinatorService } from './download-offline-provider-coordinator.service';
 import { createDownloadOfflineRouteContext } from './download-offline-route-context';
 import { DownloadOfflineSeasonSelectionService } from './download-offline-season-selection.service';
+import { RatingPipe } from '@iptvnator/pipes';
 
 @Component({
     selector: 'app-download-offline-detail',
     imports: [
+        RatingPipe,
         CastCrewRowComponent,
         DetailActionsTemplateDirective,
         DetailCreditsComponent,

@@ -11,7 +11,11 @@
                 class="account-dialog__status-pill"
                 [class.account-dialog__status-pill--active]="isActive()"
             >
-                {{ info.user_info.status || '-' }}
+                @if (statusKey(); as key) {
+                    {{ key | translate }}
+                } @else {
+                    {{ info.user_info.status || '-' }}
+                }
             </span>
 
             @if (isTrial()) {

@@ -1,4 +1,7 @@
-import { WINDOW_BACK_REQUESTED } from '@iptvnator/shared/interfaces';
+import {
+    WINDOW_BACK_REQUESTED,
+    WINDOW_FORWARD_REQUESTED,
+} from '@iptvnator/shared/interfaces';
 import { attachWindowBackGestures } from './window-back-gestures';
 
 type GestureListener = (event: unknown, value: string) => void;
@@ -74,13 +77,25 @@ describe('attachWindowBackGestures', () => {
         );
     });
 
+    it('forwards the macOS swipe that means Forward on its own channel', () => {
+        const { emit, webContents } = createWindow('darwin');
+
+        emit('swipe', 'right');
+
+        expect(webContents.send).toHaveBeenCalledTimes(1);
+        expect(webContents.send).toHaveBeenCalledWith(
+            WINDOW_FORWARD_REQUESTED,
+            'swipe'
+        );
+    });
+
     it.each([
+        // Chromium steps Forward itself on the mouse button behind it.
         ['app-command', 'browser-forward'],
         ['app-command', 'media-play-pause'],
-        ['swipe', 'right'],
         ['swipe', 'up'],
         ['swipe', 'down'],
-    ])('ignores %s %s: there is no Forward', (event, value) => {
+    ])('ignores %s %s', (event, value) => {
         const { emit, webContents } = createWindow();
 
         emit(event, value);
@@ -93,8 +108,10 @@ describe('attachWindowBackGestures', () => {
 
         webContents.isDestroyed.mockReturnValue(true);
         emit('app-command', 'browser-backward');
+        emit('swipe', 'right');
         win.isDestroyed.mockReturnValue(true);
         emit('swipe', 'left');
+        emit('swipe', 'right');
 
         expect(webContents.send).not.toHaveBeenCalled();
     });

@@ -372,20 +372,25 @@ async function withFloatingSurfaces(
         for (const theme of ['light', 'dark'] as const) {
             await applyTheme(page, theme);
             await importGuide();
+            // Floating surfaces share the overlay frame: glass over a dark
+            // ground in dark, the plain widget surface in light.
             const surface = await resolveColor(
                 page,
-                'var(--app-widget-bg)',
+                'var(--app-overlay-bg)',
                 'backgroundColor'
             );
-            const hairline = await resolveColor(page, 'var(--app-line-strong)');
+            const hairline = await resolveColor(
+                page,
+                'var(--app-overlay-border)'
+            );
             const accent = await resolveColor(
                 page,
                 'var(--app-selection-color)',
                 'backgroundColor'
             );
 
-            // Both floating panels: the dialog's surface, the menu's
-            // hairline, a 12px corner.
+            // Both floating panels: the overlay surface and hairline, a
+            // 16px corner (between the menu's 14 and the dialog's 20).
             for (const [name, floating] of [
                 ['import panel', panel],
                 ['update card', card],
@@ -397,7 +402,7 @@ async function withFloatingSurfaces(
                     .toEqual({
                         background: surface,
                         border: hairline,
-                        radius: '12px',
+                        radius: '16px',
                     });
             }
             // Header actions are the kit's 28px square ghost icon buttons.
@@ -454,7 +459,7 @@ async function withFloatingSurfaces(
             ).toEqual({
                 background: surface,
                 border: hairline,
-                radius: '16px',
+                radius: '20px',
             });
             await page
                 .locator('mat-dialog-container')
@@ -472,7 +477,7 @@ async function withFloatingSurfaces(
                 .toEqual({
                     background: surface,
                     border: hairline,
-                    radius: '10px',
+                    radius: '14px',
                 });
             expect(
                 await toast

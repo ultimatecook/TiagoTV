@@ -13,6 +13,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
+import { formatRating } from '@iptvnator/pipes';
 import { applyChannelNameStrip } from '@iptvnator/shared/m3u-utils';
 import {
     DisplayChannelName,
@@ -68,7 +69,7 @@ export function formatGridRating(value: unknown): string | undefined {
     }
 
     const numericRating = Number.parseFloat(text);
-    return Number.isFinite(numericRating) ? numericRating.toFixed(1) : text;
+    return Number.isFinite(numericRating) ? formatRating(numericRating) : text;
 }
 
 export function resolveGridRating(

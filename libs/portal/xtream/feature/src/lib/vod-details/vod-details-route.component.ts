@@ -1,4 +1,4 @@
-import { Location, NgTemplateOutlet, SlicePipe } from '@angular/common';
+import { NgTemplateOutlet, SlicePipe } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -46,6 +46,7 @@ import {
     XtreamVodInfo,
     type ExternalPlayerName,
 } from '@iptvnator/shared/interfaces';
+import { injectXtreamDetailBack } from '../xtream-detail-back';
 import { injectXtreamDetailNavigation } from '../xtream-detail-navigation';
 import { playOnDetailRequest } from '../xtream-detail-play-request';
 import { VodDetailsPlaybackService } from './vod-details-playback.service';
@@ -57,6 +58,8 @@ import { VodDetailsMenuService } from './vod-details-menu.service';
 import { VodDetailsSelectionService } from './vod-details-selection.service';
 import { VodDetailsSimilarService } from './vod-details-similar.service';
 import { VodMultiSourceHostService } from './vod-multi-source-host.service';
+import { RatingPipe } from '@iptvnator/pipes';
+import { injectXtreamDetailsErrorText } from '../xtream-detail-error';
 
 @Component({
     templateUrl: './vod-details-route.component.html',
@@ -77,6 +80,7 @@ import { VodMultiSourceHostService } from './vod-multi-source-host.service';
         VodDetailsMenuService,
     ],
     imports: [
+        RatingPipe,
         DetailActionsTemplateDirective,
         DetailMetaTemplateDirective,
         DetailTagsTemplateDirective,
@@ -97,7 +101,7 @@ import { VodMultiSourceHostService } from './vod-multi-source-host.service';
     ],
 })
 export class VodDetailsRouteComponent implements OnInit, OnDestroy {
-    private readonly location = inject(Location);
+    private readonly back = injectXtreamDetailBack('movie');
     private readonly settingsStore = inject(SettingsStore);
     private readonly route = inject(ActivatedRoute);
     private readonly navigation = injectXtreamDetailNavigation('movie');
@@ -142,6 +146,9 @@ export class VodDetailsRouteComponent implements OnInit, OnDestroy {
     readonly fallbackView = this.selection.fallbackView;
     readonly isLoadingDetails = this.xtreamStore.isLoadingDetails;
     readonly detailsError = this.xtreamStore.detailsError;
+    readonly detailsErrorText = injectXtreamDetailsErrorText(
+        this.detailsError
+    );
     readonly matchedExternalPlayback = this.playback.matchedExternalPlayback;
     readonly externalPrimaryLabel = this.playback.externalPrimaryLabel;
     readonly externalPrimaryIcon = this.playback.externalPrimaryIcon;
@@ -559,9 +566,9 @@ export class VodDetailsRouteComponent implements OnInit, OnDestroy {
         return info.backdrop_path?.[0];
     }
 
+    /** The player stays: leaving hands a playing movie to the mini-player. */
     goBack(): void {
-        this.playback.closeInlinePlayer();
-        this.location.back();
+        this.back();
     }
 
     closeInlinePlayer(): void {

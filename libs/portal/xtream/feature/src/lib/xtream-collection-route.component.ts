@@ -28,8 +28,11 @@ import { XtreamCollectionDetailComponent } from './xtream-collection-detail.comp
             [portalType]="portalType()"
             [playlistId]="playlistId()"
         >
-            <ng-template unifiedCollectionDetail let-item>
-                <app-xtream-collection-detail [item]="item" />
+            <ng-template unifiedCollectionDetail let-item let-close="close">
+                <app-xtream-collection-detail
+                    [item]="item"
+                    (closeRequested)="close()"
+                />
             </ng-template>
         </app-unified-collection-page>
     `,

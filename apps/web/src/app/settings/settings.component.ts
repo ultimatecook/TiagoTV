@@ -78,6 +78,7 @@ import { SettingsUnloadGuardService } from './settings-unload-guard.service';
 import { SettingsBackupFacade } from './settings-backup.facade';
 import { SettingsPlaylistResetFacade } from './settings-playlist-reset.facade';
 import { SettingsSnackbarService } from './settings-snackbar.service';
+import { commandShortcutLabel } from '@iptvnator/portal/shared/util';
 
 export const SETTINGS_DEFAULT_SECTION = 'general';
 
@@ -225,11 +226,7 @@ export class SettingsComponent
     });
 
     /** The Save button advertises the platform's save chord */
-    readonly saveShortcutLabel = /mac|iphone|ipad/i.test(
-        navigator.platform || navigator.userAgent
-    )
-        ? '⌘S'
-        : 'Ctrl+S';
+    readonly saveShortcutLabel = commandShortcutLabel('S');
 
     readonly themeOptions = SETTINGS_THEME_OPTIONS;
     readonly coverSizeOptions = SETTINGS_COVER_SIZE_OPTIONS;

@@ -8,6 +8,7 @@ import {
     PlaylistRefreshActionService,
 } from '@iptvnator/playlist/shared/ui';
 import {
+    commandShortcutLabel,
     LiveLayoutSidebarStateService,
     resolveRouteLiveSidebarSurface,
     WorkspaceHeaderAction,
@@ -86,7 +87,9 @@ export class WorkspaceShellHeaderService {
             const collapsed = this.liveSidebar.isCollapsedFor(surface)();
             return {
                 expanded: !collapsed,
-                tooltip: this.translateText('LAYOUT.TOGGLE_SIDEBAR_TOOLTIP'),
+                tooltip: this.translateText('LAYOUT.TOGGLE_SIDEBAR_TOOLTIP', {
+                    shortcut: commandShortcutLabel('B'),
+                }),
                 ariaLabel: this.translateText(
                     collapsed
                         ? 'LAYOUT.SHOW_CHANNELS_LIST'

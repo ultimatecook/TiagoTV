@@ -1,4 +1,5 @@
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../ui-state/page-ui';
 
 // A row of 188px 2:3 posters (README 06), bleeding to the content's edges.
 :host {
@@ -68,14 +69,14 @@
         color-mix(in srgb, var(--poster-tint) 28%, #24221e) 0%,
         #0d0d0c 100%
     );
-    transition:
-        transform 200ms ease,
-        border-color 200ms ease;
+    transition: transform page-ui.$card-ease;
+    @include page-ui.ring-layer(2);
 }
 
+// The pages' card hover: a lift and the white ring.
 .poster:hover .poster__art {
-    border-color: rgba(255, 255, 255, 0.6);
-    transform: translateY(-4px);
+    transform: page-ui.$card-lift;
+    @include page-ui.ring-shown;
 }
 
 .poster__img {

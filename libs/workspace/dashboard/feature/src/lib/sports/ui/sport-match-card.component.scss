@@ -1,11 +1,13 @@
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../ui-state/page-ui';
 
 :host {
     display: block;
     min-width: 0;
 }
 
-// A broadcast scoreboard on the competition's colour, lit from below.
+// A broadcast scoreboard on the competition's colour, lit from below. The
+// whole card is its button's (the pages' card hover: a lift, the ring).
 .match {
     display: flex;
     flex-direction: column;
@@ -27,6 +29,15 @@
             #07080c 100%
         );
     color: var(--tv-text);
+    cursor: pointer;
+    transition:
+        box-shadow page-ui.$card-ease,
+        transform page-ui.$card-ease;
+
+    &:hover {
+        box-shadow: page-ui.$card-ring;
+        transform: page-ui.$card-lift;
+    }
 }
 
 .match__top {
@@ -147,11 +158,11 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 40px;
+    height: 44px;
     margin-top: auto;
-    padding: 0 16px;
+    padding: 0 18px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 999px;
     background: #fff;
     color: #0b0b09;
     font: inherit;
@@ -174,5 +185,15 @@
 
     &:focus-visible {
         @include focus-ring.focus-ring-declarations($offset: 3px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .match {
+        transition: none;
+
+        &:hover {
+            transform: none;
+        }
     }
 }

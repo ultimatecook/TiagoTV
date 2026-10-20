@@ -150,6 +150,29 @@ describe('WorkspaceShellTopBarComponent', () => {
         expect(requested).toHaveBeenCalledTimes(1);
     });
 
+    it('goes up to the hub from the Deportes tab of a league page, like the pill', () => {
+        const requested = jest.fn();
+        component.sportsHubRequested.subscribe(requested);
+        fixture.componentRef.setInput('activeTab', 'sports');
+        setPage('/workspace/sports/laliga');
+        const tab = byTestId<HTMLAnchorElement>('topbar-tab-sports');
+        expect(tab?.getAttribute('href')).toBe('/workspace/sports');
+        expect(tab?.getAttribute('aria-current')).toBe('page');
+
+        // A plain click: up to the hub, never a new hub entry.
+        const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+        tab?.dispatchEvent(click);
+        expect(click.defaultPrevented).toBe(true);
+        expect(requested).toHaveBeenCalledTimes(1);
+
+        // Off a league page it is the router's link again.
+        setPage('/workspace/sports');
+        const hubTab = byTestId<HTMLAnchorElement>('topbar-tab-sports');
+        const again = new MouseEvent('click', { bubbles: true, cancelable: true });
+        hubTab?.dispatchEvent(again);
+        expect(requested).toHaveBeenCalledTimes(1);
+    });
+
     it('reports the lit tab clicked again, which the router ignores', () => {
         const reselected = jest.fn();
         component.activeTabReselected.subscribe(reselected);
@@ -317,6 +340,51 @@ describe('WorkspaceShellTopBarComponent', () => {
 
         expect(shortcut).toHaveBeenCalledTimes(1);
         expect(rail).toHaveBeenCalledTimes(1);
+        // An icon the bar has no line glyph for keeps its ligature.
+        expect(button?.querySelector('mat-icon')?.textContent?.trim()).toBe(
+            'view_timeline'
+        );
+    });
+
+    it('draws the page circles with the bar\'s line glyphs', () => {
+        fixture.componentRef.setInput('headerShortcut', {
+            id: 'guide',
+            icon: 'grid_view',
+            tooltipKey: 'shortcut.tooltip',
+            ariaLabelKey: 'shortcut.aria',
+            run: () => undefined,
+        });
+        fixture.componentRef.setInput('headerSidebarToggle', {
+            expanded: true,
+            tooltip: 'LAYOUT.TOGGLE_SIDEBAR_TOOLTIP',
+            ariaLabel: 'LAYOUT.HIDE_CHANNELS_LIST',
+        });
+        fixture.detectChanges();
+
+        for (const id of ['header-shortcut', 'header-sidebar-toggle']) {
+            const circle = byTestId(id);
+            expect(circle?.querySelector('mat-icon')).toBeNull();
+            expect(
+                circle?.querySelector('app-workspace-shell-top-bar-icon svg')
+            ).not.toBeNull();
+        }
+    });
+
+    it('lays out at the density it measured and tells the shell', () => {
+        const densities: string[] = [];
+        component.densityChange.subscribe((density) => densities.push(density));
+        const host = fixture.nativeElement as HTMLElement;
+
+        component.density.set('stacked');
+        fixture.detectChanges();
+        expect(host.classList).toContain('is-stacked');
+        expect(host.classList).not.toContain('is-compact');
+
+        component.density.set('compact');
+        fixture.detectChanges();
+        expect(host.classList).toContain('is-compact');
+        expect(host.classList).not.toContain('is-stacked');
+        expect(densities).toEqual(['stacked', 'compact']);
     });
 
     it('shows the downloads circle and the parental lock only while they apply', () => {

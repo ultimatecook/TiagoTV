@@ -16,7 +16,8 @@
     --poster-width: 190px;
     --poster-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
     --content-max-width: 1400px;
-    --surface-bg: var(--app-content-bg, #161a22);
+    // Opaque: the hero's scrims fade the artwork into it.
+    --surface-bg: var(--app-content-solid, #161a22);
     --text-primary: var(--app-heading-color, #e7ecf3);
     --text-secondary: var(--app-body-color, #9aa3b2);
     --text-muted: var(--app-muted-color, #6b7384);

@@ -8,6 +8,7 @@ import {
     HostListener,
     inject,
     linkedSignal,
+    signal,
     Signal,
     untracked,
     viewChild,
@@ -33,10 +34,10 @@ import {
 } from './components/workspace-shell-top-bar/workspace-shell-top-bar.component';
 import {
     readWorkspaceTopBarPage,
-    resolveWorkspaceTopBarTab,
     WorkspaceTopBarPage,
     WorkspaceTopBarTabId,
 } from './components/workspace-shell-top-bar/workspace-top-bar-nav';
+import type { WorkspaceTopBarDensity } from './components/workspace-shell-top-bar/workspace-top-bar-fit';
 import { WorkspaceShellServerBannerComponent } from './components/workspace-shell-server-banner/workspace-shell-server-banner.component';
 import { LayoutSlideDirective } from './layout-slide.directive';
 import { TrafficLightsClearanceDirective } from './traffic-lights-clearance.directive';
@@ -48,6 +49,7 @@ import { WorkspaceShellRouteStateService } from './services/workspace-shell-rout
 import { WorkspaceShellSearchSyncService } from './services/workspace-shell-search-sync.service';
 import { WorkspaceShellSearchService } from './services/workspace-shell-search.service';
 import { followWorkspaceScroll } from './workspace-scroll-memory';
+import { WorkspaceTopBarTabMemory } from './workspace-top-bar-tab-memory';
 import { watchWorkspaceScrolled } from './workspace-top-scrim';
 import { provideWorkspaceShellCommands } from './services/workspace-shell-commands.provider';
 import { WorkspaceBackGesturesService } from '../workspace-back-gestures/workspace-back-gestures.service';
@@ -123,9 +125,14 @@ export class WorkspaceShellComponent {
     readonly topBarPage = computed(() =>
         readWorkspaceTopBarPage(this.facade.currentUrl())
     );
+    private readonly tabMemory = new WorkspaceTopBarTabMemory(
+        inject(Router),
+        inject(DestroyRef)
+    );
     /**
-     * The lit tab. A deep page (a title, a channel list) keeps the tab it
-     * was opened from, so the previous value is the input.
+     * The lit tab. A deep page (a title) keeps the tab its opener lit, so
+     * the previous page and tab are the input; history Back and Forward
+     * light the tab their entry lit (`WorkspaceTopBarTabMemory`).
      */
     readonly activeTab = linkedSignal<
         WorkspaceTopBarPage,
@@ -133,8 +140,13 @@ export class WorkspaceShellComponent {
     >({
         source: this.topBarPage,
         computation: (page, previous) =>
-            resolveWorkspaceTopBarTab(page, previous?.value ?? null),
+            this.tabMemory.resolve(
+                page,
+                previous ? { page: previous.source, tab: previous.value } : null
+            ),
     });
+    /** The bar takes two rows: it is taller (`has-stacked-bar`). */
+    readonly barStacked = signal(false);
     /**
      * Back on a deep page; a league page has "‹ Deportes" instead. A tab's
      * own page has none (the bar is the way out) unless it opened a detail
@@ -173,6 +185,7 @@ export class WorkspaceShellComponent {
         const destroyRef = inject(DestroyRef);
         const scroller = () => this.workspaceContent()?.nativeElement;
         followWorkspaceScroll(router, scroller, destroyRef);
+        effect(() => this.tabMemory.remember(this.activeTab()));
         this.pageScrolled = watchWorkspaceScrolled(
             router,
             scroller,
@@ -239,12 +252,34 @@ export class WorkspaceShellComponent {
     /**
      * The lit tab clicked again: its URL is already the current one, so the
      * router does nothing. A detail the tab's page opened in place (a title
-     * over Mi lista) closes, back to the tab's own page.
+     * over Mi lista) closes, back to the tab's own page; otherwise the
+     * page scrolls back to its top.
      */
     onTabReselected(): void {
-        if (this.topBarPage().isTabRoot && this.topBarBack()) {
-            this.facade.goBack();
+        if (!this.topBarPage().isTabRoot) {
+            return;
         }
+        if (this.topBarBack()) {
+            this.facade.goBack();
+            return;
+        }
+        const content = this.workspaceContent()?.nativeElement;
+        if (!content || content.scrollTop <= 0) {
+            return;
+        }
+        if (typeof content.scrollTo !== 'function') {
+            content.scrollTop = 0;
+            return;
+        }
+        const reduce =
+            content.ownerDocument.defaultView?.matchMedia?.(
+                '(prefers-reduced-motion: reduce)'
+            ).matches ?? false;
+        content.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    }
+
+    onTopBarDensity(density: WorkspaceTopBarDensity): void {
+        this.barStacked.set(density === 'stacked');
     }
 
     /**

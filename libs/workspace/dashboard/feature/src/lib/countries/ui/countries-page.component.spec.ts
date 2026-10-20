@@ -27,7 +27,11 @@ import {
     COUNTRY_STORAGE_KEY,
     LAST_CHANNEL_STORAGE_KEY,
 } from '../country-tv-start';
-import { CountriesPageComponent } from './countries-page.component';
+import { PageStateComponent } from '../../ui-state/page-state.component';
+import {
+    COUNTRIES_CATEGORY_MEMORY,
+    CountriesPageComponent,
+} from './countries-page.component';
 import { CountryPickerComponent } from './country-picker.component';
 import { CountryTvOverlayComponent } from './country-tv-overlay.component';
 
@@ -125,6 +129,7 @@ describe('CountriesPageComponent', () => {
                     CountryPickerComponent,
                     CountryTvOverlayComponent,
                     MatIcon,
+                    PageStateComponent,
                     StageStub,
                     TranslatePipe,
                 ],
@@ -246,6 +251,34 @@ describe('CountriesPageComponent', () => {
         );
         // The playing channel keeps playing.
         expect(tv().playback()?.streamUrl).toMatch(/\/10\.ts$/);
+    });
+
+    it('keeps the chip on the history entry, for Back to bring it again', async () => {
+        history.replaceState({ navigationId: 3 }, '');
+        await render('es');
+        find('countries-chip-news')?.click();
+        await settle();
+        // No new entry; the router's own keys stay.
+        expect(history.state.navigationId).toBe(3);
+        expect(history.state.tvPageMemory[COUNTRIES_CATEGORY_MEMORY]).toEqual({
+            country: 'es',
+            category: 'news',
+        });
+
+        // Back to the entry: the page opens on that chip again...
+        TestBed.resetTestingModule();
+        await render('es');
+        expect(cardIds()).toEqual(['14', '15']);
+        expect(find('countries-chip-news')?.getAttribute('aria-pressed')).toBe(
+            'true'
+        );
+
+        // ...but another country's entry, or a new one, opens on "All".
+        TestBed.resetTestingModule();
+        history.replaceState({ navigationId: 4 }, '');
+        await render('es');
+        expect(cardIds()).toEqual(['10', '12', '14', '15']);
+        history.replaceState(null, '');
     });
 
     it('opens again on the country chosen last, or the last channel', async () => {
@@ -400,7 +433,7 @@ describe('CountriesPageComponent', () => {
         hasSource.set(true);
         failed.set(true);
         fixture.detectChanges();
-        element().querySelector<HTMLButtonElement>('.state__retry')?.click();
+        find('page-state-retry')?.click();
         expect(catalog.retry).toHaveBeenCalled();
         expect(tv().selection()).toBeNull();
     });

@@ -325,7 +325,7 @@ test.describe('Dashboard hero legibility', () => {
             // One stable page heading; the rotating slide title is an h2.
             await expect(page.locator('h1')).toHaveCount(1);
             await expect(page.getByTestId('dashboard-page-heading')).toHaveText(
-                'Dashboard'
+                'Home'
             );
             await expect(
                 page

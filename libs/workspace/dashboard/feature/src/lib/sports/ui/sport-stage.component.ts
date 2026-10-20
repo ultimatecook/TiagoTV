@@ -113,10 +113,10 @@ export class SportStageComponent {
             const key = (event: KeyboardEvent) => this.onKeydown(event);
             document.addEventListener('keydown', key);
             const overlay = this.overlay()?.nativeElement;
-            // Its height, on the stage: the player's diagnostic (Retry, the
-            // external players) stays above it.
-            // Without the veil, its controls' height: a native-view picture,
-            // which nothing can cover, stays above them.
+            // Its height without the veil, on the stage: the player's
+            // diagnostic (Retry, the external players) and a native-view
+            // picture, which nothing can cover, stay above its controls;
+            // the resting logo is centred over them.
             const observer =
                 overlay && typeof ResizeObserver !== 'undefined'
                     ? new ResizeObserver(() => {
@@ -126,17 +126,14 @@ export class SportStageComponent {
                           );
                           const height = overlay.offsetHeight;
                           style?.setProperty(
-                              '--sport-overlay-h',
-                              `${height}px`
-                          );
-                          style?.setProperty(
                               '--sport-overlay-content',
                               `${Math.max(0, height - (veil || 0))}px`
                           );
                       })
                     : null;
             if (overlay) {
-                observer?.observe(overlay);
+                // Its border box: the veil alone changes on a short window.
+                observer?.observe(overlay, { box: 'border-box' });
             }
             const scroller = this.fitScroller();
             destroyRef.onDestroy(() => {

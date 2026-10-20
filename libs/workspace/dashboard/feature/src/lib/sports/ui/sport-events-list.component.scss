@@ -1,4 +1,5 @@
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../ui-state/page-ui';
 
 :host {
     display: block;
@@ -37,7 +38,7 @@
     transition: background-color 160ms ease;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.04);
+        background: page-ui.$row-wash;
 
         .event__play {
             background: rgba(255, 255, 255, 0.16);

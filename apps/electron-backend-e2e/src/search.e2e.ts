@@ -213,7 +213,7 @@ test.describe('Electron Workspace Search', () => {
             await expectQueryParam(app.mainWindow, 'q', sample.groupTitle);
             await expectWorkspaceSearchScope(
                 app.mainWindow,
-                'Global favorites'
+                'My List'
             );
             await expect(
                 channelItemByTitle(app.mainWindow, sample.targetTitle).first()
@@ -248,7 +248,7 @@ test.describe('Electron Workspace Search', () => {
             await expectQueryParam(app.mainWindow, 'q', sample.targetTitle);
             await expectWorkspaceSearchScope(
                 app.mainWindow,
-                'Global favorites'
+                'My List'
             );
             await expect(
                 channelItemByTitle(app.mainWindow, sample.targetTitle).first()
@@ -743,7 +743,7 @@ test.describe('Electron Workspace Search', () => {
             );
             await expectWorkspaceSearchScope(
                 app.mainWindow,
-                'Global favorites'
+                'My List'
             );
             await expect(
                 contentCardByTitle(
@@ -980,7 +980,7 @@ test.describe('Electron Workspace Search', () => {
             await expectQueryParam(app.mainWindow, 'q', sample.targetTitle);
             await expectWorkspaceSearchScope(
                 app.mainWindow,
-                'Global favorites'
+                'My List'
             );
             await expect(
                 channelItemByTitle(app.mainWindow, sample.targetTitle).first()

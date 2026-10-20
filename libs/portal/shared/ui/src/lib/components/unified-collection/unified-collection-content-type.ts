@@ -21,7 +21,8 @@ export interface CollectionContentTypeState {
     readonly availableTypes: Signal<CollectionContentType[]>;
     readonly showToggle: Signal<boolean>;
     readonly currentTypeItems: Signal<UnifiedCollectionItem[]>;
-    readonly currentTypeLabelKey: Signal<string>;
+    /** The tab's type as a noun inside a sentence ("las películas"). */
+    readonly currentTypeNounKey: Signal<string>;
     /** Move off a tab the collection no longer has items for. */
     autoSelect(): void;
 }
@@ -63,14 +64,14 @@ export function createCollectionContentTypeState(
         }
     });
 
-    const currentTypeLabelKey = computed(() => {
+    const currentTypeNounKey = computed(() => {
         switch (selected()) {
             case 'live':
-                return 'PORTALS.LIVE_TV';
+                return 'WORKSPACE.SHELL.COLLECTION_TYPE_NOUN.LIVE';
             case 'movie':
-                return 'PORTALS.MOVIES';
+                return 'WORKSPACE.SHELL.COLLECTION_TYPE_NOUN.MOVIE';
             case 'series':
-                return 'PORTALS.SERIES';
+                return 'WORKSPACE.SHELL.COLLECTION_TYPE_NOUN.SERIES';
         }
     });
 
@@ -85,7 +86,7 @@ export function createCollectionContentTypeState(
         availableTypes,
         showToggle: computed(() => availableTypes().length > 1),
         currentTypeItems,
-        currentTypeLabelKey,
+        currentTypeNounKey,
         autoSelect(): void {
             const types = availableTypes();
             if (types.length > 0 && !types.includes(selected())) {

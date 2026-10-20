@@ -208,6 +208,8 @@
     font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.08em;
+    /* The copy is sentence case ("En vivo"); the badge shows it in caps. */
+    text-transform: uppercase;
 }
 
 .player-controls__live-dot {

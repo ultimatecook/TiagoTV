@@ -43,6 +43,12 @@ export interface WorkspaceTopBarPage {
     readonly isTabRoot: boolean;
     /** A league page: "‹ Deportes" back to the hub replaces Back. */
     readonly isLeague: boolean;
+    /**
+     * A deep page that keeps the tab it was opened from (a title, a
+     * platform-less list). False where the page lights its own tab or none
+     * (Buscar, Ajustes, Fuentes, Descargas).
+     */
+    readonly keepsTab: boolean;
     /** The right-hand circle that is lit. */
     readonly utility: 'search' | 'settings' | null;
     /**
@@ -53,7 +59,10 @@ export interface WorkspaceTopBarPage {
     readonly layout: 'scroll' | 'framed';
 }
 
-/** Portal sections and the tab their pages fall back to. */
+/**
+ * Portal sections and their tab: a section's own lists light it, and a
+ * title inside one falls back to it.
+ */
 const SECTION_TABS: Readonly<Record<string, WorkspaceTopBarTabId>> = {
     vod: 'movies',
     series: 'series',
@@ -87,8 +96,6 @@ export function readWorkspaceTopBarPage(url: string): WorkspaceTopBarPage {
     }
     const first = segments[1] ?? 'dashboard';
     const second = segments[2];
-    // /workspace/<provider>/<playlist id>/<section>/…
-    const section = segments[3];
     const layout = SCROLL_PAGES.has(first) ? 'scroll' : 'framed';
     switch (first) {
         case 'dashboard':
@@ -118,33 +125,75 @@ export function readWorkspaceTopBarPage(url: string): WorkspaceTopBarPage {
             return { ...page(null, null, true, layout), utility: 'search' };
         case 'settings':
             return { ...page(null, null, true, layout), utility: 'settings' };
+        case 'sources':
+        case 'downloads':
+            // Behind the source switcher, not a tab.
+            return { ...page(null, null, false, layout), keepsTab: false };
         case 'xtreams':
         case 'stalker':
-        case 'playlists': {
-            const fallback = section ? (SECTION_TABS[section] ?? null) : null;
-            return {
-                ...page(null, fallback, false, layout),
-                utility: section === 'search' ? 'search' : null,
-            };
-        }
+        case 'playlists':
+            return readPortalPage(segments, layout);
         default:
             return page(null, null, false, layout);
     }
 }
 
 /**
- * The lit tab: the page's own, else the one the page was opened from
- * (`previous`, the tab lit before this navigation), else the page's
- * fallback. Buscar and Ajustes light no tab.
+ * /workspace/<provider>/<id>/<section>/…: a section's lists light its tab
+ * (live En vivo, vod Películas, series Series), a title in it
+ * (`vod|series/<category>/<item>`) keeps the tab it was opened from, its
+ * search lights Buscar and its downloads no tab.
+ */
+function readPortalPage(
+    segments: readonly string[],
+    layout: 'scroll' | 'framed'
+): WorkspaceTopBarPage {
+    const section = segments[3];
+    const sectionTab = section ? (SECTION_TABS[section] ?? null) : null;
+    if (section === 'search') {
+        return {
+            ...page(null, null, false, layout),
+            keepsTab: false,
+            utility: 'search',
+        };
+    }
+    if (section === 'downloads') {
+        return { ...page(null, null, false, layout), keepsTab: false };
+    }
+    const isTitle =
+        (section === 'vod' || section === 'series') && segments.length > 5;
+    return sectionTab && !isTitle
+        ? page(sectionTab, null, false, layout)
+        : page(null, sectionTab, false, layout);
+}
+
+/** The page navigated from, and the tab it lit. */
+export interface WorkspaceTopBarOpener {
+    readonly page: WorkspaceTopBarPage | null;
+    readonly tab: WorkspaceTopBarTabId | null;
+}
+
+/**
+ * The lit tab after a fresh navigation (history Back and Forward restore
+ * the tab their entry lit instead, see `WorkspaceTopBarTabMemory`): the
+ * page's own, or none. A deep page keeps its opener's tab when a tab's own
+ * page opened it (a title from Películas or Inicio); opened from another
+ * deep page or from nowhere (a reload, a deep link), its section decides,
+ * else the tab lit before. Buscar, Ajustes, Fuentes and Descargas light no
+ * tab.
  */
 export function resolveWorkspaceTopBarTab(
     current: WorkspaceTopBarPage,
-    previous: WorkspaceTopBarTabId | null
+    opener: WorkspaceTopBarOpener | null
 ): WorkspaceTopBarTabId | null {
-    if (current.tab || current.isTabRoot) {
+    if (!current.keepsTab) {
         return current.tab;
     }
-    return previous ?? current.fallbackTab;
+    const openerTab = opener?.page?.tab ?? null;
+    if (openerTab && !opener?.page?.keepsTab) {
+        return openerTab;
+    }
+    return current.fallbackTab ?? opener?.tab ?? null;
 }
 
 function page(
@@ -158,6 +207,8 @@ function page(
         fallbackTab,
         isTabRoot,
         isLeague: false,
+        // A page with a tab of its own, or a tab's own page, keeps none.
+        keepsTab: !tabId && !isTabRoot,
         utility: null,
         layout,
     };

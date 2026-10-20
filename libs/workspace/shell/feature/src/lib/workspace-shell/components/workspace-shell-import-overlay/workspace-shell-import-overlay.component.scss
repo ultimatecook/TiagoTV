@@ -4,9 +4,13 @@
     display: contents;
 }
 
+// Over the window's content, below the top bar: the import is the page's
+// (another tab leaves it), so the bar stays usable and unblurred. The
+// shell's window inset and the bar's height place it.
 .workspace-loading-overlay {
     position: fixed;
-    inset: 0;
+    inset: calc(var(--workspace-window-inset, 0px) + var(--tv-topbar-h))
+        var(--workspace-window-inset, 0px) var(--workspace-window-inset, 0px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -19,7 +23,11 @@
         ),
         rgba(8, 10, 16, 0.68);
     backdrop-filter: blur(14px);
+    border-radius: 0 0 var(--tv-window-radius, 0px)
+        var(--tv-window-radius, 0px);
     z-index: 1000;
+    // Over the window's draggable margin, its button must still click.
+    app-region: no-drag;
 }
 
 .workspace-loading-overlay__card {

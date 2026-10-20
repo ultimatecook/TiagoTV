@@ -1,7 +1,10 @@
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../ui-state/page-ui';
 
-// The global search (handoff 05 · Buscador): full width, a 60px field,
-// the scope chips, then the recent searches or the grouped results.
+// The global search (handoff 05 · Buscador): a 60px field, the scope
+// chips, then the recent searches or the grouped results. It reads from
+// the page's gutter and stops at 1200px: on a wide window its rows do not
+// run the window's width.
 :host {
     display: block;
 }
@@ -10,6 +13,8 @@
     display: flex;
     flex-direction: column;
     gap: 32px;
+    box-sizing: border-box;
+    max-width: calc(1200px + 2 * var(--tv-page-x));
     padding: var(--tv-page-top) var(--tv-page-x) var(--tv-page-bottom);
     color: var(--tv-text);
 }
@@ -85,7 +90,7 @@
     }
 }
 
-// ─── Scopes ──────────────────────────────────────────────────────────────
+// ─── Scopes: the pages' chip ("En vivo"'s) ───────────────────────────────
 .search-scopes {
     display: flex;
     flex-wrap: wrap;
@@ -94,24 +99,10 @@
 }
 
 .search-scope {
-    height: 34px;
-    padding: 0 14px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--tv-text-2);
-    font: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition:
-        background 160ms ease,
-        color 160ms ease,
-        border-color 160ms ease;
+    @include page-ui.chip;
 
     &:hover:not(.search-scope--active) {
-        background: rgba(255, 255, 255, 0.06);
-        color: var(--tv-text);
+        @include page-ui.chip-hover;
     }
 
     &:focus-visible {
@@ -120,9 +111,7 @@
 }
 
 .search-scope--active {
-    border-color: var(--tv-text);
-    background: var(--tv-text);
-    color: #0b0b09;
+    @include page-ui.chip-on;
 }
 
 // ─── Recent searches ─────────────────────────────────────────────────────
@@ -172,20 +161,14 @@
     gap: 8px;
 }
 
+// A recent search: the pages' chip, its term in the body's weight.
 .search-recent__chip {
-    height: 36px;
-    padding: 0 14px;
-    border: 0;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--tv-text);
-    font: inherit;
+    @include page-ui.chip;
     font-size: 14px;
     font-weight: 500;
-    cursor: pointer;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.12);
+        @include page-ui.chip-hover;
     }
 
     &:focus-visible {
@@ -201,16 +184,18 @@
 }
 
 // ─── Results ─────────────────────────────────────────────────────────────
+// The groups keep the pages' rhythm: a section title (20px/600) its
+// `--tv-title-gap` above the card, the groups `--tv-section-gap` apart.
 .search-groups {
     display: flex;
     flex-direction: column;
-    gap: 36px;
+    gap: var(--tv-section-gap);
 }
 
 .search-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--tv-title-gap);
 }
 
 .search-group__head {
@@ -221,8 +206,9 @@
     h2 {
         margin: 0;
         color: var(--tv-text);
-        font-size: 17px;
+        font-size: 20px;
         font-weight: 600;
+        letter-spacing: -0.01em;
     }
 
     span {
@@ -263,7 +249,7 @@
     }
 
     &:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: page-ui.$row-wash;
     }
 
     // Inside the row: the card clips what lies outside it.
@@ -383,29 +369,6 @@
     }
 }
 
-.search-empty {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 32px;
-    border: 1px dashed rgba(255, 255, 255, 0.14);
-    border-radius: 16px;
-    text-align: center;
-}
-
-.search-empty__title {
-    margin: 0;
-    color: var(--tv-text);
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.search-empty__hint {
-    margin: 0;
-    color: var(--tv-meta);
-    font-size: 13.5px;
-}
-
 // ─── Phones ──────────────────────────────────────────────────────────────
 @media (max-width: 640px) {
     .search-page {
@@ -427,9 +390,5 @@
         padding: 0 var(--tv-page-x);
         overflow-x: auto;
         scrollbar-width: none;
-    }
-
-    .search-scope {
-        flex: none;
     }
 }

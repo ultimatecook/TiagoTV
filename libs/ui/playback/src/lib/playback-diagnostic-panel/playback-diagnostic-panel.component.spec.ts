@@ -557,6 +557,21 @@ describe('PlaybackDiagnosticPanelComponent', () => {
         );
     });
 
+    it('copies the full Xtream stream URL but keeps its account off the tooltip', () => {
+        const streamUrl =
+            'http://portal.example/movie/fake-user/fake-pass/42.mkv';
+        fixture.componentRef.setInput('playback', { ...PLAYBACK, streamUrl });
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.query(
+            By.css('[data-test-id="playback-copy-url"]')
+        );
+        expect(button.injector.get(CdkCopyToClipboard).text).toBe(streamUrl);
+        expect(component.streamUrlTitle()).toContain('portal.example');
+        expect(component.streamUrlTitle()).not.toContain('fake-user');
+        expect(component.streamUrlTitle()).not.toContain('fake-pass');
+    });
+
     it('uses runtime capability for browser-access guidance without implying an external action', () => {
         const browserIssue: PlaybackDiagnostic = {
             ...DIAGNOSTIC,
@@ -749,7 +764,8 @@ describe('PlaybackDiagnosticPanelComponent', () => {
         expect(styles).toContain(
             '.web-player-diagnostic__player-card:focus-visible'
         );
-        expect(styles).toContain('outline: 2px solid #ffb24c');
+        expect(styles).toContain('outline: 2px solid var(--app-focus-ring)');
+        expect(styles).toContain('--app-focus-ring: #fbf7ee');
         expect(styles).toContain(
             '@container playback-diagnostic (max-width: 520px)'
         );

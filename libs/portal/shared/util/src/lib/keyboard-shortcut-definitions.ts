@@ -145,6 +145,16 @@ export const APP_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutDefinition[] = [
         order: 0,
     },
     {
+        // History Forward, the browser chord on each platform; on macOS the
+        // trackpad swipe right too.
+        id: 'navigate-forward',
+        group: 'navigation',
+        labelKey: 'WORKSPACE.SHORTCUTS.ITEMS.GO_FORWARD',
+        icon: 'arrow_forward',
+        keys: [{ mac: ['Cmd', ']'], other: ['Alt', 'ArrowRight'] }],
+        order: 5,
+    },
+    {
         id: 'toggle-sidebar',
         group: 'navigation',
         labelKey: 'WORKSPACE.SHORTCUTS.ITEMS.TOGGLE_SIDEBAR',

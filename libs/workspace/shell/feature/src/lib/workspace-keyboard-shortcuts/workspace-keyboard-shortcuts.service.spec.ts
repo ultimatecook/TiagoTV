@@ -16,7 +16,7 @@ describe('WorkspaceKeyboardShortcutsService', () => {
         >;
     };
     let runtime: { isElectron: boolean };
-    let backGestures: { goBack: jest.Mock };
+    let backGestures: { goBack: jest.Mock; goForward: jest.Mock };
     let service: WorkspaceKeyboardShortcutsService;
 
     function openedDialogData(): WorkspaceKeyboardShortcutsDialogData {
@@ -37,6 +37,7 @@ describe('WorkspaceKeyboardShortcutsService', () => {
         runtime = { isElectron: true };
         backGestures = {
             goBack: jest.fn(() => 'back'),
+            goForward: jest.fn(() => 'forward'),
         };
 
         TestBed.configureTestingModule({
@@ -287,6 +288,92 @@ describe('WorkspaceKeyboardShortcutsService', () => {
 
             expect(backGestures.goBack).not.toHaveBeenCalled();
             expect(dialog.open).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Forward chord', () => {
+        function setPlatform(platform: string): void {
+            Object.defineProperty(navigator, 'userAgentData', {
+                configurable: true,
+                value: { platform },
+            });
+        }
+
+        function press(
+            init: KeyboardEventInit,
+            target: EventTarget = document.body
+        ): KeyboardEvent {
+            const event = new KeyboardEvent('keydown', {
+                bubbles: true,
+                cancelable: true,
+                ...init,
+            });
+            target.dispatchEvent(event);
+            return event;
+        }
+
+        it('steps Forward for Cmd+] on macOS and keeps the chord from the page', () => {
+            setPlatform('macOS');
+            const pageListener = jest.fn();
+            document.body.addEventListener('keydown', pageListener);
+
+            press({ key: 'ArrowRight', altKey: true });
+            expect(backGestures.goForward).not.toHaveBeenCalled();
+
+            const event = press({
+                key: ']',
+                code: 'BracketRight',
+                metaKey: true,
+            });
+
+            expect(backGestures.goForward).toHaveBeenCalledTimes(1);
+            expect(backGestures.goBack).not.toHaveBeenCalled();
+            expect(event.defaultPrevented).toBe(true);
+            expect(pageListener).toHaveBeenCalledTimes(1);
+            document.body.removeEventListener('keydown', pageListener);
+        });
+
+        it('steps Forward for Alt+ArrowRight outside macOS', () => {
+            setPlatform('Windows');
+
+            const event = press({ key: 'ArrowRight', altKey: true });
+
+            expect(backGestures.goForward).toHaveBeenCalledTimes(1);
+            expect(event.defaultPrevented).toBe(true);
+        });
+
+        it('swallows a blocked chord and leaves one without an entry ahead', () => {
+            setPlatform('Linux');
+            backGestures.goForward.mockReturnValue('blocked');
+            expect(press({ key: 'ArrowRight', altKey: true }).defaultPrevented).toBe(
+                true
+            );
+            document.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+
+            backGestures.goForward.mockReturnValue('none');
+            expect(press({ key: 'ArrowRight', altKey: true }).defaultPrevented).toBe(
+                false
+            );
+        });
+
+        it('steps once for a held chord and never while typing', () => {
+            setPlatform('Windows');
+            press({ key: 'ArrowRight', altKey: true });
+            const repeat = press({
+                key: 'ArrowRight',
+                altKey: true,
+                repeat: true,
+            });
+            expect(backGestures.goForward).toHaveBeenCalledTimes(1);
+            expect(repeat.defaultPrevented).toBe(true);
+
+            const input = document.createElement('input');
+            document.body.appendChild(input);
+            document.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+            const typed = press({ key: 'ArrowRight', altKey: true }, input);
+            expect(backGestures.goForward).toHaveBeenCalledTimes(1);
+            expect(typed.defaultPrevented).toBe(false);
+            input.remove();
         });
     });
 

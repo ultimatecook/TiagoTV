@@ -99,7 +99,7 @@
                 mat-icon-button
                 type="button"
                 [attr.aria-label]="'LAYOUT.HIDE_PANELS' | translate"
-                [matTooltip]="'LAYOUT.HIDE_PANELS_TOOLTIP' | translate"
+                [matTooltip]="'LAYOUT.HIDE_PANELS_TOOLTIP' | translate: { shortcut: sidebarShortcut }"
                 (click)="livePanels.collapsePanels()"
             >
                 <mat-icon>chevron_left</mat-icon>
@@ -118,7 +118,7 @@
             type="button"
             class="sidebar-restore"
             [attr.aria-label]="'LAYOUT.SHOW_PANELS' | translate"
-            [matTooltip]="'LAYOUT.SHOW_PANELS_TOOLTIP' | translate"
+            [matTooltip]="'LAYOUT.SHOW_PANELS_TOOLTIP' | translate: { shortcut: sidebarShortcut }"
             (click)="livePanels.toggleSidebar()"
         >
             <mat-icon>chevron_right</mat-icon>

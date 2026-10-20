@@ -31,6 +31,7 @@ import {
     MenuItemRadioDirective,
 } from '@iptvnator/ui/components';
 import {
+    commandShortcutLabel,
     clearNavigationStateKeys,
     CollectionContentType,
     CollectionScope,
@@ -97,12 +98,17 @@ import { UnifiedCollectionDetailDirective } from './unified-collection-detail.di
     ],
 })
 export class UnifiedCollectionPageComponent implements AfterContentInit {
+    /** Cmd/Ctrl+B, written the way the shortcuts dialog writes it. */
+    readonly sidebarShortcut = commandShortcutLabel('B');
+
     readonly mode = input<CollectionMode>('favorites');
     readonly portalType = input<string>();
     readonly playlistIdInput = input<string | undefined>(undefined, {
         alias: 'playlistId',
     });
     readonly defaultScope = input<CollectionScope>();
+    /** A page-specific heading, e.g. "Mi lista" for the global favorites. */
+    readonly titleKey = input<string>();
 
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
@@ -154,7 +160,7 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
     readonly hasSeries = this.contentType.hasSeries;
     readonly showContentToggle = this.contentType.showToggle;
     readonly currentTypeItems = this.contentType.currentTypeItems;
-    readonly currentTypeLabelKey = this.contentType.currentTypeLabelKey;
+    readonly currentTypeNounKey = this.contentType.currentTypeNounKey;
 
     readonly scopeKey = computed(() => this.mode());
     private readonly scopeState = createCollectionScopeState({
@@ -183,7 +189,7 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
     );
 
     private readonly labels = createCollectionModeLabels(this.mode);
-    readonly title = this.labels.title;
+    readonly title = computed(() => this.titleKey() ?? this.labels.title());
     readonly clearButtonTooltipKey = this.labels.clearTooltipKey;
     readonly emptyStateIcon = this.labels.emptyStateIcon;
     readonly emptyStateTitleKey = this.labels.emptyStateTitleKey;
@@ -222,7 +228,7 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
     private readonly clearAction = createClearCollectionAction({
         mode: this.mode,
         items: this.currentTypeItems,
-        typeLabelKey: this.currentTypeLabelKey,
+        typeLabelKey: this.currentTypeNounKey,
         isPlaylistScope: () => this.mutationRequest().scope === 'playlist',
         data: this.data,
         dropCurrentType: () => this.dropCurrentContentType(),
@@ -253,7 +259,7 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
             selectedContentType: this.selectedContentType,
             currentTypeItems: this.currentTypeItems,
             labelKey: this.clearButtonTooltipKey,
-            typeLabelKey: this.currentTypeLabelKey,
+            typeLabelKey: this.currentTypeNounKey,
             run: () => this.clearAllCurrent(),
         });
 

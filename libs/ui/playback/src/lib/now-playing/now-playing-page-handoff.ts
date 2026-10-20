@@ -43,6 +43,8 @@ export class NowPlayingPageHandoff {
     private readonly originState = navigationReturnState(
         typeof history !== 'undefined' ? history.state : null
     );
+    /** The history entry it runs on; null without the Navigation API. */
+    private readonly originEntryKey = currentHistoryEntryKey();
     private progress: NowPlayingProgress | null = null;
     private readonly stoppedState = signal(false);
     private readonly holder: PlaybackStreamHolder = {
@@ -151,11 +153,26 @@ export class NowPlayingPageHandoff {
                 : null;
         return (
             navigation !== null ||
-            stripQuery(router.url ?? '') !== stripQuery(this.originUrl)
+            stripQuery(router.url ?? '') !== stripQuery(this.originUrl) ||
+            // A traversal that keeps the URL leaves the page all the same:
+            // Back from a collection's inline detail (Mi lista) to its list.
+            // A `replaceState` keeps the entry's key.
+            (this.originEntryKey !== null &&
+                currentHistoryEntryKey() !== this.originEntryKey)
         );
     }
 }
 
 function stripQuery(url: string): string {
     return url.split(/[?#]/)[0];
+}
+
+function currentHistoryEntryKey(): string | null {
+    try {
+        return typeof navigation === 'undefined'
+            ? null
+            : (navigation?.currentEntry?.key ?? null);
+    } catch {
+        return null;
+    }
 }

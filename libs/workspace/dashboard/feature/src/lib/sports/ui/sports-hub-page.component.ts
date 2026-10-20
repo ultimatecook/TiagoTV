@@ -20,10 +20,19 @@ import { injectSportsLocale } from '../match-view';
 import type { TeamFixture } from '../my-teams';
 import { SportsBoardService } from '../sports-board.service';
 import { SportsCatalogService } from '../sports-catalog.service';
+import {
+    isNumber,
+    recallPageChoice,
+    rememberPageChoice,
+} from '../../ui-state/page-memory';
+import { PageStateComponent } from '../../ui-state/page-state.component';
 import { SportEventsListComponent } from './sport-events-list.component';
 import { SportMatchCardComponent } from './sport-match-card.component';
 import { SportsRailComponent } from './sports-rail.component';
 import { TeamCrestComponent } from './team-crest.component';
+
+/** The history entry's memory of the day picked (`rememberPageChoice`). */
+export const SPORTS_DAY_MEMORY = 'sports-day';
 
 /** A followed team's state on its pill: on now, or its next kick-off. */
 export type TeamStatus =
@@ -38,6 +47,7 @@ export type TeamStatus =
 @Component({
     selector: 'lib-sports-hub-page',
     imports: [
+        PageStateComponent,
         SportEventsListComponent,
         SportMatchCardComponent,
         SportsRailComponent,
@@ -53,8 +63,13 @@ export class SportsHubPageComponent {
     readonly board = inject(SportsBoardService);
     private readonly locale = injectSportsLocale();
 
-    /** The day picked: days from today. */
-    readonly offset = signal(0);
+    /**
+     * The day picked: days from today. It stays on the history entry, so
+     * Back returns to the day left, and a new visit opens on today.
+     */
+    readonly offset = signal(
+        recallPageChoice(SPORTS_DAY_MEMORY, isDayOffset) ?? 0
+    );
     readonly days = computed(() => {
         const now = this.sports.now();
         const locale = this.locale();
@@ -103,6 +118,15 @@ export class SportsHubPageComponent {
         this.sports.keepFresh(inject(DestroyRef));
     }
 
+    pickDay(offset: number): void {
+        this.offset.set(offset);
+        rememberPageChoice(SPORTS_DAY_MEMORY, offset);
+    }
+
+    retry(): void {
+        void this.sports.load();
+    }
+
     openTeam(fixture: TeamFixture): void {
         if (fixture.match) {
             this.board.openMatch(fixture.match);
@@ -131,4 +155,8 @@ export class SportsHubPageComponent {
             time: kickOffTime(kickOff, locale),
         };
     }
+}
+
+function isDayOffset(value: unknown): value is number {
+    return isNumber(value) && DAY_OFFSETS.includes(value);
 }

@@ -16,8 +16,9 @@
     inset: 0;
     display: grid;
     place-items: center;
-    // The logo sits in the picture's upper part, clear of the overlay.
-    padding-bottom: 34%;
+    // The logo sits in the picture between the bar and the overlay's
+    // controls (`--live-overlay-content`, the page's), at any window shape.
+    padding: var(--tv-topbar-h) 0 var(--live-overlay-content, 34vh);
     background: radial-gradient(
         70% 90% at 50% 40%,
         #2a2c2e 0%,
@@ -37,7 +38,7 @@
     padding: 0 24px;
     color: rgba(255, 255, 255, 0.14);
     font-family: var(--tv-font-display);
-    font-size: clamp(64px, 9vw, 120px);
+    font-size: clamp(48px, min(9vw, 16vh), 120px);
     line-height: 1;
     letter-spacing: 0.03em;
     text-align: center;
@@ -56,12 +57,17 @@
 
 // The page's overlay is the controls: the player's own bar is hidden, and
 // its picture takes no clicks (a click shows or hides the overlay). Its
-// diagnostic, with Retry and the external players, stays usable, above
-// the overlay's height (`--live-overlay-height`, set by the page).
+// diagnostic, with Retry and the external players, stays usable above the
+// overlay's controls (`--live-overlay-content`, set by the page: the
+// overlay's height without its veil, which the opaque panel covers); on
+// a short window the overlay folds its rows to give it room.
 :host ::ng-deep {
     app-player-controls,
     .vjs-control-bar,
     .vjs-big-play-button,
+    // Video.js's own error text sits at the picture's top, under the bar;
+    // the page shows the app's diagnostic panel instead.
+    .vjs-error-display,
     .art-bottom,
     .art-mask {
         display: none !important;
@@ -78,7 +84,7 @@
         // Clear of the top bar and the country button, as the native
         // picture (`--live-player-inset`): a phone's bar takes two rows.
         top: calc(var(--tv-topbar-h) + 76px);
-        bottom: var(--live-overlay-height, 0px);
+        bottom: var(--live-overlay-content, 0px);
     }
 
     // Native-view Embedded MPV keeps no dock below its picture on the
@@ -98,6 +104,13 @@
     // shown by a move, and the player takes the pointer.
     app-web-player-view:fullscreen app-embedded-mpv-player {
         pointer-events: auto;
+    }
+}
+
+// A short window keeps the country's button closer under the bar.
+@media (max-height: 700px) {
+    :host ::ng-deep app-playback-diagnostic-panel {
+        top: calc(var(--tv-topbar-h) + 56px);
     }
 }
 

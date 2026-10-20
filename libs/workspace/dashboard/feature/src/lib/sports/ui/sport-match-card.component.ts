@@ -4,9 +4,10 @@ import {
     computed,
     inject,
     input,
+    viewChild,
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { TranslatePipe } from '@ngx-translate/core';
 import { kickOffTime } from '../match-days';
 import { injectSportsLocale, matchSides } from '../match-view';
@@ -24,6 +25,7 @@ import { TeamCrestComponent } from './team-crest.component';
  * {channel}" that opens the competition's page playing it. A match no
  * kept feed names offers its competition's channels ("M+ LaLiga TV",
  * "DAZN LaLiga") in a menu. Races and tennis sessions show their title.
+ * A click anywhere on the card does what its button does.
  */
 @Component({
     selector: 'lib-sport-match-card',
@@ -31,6 +33,7 @@ import { TeamCrestComponent } from './team-crest.component';
     templateUrl: './sport-match-card.component.html',
     styleUrl: './sport-match-card.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    host: { '(click)': 'openFromCard($event)' },
 })
 export class SportMatchCardComponent {
     private readonly sports = inject(SportsCatalogService);
@@ -66,7 +69,22 @@ export class SportMatchCardComponent {
     /** Several of its competition's channels may show it: a menu offers them. */
     readonly offers = computed(() => this.match().via.length > 1);
 
+    private readonly menu = viewChild(MatMenuTrigger);
+
     watch(channel?: SportChannel): void {
         this.board.openMatch(this.match(), channel);
+    }
+
+    /** The card's own click, off its button: the button's action. */
+    openFromCard(event: MouseEvent): void {
+        if ((event.target as Element | null)?.closest('button')) {
+            return;
+        }
+        const menu = this.menu();
+        if (menu) {
+            menu.openMenu();
+        } else {
+            this.watch();
+        }
     }
 }

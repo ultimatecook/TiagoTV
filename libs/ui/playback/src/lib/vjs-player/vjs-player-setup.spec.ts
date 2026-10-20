@@ -18,9 +18,21 @@ describe('Video.js player setup', () => {
 
         expect(createVjsPlayerOptions(options, false, false)).toEqual({
             ...options,
+            language: 'en',
             autoplay: true,
             controls: true,
         });
+    });
+
+    it('hands Video.js the app language for its own overlay text', () => {
+        expect(
+            createVjsPlayerOptions(
+                { sources: [{ src: 'https://example.test/movie.mp4' }] },
+                false,
+                true,
+                'es'
+            )
+        ).toEqual(expect.objectContaining({ language: 'es' }));
     });
 
     it('keeps Video.js controls enabled on the raw MPEG-TS legacy path', () => {

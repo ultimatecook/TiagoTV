@@ -20,6 +20,7 @@ import {
     EXTERNAL_PLAYER_ERROR_KEYS,
     EXTERNAL_PLAYER_LAUNCH_FAILED_KEY,
     EXTERNAL_PLAYER_UNKNOWN_ERROR_KEY,
+    describePortalRequestError,
     isPortalRequestCancelledError,
     isPortalRequestFailureEnvelope,
     normalizeHost,
@@ -28,7 +29,9 @@ import {
     Playlist,
     PLAYLIST_PARSE_BY_URL,
     PLAYLIST_UPDATE,
+    PORTAL_REQUEST_ERROR_KEYS,
     readExternalPlayerErrorCode,
+    toSafePortalRequestErrorMessage,
     XTREAM_REQUEST,
     XTREAM_RESPONSE,
     XtreamCodeActions,
@@ -36,6 +39,7 @@ import {
 } from '@iptvnator/shared/interfaces';
 import {
     measureRendererPerformancePhase,
+    redactSensitiveData,
     RENDERER_PERFORMANCE_PHASE,
 } from '@iptvnator/shared/logging';
 import { AppConfig } from '../../environments/environment';
@@ -102,7 +106,12 @@ export class ElectronService extends DataService {
                         data.code
                             ? EXTERNAL_PLAYER_ERROR_KEYS[data.code]
                             : EXTERNAL_PLAYER_UNKNOWN_ERROR_KEY,
-                        { player: data.player, error: data.error }
+                        // Raw player output can name the stream URL, and
+                        // with it the account in an Xtream path.
+                        {
+                            player: data.player,
+                            error: redactSensitiveData(data.error),
+                        }
                     ),
                     this.translateService.instant('CLOSE'),
                     {
@@ -337,26 +346,9 @@ export class ElectronService extends DataService {
                 );
                 throw err;
             }
-            const errorInfo = this.getErrorDetails(err);
             this.logger.error('Stalker request error:', err);
             if (!payload.silent) {
-                void this.snackBar.open(
-                    this.translateService.instant(
-                        'PORTALS.REQUEST_ERRORS.STALKER',
-                        {
-                            message:
-                                errorInfo?.message ??
-                                this.translateService.instant(
-                                    'PORTALS.REQUEST_ERRORS.NOT_FOUND'
-                                ),
-                            status: errorInfo?.status ?? 404,
-                        }
-                    ),
-                    this.translateService.instant('CLOSE'),
-                    {
-                        duration: 5000,
-                    }
-                );
+                this.showPortalRequestError(err);
             }
             throw err;
         }
@@ -692,21 +684,9 @@ export class ElectronService extends DataService {
                     normalizedMessage
                 );
             } else {
-                this.logger.error('Xtream request error:', normalizedMessage);
-            }
-
-            // Only show snackbar for user-triggered Xtream requests
-            if (!isSilentAction) {
-                void this.snackBar.open(
-                    this.translateService.instant(
-                        'PORTALS.REQUEST_ERRORS.XTREAM',
-                        { message: normalizedMessage }
-                    ),
-                    this.translateService.instant('CLOSE'),
-                    {
-                        duration: 5000,
-                    }
-                );
+                this.logger.error('Xtream request error:', error);
+                // Only user-triggered Xtream requests show a snackbar.
+                this.showPortalRequestError(error);
             }
 
             return {
@@ -719,50 +699,22 @@ export class ElectronService extends DataService {
         }
     }
 
+    /** Never the error's own text: see `toSafePortalRequestErrorMessage`. */
     private getReadableXtreamErrorMessage(error: unknown): string {
-        const fallback = this.translateService.instant(
-            'PORTALS.REQUEST_ERRORS.XTREAM_CONNECTION'
+        return toSafePortalRequestErrorMessage(
+            error,
+            this.translateService.instant(PORTAL_REQUEST_ERROR_KEYS.unreachable)
         );
-        if (!error) {
-            return fallback;
-        }
+    }
 
-        const maybeError = error as {
-            message?: unknown;
-            statusText?: unknown;
-            status?: unknown;
-            error?: unknown;
-        };
-
-        if (typeof maybeError.message === 'string') {
-            if (maybeError.message.includes('[object Object]')) {
-                if (typeof maybeError.error === 'string') {
-                    return maybeError.error;
-                }
-                if (
-                    maybeError.error &&
-                    typeof maybeError.error === 'object' &&
-                    'message' in
-                        (maybeError.error as Record<string, unknown>) &&
-                    typeof (maybeError.error as Record<string, unknown>)
-                        .message === 'string'
-                ) {
-                    return (maybeError.error as Record<string, string>).message;
-                }
-                return fallback;
-            }
-            return maybeError.message;
-        }
-
-        if (typeof maybeError.statusText === 'string') {
-            return maybeError.statusText;
-        }
-
-        if (typeof error === 'string') {
-            return error;
-        }
-
-        return fallback;
+    /** The snackbar for a failed portal request: no URL, no credentials. */
+    private showPortalRequestError(error: unknown): void {
+        const { key, params } = describePortalRequestError(error);
+        void this.snackBar.open(
+            this.translateService.instant(key, params),
+            this.translateService.instant('CLOSE'),
+            { duration: 5000 }
+        );
     }
 
     private getErrorDetails(error: unknown): ErrorStatus | null {

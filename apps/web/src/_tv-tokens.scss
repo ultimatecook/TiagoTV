@@ -54,6 +54,20 @@
     --tv-glass-border: rgba(255, 255, 255, 0.16);
     --tv-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.17);
     --tv-glass-filter: blur(22px) saturate(160%);
+    // The dark ground under a floating glass surface (menus, dialogs, toasts,
+    // tooltips, the palette): over the dark glass window its text reads
+    // like the window's own, and over a white poster the heading text still
+    // keeps 4.5:1 through the blur.
+    --tv-glass-ground: rgba(22, 22, 21, 0.8);
+
+    // ─── Radii of floating surfaces ────────────────────────────────────────
+    // One scale for every overlay, in both themes: tooltips, menus and
+    // select panels, toasts, floating panels, dialogs and the palette.
+    --tv-radius-tooltip: 8px;
+    --tv-radius-menu: 14px;
+    --tv-radius-toast: 14px;
+    --tv-radius-panel: 16px;
+    --tv-radius-dialog: 20px;
 
     // ─── Shadows ───────────────────────────────────────────────────────────
     --tv-shadow-card: 0 18px 34px -22px rgba(0, 0, 0, 0.85);

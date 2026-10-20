@@ -3,11 +3,13 @@
     min-width: 0;
 }
 
+// The pages' one rhythm: sections `--tv-section-gap` apart, the page's
+// foot `--tv-page-bottom`.
 .page {
     display: flex;
     flex-direction: column;
-    gap: 56px;
-    padding-bottom: 96px;
+    gap: var(--tv-section-gap);
+    padding-bottom: var(--tv-page-bottom);
     color: var(--tv-text);
 }
 
@@ -19,7 +21,7 @@
 .page__body {
     display: flex;
     flex-direction: column;
-    gap: 48px;
+    gap: var(--tv-section-gap);
     padding: 0 var(--tv-page-x);
     // "Matches and table" scrolls here, clear of the top bar.
     scroll-margin-top: calc(var(--tv-topbar-h) + 20px);
@@ -81,18 +83,6 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 24px;
     background: var(--tv-card-bg);
-}
-
-.page__empty,
-.page__missing {
-    margin: 0;
-    padding: 32px 24px;
-    border: 1px dashed rgba(255, 255, 255, 0.14);
-    border-radius: 18px;
-    color: var(--tv-text-3);
-    font-size: 15px;
-    font-weight: 500;
-    text-align: center;
 }
 
 .page__missing {

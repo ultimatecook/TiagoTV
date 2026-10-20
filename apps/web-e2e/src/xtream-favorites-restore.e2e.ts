@@ -154,7 +154,7 @@ for (const identity of ['missing', 'conflicting'] as const) {
         ).toBeVisible();
         // Keep the catalog in memory while opening Favorites, exercising the merge.
         await page
-            .getByRole('link', { name: 'Global favorites', exact: true })
+            .getByRole('link', { name: 'My List', exact: true })
             .click();
         await expect(
             page.getByText(favorite.snapshot.title, { exact: true }).first()
@@ -401,7 +401,7 @@ test('@xtream @collections detail identity protects a sparse PWA favorite from a
         page.getByText('Reused provider entry', { exact: true }).first()
     ).toBeVisible();
     await page
-        .getByRole('link', { name: 'Global favorites', exact: true })
+        .getByRole('link', { name: 'My List', exact: true })
         .click();
     const originalCard = page.getByRole('button', {
         name: movie.name,
@@ -776,7 +776,7 @@ test('@xtream @collections sparse favorite playback uses the current category wh
         { id: playlistId, movie }
     );
     await page
-        .getByRole('link', { name: 'Global favorites', exact: true })
+        .getByRole('link', { name: 'My List', exact: true })
         .click();
     await page
         .locator('app-content-card')
@@ -1005,7 +1005,7 @@ test('@xtream @collections detail enrichment retains both category listings of o
         page.getByText('Duplicate category listing', { exact: true })
     ).toBeVisible();
     await page
-        .getByRole('link', { name: 'Global favorites', exact: true })
+        .getByRole('link', { name: 'My List', exact: true })
         .click();
     const card = page.getByRole('button', { name: savedTitle, exact: true });
     await expect(card).not.toHaveAttribute('aria-disabled', 'true');

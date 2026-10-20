@@ -20,7 +20,7 @@
                 mat-icon-button
                 class="all-channels-sidebar-toggle"
                 [attr.aria-label]="'LAYOUT.HIDE_CHANNELS_LIST' | translate"
-                [matTooltip]="'LAYOUT.TOGGLE_SIDEBAR_TOOLTIP' | translate"
+                [matTooltip]="'LAYOUT.TOGGLE_SIDEBAR_TOOLTIP' | translate: { shortcut: sidebarShortcut }"
                 (click)="sidebarToggleRequested.emit()"
             >
                 <mat-icon>chevron_left</mat-icon>

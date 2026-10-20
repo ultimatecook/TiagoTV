@@ -667,7 +667,7 @@ async function waitForAppReady(page: Page): Promise<void> {
 }
 
 export async function openAddPlaylistDialog(page: Page): Promise<void> {
-    await page.getByRole('button', { name: 'Add playlist' }).click();
+    await page.getByRole('button', { name: 'Add source' }).click();
     await expect(page.locator('mat-dialog-container').last()).toBeVisible();
 }
 
@@ -1241,16 +1241,16 @@ export async function openWorkspaceSection(
 
 export async function openPlaylistFavorites(page: Page): Promise<void> {
     await openGlobalFavorites(page);
-    await switchUnifiedCollectionScope(page, 'This playlist');
+    await switchUnifiedCollectionScope(page, 'This source');
 }
 
 export async function openPlaylistRecent(page: Page): Promise<void> {
     await openGlobalRecent(page);
-    await switchUnifiedCollectionScope(page, 'This playlist');
+    await switchUnifiedCollectionScope(page, 'This source');
 }
 
 export async function openGlobalFavorites(page: Page): Promise<void> {
-    await openWorkspaceSection(page, 'Global favorites');
+    await openWorkspaceSection(page, 'My List');
     await page.waitForURL(/\/workspace\/global-favorites(?:\?.*)?$/);
 }
 
@@ -1264,7 +1264,7 @@ export async function openGlobalRecent(page: Page): Promise<void> {
 
 export async function switchUnifiedCollectionScope(
     page: Page,
-    scopeLabel: 'This playlist' | 'All playlists'
+    scopeLabel: 'This source' | 'All sources'
 ): Promise<void> {
     const toggleGroup = page.locator('.scope-toggle');
 
@@ -1705,7 +1705,7 @@ export async function deleteSource(page: Page, title: string): Promise<void> {
     await row.locator('.source-row__more').click();
     await page
         .locator('.cdk-overlay-pane [mat-menu-item]')
-        .filter({ hasText: 'Remove playlist' })
+        .filter({ hasText: 'Remove source' })
         .click();
     const toast = page.locator('mat-snack-bar-container.app-toast');
     await expect(toast).toContainText('Removed');
@@ -1727,7 +1727,7 @@ export async function refreshSource(
     await row.locator('.source-row__refresh').click();
 
     if (confirm) {
-        await confirmDialog(page, 'Refresh playlist');
+        await confirmDialog(page, 'Refresh source');
     }
 }
 

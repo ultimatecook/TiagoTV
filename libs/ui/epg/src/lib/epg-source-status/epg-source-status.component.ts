@@ -16,6 +16,7 @@ import {
     EpgProgressService,
     EpgRuntimeBridgeService,
 } from '@iptvnator/epg/data-access';
+import { redactSensitiveData } from '@iptvnator/shared/logging';
 
 type BadgeStatus =
     'loading' | 'queued' | 'fresh' | 'stale' | 'error' | 'unknown';
@@ -58,11 +59,13 @@ export class EpgSourceStatusComponent implements OnInit {
         return this.isFresh() ? 'fresh' : 'stale';
     });
 
-    readonly errorMessage = computed(
-        () =>
-            this.epgProgress.imports().find((item) => item.url === this.url())
-                ?.error
-    );
+    /** The import's failure as a tooltip; it must not show credentials. */
+    readonly errorMessage = computed(() => {
+        const error = this.epgProgress
+            .imports()
+            .find((item) => item.url === this.url())?.error;
+        return error ? String(redactSensitiveData(error)) : undefined;
+    });
 
     constructor() {
         // Optimistically mark as fresh when a live fetch completes for our URL,

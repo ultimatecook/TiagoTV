@@ -1,7 +1,9 @@
 @use '../../../../../../../ui/styles/focus-ring';
 
 :host {
-    // The stage fills the content area's height (the top bar over it).
+    // The stage fills the content area's height (the top bar over it), at
+    // any height: no floor of its own, so a short window does not scroll
+    // its controls out of view.
     --sport-stage-h: 100vh;
     display: block;
     min-width: 0;
@@ -10,7 +12,6 @@
 .stage {
     position: relative;
     height: var(--sport-stage-h);
-    min-height: 640px;
     overflow: hidden;
     // It reaches the window's top edge: the browser window's corners.
     border-radius: var(--tv-window-radius) var(--tv-window-radius) 0 0;
@@ -19,18 +20,18 @@
 
     &:fullscreen {
         height: 100vh;
-        min-height: 0;
         border-radius: 0;
     }
 }
 
-// At rest: the competition's colour, the signal's logo faint in the middle.
+// At rest: the competition's colour, the signal's logo faint in the middle
+// of the picture between the bar and the overlay's controls.
 .stage__rest {
     position: absolute;
     inset: 0;
     display: grid;
     place-items: center;
-    padding-bottom: 34vh;
+    padding: var(--tv-topbar-h) 0 var(--sport-overlay-content, 34vh);
     background: radial-gradient(
         70% 90% at 50% 38%,
         color-mix(in srgb, var(--stage-tint, #1a1c1e) 55%, #1a1c1e) 0%,
@@ -69,11 +70,16 @@
 
 // The page's overlay is the controls, as on "En vivo": the player's own
 // bar is hidden, and its picture takes no clicks. Its diagnostic, with
-// Retry and the external players, stays usable above the overlay.
+// Retry and the external players, stays usable above the overlay's
+// controls (`--sport-overlay-content`: the overlay without its veil, which
+// the opaque panel covers); a short window folds the overlay's rows.
 .stage__screen ::ng-deep {
     app-player-controls,
     .vjs-control-bar,
     .vjs-big-play-button,
+    // Video.js's own error text sits at the picture's top, under the bar;
+    // the page shows the app's diagnostic panel instead.
+    .vjs-error-display,
     .art-bottom,
     .art-mask {
         display: none !important;
@@ -87,7 +93,7 @@
     }
 
     app-playback-diagnostic-panel {
-        bottom: var(--sport-overlay-h, 0px);
+        bottom: var(--sport-overlay-content, 0px);
     }
 
     // Native-view Embedded MPV keeps no dock below its picture on the
@@ -123,16 +129,17 @@
     top: calc(var(--tv-topbar-h) + 76px);
 }
 
-// Nothing plays yet (the mini-player was busy, or MPV/VLC is the player).
+// Nothing plays yet (the mini-player was busy, or MPV/VLC is the player):
+// the button is the picture above the overlay's controls.
 .stage__ready {
     position: absolute;
-    inset: 0 0 34vh;
+    inset: 0 0 var(--sport-overlay-content, 34vh);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 14px;
-    padding: 24px;
+    padding: calc(var(--tv-topbar-h) + 12px) 24px 12px;
     border: 0;
     background: transparent;
     color: var(--tv-text);
@@ -170,9 +177,18 @@
     font-weight: 600;
 }
 
+// 20px under the bar; on a short window, higher, so it stays 8px clear of
+// the overlay's controls (never under the bar, though).
 .stage__pill {
+    --pill-top: calc(var(--tv-topbar-h) + 20px);
     position: absolute;
-    top: calc(var(--tv-topbar-h) + 20px);
+    top: max(
+        calc(var(--tv-topbar-h) + 4px),
+        min(
+            var(--pill-top),
+            calc(100% - var(--sport-overlay-content, 0px) - 48px)
+        )
+    );
     right: var(--tv-page-x);
     z-index: 6;
     display: flex;
@@ -226,16 +242,18 @@
     animation: tv-pulse 1.6s ease-in-out infinite;
 }
 
-// The bottom of the stage: a veil, what plays, the controls and the row.
-// The veil lets the video's clicks through; only its controls take them.
+// The bottom of the stage: a veil (`--stage-veil` tall), what plays, the
+// controls and the row. The veil lets the video's clicks through; only its
+// controls take them.
 .stage__overlay {
+    --stage-veil: 140px;
     position: absolute;
     inset: auto 0 0;
     z-index: 3;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 140px var(--tv-page-x) 32px;
+    padding: var(--stage-veil) var(--tv-page-x) 32px;
     background: linear-gradient(
         180deg,
         transparent 0%,
@@ -416,6 +434,58 @@
 
     &::-webkit-scrollbar {
         display: none;
+    }
+}
+
+// A short window (a 900×600 one at 110 % and up): a lower veil and
+// tighter rows, so the overlay leaves the picture, and the competition's
+// pill, their room; the diagnostic stays clear of the pill there.
+@media (max-height: 700px) {
+    .stage__pill {
+        --pill-top: calc(var(--tv-topbar-h) + 12px);
+    }
+
+    .stage__overlay {
+        --stage-veil: 64px;
+        gap: 12px;
+        padding-bottom: 20px;
+    }
+
+    .stage:not(:fullscreen)
+        .stage__screen
+        ::ng-deep
+        app-playback-diagnostic-panel {
+        top: calc(var(--tv-topbar-h) + 56px);
+    }
+}
+
+// The signal failed and the player's diagnostic shows (what went wrong,
+// Retry, the other players): on a window too short for both, the overlay
+// keeps only the signals, to pick another, and the diagnostic takes the
+// room; on a very short one the signals go too.
+@media (max-height: 900px) {
+    .stage:has(app-playback-diagnostic-panel) {
+        .stage__overlay {
+            --stage-veil: 24px;
+        }
+
+        .stage__now,
+        .stage__progress {
+            display: none;
+        }
+    }
+}
+
+@media (max-height: 560px) {
+    .stage:has(app-playback-diagnostic-panel) {
+        .stage__overlay {
+            padding-bottom: 0;
+        }
+
+        .stage__row-head,
+        .stage__cards {
+            display: none;
+        }
     }
 }
 

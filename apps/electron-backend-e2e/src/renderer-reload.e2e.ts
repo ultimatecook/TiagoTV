@@ -46,7 +46,7 @@ test.describe('Renderer reload on an in-app route', () => {
             ).toBeVisible();
             // The page is alive, not a leftover paint: navigation still works.
             await app.mainWindow
-                .getByRole('link', { name: 'Dashboard', exact: true })
+                .getByRole('link', { name: 'Home', exact: true })
                 .click();
             await expectPathname(app.mainWindow, /\/workspace\/dashboard$/);
         } finally {

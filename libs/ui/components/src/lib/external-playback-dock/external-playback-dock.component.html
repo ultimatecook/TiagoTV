@@ -59,9 +59,7 @@
             }
             <span
                 class="external-playback-dock__status-text"
-                [attr.title]="
-                    session().status === 'error' ? session().error : null
-                "
+                [attr.title]="errorTitle()"
             >
                 {{ statusLabelKey() | translate: { player: playerLabel() } }}
             </span>

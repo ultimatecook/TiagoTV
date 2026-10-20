@@ -14,7 +14,11 @@ import {
     importProvidersFrom,
     provideZonelessChangeDetection,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import {
+    provideRouter,
+    withComponentInputBinding,
+    withRouterConfig,
+} from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideEffects } from '@ngrx/effects';
 import { provideRouterStore, routerReducer } from '@ngrx/router-store';
@@ -111,7 +115,14 @@ export function DataFactory() {
 export const appConfig: ApplicationConfig = {
     providers: [
         provideZonelessChangeDetection(),
-        provideRouter(routes, withComponentInputBinding()),
+        provideRouter(
+            routes,
+            withComponentInputBinding(),
+            // A guard that cancels a history Back or Forward (Ajustes with
+            // unsaved edits) steps the browser back to the page it stayed
+            // on, instead of rewriting the entry it was leaving for.
+            withRouterConfig({ canceledNavigationResolution: 'computed' })
+        ),
         // No provideAnimations(): nothing declares an Angular animation
         // trigger, and Material 22 animates with CSS, reading
         // prefers-reduced-motion itself. The provider only put the 66 KB

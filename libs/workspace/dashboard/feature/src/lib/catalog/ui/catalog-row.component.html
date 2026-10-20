@@ -8,7 +8,11 @@
         {{ heading.key | translate: heading.params }}
     </h2>
     @if (rendered()) {
-        <lib-catalog-strip class="row__strip" [labelledBy]="headingId">
+        <lib-catalog-strip
+            class="row__strip"
+            [labelledBy]="headingId"
+            [memoryKey]="'catalog-row-' + row().id"
+        >
             @for (title of row().titles; track key(title); let first = $first) {
                 @let image = posterOf(title);
                 <button

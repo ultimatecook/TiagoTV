@@ -14,6 +14,7 @@ interface PlayerCommandDefinition {
     id: string;
     player: VideoPlayer;
     icon: string;
+    /** A bare player name, read inside "Usar el reproductor {{name}}". */
     nameKey: string;
     keywords: readonly string[];
     requires: PlayerCommandRequirement;
@@ -25,7 +26,7 @@ const PLAYER_COMMAND_DEFS: readonly PlayerCommandDefinition[] = [
         id: 'switch-player-videojs',
         player: VideoPlayer.VideoJs,
         icon: 'play_circle',
-        nameKey: 'SETTINGS.PLAYER_VIDEOJS',
+        nameKey: 'WORKSPACE.SHELL.COMMANDS.PLAYER_NAME.VIDEOJS',
         keywords: ['player', 'videojs', 'video.js'],
         requires: 'none',
         priority: 90,
@@ -34,7 +35,7 @@ const PLAYER_COMMAND_DEFS: readonly PlayerCommandDefinition[] = [
         id: 'switch-player-html5',
         player: VideoPlayer.Html5Player,
         icon: 'play_circle',
-        nameKey: 'SETTINGS.PLAYER_HTML5',
+        nameKey: 'WORKSPACE.SHELL.COMMANDS.PLAYER_NAME.HTML5',
         keywords: ['player', 'html5'],
         requires: 'none',
         priority: 91,
@@ -43,7 +44,7 @@ const PLAYER_COMMAND_DEFS: readonly PlayerCommandDefinition[] = [
         id: 'switch-player-artplayer',
         player: VideoPlayer.ArtPlayer,
         icon: 'play_circle',
-        nameKey: 'SETTINGS.PLAYER_ARTPLAYER',
+        nameKey: 'WORKSPACE.SHELL.COMMANDS.PLAYER_NAME.ARTPLAYER',
         keywords: ['player', 'artplayer', 'art'],
         requires: 'none',
         priority: 92,
@@ -52,7 +53,7 @@ const PLAYER_COMMAND_DEFS: readonly PlayerCommandDefinition[] = [
         id: 'switch-player-embedded-mpv',
         player: VideoPlayer.EmbeddedMpv,
         icon: 'play_circle',
-        nameKey: 'SETTINGS.PLAYER_EMBEDDED_MPV',
+        nameKey: 'WORKSPACE.SHELL.COMMANDS.PLAYER_NAME.EMBEDDED_MPV',
         keywords: ['player', 'embedded', 'mpv', 'native'],
         requires: 'embedded-mpv',
         priority: 93,
@@ -61,7 +62,7 @@ const PLAYER_COMMAND_DEFS: readonly PlayerCommandDefinition[] = [
         id: 'switch-player-mpv',
         player: VideoPlayer.MPV,
         icon: 'play_circle_outline',
-        nameKey: 'SETTINGS.PLAYER_MPV',
+        nameKey: 'WORKSPACE.SHELL.COMMANDS.PLAYER_NAME.MPV',
         keywords: ['player', 'mpv', 'external'],
         requires: 'managed-external',
         priority: 94,
@@ -70,7 +71,7 @@ const PLAYER_COMMAND_DEFS: readonly PlayerCommandDefinition[] = [
         id: 'switch-player-vlc',
         player: VideoPlayer.VLC,
         icon: 'play_circle_outline',
-        nameKey: 'SETTINGS.PLAYER_VLC',
+        nameKey: 'WORKSPACE.SHELL.COMMANDS.PLAYER_NAME.VLC',
         keywords: ['player', 'vlc', 'external'],
         requires: 'managed-external',
         priority: 95,

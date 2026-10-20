@@ -39,7 +39,10 @@ Core implementation:
 
 Current workspace routes:
 
-1. `/` -> `/workspace`
+1. `/` -> `/workspace`; any unknown address (`**`, `/workspace/nope`
+   included) -> `/workspace` too. The redirect is absolute: a relative `''`
+   left the router on `/` with nothing routed, so the start-up screen
+   stayed.
 2. `/workspace` -> functional redirect `workspaceEntryRedirect`
    (`WorkspaceStartupPreferencesService.resolveInitialWorkspacePath()`;
    `/workspace/dashboard` by default, `/workspace/sources` when the dashboard
@@ -65,7 +68,9 @@ Current workspace routes:
 13. TiagoTV pages (`@iptvnator/workspace/dashboard/feature`, see
     [Workspace Dashboard](./workspace-dashboard.md)): `/workspace/sports`
     (the sports hub, the Deportes tab), `/workspace/sports/:sectionId` (a
-    league), `/workspace/series` and `/workspace/movies` (the aggregated
+    league; `knownSportSectionGuard` matches only a competition of
+    `SPORT_SECTIONS`, and an unknown one redirects to the hub within the
+    same navigation), `/workspace/series` and `/workspace/movies` (the aggregated
     catalog, route data `kind`), `/workspace/countries` and
     `/workspace/countries/:countryId` (En vivo) and
     `/workspace/platforms/:platformId`.
@@ -73,6 +78,13 @@ Current workspace routes:
 Compatibility redirect:
 
 1. `/settings` -> `/workspace/settings`
+
+The router resolves a cancelled history traversal as `computed`
+(`withRouterConfig` in `apps/web/src/app/app.config.ts`): a guard that
+refuses Back or Forward (Ajustes with unsaved edits) steps the browser back
+to the page that stayed. Angular's default (`replace`) rewrote the entry
+being left for into the current URL, so the page before was gone from
+history (`app.config.spec.ts`).
 
 Provider route integration:
 
@@ -109,7 +121,11 @@ The shell is intentionally split into four persistent regions:
    container and popover hosts are not, because they span the window and
    would stop every page from moving it.
     1. Left: room for the macOS traffic lights (`has-traffic-lights` on the
-       shell, `--traffic-lights-clear-x`; nothing in the browser), then Back
+       shell, `--traffic-lights-clear-x`; nothing in the browser): a spacer
+       that ends at the clearance whatever the bar's padding and gap
+       (`--topbar-pad-start`, `--topbar-lead-gap`), and a group that reaches
+       it even with nothing after the lights, so the capsule never starts
+       under them. Then Back
        on deep pages (see [Header Back](#header-back)), "‹ Deportes" back to
        the sports hub on a league page (`/workspace/sports/:sectionId`), and
        at phone width the context drawer toggle.
@@ -117,15 +133,27 @@ The shell is intentionally split into four persistent regions:
        Deportes (`/workspace/sports`), Series (`/workspace/series`),
        Películas (`/workspace/movies`), En vivo (`/workspace/countries`) and
        Mi lista (`/workspace/global-favorites`). `readWorkspaceTopBarPage()`
-       (`workspace-top-bar-nav.ts`) reads the lit tab from the URL; a deep
-       page (a title, a portal list, `/workspace/global-recent`, where the
-       Home hero's "Continuar" opens a title) keeps the tab it was opened
-       from (`resolveWorkspaceTopBarTab()`, fed the previous tab), else its
-       section decides (`vod` Películas, `series` Series, live sections En
-       vivo, recent Mi lista). A platform page and its titles belong to
-       Inicio, a league page to Deportes. Buscar and Ajustes light their
-       circle and no tab. The lit tab clicked again closes a detail its page
-       opened in place (see [Header Back](#header-back)).
+       (`workspace-top-bar-nav.ts`) reads the page from the URL. A tab's
+       own page lights it; so does a portal section's list, whatever opened
+       it (`live`, `itv`, `radio` En vivo, `vod` Películas, `series` Series,
+       `favorites` and `recent` Mi lista: the mini-player's "Abrir" and Mi
+       lista open channel lists). A platform page belongs to Inicio, a
+       league page to Deportes. A deep page (`keepsTab`: a title,
+       `/workspace/global-recent`, where the Home hero's "Continuar" opens
+       a title) keeps the tab of a tab's page that opened it
+       (`resolveWorkspaceTopBarTab()`, fed the page left and its tab);
+       opened from another deep page or from nowhere (a reload, a deep
+       link) its section decides, else the tab lit before. Buscar (also a
+       portal's search) and Ajustes light their circle and no tab; Fuentes
+       and Descargas light none. History Back and Forward light the tab
+       their entry lit when it was left (`WorkspaceTopBarTabMemory`,
+       `workspace-top-bar-tab-memory.ts`, keyed by the router's navigation
+       id like the scroll memory), never the tab of the page just left. The
+       lit tab clicked again closes a detail its page opened in place (see
+       [Header Back](#header-back)), else scrolls its page back to the top
+       (smoothly, unless reduced motion). On a league page Deportes goes up
+       to the hub as "‹ Deportes" does, never a new hub entry that Back
+       would bounce through into the league and its stream.
     3. Right: the page's own shortcut and the live channel list toggle
        (`WorkspaceHeaderContextService`, as round glass buttons), a
        downloads circle with the active count while downloads run, the
@@ -144,15 +172,38 @@ The shell is intentionally split into four persistent regions:
        redesigned pages) it opens the search page, `/workspace/search`,
        which has its own field; on that page Buscar and find focus it.
        `Ctrl/Cmd+F` (Electron) does the same.
-    5. Below 760 px the bar takes two rows (`--tv-topbar-h: 108px`): the
-       circles beside Back, then the capsule, whose tabs scroll sideways in
-       a track (`.topbar__tabs-track`) that fades out at an end where more
-       tabs hide; the lit tab is scrolled into view.
-    6. The capsule, circles and pills are dark glass: a ground
+    5. Nothing in the bar overlaps at any width or zoom. Its grid
+       (`minmax(min-content, 1fr) minmax(0, auto) minmax(min-content,
+       1fr)`) never shrinks the side groups below what they hold; the
+       capsule between them yields (`min-width: 0`, `overflow: hidden`) and
+       its tabs scroll sideways in a track (`.topbar__tabs-track`) that
+       fades out at an end where more tabs hide, with the lit tab scrolled
+       into view, at every width. The bar measures what it holds
+       (`readWorkspaceTopBarWidths()`, on resize, zoom, font load and each
+       change of its contents) and picks a density
+       (`resolveWorkspaceTopBarDensity()`, `workspace-top-bar-fit.ts`):
+       the full spacing (tab padding 20 px, 32 px between the groups) on a
+       window of at least 1180 CSS px where every tab shows; else compact
+       (`is-compact`: 12 px tabs, 16 px gaps, 20 px trailing padding) where
+       that fits; else two rows (`is-stacked`): the circles beside Back,
+       then the capsule centred on a row of its own. At 760 px and below
+       the bar always takes two rows, with narrower spacing and 40 px
+       circles. The two-row bar is `--workspace-topbar-stacked-top + 104px`
+       tall (108 px; the shell's `has-stacked-bar`, from the bar's
+       `densityChange`). Buscar's open field keeps an honest least width
+       (`--topbar-search-min`, 200 px) and the capsule scrolls beside it;
+       the field alone never makes the bar take two rows unless the capsule
+       would keep less than 160 px. Every measure is the same in each
+       density, so a change of density never changes the answer.
+    6. The page circles (the live list toggle, a page shortcut) draw the
+       bar's own 19 px line glyphs (`workspaceTopBarLineIcon()`: `sidebar`,
+       `grid`); a shortcut icon without one keeps its Material ligature at
+       19 px.
+    7. The capsule, circles and pills are dark glass: a ground
        (`--topbar-glass-ground`) under the sheen (`--tv-glass-bg`) and a
        dimmed backdrop (`--tv-glass-filter` plus `brightness(0.75)`), so the
        labels (`--tv-text-img-1`) and icons keep 4.5:1 over a white hero.
-    7. The scrim (`.workspace-top-scrim`): while the page under the bar is
+    8. The scrim (`.workspace-top-scrim`): while the page under the bar is
        scrolled (the shell's scroller, or a page's own full-height scroller
        such as a platform title page; `watchWorkspaceScrolled()`,
        `workspace-top-scrim.ts`), a dark gradient from the window's top edge
@@ -310,7 +361,10 @@ services:
    `isImporting` still false) shows it only after
    `XTREAM_LOCAL_LOAD_OVERLAY_DELAY_MS` (300 ms), so a warm open goes from
    the skeleton to the page without flashing the overlay, while a slow or
-   stuck cache read still blocks and stays cancellable.
+   stuck cache read still blocks and stays cancellable. The overlay covers
+   the window below the top bar only (`top: inset + --tv-topbar-h`): the
+   import belongs to the page (another tab leaves it), so the bar stays
+   usable and unblurred.
 
 When adding shell behavior, prefer placing it in the service that owns the
 nearest existing state. Keep `WorkspaceShellFacade` as a stable re-export layer
@@ -434,7 +488,9 @@ appears or leaves, which happens only at the start of the history and together
 with a route change, the switcher and search slide by the slot's width instead
 of jumping (see [Layout slides](#layout-slides)).
 There is no Forward button: Stalker inline details are store state, not
-history entries, so Forward would skip them.
+history entries, so Forward would skip them. History Forward has gestures
+only (below): `WorkspaceBackNavigationService.goForward()` steps only to an
+in-app entry ahead (same-document, Navigation API; nothing without it).
 
 **Platform gestures.** The mouse Back button, Alt+← (Cmd+[ on macOS) and, in
 Electron, the window's `app-command` `browser-backward` (Windows and Linux:
@@ -472,6 +528,14 @@ the app.
   once: its repeats follow its first press until a key is released, so after
   a press that ran Back they are swallowed even when the page it reached has
   no Back left, and the browser cannot step on them.
+- **Forward.** Cmd+] on macOS (also by the `BracketRight` key position),
+  Alt+→ elsewhere (`isWorkspaceForwardShortcut()`, `navigate-forward` in the
+  shortcuts dialog) and, in Electron on macOS, the trackpad swipe right run
+  `WorkspaceBackGesturesService.goForward()`: `forward` to an in-app entry
+  ahead, `blocked` under the same surfaces as Back, `none` otherwise (the
+  chord stays the browser's). The chord is handled like the Back chord
+  (capture phase, not while typing, once per held chord). The mouse Forward
+  button stays Chromium's own.
 - **Electron.** `attachWindowBackGestures()`
   (`apps/electron-backend/src/app/services/window-back-gestures.ts`) forwards
   the two window events over the main → renderer push channel
@@ -479,8 +543,12 @@ the app.
   preload's `onWindowBackRequested` passes only those two values on. The
   renderer subscribes only when
   `RuntimeCapabilitiesService.supportsWindowBackGestures` reports the
-  subscription, so an older preload forwards nothing. `browser-forward` and
-  `swipe` right are not forwarded. `swipe` needs macOS's "Swipe between
+  subscription, so an older preload forwards nothing. `swipe` right goes
+  over `WINDOW:FORWARD_REQUESTED` (`onWindowForwardRequested`, capability
+  `supportsWindowForwardGestures`; a main process and preload from before
+  it, which only a new installer replaces, send nothing). `browser-forward`
+  is not forwarded: Chromium already steps Forward on the mouse button
+  behind it, so one press would step twice. `swipe` needs macOS's "Swipe between
   pages" set to two or three fingers. On Linux Electron raises `app-command`
   for the keydown and the keyup of the Browser Back key alike, so the main
   process takes that key in `before-input-event` instead (Back once per
@@ -499,7 +567,8 @@ the app.
 Electron E2E `back-gestures.e2e.ts` drives each gesture (the mouse through
 CDP's `back` button, the window events emitted on the `BrowserWindow`) and
 checks that each goes back one history entry, a paired press goes back once
-(also when held), Forward does nothing, and the gestures wait while typing
+(also when held), `browser-forward` does nothing while the swipe right steps
+Forward, and the gestures wait while typing
 (the chord) or with a dialog open. Web E2E `workspace-header-back.e2e.ts`
 checks that the mouse Back button and the chord step once in the browser.
 
@@ -750,12 +819,22 @@ The Electron window hides the native title bar on all desktop platforms
    window points: the lights plus a gap), `--traffic-lights-clear-y` (63:
    the lights' bottom plus a gap) and `--traffic-lights-band-h` (84: the
    band centred on the lights). Zoomed out (the app's default zoom is about
-   83 %) the shell grows the bar to that band above 760 px
+   83 %) the shell grows the one-row bar to that band
    (`--tv-topbar-h: max(84px, var(--traffic-lights-band-h))` on
-   `.workspace-shell.has-traffic-lights`), so the lights stay on the
-   capsule's centre line. Off macOS nothing is published and the defaults
-   apply. In fullscreen macOS hides the lights, so all three are `0px`
-   there. `window-controls.e2e.ts` ("macOS traffic lights") was written for
+   `.workspace-shell.has-traffic-lights`); zoomed in, the 84 px bar is
+   taller than the band and lifts its row onto the lights' line instead
+   (`--topbar-lift`, the room left under the band), so the lights stay on
+   the capsule's centre line at every zoom. The two-row bar centres its
+   first row on them (`--workspace-topbar-stacked-top`: half the band less
+   half the 52 px row, at least 4 px). Off macOS nothing is published and
+   the defaults apply. In fullscreen macOS hides the lights, so all three
+   are `0px` there. `--traffic-lights-clear-y` is also set on `<html>`:
+   dialogs render in the CDK overlay container, outside the shell, and
+   `dialogSize()` (`libs/ui/components/src/lib/dialog-shell/dialog-size.ts`)
+   keeps a centred dialog `max(16px, var(--traffic-lights-clear-y))` from
+   both window edges, so its header never sits under the lights (at 125 %
+   on a 900 pt window the clearance is 50 CSS px). Dialogs with their own
+   `maxHeight` (the account info's `90vh`) keep it. `window-controls.e2e.ts` ("macOS traffic lights") was written for
    the header band and needs updating to this layout.
 
    Fullscreen is `window-fullscreen` on `<html>`, set by

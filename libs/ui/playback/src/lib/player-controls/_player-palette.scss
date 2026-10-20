@@ -13,10 +13,14 @@
 // Accent blue: the primary action and watch progress over video.
 $accent-blue: #4f8eff;
 
-// Overlay text, the keyboard focus ring over video. The controls host
-// declares `--pc-text` with the same literal; the palette spec keeps the two
-// in step.
+// Overlay text. The controls host declares `--pc-text` with the same
+// literal; the palette spec keeps the two in step.
 $text: #e7ecf3;
+
+// The keyboard focus ring over video: the dark theme's `--app-focus-ring`
+// (`apps/web/src/m3-theme.scss`), the warm white that reads on every glass
+// surface, so a ring looks the same on and off the picture in either theme.
+$focus-ring: #fbf7ee;
 
 // `--pc-progress`, the watch-progress fill over video. Literal like the rest
 // of the overlay palette: the player is theme-independent, and the app's
@@ -26,9 +30,9 @@ $text: #e7ecf3;
 }
 
 // Points the app's `:focus-visible` fallback ring (`--app-focus-ring`, see
-// `libs/ui/styles/_focus-ring.scss`) at the overlay text colour, so a control
-// over video without a ring of its own gets the player's ring rather than
-// the theme's blue. Included on every surface that sits on video.
+// `libs/ui/styles/_focus-ring.scss`) at the shared warm white, so a control
+// over video without a ring of its own never gets the light theme's blue.
+// Included on every surface that sits on video.
 @mixin focus-ring-token {
-    --app-focus-ring: #{$text};
+    --app-focus-ring: #{$focus-ring};
 }

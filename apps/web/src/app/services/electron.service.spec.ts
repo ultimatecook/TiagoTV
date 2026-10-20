@@ -211,18 +211,14 @@ describe('ElectronService', () => {
                 });
                 expect(snackBar.open).toHaveBeenCalledTimes(1);
                 expect(snackBar.open).toHaveBeenCalledWith(
-                    'PORTALS.REQUEST_ERRORS.STALKER',
+                    'PORTALS.REQUEST_ERRORS.SERVER_STATUS',
                     'CLOSE',
                     { duration: 5000 }
                 );
-                // The toast carries the portal's own error, not Electron's
-                // "Error invoking remote method" wrapper.
+                // The toast names the status, never the error's own text.
                 expect(translateService.instant).toHaveBeenCalledWith(
-                    'PORTALS.REQUEST_ERRORS.STALKER',
-                    {
-                        message: `HTTP Error ${status}: ${status === 401 ? 'Unauthorized' : 'Forbidden'}`,
-                        status,
-                    }
+                    'PORTALS.REQUEST_ERRORS.SERVER_STATUS',
+                    { status }
                 );
             }
         );
@@ -316,12 +312,12 @@ describe('ElectronService', () => {
                 expect(result).toEqual({
                     type: ERROR,
                     status,
-                    message: `HTTP Error ${status}: ${status === 401 ? 'Unauthorized' : 'Forbidden'}`,
+                    message: `HTTP Error ${status}`,
                 });
                 expect(snackBar.open).toHaveBeenCalledTimes(1);
                 expect(translateService.instant).toHaveBeenCalledWith(
-                    'PORTALS.REQUEST_ERRORS.XTREAM',
-                    { message: expect.stringContaining(`HTTP Error ${status}`) }
+                    'PORTALS.REQUEST_ERRORS.SERVER_STATUS',
+                    { status }
                 );
             }
         );
@@ -441,6 +437,55 @@ describe('ElectronService', () => {
             'EXTERNAL_PLAYER.ERRORS.UNKNOWN',
             { player: 'MPV', error: 'demuxer gave up' }
         );
+    });
+
+    it('keeps the account of a stream URL out of the player error toast', () => {
+        const listener = electronBridge.onPlayerError.mock.calls[0][0];
+
+        listener({
+            player: 'MPV',
+            code: null,
+            error: 'demuxer gave up on http://portal.example/live/fake-user/fake-pass/7.ts',
+        });
+
+        const shown = JSON.stringify(translateService.instant.mock.calls);
+        expect(shown).toContain('portal.example');
+        expect(shown).not.toContain('fake-user');
+        expect(shown).not.toContain('fake-pass');
+    });
+
+    it('shows a friendly Xtream failure without the raw transport text', async () => {
+        electronBridge.xtreamRequest.mockRejectedValue(
+            new Error(
+                "Error invoking remote method 'XTREAM_REQUEST': Error: connect ECONNREFUSED http://fake-user:fake-pass@portal.example"
+            )
+        );
+
+        const result = await service.sendIpcEvent(XTREAM_REQUEST, {
+            url: 'http://portal.example',
+            params: {
+                username: 'fake-user',
+                password: 'fake-pass',
+                action: 'get_vod_info',
+            },
+        });
+
+        expect(result).toEqual({
+            type: ERROR,
+            status: 500,
+            message: 'PORTALS.REQUEST_ERRORS.SERVER_UNREACHABLE',
+        });
+        expect(snackBar.open).toHaveBeenCalledWith(
+            'PORTALS.REQUEST_ERRORS.SERVER_UNREACHABLE',
+            'CLOSE',
+            { duration: 5000 }
+        );
+        const surfaced = JSON.stringify([
+            snackBar.open.mock.calls,
+            translateService.instant.mock.calls,
+            (console.error as jest.Mock).mock.calls,
+        ]);
+        expect(surfaced).not.toContain('fake-pass');
     });
 
     it('translates a rejected launch by the code the main process tagged', async () => {

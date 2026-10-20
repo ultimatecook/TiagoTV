@@ -11,6 +11,8 @@
     --workspace-now-playing-clearance: 0px;
     // Room around the glass window: the ambient room shows through it.
     --workspace-window-inset: 22px;
+    // The two-row bar's first row starts this far down (see below).
+    --workspace-topbar-stacked-top: 4px;
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -36,11 +38,27 @@
 // pixels hold fewer window points than the band the native traffic lights
 // are centred on, so the bar grows to that band (`--traffic-lights-band-h`,
 // 84 window points) and stays centred on them. The token's 84px stays the
-// floor; the two-row narrow bar keeps its own 108px.
+// floor; zoomed in, the bar lifts its row onto the lights' line instead
+// (`--topbar-lift` in the bar).
 @media (min-width: 761px) {
-    .workspace-shell.has-traffic-lights {
+    .workspace-shell.has-traffic-lights:not(.has-stacked-bar) {
         --tv-topbar-h: max(84px, var(--traffic-lights-band-h, 0px));
     }
+}
+
+// Two rows (the bar measured that one does not fit; always at 760px and
+// below): the first row (52px) and its gap, the capsule's row (40px) and
+// the room under it, 104px, below the first row's top. On macOS that row
+// is centred on the lights (half the band, less half the row).
+.workspace-shell.has-traffic-lights {
+    --workspace-topbar-stacked-top: max(
+        4px,
+        calc(var(--traffic-lights-band-h, 0px) / 2 - 26px)
+    );
+}
+
+.workspace-shell.has-stacked-bar {
+    --tv-topbar-h: calc(var(--workspace-topbar-stacked-top) + 104px);
 }
 
 // The glass window (handoff "Ventana"). It never clips: a rounded clip

@@ -503,7 +503,9 @@ describe('VodDetailsRouteComponent — playback actions', () => {
         expect(fixture.componentInstance.playableVodItem()).toBeNull();
         const host = fixture.nativeElement as HTMLElement;
         expect(host.textContent).not.toContain('Movie A');
-        expect(host.textContent).toContain('Movie B unavailable');
+        // The raw request error is never shown; a friendly message is.
+        expect(host.textContent).not.toContain('Movie B unavailable');
+        expect(host.textContent).toContain('PORTALS.REQUEST_ERRORS.');
         expect(host.textContent).not.toContain('DOWNLOADS.OFFLINE');
         expect(host.textContent).not.toContain('DOWNLOADS.PLAY_LOCAL');
         expect(host.textContent).not.toContain(

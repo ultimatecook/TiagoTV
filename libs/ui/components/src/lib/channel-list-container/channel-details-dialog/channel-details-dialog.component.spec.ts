@@ -72,4 +72,34 @@ describe('ChannelDetailsDialogComponent', () => {
             ])
         );
     });
+
+    it('shows the stream URL without its credentials but copies it whole', async () => {
+        const url =
+            'http://portal.example/live/fake-user/fake-pass/7.ts?token=fake-token';
+        TestBed.resetTestingModule();
+        await TestBed.configureTestingModule({
+            imports: [
+                ChannelDetailsDialogComponent,
+                NoopAnimationsModule,
+                TranslateModule.forRoot(),
+            ],
+            providers: [
+                { provide: MAT_DIALOG_DATA, useValue: { ...channel, url } },
+            ],
+        }).compileComponents();
+        const credentialed = TestBed.createComponent(
+            ChannelDetailsDialogComponent
+        );
+        credentialed.detectChanges();
+
+        const shown =
+            credentialed.nativeElement.querySelector(
+                '.channel-dialog__url-block code'
+            )?.textContent ?? '';
+        expect(shown).toContain('portal.example');
+        for (const secret of ['fake-user', 'fake-pass', 'fake-token']) {
+            expect(shown).not.toContain(secret);
+        }
+        expect(credentialed.componentInstance.channel.url).toBe(url);
+    });
 });

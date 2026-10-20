@@ -8,14 +8,18 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
     XtreamAccountInfo,
     XtreamApiService,
     XtreamStore,
 } from '@iptvnator/portal/xtream/data-access';
 import { createLogger } from '@iptvnator/portal/shared/util';
-import { DataService, resetHostConnectivityGuard } from '@iptvnator/services';
+import {
+    DataService,
+    injectTranslationTick,
+    resetHostConnectivityGuard,
+} from '@iptvnator/services';
 import {
     isHostConnectivityFastFailMessage,
     resolveXtreamPortalStatus,
@@ -25,6 +29,11 @@ import {
     DialogHeaderEndDirective,
     DialogShellComponent,
 } from '@iptvnator/ui/components';
+import {
+    accountStatusKey,
+    formatAccountDate,
+    formatServerTime,
+} from './account-info-format';
 
 type AccountLoadState = 'loading' | 'ready' | 'error';
 
@@ -71,6 +80,13 @@ export class AccountInfoComponent {
     private readonly xtreamApiService = inject(XtreamApiService);
     private readonly xtreamStore = inject(XtreamStore);
     private readonly logger = createLogger('XtreamAccountInfo');
+    private readonly translate = inject(TranslateService);
+    private readonly languageTick = injectTranslationTick();
+    /** Dates and times follow the app language, not the OS locale. */
+    private readonly locale = computed(() => {
+        this.languageTick();
+        return this.translate.currentLang || this.translate.defaultLang;
+    });
 
     readonly currentPlaylist = computed(
         () => this.data.playlist ?? this.xtreamStore.currentPlaylist()
@@ -83,6 +99,10 @@ export class AccountInfoComponent {
 
     readonly isActive = computed(
         () => resolveXtreamPortalStatus(this.accountInfo()) === 'active'
+    );
+    /** "Active" as the panel sends it, as a translation key when known. */
+    readonly statusKey = computed(() =>
+        accountStatusKey(this.accountInfo()?.user_info?.status)
     );
     readonly isTrial = computed(
         () => this.accountInfo()?.user_info?.is_trial === '1'
@@ -125,10 +145,16 @@ export class AccountInfoComponent {
             `${this.activeConnections()}/${Math.max(this.maxConnections(), 0)}`
     );
     readonly formattedExpDate = computed(() =>
-        this.formatUnixDate(this.accountInfo()?.user_info?.exp_date)
+        formatAccountDate(
+            this.accountInfo()?.user_info?.exp_date,
+            this.locale()
+        )
     );
     readonly formattedCreatedDate = computed(() =>
-        this.formatUnixDate(this.accountInfo()?.user_info?.created_at)
+        formatAccountDate(
+            this.accountInfo()?.user_info?.created_at,
+            this.locale()
+        )
     );
     readonly allowedFormats = computed(
         () => this.accountInfo()?.user_info?.allowed_output_formats ?? []
@@ -180,7 +206,10 @@ export class AccountInfoComponent {
     readonly userDetails = computed<AccountDetailRow[]>(() => [
         {
             labelKey: 'XTREAM.ACCOUNT_INFO.STATUS',
-            value: this.accountInfo()?.user_info?.status || '-',
+            value:
+                this.statusKey() ??
+                (this.accountInfo()?.user_info?.status || '-'),
+            translateValue: this.statusKey() !== null,
             tone: this.isActive() ? 'positive' : undefined,
         },
         {
@@ -226,8 +255,10 @@ export class AccountInfoComponent {
         },
         {
             labelKey: 'XTREAM.ACCOUNT_INFO.SERVER_TIME',
-            value: this.accountInfo()?.server_info?.time_now || '-',
-            mono: true,
+            value: formatServerTime(
+                this.accountInfo()?.server_info?.time_now,
+                this.locale()
+            ),
         },
     ]);
 
@@ -281,16 +312,6 @@ export class AccountInfoComponent {
             this.accountInfo.set(null);
             this.loadState.set('error');
         }
-    }
-
-    private formatUnixDate(timestamp?: string): string {
-        const value = Number.parseInt(timestamp ?? '', 10);
-
-        if (!Number.isFinite(value) || value <= 0) {
-            return '-';
-        }
-
-        return new Date(value * 1000).toLocaleDateString();
     }
 
     private parseNumber(value?: string): number {

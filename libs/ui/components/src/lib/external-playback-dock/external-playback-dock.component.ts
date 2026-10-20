@@ -17,6 +17,7 @@ import {
     ExternalPlayerSession,
 } from '@iptvnator/shared/interfaces';
 import { SettingsStore } from '@iptvnator/services';
+import { redactSensitiveData } from '@iptvnator/shared/logging';
 import { applyChannelNameStrip } from '@iptvnator/shared/m3u-utils';
 
 @Component({
@@ -56,6 +57,14 @@ export class ExternalPlaybackDockComponent {
     );
 
     readonly playerLabel = computed(() => this.session().player.toUpperCase());
+
+    /** The raw failure as a hover title; it can name the stream URL. */
+    readonly errorTitle = computed(() => {
+        const session = this.session();
+        return session.status === 'error' && session.error
+            ? String(redactSensitiveData(session.error))
+            : null;
+    });
     readonly artworkUrl = computed(
         () => this.session().thumbnail?.trim() ?? ''
     );

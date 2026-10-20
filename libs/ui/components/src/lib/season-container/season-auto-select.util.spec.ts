@@ -97,6 +97,34 @@ describe('resolveAutoSelectedSeason', () => {
         expect(resolveAutoSelectedSeason(ctx)).toBe('3');
     });
 
+    it("opens on the host's season after the playing one", () => {
+        // The series page's play button says S03E02, an episode started
+        // a few seconds only: not "in progress", but the season it names.
+        const seasons = { '1': ['101'], '2': ['201'], '3': ['301', '302'] };
+        const progress = {
+            '201': inProgress(201, '2026-07-02T00:00:00.000Z'),
+        };
+        expect(
+            resolveAutoSelectedSeason(
+                context(seasons, progress, { preferredSeasonKey: '3' })
+            )
+        ).toBe('3');
+        expect(
+            resolveAutoSelectedSeason(
+                context(seasons, progress, {
+                    preferredSeasonKey: '3',
+                    playingSeasonKey: '1',
+                })
+            )
+        ).toBe('1');
+        // A season the list does not hold is no choice.
+        expect(
+            resolveAutoSelectedSeason(
+                context(seasons, progress, { preferredSeasonKey: '9' })
+            )
+        ).toBe('2');
+    });
+
     it('picks the most recently updated in-progress season', () => {
         const ctx = context(
             { '1': ['101', '102'], '2': ['201'], '3': ['301'] },

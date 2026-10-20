@@ -23,6 +23,8 @@ export interface SeasonAutoSelectSources {
     readonly sortedSeasonKeys: Signal<readonly string[]>;
     /** Season key of the inline-playing episode, if it is in the loaded set. */
     readonly playingSeasonKey: Signal<string | null>;
+    /** The host's season when nothing plays inline; read as it resolves. */
+    readonly preferredSeasonKey?: Signal<string | null>;
     readonly playbackPositions: Signal<
         ReadonlyMap<number, PlaybackPositionData>
     >;
@@ -95,6 +97,7 @@ export function createSeasonAutoSelectState(
         resolveAutoSelectedSeason({
             keys: sources.sortedSeasonKeys(),
             playingSeasonKey: sources.playingSeasonKey(),
+            preferredSeasonKey: sources.preferredSeasonKey?.() ?? null,
             seasons: sources.seasons(),
             positionOf: sources.positionOf,
             hasUnloadedSeasons:

@@ -41,6 +41,7 @@ import {
     PortalEmptyStateComponent,
 } from '@iptvnator/portal/shared/ui';
 import {
+    commandShortcutLabel,
     createLivePanelsController,
     type FeedCandidate,
     PORTAL_PLAYER,
@@ -160,6 +161,9 @@ const LIVE_CHANNEL_SORT_STORAGE_KEY = 'xtream-live-channel-sort-mode';
 export class LiveStreamLayoutComponent
     implements OnInit, OnDestroy, FullscreenChannelPanelHost
 {
+    /** Cmd/Ctrl+B, written the way the shortcuts dialog writes it. */
+    readonly sidebarShortcut = commandShortcutLabel('B');
+
     private readonly destroyRef = inject(DestroyRef);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     private readonly route = inject(ActivatedRoute);

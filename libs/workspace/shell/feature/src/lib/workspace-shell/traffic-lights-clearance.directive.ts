@@ -46,6 +46,9 @@ const FULLSCREEN_CLEARANCE: TrafficLightsClearance = { x: 0, y: 0, band: 0 };
  */
 const WINDOW_FULLSCREEN_CLASS = 'window-fullscreen';
 
+/** The clearance below the lights, for overlays outside the shell. */
+const ROOT_CLEAR_Y = '--traffic-lights-clear-y';
+
 /**
  * The page zoom factor. Chromium reports the window in window pixels and the
  * viewport in CSS pixels, so their ratio is the app zoom.
@@ -80,6 +83,11 @@ export function trafficLightsClearance(
  * centred on the lights: zoomed out, the shell grows the bar to it, so the
  * lights stay on its centre line. In fullscreen (`window-fullscreen` on
  * `<html>`) macOS hides the lights, so all three are `0px`.
+ *
+ * `--traffic-lights-clear-y` is also set on `<html>` while the directive is
+ * enabled: dialogs and other overlays render outside the shell (the CDK
+ * overlay container) and keep their top edge below the lights with it
+ * (`dialogSize()`).
  */
 @Directive({
     selector: '[appTrafficLightsClearance]',
@@ -117,6 +125,13 @@ export class TrafficLightsClearanceDirective {
             update();
             view.addEventListener('resize', update);
             onCleanup(() => view.removeEventListener('resize', update));
+        });
+        effect((onCleanup) => {
+            const value = this.clearY();
+            const root = this.document.documentElement;
+            if (value === null) return;
+            root.style.setProperty(ROOT_CLEAR_Y, value);
+            onCleanup(() => root.style.removeProperty(ROOT_CLEAR_Y));
         });
         effect((onCleanup) => {
             if (!this.enabled() || typeof MutationObserver === 'undefined') {

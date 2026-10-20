@@ -50,6 +50,7 @@ class FakeHistory extends EventTarget {
 
 describe('WorkspaceBackNavigationService', () => {
     const back = jest.fn();
+    const forward = jest.fn();
     const navigate = jest.fn().mockResolvedValue(true);
     const navigateByUrl = jest.fn().mockResolvedValue(true);
     let routerEvents = new Subject<RouterEvent>();
@@ -91,6 +92,7 @@ describe('WorkspaceBackNavigationService', () => {
         history: FakeHistory | null = null
     ): WorkspaceBackNavigationService {
         back.mockReset();
+        forward.mockReset();
         navigate.mockClear();
         navigateByUrl.mockClear();
         routerEvents = new Subject<RouterEvent>();
@@ -101,7 +103,11 @@ describe('WorkspaceBackNavigationService', () => {
                 {
                     provide: Location,
                     // The app's base href is "/": a path is its own route.
-                    useValue: { back, normalize: (path: string) => path },
+                    useValue: {
+                        back,
+                        forward,
+                        normalize: (path: string) => path,
+                    },
                 },
                 {
                     provide: Router,
@@ -325,6 +331,42 @@ describe('WorkspaceBackNavigationService', () => {
                 'currententrychange',
                 expect.any(Function)
             );
+        });
+    });
+
+    describe('history Forward', () => {
+        it('goes forward only to an in-app entry ahead', () => {
+            const history = new FakeHistory();
+            const service = createService(history);
+            expect(service.goForward()).toBe(false);
+
+            history.push();
+            expect(service.goForward()).toBe(false);
+
+            history.traverseTo(0);
+            expect(service.canGoForward()).toBe(true);
+            expect(service.goForward()).toBe(true);
+            expect(forward).toHaveBeenCalledTimes(1);
+
+            // A push drops the entries ahead.
+            history.push();
+            expect(service.goForward()).toBe(false);
+            expect(forward).toHaveBeenCalledTimes(1);
+        });
+
+        it('never steps into an entry from another document', () => {
+            const history = new FakeHistory([true, false]);
+            const service = createService(history);
+            history.traverseTo(0);
+
+            expect(service.goForward()).toBe(false);
+            expect(forward).not.toHaveBeenCalled();
+        });
+
+        it('does nothing without the Navigation API', () => {
+            const service = createService(null);
+
+            expect(service.goForward()).toBe(false);
         });
     });
 

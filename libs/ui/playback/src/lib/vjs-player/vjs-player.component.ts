@@ -15,11 +15,13 @@ import {
 } from '@angular/core';
 import '@yangkghjh/videojs-aspect-ratio-panel';
 import { createDevLogger } from '@iptvnator/shared/interfaces';
+import { documentLocale } from '@iptvnator/pipes';
 import videoJs from 'video.js';
 import 'videojs-contrib-quality-levels';
 import 'videojs-quality-selector-hls';
 import { type PlaybackDiagnostic } from '@iptvnator/playback/util';
 import { createVideoJsPlaybackDiagnostic } from './vjs-playback-diagnostics';
+import { registerVjsLanguages, resolveVjsLanguage } from './vjs-language';
 import {
     type LegacyPlayerShortcuts,
     PlayerControlsComponent,
@@ -140,10 +142,13 @@ export class VjsPlayerComponent implements OnInit, OnChanges, OnDestroy {
             });
         }
 
+        registerVjsLanguages();
         const vjsOptions = createVjsPlayerOptions(
             this.options(),
             this.mpegTsSession.isSupportedSource(this.desiredSource?.src),
-            this.sharedControls
+            this.sharedControls,
+            // `<html lang>` follows the app language.
+            resolveVjsLanguage(documentLocale())
         );
         this.player = videoJs(
             this.target().nativeElement,

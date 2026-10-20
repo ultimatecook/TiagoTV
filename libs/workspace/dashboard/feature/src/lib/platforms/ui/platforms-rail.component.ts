@@ -9,6 +9,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { HomeHeadingComponent } from '../../rails/home-heading.component';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
 import { PlatformLogoComponent } from './platform-logo.component';
+import { RememberScrollDirective } from '../../ui-state/remember-scroll.directive';
 
 /**
  * The Home's platforms row, under "Seguir viendo": one logo card per
@@ -21,6 +22,7 @@ import { PlatformLogoComponent } from './platform-logo.component';
     imports: [
         HomeHeadingComponent,
         PlatformLogoComponent,
+        RememberScrollDirective,
         RouterLink,
         TranslatePipe,
     ],

@@ -19,6 +19,7 @@ import {
     type CatalogTitle,
 } from '../catalog-titles';
 import { CatalogService } from '../catalog.service';
+import { PageStateComponent } from '../../ui-state/page-state.component';
 import { CatalogHeroComponent } from './catalog-hero.component';
 import { CatalogRowComponent } from './catalog-row.component';
 
@@ -33,7 +34,12 @@ const EXTRAS_DELAY_MS = 400;
  */
 @Component({
     selector: 'lib-catalog-page',
-    imports: [CatalogHeroComponent, CatalogRowComponent, TranslatePipe],
+    imports: [
+        CatalogHeroComponent,
+        CatalogRowComponent,
+        PageStateComponent,
+        TranslatePipe,
+    ],
     templateUrl: './catalog-page.component.html',
     styleUrl: './catalog-page.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -105,5 +111,10 @@ export class CatalogPageComponent {
 
     pick(title: CatalogTitle): void {
         this.featuredKey.set(titleKey(title));
+    }
+
+    /** "Retry" on a failed load: the kind's lists are asked again. */
+    retry(): void {
+        void this.catalog.load(this.kind());
     }
 }

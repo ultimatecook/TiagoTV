@@ -3,13 +3,32 @@
 // The bar: transparent, 84px, three columns. Only its groups take the
 // pointer; the band itself moves the macOS window like a title bar.
 :host {
+    // Its spacing. The density the bar measures (workspace-top-bar-fit.ts,
+    // whose WORKSPACE_TOP_BAR_SPACING holds the same tab padding, gap and
+    // trailing padding) narrows them: `is-compact`, and `is-stacked` for
+    // two rows.
+    --topbar-pad-start: 22px;
+    --topbar-pad-end: 28px;
+    --topbar-gap: 32px;
+    --topbar-lead-gap: 20px;
+    --topbar-trail-gap: 14px;
+    --topbar-tab-pad: 20px;
+    --topbar-search-min: 200px;
+    // Room under the row that lifts it onto the macOS lights' centre line.
+    --topbar-lift: 0px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    // The side columns never shrink below what they hold, so nothing
+    // overlaps: the capsule between them yields and its tabs scroll.
+    grid-template-columns:
+        minmax(min-content, 1fr) minmax(0, auto)
+        minmax(min-content, 1fr);
+    grid-template-areas: 'leading tabs trailing';
     align-items: center;
-    gap: 32px;
+    column-gap: var(--topbar-gap);
     box-sizing: border-box;
     height: var(--tv-topbar-h);
-    padding: 0 28px 0 22px;
+    padding: 0 var(--topbar-pad-end) var(--topbar-lift)
+        var(--topbar-pad-start);
     // The glass's dark ground, under its sheen: the bar floats over heroes
     // and artwork, and over a bright one the labels and icons must still
     // read (at least 4.5:1 over white, with the backdrop dimmed below).
@@ -28,17 +47,56 @@
     app-region: no-drag;
 }
 
+:host(.is-compact),
+:host(.is-stacked) {
+    --topbar-gap: 16px;
+    --topbar-tab-pad: 12px;
+    --topbar-pad-end: 20px;
+}
+
+// macOS: the row sits on the native traffic lights' centre line. Zoomed
+// in, the bar's 84 CSS pixels outgrow the lights' band (84 window points):
+// the room left under the band lifts the row (the shell grows the bar to
+// the band when zoomed out). Fullscreen hides the lights.
+:host-context(.has-traffic-lights) {
+    --topbar-lift: max(
+        0px,
+        calc(
+            var(--tv-topbar-h) -
+                var(--traffic-lights-band-h, var(--tv-topbar-h))
+        )
+    );
+}
+
+:host-context(.window-fullscreen) {
+    --topbar-lift: 0px;
+}
+
 .topbar__group--leading {
+    grid-area: leading;
     justify-self: start;
-    gap: 20px;
+    gap: var(--topbar-lead-gap);
+}
+
+// The group reaches past the lights even with nothing after them, so the
+// capsule never starts under them.
+:host-context(.has-traffic-lights) .topbar__group--leading {
+    min-width: calc(
+        var(--traffic-lights-clear-x, 90px) - var(--topbar-pad-start)
+    );
+}
+
+:host-context(.window-fullscreen) .topbar__group--leading {
+    min-width: 0;
 }
 
 .topbar__group--trailing {
     // The whole column, so an open search field shrinks to fit it instead
     // of running into the capsule; only its controls take the pointer.
+    grid-area: trailing;
     justify-self: stretch;
     justify-content: flex-end;
-    gap: 14px;
+    gap: var(--topbar-trail-gap);
     pointer-events: none;
     app-region: drag;
 
@@ -49,10 +107,15 @@
 }
 
 // macOS: the native traffic lights' room (the shell flags the window).
+// What follows it starts at the clearance, whatever the bar's padding and
+// the group's gap.
 .topbar__lights {
     display: none;
     flex: none;
-    width: calc(var(--traffic-lights-clear-x, 90px) - 30px);
+    width: calc(
+        var(--traffic-lights-clear-x, 90px) - var(--topbar-pad-start) -
+            var(--topbar-lead-gap)
+    );
     height: 14px;
 }
 
@@ -86,21 +149,60 @@
 
 .topbar__tabs {
     @extend %glass;
+    grid-area: tabs;
     display: flex;
     align-items: center;
     min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
     padding: 5px;
+    overflow: hidden;
     border-radius: 999px;
     pointer-events: auto;
     app-region: no-drag;
 }
 
+// The tabs scroll sideways inside the capsule when it has to yield; an
+// edge fades out where more of them hide, the hint that the capsule
+// scrolls.
 .topbar__tabs-track {
+    --tabs-fade-start: 0px;
+    --tabs-fade-end: 0px;
     position: relative;
     display: flex;
+    flex: 1 1 auto;
     align-items: center;
     gap: 4px;
     min-width: 0;
+    overflow-x: auto;
+    border-radius: 999px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent 0,
+        #000 var(--tabs-fade-start),
+        #000 calc(100% - var(--tabs-fade-end)),
+        transparent 100%
+    );
+    mask-image: linear-gradient(
+        90deg,
+        transparent 0,
+        #000 var(--tabs-fade-start),
+        #000 calc(100% - var(--tabs-fade-end)),
+        transparent 100%
+    );
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    &.has-more-start {
+        --tabs-fade-start: 36px;
+    }
+
+    &.has-more-end {
+        --tabs-fade-end: 36px;
+    }
 }
 
 .topbar__tab {
@@ -108,7 +210,7 @@
     flex: none;
     align-items: center;
     height: 38px;
-    padding: 0 20px;
+    padding: 0 var(--topbar-tab-pad);
     border-radius: 999px;
     color: var(--tv-text-img-1);
     font-size: 14.5px;
@@ -181,10 +283,12 @@
         @include focus-ring.focus-ring-declarations;
     }
 
+    // A page shortcut without a line glyph keeps its ligature, at the
+    // glyphs' size.
     mat-icon {
-        width: 20px;
-        height: 20px;
-        font-size: 20px;
+        width: 19px;
+        height: 19px;
+        font-size: 19px;
     }
 }
 
@@ -248,8 +352,12 @@
     flex: none;
     min-width: 0;
 
+    // The open field's least width is the wrapper's own, so the bar
+    // measures it and the capsule yields to it (it never runs under
+    // Ajustes).
     &.is-open {
         flex: 0 1 clamp(220px, 24vw, 320px);
+        min-width: var(--topbar-search-min);
     }
 }
 
@@ -259,7 +367,7 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    min-width: 150px;
+    min-width: 0;
     height: 46px;
     padding: 0 6px 0 16px;
     box-sizing: border-box;
@@ -274,6 +382,7 @@
 
     input {
         flex: 1;
+        width: 0;
         min-width: 0;
         height: 100%;
         padding: 0;
@@ -386,77 +495,47 @@
     }
 }
 
-// Narrow windows: the circles move up beside Back and the capsule takes a
-// row of its own, scrolling sideways when the tabs do not fit.
-@media (max-width: 760px) {
-    :host {
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-rows: 52px 40px;
-        grid-template-areas:
-            'leading trailing'
-            'tabs tabs';
-        row-gap: 8px;
-        column-gap: 12px;
-        padding: 8px 16px;
-    }
-
-    .topbar__group--leading {
-        grid-area: leading;
-        gap: 10px;
-    }
-
-    .topbar__group--trailing {
-        grid-area: trailing;
-        gap: 8px;
-    }
+// Two rows when even the compact row does not fit, and always at 760px and
+// below: the circles move up beside Back and the capsule takes a row of its
+// own, centred, scrolling sideways when the tabs do not fit. The first row
+// sits on the macOS lights' centre line (the shell's
+// `--workspace-topbar-stacked-top`, which also sizes the bar).
+:host(.is-stacked) {
+    grid-template-columns: auto minmax(min-content, 1fr);
+    grid-template-rows: 52px 40px;
+    grid-template-areas:
+        'leading trailing'
+        'tabs tabs';
+    align-content: start;
+    row-gap: 6px;
+    padding: var(--workspace-topbar-stacked-top, 4px) var(--topbar-pad-end)
+        6px var(--topbar-pad-start);
 
     .topbar__tabs {
-        grid-area: tabs;
-        justify-self: stretch;
+        justify-self: center;
         padding: 3px;
-        overflow: hidden;
-    }
-
-    // The tabs scroll sideways inside the capsule; an edge fades out where
-    // more of them hide, the hint that the capsule scrolls.
-    .topbar__tabs-track {
-        --tabs-fade-start: 0px;
-        --tabs-fade-end: 0px;
-        flex: 1;
-        overflow-x: auto;
-        border-radius: 999px;
-        scrollbar-width: none;
-        -webkit-mask-image: linear-gradient(
-            90deg,
-            transparent 0,
-            #000 var(--tabs-fade-start),
-            #000 calc(100% - var(--tabs-fade-end)),
-            transparent 100%
-        );
-        mask-image: linear-gradient(
-            90deg,
-            transparent 0,
-            #000 var(--tabs-fade-start),
-            #000 calc(100% - var(--tabs-fade-end)),
-            transparent 100%
-        );
-
-        &::-webkit-scrollbar {
-            display: none;
-        }
-
-        &.has-more-start {
-            --tabs-fade-start: 36px;
-        }
-
-        &.has-more-end {
-            --tabs-fade-end: 36px;
-        }
     }
 
     .topbar__tab {
         height: 32px;
-        padding: 0 14px;
+    }
+}
+
+// Narrow windows: narrower spacing and circles.
+@media (max-width: 760px) {
+    :host,
+    :host(.is-stacked) {
+        --topbar-pad-start: 16px;
+        --topbar-pad-end: 16px;
+        --topbar-gap: 12px;
+        --topbar-lead-gap: 10px;
+        --topbar-trail-gap: 8px;
+        --topbar-tab-pad: 14px;
+        --topbar-search-min: 140px;
+    }
+
+    .topbar__tab {
+        height: 32px;
         font-size: 13.5px;
     }
 
@@ -476,7 +555,6 @@
     }
 
     .topbar__search-field {
-        min-width: 120px;
         height: 40px;
     }
 }

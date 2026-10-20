@@ -116,6 +116,7 @@ export * from './lib/catchup-download.interface';
 
 export * from './lib/xtream-connection-test';
 export * from './lib/portal-request-failure.util';
+export * from './lib/portal-request-error-display.util';
 
 export * from './lib/source-health';
 export * from './lib/source-reachability';

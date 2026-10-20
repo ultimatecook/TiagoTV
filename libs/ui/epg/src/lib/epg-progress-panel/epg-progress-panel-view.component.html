@@ -70,7 +70,7 @@
                             >
                                 {{ getStatusIcon(item.status) }}
                             </mat-icon>
-                            <span class="item-url" [title]="item.url">
+                            <span class="item-url" [title]="screenText(item.url)">
                                 {{ getDisplayUrl(item.url) }}
                             </span>
                             @if (item.status === 'error') {
@@ -129,7 +129,7 @@
                                     {{ formatCount(item.stats.totalPrograms) }}
                                 </span>
                             } @else if (item.error) {
-                                <span class="error-text">{{ item.error }}</span>
+                                <span class="error-text">{{ screenText(item.error) }}</span>
                             } @else if (item.status === 'loading') {
                                 <span>{{ 'EPG.LOADING' | translate }}...</span>
                             }
@@ -157,7 +157,7 @@
                                     <span class="queue-position">{{
                                         i + 1
                                     }}</span>
-                                    <span class="queue-url" [title]="item.url">
+                                    <span class="queue-url" [title]="screenText(item.url)">
                                         {{ getDisplayUrl(item.url) }}
                                     </span>
                                     <button

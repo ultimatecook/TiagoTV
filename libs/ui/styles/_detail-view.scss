@@ -15,10 +15,12 @@
         --content-max-width: 1400px;
 
         // Page surface and text follow the app theme (light by default).
-        --hero-gradient-start: color-mix(in srgb, var(--app-content-bg, #f5f6f8) 0%, transparent);
-        --hero-gradient-mid: color-mix(in srgb, var(--app-content-bg, #f5f6f8) 75%, transparent);
-        --hero-gradient-end: var(--app-content-bg, #f5f6f8);
-        --surface-bg: var(--app-content-bg, #f5f6f8);
+        // The page is opaque (`--app-content-solid`): the hero artwork
+        // fades into it.
+        --hero-gradient-start: color-mix(in srgb, var(--app-content-solid, #f5f6f8) 0%, transparent);
+        --hero-gradient-mid: color-mix(in srgb, var(--app-content-solid, #f5f6f8) 75%, transparent);
+        --hero-gradient-end: var(--app-content-solid, #f5f6f8);
+        --surface-bg: var(--app-content-solid, #f5f6f8);
         --text-primary: var(--app-heading-color, #1a1d23);
         --text-secondary: var(--app-body-color, #4a5060);
         --text-muted: var(--app-muted-color, #8891a4);

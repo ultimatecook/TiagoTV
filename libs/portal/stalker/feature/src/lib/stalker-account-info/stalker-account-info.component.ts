@@ -31,6 +31,7 @@ import {
     DialogHeaderEndDirective,
     DialogShellComponent,
 } from '@iptvnator/ui/components';
+import { documentLocale, formatWithIntl } from '@iptvnator/pipes';
 
 type AccountLoadState = 'loading' | 'ready' | 'error';
 
@@ -314,7 +315,15 @@ export class StalkerAccountInfoComponent {
         }
     }
 
+    /** "17 mar 2030": the app language (`<html lang>`), not the OS locale. */
     private formatDate(date: Date | null): string {
-        return date ? date.toLocaleDateString() : '-';
+        return date
+            ? formatWithIntl(date, {
+                  locale: documentLocale(),
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+              }) || '-'
+            : '-';
     }
 }

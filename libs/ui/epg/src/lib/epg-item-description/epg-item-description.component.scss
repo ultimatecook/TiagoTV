@@ -4,12 +4,17 @@
     box-sizing: border-box;
     width: 540px;
     max-width: 100%;
-    background: $surface-1;
+    // The dialogs' overlay frame (glass over a dark ground in dark).
+    background-color: var(--app-overlay-bg);
+    background-image: var(--app-overlay-sheen);
+    backdrop-filter: var(--app-overlay-filter);
     color: $text-primary;
-    border: 1px solid $line-strong;
-    border-radius: 14px;
+    border: 1px solid var(--app-overlay-border);
+    border-radius: var(--tv-radius-dialog);
     overflow: hidden;
-    box-shadow: var(--app-widget-shadow);
+    box-shadow:
+        var(--app-overlay-highlight),
+        var(--app-popover-shadow);
 
     * {
         box-sizing: border-box;
@@ -252,7 +257,9 @@
         background: transparent !important;
         border: 0;
         box-shadow: none !important;
-        border-radius: 14px !important;
+        // The dialog blurs its own backdrop, inside its own corners.
+        backdrop-filter: none;
+        border-radius: var(--tv-radius-dialog) !important;
         overflow: visible;
     }
 }

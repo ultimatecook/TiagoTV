@@ -57,9 +57,64 @@ const KEY_ARIA_LABELS = new Map<string, string>([
     ['ArrowDown', 'Down arrow'],
     ['Escape', 'Escape'],
     ['[', 'Left bracket'],
+    [']', 'Right bracket'],
 ]);
 
 const MODIFIER_KEYS = new Set(['Cmd', 'Ctrl', 'Alt', 'Shift']);
+
+/** macOS shows its modifier symbols; elsewhere the key names stay. */
+const MAC_KEY_LABELS = new Map<string, string>([
+    ['Cmd', '⌘'],
+    ['Alt', '⌥'],
+    ['Shift', '⇧'],
+    ['Ctrl', '⌃'],
+]);
+
+/** Whether shortcuts read the macOS way (⌘ ⌥ ⇧) on this device. */
+export function isMacShortcutPlatform(): boolean {
+    if (typeof navigator === 'undefined') {
+        return false;
+    }
+    const nav = navigator as Navigator & {
+        userAgentData?: { platform?: string };
+    };
+    return /Mac|iPhone|iPad|iPod/i.test(
+        nav.userAgentData?.platform || nav.userAgent || ''
+    );
+}
+
+function keyLabel(key: string, isMac: boolean): string {
+    return (
+        (isMac ? MAC_KEY_LABELS.get(key) : undefined) ??
+        KEY_LABELS.get(key) ??
+        key
+    );
+}
+
+/**
+ * A chord as one piece of text, the same convention the shortcuts dialog
+ * draws: "⌘⇧K" on macOS, "Ctrl+Shift+K" elsewhere.
+ */
+export function formatShortcutLabel(
+    keys: readonly string[],
+    isMac = isMacShortcutPlatform()
+): string {
+    const labels = keys.map((key) => keyLabel(key, isMac));
+    return labels.join(isMac ? '' : '+');
+}
+
+/** The command chord for a key: "⌘B" on macOS, "Ctrl+B" elsewhere. */
+export function commandShortcutLabel(
+    key: string,
+    isMac = isMacShortcutPlatform()
+): string {
+    return formatShortcutLabel([isMac ? 'Cmd' : 'Ctrl', key], isMac);
+}
+
+/** The command modifier on its own: "⌘" on macOS, "Ctrl" elsewhere. */
+export function commandModifierLabel(isMac = isMacShortcutPlatform()): string {
+    return keyLabel(isMac ? 'Cmd' : 'Ctrl', isMac);
+}
 
 export function getKeyboardShortcutGroups(options: {
     isMac: boolean;
@@ -122,6 +177,35 @@ export function isWorkspaceBackShortcut(
 }
 
 /**
+ * True for the Forward chord: Cmd+] on macOS, Alt+→ elsewhere (the
+ * browser's own chords), matched like {@link isWorkspaceBackShortcut}; on
+ * macOS also by the `BracketRight` key position.
+ */
+export function isWorkspaceForwardShortcut(
+    event: KeyboardEvent,
+    options: { isMac: boolean }
+): boolean {
+    if (event.shiftKey) {
+        return false;
+    }
+
+    if (options.isMac) {
+        return (
+            event.metaKey &&
+            !event.ctrlKey &&
+            (event.key === ']' || event.code === 'BracketRight')
+        );
+    }
+
+    return (
+        event.altKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        event.key === 'ArrowRight'
+    );
+}
+
+/**
  * The app zoom shortcut `event` carries, or null. Follows the browser
  * convention on each platform — Cmd on macOS, Ctrl elsewhere, Alt never:
  * `+`/`=` (so `Ctrl+=` and `Ctrl+Shift+=` both zoom in), `-`/`_`, `0`, and
@@ -179,7 +263,7 @@ function resolveShortcutChord(
             .join(' + '),
         keys: keys.map((shortcutKey) => ({
             id: shortcutKey.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-            label: KEY_LABELS.get(shortcutKey) ?? shortcutKey,
+            label: keyLabel(shortcutKey, isMac),
             ariaLabel: KEY_ARIA_LABELS.get(shortcutKey) ?? shortcutKey,
             isModifier: MODIFIER_KEYS.has(shortcutKey),
         })),

@@ -1,6 +1,7 @@
 // "Series para vos" (README 01 · Inicio, 6): one featured show beside two
 // stacked ones, each over its backdrop or its title-tinted gradient.
 @use '../../../../../../ui/styles/focus-ring';
+@use '../ui-state/page-ui';
 @use '../../../../../../ui/styles/skeleton-shimmer' as shimmer;
 
 :host {
@@ -53,10 +54,13 @@
     font: inherit;
     text-align: left;
     cursor: pointer;
-    transition: border-color 220ms ease;
+    transition: transform page-ui.$card-ease;
+    @include page-ui.ring-layer;
 
+    // The pages' card hover: a lift and the white ring.
     &:hover {
-        border-color: rgba(255, 255, 255, 0.55);
+        transform: page-ui.$card-lift;
+        @include page-ui.ring-shown;
     }
 
     &--featured {

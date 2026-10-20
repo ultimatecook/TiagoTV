@@ -7,7 +7,8 @@
 :host {
     // Shared surface palette (mirrors content-hero) so the area below the
     // natural-height hero and the About block match the page background.
-    --surface-bg: var(--app-content-bg, #f5f6f8);
+    // Opaque, the colour the hero's scrims fade into.
+    --surface-bg: var(--app-content-solid, #f5f6f8);
     --text-primary: var(--app-heading-color, #1a1d23);
     --text-secondary: var(--app-body-color, #4a5060);
     --text-muted: var(--app-muted-color, #8891a4);

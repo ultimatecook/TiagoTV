@@ -91,7 +91,7 @@
                         : 'LAYOUT.HIDE_CHANNELS_LIST'
                     ) | translate
                 "
-                [matTooltip]="'LAYOUT.TOGGLE_SIDEBAR_TOOLTIP' | translate"
+                [matTooltip]="'LAYOUT.TOGGLE_SIDEBAR_TOOLTIP' | translate: { shortcut: sidebarShortcut }"
                 [attr.aria-pressed]="isSidebarCollapsed()"
                 (click)="toggleSidebar()"
             >
@@ -154,14 +154,14 @@
                         clearButtonTooltipKey()
                             | translate
                                 : {
-                                      type: currentTypeLabelKey() | translate,
+                                      type: currentTypeNounKey() | translate,
                                   }
                     "
                     [attr.aria-label]="
                         clearButtonTooltipKey()
                             | translate
                                 : {
-                                      type: currentTypeLabelKey() | translate,
+                                      type: currentTypeNounKey() | translate,
                                   }
                     "
                 >

@@ -69,6 +69,7 @@ class MockWorkspaceShellTopBarComponent {
     readonly parentalLockToggleRequested = output<void>();
     readonly addPlaylistRequested = output<void>();
     readonly accountInfoForPlaylistRequested = output<unknown>();
+    readonly densityChange = output<string>();
     focusSearch = jest.fn(() => false);
     containsSearchInput = jest.fn(() => false);
     focusContextDrawerToggle = jest.fn(() => true);
@@ -395,6 +396,49 @@ describe('WorkspaceShellComponent', () => {
         expect(topBar().back()).toBeNull();
         topBar().activeTabReselected.emit();
         expect(facade.goBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('scrolls a tab\'s own page back to its top when its lit tab is clicked again', async () => {
+        const { facade, fixture, topBar } = await createShell();
+        const content = (fixture.nativeElement as HTMLElement).querySelector(
+            'main.workspace-content'
+        ) as HTMLElement;
+        const scrollTo = jest.fn();
+        content.scrollTo = scrollTo;
+        facade.currentUrl.set('/workspace/series');
+        fixture.detectChanges();
+
+        content.scrollTop = 900;
+        topBar().activeTabReselected.emit();
+
+        expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+        expect(facade.goBack).not.toHaveBeenCalled();
+
+        // Already at its top, or on a deep page, it stays where it is.
+        scrollTo.mockClear();
+        content.scrollTop = 0;
+        topBar().activeTabReselected.emit();
+        facade.currentUrl.set('/workspace/xtreams/p1/vod/1/2');
+        fixture.detectChanges();
+        content.scrollTop = 400;
+        topBar().activeTabReselected.emit();
+        expect(scrollTo).not.toHaveBeenCalled();
+    });
+
+    it('makes room for the bar\'s second row when it takes two', async () => {
+        const { fixture, topBar } = await createShell();
+        const shell = (fixture.nativeElement as HTMLElement).querySelector(
+            '.workspace-shell'
+        ) as HTMLElement;
+        expect(shell.classList).not.toContain('has-stacked-bar');
+
+        topBar().densityChange.emit('stacked');
+        fixture.detectChanges();
+        expect(shell.classList).toContain('has-stacked-bar');
+
+        topBar().densityChange.emit('compact');
+        fixture.detectChanges();
+        expect(shell.classList).not.toContain('has-stacked-bar');
     });
 
     it('goes up to the sports hub from a league page', async () => {

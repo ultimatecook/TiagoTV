@@ -91,7 +91,7 @@ test.describe('Electron Sources View', () => {
                 path: test.info().outputPath('http-connection-add.png'),
             });
             await dialog
-                .getByRole('button', { name: 'Add playlist', exact: true })
+                .getByRole('button', { name: 'Add source', exact: true })
                 .click();
             await waitForXtreamCatalog(page);
             await openSources(page);
@@ -328,7 +328,7 @@ https://streams.example.test/url-omega.m3u8
                 ]);
 
             await app.mainWindow
-                .getByRole('link', { name: 'Dashboard', exact: true })
+                .getByRole('link', { name: 'Home', exact: true })
                 .click();
             await openSources(app.mainWindow);
             await expect
@@ -795,7 +795,7 @@ https://streams.example.test/original-url.m3u8
             await currentRow.locator('.source-row__more').click();
             await expect(
                 app.mainWindow.getByRole('menuitem', {
-                    name: 'Refresh playlist',
+                    name: 'Refresh source',
                 })
             ).toBeVisible();
             await app.mainWindow.keyboard.press('Escape');
@@ -823,7 +823,7 @@ https://streams.example.test/original-url.m3u8
                 .click();
             await expect(
                 app.mainWindow.getByRole('menuitem', {
-                    name: 'Refresh playlist',
+                    name: 'Refresh source',
                     exact: true,
                 })
             ).toBeVisible();

@@ -19,6 +19,7 @@ import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
 import { HomeHeadingComponent } from './home-heading.component';
 import { HomeNearDirective } from './home-near.directive';
 import { homeChannelFace, type HomeChannelFace } from './home-recent-channels';
+import { RememberScrollDirective } from '../ui-state/remember-scroll.directive';
 
 /** Channels the row lists. */
 const CHANNEL_LIMIT = 12;
@@ -42,6 +43,7 @@ interface HomeChannelCard extends HomeChannelFace {
     imports: [
         HomeHeadingComponent,
         HomeNearDirective,
+        RememberScrollDirective,
         RouterLink,
         TranslatePipe,
     ],

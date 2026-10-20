@@ -454,7 +454,7 @@ test.describe('Electron catalog sort menus', () => {
             });
             const expected = {
                 chip: { isPrimary: true, padding: '10px 10px' },
-                refine: { height: 32, radius: '8px' },
+                refine: { height: 32, radius: '999px' },
             };
 
             // Angular removes a component's stylesheet with its last instance

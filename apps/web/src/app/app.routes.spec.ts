@@ -1,5 +1,11 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideLocationMocks } from '@angular/common/testing';
+import { provideRouter, Route, Router } from '@angular/router';
 import { ParentalLockService, SettingsStore } from '@iptvnator/services';
+
+@Component({ template: '' })
+class RoutePageStubComponent {}
 
 type AppRoutesModule = typeof import('./app.routes');
 
@@ -14,8 +20,13 @@ describe('app routes', () => {
         redirectTo?: unknown;
     }> = [];
     let resolveRecordingsCapabilityRoute: AppRoutesModule['resolveRecordingsCapabilityRoute'];
+    let appRoutesList: Route[] = [];
 
     beforeAll(async () => {
+        // The league guard reads the competitions the hub lists.
+        jest.unstable_mockModule('@iptvnator/workspace/dashboard/feature', () => ({
+            SPORT_SECTIONS: [{ id: 'laliga' }, { id: 'premier-league' }],
+        }));
         jest.unstable_mockModule(
             '@iptvnator/playlist/m3u/feature-player',
             () => ({
@@ -50,6 +61,7 @@ describe('app routes', () => {
 
         const appRoutes = await import('./app.routes');
         const { routes } = appRoutes;
+        appRoutesList = routes;
         workspaceRoute = routes.find((route) => route.path === 'workspace');
         workspaceChildren = workspaceRoute?.children ?? [];
         resolveRecordingsCapabilityRoute =
@@ -245,6 +257,73 @@ describe('app routes', () => {
         );
 
         expect(typeof workspaceDefaultRoute?.redirectTo).toBe('function');
+    });
+
+    /**
+     * The real redirects in a router with stub pages: the workspace entry
+     * lands on Inicio, as `workspaceEntryRedirect` does by default.
+     */
+    async function routerWithAppRedirects(): Promise<Router> {
+        const leagueRoutes = workspaceChildren
+            .filter((route) => route.path === 'sports/:sectionId')
+            .map((route) => {
+                const { loadComponent: _lazy, ...rest } = route as Route;
+                return rest.redirectTo
+                    ? rest
+                    : { ...rest, component: RoutePageStubComponent };
+            });
+        const page = (path: string): Route => ({
+            path,
+            component: RoutePageStubComponent,
+        });
+        TestBed.configureTestingModule({
+            providers: [
+                provideLocationMocks(),
+                provideRouter([
+                    ...appRoutesList.filter(
+                        (route) => route.path === '' && route.redirectTo
+                    ),
+                    {
+                        path: 'workspace',
+                        children: [
+                            {
+                                path: '',
+                                pathMatch: 'full',
+                                redirectTo: 'dashboard',
+                            },
+                            page('dashboard'),
+                            { ...page('sports'), pathMatch: 'full' },
+                            ...leagueRoutes,
+                            page('settings/:section'),
+                        ],
+                    },
+                    ...appRoutesList.filter((route) => route.path === '**'),
+                ]),
+            ],
+        });
+        const router = TestBed.inject(Router);
+        router.initialNavigation();
+        return router;
+    }
+
+    it('sends an unknown address to the workspace entry, Inicio', async () => {
+        const router = await routerWithAppRedirects();
+
+        await router.navigateByUrl('/workspace/nope');
+        expect(router.url).toBe('/workspace/dashboard');
+
+        await router.navigateByUrl('/nope/deeper');
+        expect(router.url).toBe('/workspace/dashboard');
+    });
+
+    it('opens the hub for a competition the app does not follow', async () => {
+        const router = await routerWithAppRedirects();
+
+        await router.navigateByUrl('/workspace/sports/laliga');
+        expect(router.url).toBe('/workspace/sports/laliga');
+
+        await router.navigateByUrl('/workspace/sports/nope');
+        expect(router.url).toBe('/workspace/sports');
     });
 
     it('protects the dashboard route behind a visibility guard', async () => {

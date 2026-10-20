@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { Router, Routes } from '@angular/router';
+import { CanMatchFn, Router, Routes } from '@angular/router';
 import {
     ParentalLockService,
     RuntimeCapabilitiesService,
@@ -51,6 +51,18 @@ export function resolveRecordingsCapabilityRoute(
         ? true
         : router.parseUrl('/workspace/downloads');
 }
+
+/** A league page matches only a competition the sports hub lists. */
+export const knownSportSectionGuard: CanMatchFn = async (_route, segments) => {
+    const sectionId = segments[1]?.path;
+    if (!sectionId) {
+        return false;
+    }
+    const { SPORT_SECTIONS } = await import(
+        '@iptvnator/workspace/dashboard/feature'
+    );
+    return SPORT_SECTIONS.some((section) => section.id === sectionId);
+};
 
 const recordingsCapabilityGuard = () => {
     return resolveRecordingsCapabilityRoute(
@@ -108,10 +120,17 @@ export const routes: Routes = [
             {
                 // TiagoTV: a competition of the Home's "Deportes" row.
                 path: 'sports/:sectionId',
+                canMatch: [knownSportSectionGuard],
                 loadComponent: () =>
                     import('@iptvnator/workspace/dashboard/feature').then(
                         (c) => c.SportSectionPageComponent
                     ),
+            },
+            {
+                // A competition the app does not follow: the hub, within
+                // the same navigation (no entry of its own).
+                path: 'sports/:sectionId',
+                redirectTo: '/workspace/sports',
             },
             {
                 // TiagoTV: a streaming platform of the Home's platforms row.
@@ -269,7 +288,9 @@ export const routes: Routes = [
         pathMatch: 'full',
     },
     {
+        // Absolute: a relative '' under an unknown /workspace/… URL never
+        // reached the workspace entry, and the start-up screen stayed.
         path: '**',
-        redirectTo: '',
+        redirectTo: '/workspace',
     },
 ];

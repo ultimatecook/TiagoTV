@@ -20,6 +20,7 @@ import {
     EpgProgressService,
 } from '@iptvnator/epg/data-access';
 import { ELECTRON_BRIDGE_SECURITY_ERROR_CODES } from '@iptvnator/shared/interfaces';
+import { redactSensitiveData } from '@iptvnator/shared/logging';
 import { normalizeDateLocale } from '@iptvnator/pipes/date-format';
 import { formatEpgImportDisplayUrl } from './epg-import-display-url';
 
@@ -122,6 +123,11 @@ export class EpgProgressPanelViewComponent {
 
     getDisplayUrl(url: string): string {
         return formatEpgImportDisplayUrl(url);
+    }
+
+    /** An address or error as shown on screen, without an Xtream account. */
+    screenText(text: string): string {
+        return String(redactSensitiveData(text));
     }
 
     formatCount(value: number): string {

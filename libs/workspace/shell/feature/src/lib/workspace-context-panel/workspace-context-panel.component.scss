@@ -1,6 +1,7 @@
 @use '@angular/material' as mat;
 @use '../../../../../../ui/styles/app-controls' as controls;
 @use '../../../../../../ui/styles/focus-ring';
+@use '../../../../../../ui/styles/scrollbar';
 
 :host {
     display: flex;
@@ -170,9 +171,7 @@ app-workspace-context-category-view {
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--app-muted-color) 55%, transparent)
-        transparent;
+    @include scrollbar.thin;
 }
 
 .context-skeleton {

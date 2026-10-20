@@ -22,6 +22,7 @@ import { findSportSection, type SportSectionId } from '../sport-sections';
 import type { SportChannel } from '../sports-catalog';
 import { SportTvGuide } from '../sport-tv-guide';
 import { SportTvPlayback } from '../sport-tv-playback';
+import { PageStateComponent } from '../../ui-state/page-state.component';
 import { FeaturedMatchComponent } from './featured-match.component';
 import { LeagueTableComponent } from './league-table.component';
 import { SportMatchRowComponent } from './sport-match-row.component';
@@ -38,6 +39,7 @@ import { SportStageComponent } from './sport-stage.component';
     imports: [
         FeaturedMatchComponent,
         LeagueTableComponent,
+        PageStateComponent,
         SportMatchRowComponent,
         SportStageComponent,
         TranslatePipe,
@@ -112,6 +114,10 @@ export class SportSectionPageComponent {
         this.host
             .querySelector('lib-sport-stage')
             ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    retry(): void {
+        void this.sports.load();
     }
 
     /** "Matches and table": down to them. */

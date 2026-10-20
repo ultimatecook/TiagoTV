@@ -13,6 +13,7 @@ import {
     ANNOUNCE_PLAYLIST_OPEN_LISTENER,
     OPEN_FILE,
     WINDOW_BACK_REQUESTED,
+    WINDOW_FORWARD_REQUESTED,
     WINDOW_STATE_CHANGED,
 } from '@iptvnator/shared/interfaces';
 import type {
@@ -331,6 +332,29 @@ describe('main preload DB IPC contract', () => {
         expect(callback.mock.calls).toEqual([['app-command'], ['swipe']]);
         expect(mockIpcRenderer.off).toHaveBeenCalledWith(
             WINDOW_BACK_REQUESTED,
+            handler
+        );
+    });
+
+    it('forwards only the known window Forward gesture source', () => {
+        const api = getExposedApi();
+        const callback = jest.fn();
+
+        const unsubscribe = api.onWindowForwardRequested?.(callback);
+        const handler = mockIpcRenderer.on.mock.calls.at(-1)?.[1];
+
+        handler({}, 'swipe');
+        handler({}, 'app-command');
+        handler({}, { source: 'swipe' });
+        unsubscribe?.();
+
+        expect(mockIpcRenderer.on).toHaveBeenCalledWith(
+            WINDOW_FORWARD_REQUESTED,
+            expect.any(Function)
+        );
+        expect(callback.mock.calls).toEqual([['swipe']]);
+        expect(mockIpcRenderer.off).toHaveBeenCalledWith(
+            WINDOW_FORWARD_REQUESTED,
             handler
         );
     });

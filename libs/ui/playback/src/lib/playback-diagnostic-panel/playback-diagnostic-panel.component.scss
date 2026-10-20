@@ -24,6 +24,10 @@
         ),
         rgb(0 0 0 / 96%);
     color: #f6f6f6;
+    /* The panel sits over video in either theme: its keyboard ring is the
+     * shared warm white (`$focus-ring` in `_player-palette.scss`, which this
+     * raw-CSS stylesheet cannot load), never the light theme's blue. */
+    --app-focus-ring: #fbf7ee;
 }
 
 .web-player-diagnostic button,
@@ -247,7 +251,7 @@
 .web-player-diagnostic__player-card:focus-visible,
 .web-player-diagnostic__utility-button:focus-visible,
 .web-player-diagnostic__details summary:focus-visible {
-    outline: 2px solid #ffb24c;
+    outline: 2px solid var(--app-focus-ring);
     outline-offset: 3px;
 }
 

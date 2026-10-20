@@ -12,5 +12,6 @@
 @forward 'detail-view-actions';
 @forward 'nav-list';
 @forward 'focus-ring';
+@forward 'scrollbar' as scrollbar-*;
 @forward 'app-controls' as controls-*;
 @forward 'skeleton-shimmer' as skeleton-*;

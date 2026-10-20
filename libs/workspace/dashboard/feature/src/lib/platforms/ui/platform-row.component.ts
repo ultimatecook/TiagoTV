@@ -15,6 +15,7 @@ import {
 } from '../platform-design';
 import type { PlatformRow } from '../platform-rows';
 import { PlatformTitleCardComponent } from './platform-title-card.component';
+import { RememberScrollDirective } from '../../ui-state/remember-scroll.directive';
 
 /** Posters a row lays out; "See all" opens the rest. */
 const ROW_LIMIT = 40;
@@ -29,7 +30,11 @@ const ROW_LIMIT = 40;
  */
 @Component({
     selector: 'lib-platform-row',
-    imports: [PlatformTitleCardComponent, TranslatePipe],
+    imports: [
+        PlatformTitleCardComponent,
+        RememberScrollDirective,
+        TranslatePipe,
+    ],
     templateUrl: './platform-row.component.html',
     styleUrl: './platform-row.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

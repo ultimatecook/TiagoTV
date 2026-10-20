@@ -363,14 +363,14 @@ test.describe('Parental lock UI', () => {
             /^https?:\/\/(?:channel\.icons\.url|example\.channels|xml-url)\//,
             (route) => route.abort()
         );
-        await page.getByRole('button', { name: 'Add playlist' }).click();
+        await page.getByRole('button', { name: 'Add source' }).click();
         const addDialog = page.locator('mat-dialog-container');
         await addDialog.getByRole('radio', { name: /M3U file/i }).click();
         await page.setInputFiles('input[type="file"]', M3U_FIXTURE);
         await Promise.all([
             page.waitForURL(/\/workspace\/playlists\/.+\/all$/),
             addDialog
-                .getByRole('button', { name: 'Add playlist', exact: true })
+                .getByRole('button', { name: 'Add source', exact: true })
                 .click(),
         ]);
         const groupsUrl = page.url().replace(/\/all$/, '/groups');

@@ -160,7 +160,7 @@
 
         &::after {
             left: 16px;
-            background: var(--app-content-bg);
+            background: var(--app-content-solid);
         }
     }
     &:has(input:disabled) {

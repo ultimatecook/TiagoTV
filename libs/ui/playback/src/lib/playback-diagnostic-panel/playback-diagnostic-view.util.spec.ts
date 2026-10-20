@@ -56,6 +56,29 @@ describe('playback diagnostic view formatters', () => {
         videoCodecs: ['hvc1.1.6.L93.B0'],
     };
 
+    it('keeps the account of a stream URL out of the native error detail', () => {
+        const details = getDiagnosticDetails({
+            code: PlaybackDiagnosticCode.NetworkError,
+            source: PlaybackDiagnosticSource.Native,
+            sourceUrl: 'http://portal.example/live/fake-user/fake-pass/7.ts',
+            container: 'mpegts',
+            audioCodecs: [],
+            videoCodecs: [],
+            nativeErrorMessage:
+                'Failed to load http://portal.example/live/fake-user/fake-pass/7.ts',
+        });
+        const message =
+            details.find(
+                (detail) =>
+                    detail.labelKey ===
+                    'PLAYBACK_DIAGNOSTICS.DETAIL_NATIVE_ERROR_MESSAGE'
+            )?.value ?? '';
+
+        expect(message).toContain('portal.example');
+        expect(message).not.toContain('fake-user');
+        expect(message).not.toContain('fake-pass');
+    });
+
     it('preserves existing title, metadata, codec and detail formatting', () => {
         expect(getDiagnosticTitleKey(issue)).toBe(
             'PLAYBACK_DIAGNOSTICS.UNSUPPORTED_CODEC.TITLE'

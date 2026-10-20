@@ -1,13 +1,16 @@
 @use '../../../../../../../ui/styles/focus-ring';
+@use '../../ui-state/page-ui';
 
 // A row as each platform draws it: the heading's weight and colours, how
 // many tiles it shows across and the gap between them. The tiles share out
 // the row's width (`100cqi`, the viewport's): a fraction left over is the
 // next tile, cut by the edge, inviting a scroll. Each shape has its count,
 // the featured row's (`data-size='large'`) its own, fewer and larger; a
-// tile never shrinks under `--row-min`, so a narrow window shows fewer.
-// The default is TiagoTV's.
+// tile never shrinks under `--row-min`, so a narrow window shows fewer,
+// and stops growing past the rows' width limit (`--row-width`), so a very
+// wide one shows more. The default is TiagoTV's.
 :host {
+    --row-width: min(100cqi, #{page-ui.$row-width-max});
     --across-landscape: 4.8;
     --across-poster: 7.2;
     --across-large-landscape: 2.7;
@@ -17,7 +20,8 @@
     --row-gap: 14px;
     --row-tile: max(
         var(--row-min),
-        (100cqi - (var(--row-across) - 1) * var(--row-gap)) / var(--row-across)
+        (var(--row-width) - (var(--row-across) - 1) * var(--row-gap)) /
+            var(--row-across)
     );
     --row-lift: 8px;
     --row-arrow-bottom: 48px;
@@ -28,7 +32,8 @@
     // The Top 10's posters, a 16:9 tile's width with their numbers.
     --rank-poster: max(
         104px,
-        0.52 * (100cqi - (var(--across-landscape) - 1) * var(--row-gap)) /
+        0.52 *
+            (var(--row-width) - (var(--across-landscape) - 1) * var(--row-gap)) /
             var(--across-landscape)
     );
     display: block;

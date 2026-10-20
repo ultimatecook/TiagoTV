@@ -27,6 +27,8 @@
     text-align: left;
     text-decoration: none;
     cursor: pointer;
+    // A `<button>` row would otherwise take the system font (Arial).
+    font-family: inherit;
     font-size: 0.875rem;
     font-weight: 500;
     box-sizing: border-box;
