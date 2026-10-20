@@ -69,7 +69,8 @@ export function detach(el: Node | null | undefined): void {
 export function picture(
     src: string | null,
     className: string,
-    fallback: string
+    fallback: string,
+    urgent = false
 ): HTMLElement {
     const box = h('div', `${className} pic`);
     const label = h('span', { className: 'pic__fallback', text: fallback });
@@ -83,7 +84,7 @@ export function picture(
         img.onload = () => {
             box.className += ' is-loaded';
         };
-        queueImage(img, src);
+        queueImage(img, src, urgent);
         box.appendChild(img);
     } else {
         box.className += ' is-broken';

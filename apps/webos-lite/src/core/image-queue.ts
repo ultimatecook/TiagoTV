@@ -42,8 +42,15 @@ function start(job: Job): void {
     img.src = job.src;
 }
 
-/** Sets `img.src` to `src` when its turn comes. */
-export function queueImage(img: HTMLImageElement, src: string): void {
+/**
+ * Sets `img.src` to `src` when its turn comes. An `urgent` image (the
+ * player's own channel logo) skips the line, even in full screen.
+ */
+export function queueImage(img: HTMLImageElement, src: string, urgent = false): void {
+    if (urgent) {
+        start({ img, src });
+        return;
+    }
     waiting.push({ img, src });
     pump();
 }

@@ -41,7 +41,7 @@ export class Osd {
         clear(this.logo);
         this.logo.style.display = item.logo ? '' : 'none';
         if (item.logo) {
-            this.logo.appendChild(picture(item.logo, 'osd__logo-pic', ''));
+            this.logo.appendChild(picture(item.logo, 'osd__logo-pic', '', true));
         }
         const position = item.kind === 'live' && count > 1 ? `${index + 1}/${count}  ` : '';
         this.title.textContent = `${position}${item.title}`;
