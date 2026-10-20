@@ -22,6 +22,9 @@ export interface HeroAction {
     readonly run: () => void;
 }
 
+/** Characters from which a hero's title is set smaller. */
+const LONG_TITLE = 22;
+
 export interface HeroSlide {
     readonly key: string;
     readonly eyebrow: string;
@@ -160,7 +163,9 @@ export class Hero {
         if (mark) {
             this.content.appendChild(mark);
         }
-        this.content.appendChild(h('h2', { className: 'hero__title display', text: slide.title }));
+        // A long name ("JO KOY: LIVE FROM THE LOS ANGELES FORUM") is set smaller.
+        const long = slide.title.length > LONG_TITLE ? ' is-long' : '';
+        this.content.appendChild(h('h2', { className: `hero__title display${long}`, text: slide.title }));
         if (bar || slide.meta) {
             this.content.appendChild(h('div', 'hero__meta', bar, slide.meta ? h('span', { text: slide.meta }) : null));
         }

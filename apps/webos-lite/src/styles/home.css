@@ -100,6 +100,10 @@
     overflow: hidden;
 }
 
+.hero__title.is-long {
+    font-size: 92px;
+}
+
 .hero__meta {
     margin-top: 20px;
     color: var(--text-img-3);
