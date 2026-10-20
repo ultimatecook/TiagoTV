@@ -200,6 +200,21 @@ export class Nav {
         return false;
     }
 
+    /**
+     * Up with nothing above: the screen's bar (its tabs), wherever the
+     * page's top row sits. False when the screen has no focusable bar.
+     */
+    enterBar(): boolean {
+        const bar = this.scope.querySelector('.topbar[data-group]');
+        const group = bar ? groups.get(bar) : undefined;
+        const target = group ? group.enter(null) : null;
+        if (!target || target === this.current) {
+            return false;
+        }
+        this.focus(target);
+        return true;
+    }
+
     /** The scrolling page (a registered revealer) that holds `el`. */
     private pageOf(el: HTMLElement): HTMLElement | null {
         let node: HTMLElement | null = el.parentElement;

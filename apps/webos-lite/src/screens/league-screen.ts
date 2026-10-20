@@ -24,7 +24,7 @@ import { tableView } from '../ui/league-table-view';
 import { featuredMatch } from '../ui/featured-match';
 import { Row } from '../ui/row';
 import { Stage } from '../ui/stage';
-import { BAR_ITEMS, buildTopbar } from '../ui/topbar';
+import { screenBar } from '../ui/screen-bar';
 import { VPage } from '../ui/vpage';
 import { playMatches } from './sports-play';
 
@@ -88,7 +88,7 @@ export class LeagueScreen implements Screen {
             this.page.el,
             this.pill,
             h('div', 'shell__veil'),
-            buildTopbar(BAR_ITEMS, 'sports', false).el
+            screenBar('sports', (id) => app.openTab(id))
         );
         this.renderPill(0);
         void this.load();

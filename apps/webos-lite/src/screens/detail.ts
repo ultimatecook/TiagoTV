@@ -19,7 +19,7 @@ import { kindLabel } from '../data/title-meta';
 import type { App, OpenTitleOptions } from '../app';
 import { platformMark } from '../ui/cards';
 import { icon } from '../ui/icons';
-import { BAR_ITEMS, buildTopbar } from '../ui/topbar';
+import { screenBar } from '../ui/screen-bar';
 import { VPage } from '../ui/vpage';
 import { detailMeta, episodeRow, moreTitlesRow, seasonChip } from './detail-parts';
 import { DetailPlayback } from './detail-playback';
@@ -94,7 +94,7 @@ export class DetailScreen implements Screen {
             h('div', 'detail__stage', this.backdrop, h('div', 'detail__veil')),
             this.page.el,
             h('div', 'shell__veil'),
-            buildTopbar(BAR_ITEMS, active, false).el
+            screenBar(active, (id) => app.openTab(id))
         );
         this.render();
         void this.load();

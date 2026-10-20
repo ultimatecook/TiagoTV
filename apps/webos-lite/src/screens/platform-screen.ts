@@ -23,7 +23,7 @@ import { CARD, landscapeCard, posterCard, top10Card } from '../ui/cards';
 import { hueOf, tint } from '../ui/colour';
 import { Hero, type HeroSlide } from '../ui/hero';
 import { Row } from '../ui/row';
-import { BAR_ITEMS, buildTopbar } from '../ui/topbar';
+import { screenBar } from '../ui/screen-bar';
 import { VPage } from '../ui/vpage';
 import { playTitle } from './play-title';
 
@@ -91,7 +91,7 @@ export class PlatformScreen implements Screen {
             stage,
             this.page.el,
             h('div', 'shell__veil'),
-            buildTopbar(BAR_ITEMS, 'home', false).el
+            screenBar('home', (id) => app.openTab(id))
         );
         this.stopListening = app.store.onChange(() => {
             if (this.visible && !this.refresh.pending) {

@@ -53,6 +53,7 @@ export async function homeSuite(h) {
     }));
     check('OK opens Prime Video\'s page', /look--prime/.test(platform.look) && platform.rows.indexOf('Lo más nuevo') >= 0, platform.rows.join(' | '));
     await shot('03-plataforma-prime');
+    check('platform page: Up reaches the bar', await h.pressUntil('ArrowUp', /\btab\b/, 8), `${await h.focusedClass()} | ${await h.focused()}`);
     await press('Backspace');
     check('Back returns to Prime\'s card', /card--platform/.test(await h.focusedClass()) && (await page.evaluate(() => document.querySelector('.focused img').alt)) === 'Prime Video');
     await press('ArrowRight');
@@ -135,10 +136,15 @@ export async function catalogSuite(h) {
     await shot('13-titulo-serie-episodios');
     // Deep in the episodes, Up climbs back to the page's top: title shown.
     await press('ArrowDown', 3);
-    const toPlay = await h.pressUntil('ArrowUp', /button--play/, 10);
+    const inActions = () => page.evaluate(() => !!document.querySelector('.detail__actions .focused'));
+    for (let i = 0; i < 10 && !(await inActions()); i++) {
+        await press('ArrowUp');
+    }
+    const toPlay = await inActions();
     const titleTop = await page.evaluate(() => document.querySelector('.detail__title').getBoundingClientRect().top);
     check('series page: Up returns to the top, title in view', toPlay && titleTop >= 100, `${titleTop}`);
-    check('series page: back down to an episode', await h.pressUntil('ArrowDown', /episode/, 4));
+    check('series page: Up again reaches the bar', await h.pressUntil('ArrowUp', /\btab\b/, 3));
+    check('series page: back down to an episode', await h.pressUntil('ArrowDown', /episode/, 6));
     await press('Enter');
     await page.waitForSelector('.player', { timeout: 10000 });
     await h.waitPlaying();

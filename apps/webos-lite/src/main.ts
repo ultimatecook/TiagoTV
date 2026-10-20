@@ -118,7 +118,9 @@ function boot(): void {
             if (action === 'back') {
                 stack.back();
             } else if (isDirection(action)) {
-                nav.move(action);
+                if (!nav.move(action) && action === 'up') {
+                    nav.enterBar();
+                }
             } else if (action === 'ok') {
                 nav.activate();
             }
