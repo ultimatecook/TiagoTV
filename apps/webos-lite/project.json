@@ -1,0 +1,77 @@
+{
+    "name": "webos-lite",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "projectType": "application",
+    "sourceRoot": "apps/webos-lite/src",
+    "tags": ["scope:tiagotv", "domain:webos", "type:app"],
+    "targets": {
+        "build": {
+            "executor": "nx:run-commands",
+            "cache": true,
+            "inputs": [
+                "{projectRoot}/src/**/*",
+                "{projectRoot}/tools/**/*",
+                "{projectRoot}/webos/**/*",
+                "{projectRoot}/tsconfig*.json",
+                "^production",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{workspaceRoot}/apps/web/src/assets/brand/**/*",
+                "{workspaceRoot}/apps/web/src/assets/flags/**/*",
+                "{workspaceRoot}/apps/web/src/assets/platforms/**/*",
+                "{workspaceRoot}/apps/web/src/assets/fonts/bebas-neue/**/*",
+                { "externalDependencies": ["esbuild", "mpegts.js", "@fontsource/dm-sans"] }
+            ],
+            "outputs": ["{workspaceRoot}/dist/webos-lite"],
+            "options": {
+                "command": "node apps/webos-lite/tools/build.mjs",
+                "cwd": "{workspaceRoot}"
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "cache": true,
+            "inputs": [
+                "{projectRoot}/src/**/*",
+                "{projectRoot}/tools/**/*",
+                "{projectRoot}/webos/**/*",
+                "^production",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{workspaceRoot}/apps/web/src/assets/i18n/es.json",
+                { "externalDependencies": ["esbuild"] }
+            ],
+            "options": {
+                "command": "node apps/webos-lite/tools/run-tests.mjs",
+                "cwd": "{workspaceRoot}"
+            }
+        },
+        "typecheck": {
+            "executor": "nx:run-commands",
+            "cache": true,
+            "inputs": ["default", "^production", "{workspaceRoot}/tsconfig.base.json"],
+            "options": {
+                "commands": [
+                    "tsc -p apps/webos-lite/tsconfig.app.json --noEmit",
+                    "tsc -p apps/webos-lite/tsconfig.spec.json --noEmit"
+                ],
+                "parallel": false,
+                "cwd": "{workspaceRoot}"
+            }
+        },
+        "package": {
+            "executor": "nx:run-commands",
+            "dependsOn": ["build"],
+            "options": {
+                "command": "node apps/webos-lite/tools/package.mjs",
+                "cwd": "{workspaceRoot}"
+            }
+        },
+        "smoke": {
+            "executor": "nx:run-commands",
+            "dependsOn": ["build"],
+            "options": {
+                "command": "node apps/webos-lite/e2e/smoke.mjs",
+                "cwd": "{workspaceRoot}"
+            }
+        }
+    }
+}

@@ -1,0 +1,149 @@
+/* The player: the video, its OSD, its messages. */
+.player {
+    background: #000;
+}
+
+.player__video {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    background: #000;
+    object-fit: contain;
+}
+
+.osd {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    opacity: 0;
+    pointer-events: none;
+    -webkit-transition: opacity 0.25s ease-out;
+    transition: opacity 0.25s ease-out;
+}
+
+.osd.is-visible {
+    opacity: 1;
+}
+
+.osd__top {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 260px;
+    padding: 56px 80px 0;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+    background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+}
+
+.osd__logo {
+    width: 180px;
+    height: 100px;
+    margin-right: 32px;
+}
+
+.osd__logo-pic {
+    width: 180px;
+    height: 100px;
+    border-radius: 12px;
+}
+
+.osd__logo-pic .pic__img {
+    object-fit: contain;
+}
+
+.osd__text {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: hidden;
+}
+
+.osd__title {
+    font-family: var(--display);
+    font-size: 72px;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.osd__subtitle {
+    margin-top: 10px;
+    color: var(--text);
+    opacity: 0.8;
+    font-size: 28px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.osd__clock {
+    margin-left: 32px;
+    font-size: 40px;
+    font-weight: 600;
+}
+
+.osd__progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 1920px;
+    height: 200px;
+    padding: 110px 80px 0;
+    background: -webkit-linear-gradient(bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+}
+
+.osd__bar {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(244, 241, 234, 0.25);
+    overflow: hidden;
+}
+
+.osd__bar-fill {
+    height: 8px;
+    background: var(--red);
+    -webkit-transform-origin: 0 0;
+    transform-origin: 0 0;
+    -webkit-transform: scaleX(0);
+    transform: scaleX(0);
+}
+
+.osd__time {
+    margin-top: 14px;
+    font-size: 28px;
+    color: var(--text);
+}
+
+.player__message {
+    position: absolute;
+    left: 460px;
+    top: 400px;
+    width: 1000px;
+    padding: 40px 56px;
+    border-radius: 24px;
+    background: rgba(11, 11, 9, 0.88);
+    text-align: center;
+}
+
+.player__message-title {
+    font-size: 40px;
+    font-weight: 700;
+}
+
+.player__message-hint {
+    margin-top: 14px;
+    color: var(--meta);
+    font-size: 28px;
+    line-height: 1.4;
+}

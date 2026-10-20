@@ -1,0 +1,271 @@
+/* A title's page: the backdrop under the bar, dark below it. */
+.detail {
+    background: #19181a;
+}
+
+.detail__stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+}
+
+.detail__backdrop {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    object-fit: cover;
+    object-position: 50% 20%;
+    opacity: 0;
+    -webkit-transition: opacity 0.4s ease-out;
+    transition: opacity 0.4s ease-out;
+}
+
+.detail__backdrop.is-poster {
+    left: 1040px;
+    width: 880px;
+    object-position: 50% 15%;
+}
+
+.detail__backdrop.is-loaded {
+    opacity: 0.85;
+}
+
+.detail__veil {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    background: linear-gradient(90deg, rgba(25, 24, 26, 0.95) 0%, rgba(25, 24, 26, 0.7) 32%, rgba(25, 24, 26, 0.15) 62%, rgba(25, 24, 26, 0) 80%),
+        linear-gradient(180deg, rgba(25, 24, 26, 0.45) 0%, rgba(25, 24, 26, 0) 22%, rgba(25, 24, 26, 0) 50%, rgba(25, 24, 26, 1) 92%);
+}
+
+.detail__page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    z-index: 1;
+}
+
+.detail__header {
+    padding: 250px 0 40px 250px;
+    width: 1500px;
+}
+
+.detail__eyebrow {
+    height: 40px;
+    color: var(--text-img-2);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.detail__mark {
+    display: inline-block;
+    height: 36px;
+    max-width: 150px;
+    margin-right: 16px;
+    object-fit: contain;
+    object-position: 0 50%;
+    vertical-align: middle;
+}
+
+.detail__eyebrow .mark--name {
+    font-size: 34px;
+    letter-spacing: 0.02em;
+}
+
+.detail__title {
+    margin-top: 12px;
+    color: var(--text-img);
+    font-size: 140px;
+    line-height: 0.9;
+    max-width: 1300px;
+}
+
+.detail__meta {
+    margin-top: 22px;
+    color: var(--text-img-2);
+    font-size: 27px;
+    white-space: nowrap;
+}
+
+.detail__meta span {
+    display: inline-block;
+    margin-right: 22px;
+    vertical-align: middle;
+}
+
+.detail__rating {
+    color: var(--green);
+    font-weight: 600;
+}
+
+.detail__lang {
+    padding: 0 10px;
+    height: 32px;
+    line-height: 30px;
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.detail__plot {
+    margin-top: 20px;
+    max-width: 1080px;
+    color: var(--text-img-2);
+    font-size: 28px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.detail__actions {
+    margin-top: 34px;
+    white-space: nowrap;
+}
+
+.button--play {
+    border-radius: 10px;
+    padding: 0 40px 0 34px;
+}
+
+.button--play .icon {
+    width: 32px;
+    height: 32px;
+    vertical-align: -6px;
+}
+
+.play__label {
+    display: inline-block;
+    line-height: 1;
+    vertical-align: middle;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.play__label small {
+    display: block;
+    margin-top: 4px;
+    font-size: 18px;
+    font-weight: 500;
+    color: #3a3833;
+}
+
+.button--round.is-on {
+    color: var(--live-red);
+}
+
+/* Episodes: season chips, then a row per episode. */
+.detail__episodes {
+    padding: 0 0 20px 170px;
+}
+
+.detail__seasons {
+    margin-top: 6px;
+}
+
+.episodes {
+    margin: 10px 0 0 var(--gutter);
+    width: 1500px;
+}
+
+.episode {
+    position: relative;
+    height: 116px;
+    padding: 13px 20px;
+    border-top: 2px solid var(--separator);
+    border-radius: 16px;
+    white-space: nowrap;
+}
+
+.episode.focused {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+    -webkit-transform: none;
+    transform: none;
+}
+
+.episode > span,
+.episode > .pic {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.episode__number {
+    width: 70px;
+    font-size: 40px;
+    font-weight: 400;
+    color: var(--text-2);
+    text-align: center;
+}
+
+.episode__still {
+    width: 160px;
+    height: 90px;
+    border-radius: 10px;
+    margin-right: 24px;
+}
+
+.episode__still .pic__img {
+    object-fit: cover;
+}
+
+.episode__text {
+    width: 1000px;
+    overflow: hidden;
+}
+
+.episode__title {
+    display: block;
+    font-size: 27px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.episode__plot {
+    display: block;
+    margin-top: 4px;
+    color: var(--meta);
+    font-size: 22px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.episode__length {
+    position: absolute;
+    right: 24px;
+    top: 42px;
+    color: var(--meta);
+    font-size: 23px;
+}
+
+.episode__progress {
+    position: absolute;
+    left: 110px;
+    bottom: 14px;
+    width: 160px;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.22);
+    overflow: hidden;
+}
+
+.episode__progress i {
+    display: block;
+    height: 5px;
+    background: var(--red);
+}

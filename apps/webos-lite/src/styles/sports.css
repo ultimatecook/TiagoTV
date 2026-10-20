@@ -1,0 +1,557 @@
+/* A page's own title under the bar (Deportes, Mi lista, Ajustes). */
+.page__head {
+    position: relative;
+    height: 240px;
+    padding: 140px var(--gutter) 0;
+}
+
+.page__title {
+    font-size: 56px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.page__day {
+    position: absolute;
+    right: var(--gutter);
+    top: 150px;
+    height: 60px;
+    line-height: 60px;
+    padding: 0 28px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.16);
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.page--sports .row--leagues {
+    margin-top: -40px;
+}
+
+/* Crests: the team's initials in a circle (the desktop's fallback). */
+.crest {
+    display: inline-block;
+    width: 84px;
+    height: 84px;
+    line-height: 84px;
+    border-radius: 42px;
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+    color: var(--text);
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.crest--small {
+    width: 56px;
+    height: 56px;
+    line-height: 56px;
+    border-radius: 28px;
+    font-size: 21px;
+}
+
+.crest--large {
+    width: 140px;
+    height: 140px;
+    line-height: 140px;
+    border-radius: 70px;
+    font-size: 48px;
+}
+
+/* "Tus equipos". */
+.team-pills {
+    padding: 4px var(--gutter) 30px;
+    white-space: nowrap;
+}
+
+.team-pill {
+    display: inline-block;
+    height: 84px;
+    line-height: 84px;
+    padding: 0 30px 0 14px;
+    margin-right: 18px;
+    border-radius: 42px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.055));
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16);
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.team-pill .crest {
+    margin-right: 16px;
+}
+
+.team-pill__status {
+    margin-left: 16px;
+    color: var(--text-3);
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.team-pill__status.is-live {
+    color: var(--live-red);
+    font-weight: 700;
+}
+
+/* "En vivo ahora": cards on the competition's colour, three across. */
+.match-grid {
+    padding: 10px 0 0 var(--gutter);
+    white-space: normal;
+}
+
+.match-card {
+    display: inline-block;
+    position: relative;
+    width: 570px;
+    height: 330px;
+    margin: 0 24px 24px 0;
+    padding: 26px 30px;
+    border-radius: 30px;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+    vertical-align: top;
+}
+
+.match-card:nth-child(3n) {
+    margin-right: 0;
+}
+
+.match-card__top {
+    height: 40px;
+    line-height: 40px;
+    white-space: nowrap;
+}
+
+.match-card__logo {
+    width: 34px;
+    height: 34px;
+    margin-right: 12px;
+    object-fit: contain;
+    vertical-align: middle;
+}
+
+.match-card__competition {
+    color: var(--text-img-2);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.match-card__status {
+    position: absolute;
+    right: 30px;
+    top: 26px;
+    color: var(--text-2);
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.match-card__status.is-live {
+    color: var(--live-red);
+}
+
+.match-card__sides {
+    position: relative;
+    height: 170px;
+    margin-top: 12px;
+}
+
+.match__side {
+    position: absolute;
+    top: 0;
+    width: 230px;
+    text-align: center;
+}
+
+.match__side:first-child {
+    left: 0;
+}
+
+.match__side:last-child {
+    right: 0;
+}
+
+.match__name {
+    margin-top: 12px;
+    font-size: 24px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.match-card__vs {
+    position: absolute;
+    left: 210px;
+    width: 90px;
+    top: 18px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 64px;
+}
+
+.match-card__title {
+    height: 170px;
+    margin-top: 12px;
+    padding-top: 50px;
+    font-size: 30px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.match-card__watch,
+.featured__watch {
+    height: 60px;
+    line-height: 60px;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #0b0b09;
+    font-size: 24px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.match-card__watch .icon,
+.featured__watch .icon {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    margin-right: 12px;
+    vertical-align: -3px;
+}
+
+/* A league's page: the stage, then the featured match, matches, table. */
+.league-page {
+    background: #0b0b0c;
+}
+
+.league__page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+}
+
+.league__top {
+    position: relative;
+    height: 1080px;
+    padding-top: 640px;
+}
+
+.league__top .row__head {
+    height: 44px;
+}
+
+.league__top .heading__title {
+    color: var(--text-img-3);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 44px;
+}
+
+.league-pill {
+    position: absolute;
+    right: var(--gutter);
+    top: 140px;
+    height: 66px;
+    line-height: 66px;
+    padding: 0 26px 0 18px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(58, 56, 62, 0.88) 0%, rgba(34, 33, 37, 0.92) 100%);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14);
+    font-size: 25px;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 5;
+}
+
+.league-pill__logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 14px;
+    object-fit: contain;
+    vertical-align: middle;
+}
+
+.league-pill__live {
+    margin-left: 18px;
+    font-size: 21px;
+    font-weight: 700;
+}
+
+.league-page.is-bare .live__veil,
+.league-page.is-bare .league__page,
+.league-page.is-bare .league-pill,
+.league-page.is-bare .topbar,
+.league-page.is-bare .shell__veil {
+    opacity: 0;
+}
+
+.league__page,
+.league-pill {
+    -webkit-transition: opacity 0.4s ease-out;
+    transition: opacity 0.4s ease-out;
+}
+
+.league__lower {
+    padding: 60px 0 120px;
+}
+
+.league__featured {
+    padding: 0 var(--gutter) 40px;
+}
+
+.featured {
+    position: relative;
+    height: 300px;
+    border-radius: 40px;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.featured__side {
+    position: absolute;
+    top: 80px;
+    width: 640px;
+    white-space: nowrap;
+}
+
+.featured__side--home {
+    left: 0;
+    text-align: right;
+}
+
+.featured__side--away {
+    right: 0;
+    text-align: left;
+}
+
+.featured__name {
+    display: inline-block;
+    margin: 0 30px;
+    font-size: 40px;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.featured__middle {
+    position: absolute;
+    left: 640px;
+    top: 30px;
+    width: 480px;
+    text-align: center;
+}
+
+.featured__status {
+    display: inline-block;
+    height: 44px;
+    line-height: 44px;
+    padding: 0 20px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.14);
+    font-size: 21px;
+    font-weight: 600;
+}
+
+.dot--amber {
+    background: var(--amber);
+}
+
+.featured__vs {
+    margin-top: 6px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 96px;
+    line-height: 1;
+}
+
+.featured__watch {
+    display: inline-block;
+    padding: 0 34px;
+    margin-top: 10px;
+    border-radius: 30px;
+}
+
+.league__columns {
+    position: relative;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.league__columns .block {
+    display: inline-block;
+    vertical-align: top;
+    white-space: normal;
+}
+
+.block--matches {
+    width: 1210px;
+}
+
+.block--matches .events {
+    margin-right: 0;
+}
+
+.block--matches .event__competition,
+.block--matches .event__channel {
+    display: none;
+}
+
+.block--matches .event__sides {
+    width: 900px;
+}
+
+.block--table {
+    width: 640px;
+    margin-left: 10px;
+}
+
+.block--table .heading {
+    display: none;
+}
+
+/* "Tabla de posiciones". */
+.table {
+    margin-top: 64px;
+    border-radius: 28px;
+    background: var(--list);
+    box-shadow: inset 0 0 0 2px var(--card-border);
+    overflow: hidden;
+}
+
+.table__head {
+    height: 96px;
+    padding: 0 28px;
+    line-height: 96px;
+    white-space: nowrap;
+}
+
+.table__logo {
+    width: 48px;
+    height: 48px;
+    margin-right: 18px;
+    object-fit: contain;
+    vertical-align: middle;
+}
+
+.table__title {
+    display: inline-block;
+    font-size: 27px;
+    font-weight: 600;
+    line-height: 1.2;
+    vertical-align: middle;
+}
+
+.table__title small {
+    display: block;
+    color: var(--text-img-3);
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.table__row {
+    position: relative;
+    height: 58px;
+    line-height: 58px;
+    padding: 0 26px 0 30px;
+    font-size: 24px;
+    white-space: nowrap;
+}
+
+.table__row.focused {
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
+    -webkit-transform: none;
+    transform: none;
+}
+
+.table__row--labels {
+    height: 50px;
+    line-height: 50px;
+    color: var(--meta);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+
+.table__row.is-mine {
+    background: rgba(255, 255, 255, 0.12);
+    font-weight: 700;
+}
+
+.table__row.zone--champions:before,
+.table__row.zone--europe:before,
+.table__row.zone--relegation:before,
+.table__row.zone--promotion:before,
+.table__row.zone--playoff:before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    width: 5px;
+    height: 34px;
+    border-radius: 3px;
+    background: var(--green);
+}
+
+.table__row.zone--champions:before {
+    background: #3b82f6;
+}
+
+.table__row.zone--europe:before {
+    background: #f59e0b;
+}
+
+.table__row.zone--relegation:before {
+    background: #ef4444;
+}
+
+.table__row > span {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.table__rank {
+    width: 56px;
+    color: var(--text-2);
+}
+
+.table__rank.is-top {
+    color: var(--amber);
+}
+
+.table__team {
+    width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.table__badge {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    margin-right: 16px;
+    vertical-align: middle;
+    background: transparent;
+}
+
+.table__badge .pic__img {
+    object-fit: contain;
+}
+
+.table__played {
+    width: 60px;
+    color: var(--text-2);
+    text-align: right;
+}
+
+.table__points {
+    width: 66px;
+    font-weight: 700;
+    text-align: right;
+}
