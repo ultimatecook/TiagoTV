@@ -79,7 +79,10 @@ export class VPage implements Revealer {
             // A hero: the page goes back to show it whole.
             target = offsetWithin(anchor, this.content);
         } else if (row) {
-            target = offsetWithin(row.el, this.content) - this.topPad;
+            const top = offsetWithin(row.el, this.content);
+            // A row that shows whole with the page at its top keeps it there,
+            // so the page's title stays clear of the bar.
+            target = top + row.el.offsetHeight + BOTTOM_PAD <= height ? 0 : top - this.topPad;
         } else {
             const top = offsetWithin(el, this.content);
             const bottom = top + el.offsetHeight;
