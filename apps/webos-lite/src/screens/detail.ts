@@ -72,7 +72,7 @@ export class DetailScreen implements Screen {
             })
         );
         this.page.add(
-            h('div', 'detail__header', eyebrow, h('h1', { className: 'detail__title display', text: title.title }), this.meta, this.plot, this.actions)
+            h('div', { className: 'detail__header', attrs: { 'data-anchor': '' } }, eyebrow, h('h1', { className: 'detail__title display', text: title.title }), this.meta, this.plot, this.actions)
         );
         if (title.kind === 'series') {
             this.episodesBlock.appendChild(

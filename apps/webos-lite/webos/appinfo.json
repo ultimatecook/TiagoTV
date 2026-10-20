@@ -1,6 +1,6 @@
 {
     "id": "com.tiagotv.lite",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "vendor": "TiagoTV",
     "type": "web",
     "main": "index.html",

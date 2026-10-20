@@ -133,6 +133,12 @@ export async function catalogSuite(h) {
     await press('ArrowDown', 2);
     check('down: the first episode', /episode/.test(await h.focusedClass()));
     await shot('13-titulo-serie-episodios');
+    // Deep in the episodes, Up climbs back to the page's top: title shown.
+    await press('ArrowDown', 3);
+    const toPlay = await h.pressUntil('ArrowUp', /button--play/, 10);
+    const titleTop = await page.evaluate(() => document.querySelector('.detail__title').getBoundingClientRect().top);
+    check('series page: Up returns to the top, title in view', toPlay && titleTop >= 100, `${titleTop}`);
+    check('series page: back down to an episode', await h.pressUntil('ArrowDown', /episode/, 4));
     await press('Enter');
     await page.waitForSelector('.player', { timeout: 10000 });
     await h.waitPlaying();
