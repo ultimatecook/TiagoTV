@@ -81,7 +81,9 @@ Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
    last other place). Scores and minutes are not in the provider's data: a
    row says "En vivo" or its kick-off. The channel column names the
    broadcaster from the event feed's category, or a match's first `via`
-   channel, which a click plays. A feed filed under another sport's
+   channel, which a click plays on the match's competition page, the match
+   in focus (its key in the navigation state, `playRequestMatch`) so the
+   stage lists its signals in every language. A feed filed under another sport's
    category (a Ligue 1 match under Formula 1, `namesOtherSport`) names no
    channel, and a card's logo that is one competition's (Básquet's NBA logo,
    `SportSection.logoCompetition`) shows on that competition's rows only.
@@ -967,6 +969,30 @@ else but the playing channel and its guide.
    matches' own feeds first, then every numbered feed of the section's
    channel families, broadcasters first and pay-per-view passes last. Below:
    the first match, the others (84px rows) and the standings.
+   A match in focus (the one the way in or a click asked for while the
+   stage plays one of its feeds, else the match a name-carrying feed on the
+   stage belongs to: `focusedMatch`) turns the row into "Señales de este
+   partido" when it has more than one signal; "Todos los canales" brings the
+   section's row back. Its signals are `SportMatch.feeds` (`match-feeds.ts`,
+   `feed-languages.ts`): every event slot naming it in any language, the
+   channels that name it without being slots ("UEFA | 05 - PSG vs Barcelona
+   21:00 pm", `parseNamedMatch`; not a replay's, nor a listing dated another
+   day), and its `via` channels with their two best copies. Order:
+   Argentina's and Spain's, then the rest of Latin America's, the English
+   ones, then the others; in each language the name-carrying feeds before
+   the `via` ones, HD before 4K, unknown and SD; one stream once. The
+   match's default channel is unchanged (a kept feed, else its first
+   `via`). Each card carries its language as a chip (a bundled flag where
+   there is one; the labels are `WORKSPACE.SPORTS.FEED_LANGUAGES.*`). When
+   the playing signal fails (the web engines' `playbackFailed`, Embedded
+   MPV's `playbackLost` once its reloads ran out), `SportFeedFallback`
+   plays the next one in that order on its own, once per match and never
+   after the viewer's own pick, and says so; otherwise it offers "Probar
+   otra señal" naming the next one (language · channel), skipping the
+   signals that failed ("Sin señal" on their cards). While a match is on,
+   the kept numbered listings its competition claims (`|UK| ✪ UEFA
+   CHAMPIONS LEAGUE`) are reloaded with the event categories
+   (`listingCategoryIds`), so their names are tonight's.
 4. **Standings** (`league-tables.ts`, `league-table-sources.ts`). ESPN's
    public site API (`<slug>/standings`: esp.1, eng.1, arg.1, uefa.champions,
    uefa.europa, conmebol.libertadores, usa.1, esp.2, ita.1, ger.1, fra.1,

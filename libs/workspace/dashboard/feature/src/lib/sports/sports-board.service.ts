@@ -52,9 +52,14 @@ export class SportsBoardService {
 
     /**
      * A competition's page, playing `channel` once it opens (the league
-     * page reads it from the navigation's state, see playRequest).
+     * page reads it from the navigation's state, see playRequest), with
+     * the match `matchKey` in focus.
      */
-    open(sectionId: SportSectionId, channel?: SportChannel): void {
+    open(
+        sectionId: SportSectionId,
+        channel?: SportChannel,
+        matchKey?: string
+    ): void {
         const play: SportChannel | null = channel
             ? {
                   streamId: channel.streamId,
@@ -64,17 +69,36 @@ export class SportsBoardService {
               }
             : null;
         void this.router.navigate(['/workspace', 'sports', sectionId], {
-            state: play ? { [PLAY_STATE_KEY]: play } : undefined,
+            state: play
+                ? {
+                      [PLAY_STATE_KEY]: play,
+                      ...(matchKey ? { [MATCH_STATE_KEY]: matchKey } : {}),
+                  }
+                : undefined,
         });
     }
 
-    /** A match on its competition's page, playing its feed. */
+    /**
+     * A match on its competition's page, playing its feed, its signals in
+     * every language in the stage's row.
+     */
     openMatch(match: SportMatch, channel?: SportChannel): void {
-        this.open(match.sectionId, channel ?? match.via[0]?.channel ?? match);
+        this.open(
+            match.sectionId,
+            channel ?? match.via[0]?.channel ?? match,
+            match.key
+        );
     }
 }
 
 const PLAY_STATE_KEY = 'tiagotvSportsPlay';
+const MATCH_STATE_KEY = 'tiagotvSportsMatch';
+
+/** The match a navigation into a competition's page put in focus. */
+export function playRequestMatch(state: unknown): string | null {
+    const key = (state as Record<string, unknown> | null)?.[MATCH_STATE_KEY];
+    return typeof key === 'string' && key ? key : null;
+}
 
 /** The channel a navigation into a competition's page asked to play. */
 export function playRequest(state: unknown): SportChannel | null {

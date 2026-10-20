@@ -30,6 +30,9 @@
                 [playback]="current"
                 [dockable]="!tv.leaving()"
                 (externalFallbackRequested)="tv.openExternally($event)"
+                (playbackFailed)="playbackFailed()"
+                (playbackLost)="playbackFailed()"
+                (timeUpdate)="timeUpdate($event)"
             />
         } @else if (selection) {
             <button
@@ -139,29 +142,111 @@
                 <i [style.width.%]="progress()"></i>
             }
         </span>
-        @if (cards().length > 0) {
-            <div class="stage__row-head">
-                <span class="stage__row-title">{{
-                    'WORKSPACE.SPORTS.CHANNELS' | translate
+        @if (failure(); as failed) {
+            <div
+                class="stage__fallback"
+                role="alert"
+                data-test-id="sport-feed-fallback"
+            >
+                <mat-icon class="stage__fallback-icon" aria-hidden="true"
+                    >error_outline</mat-icon
+                >
+                <span class="stage__fallback-text">{{
+                    (failed.next
+                        ? 'WORKSPACE.SPORTS.FEED_FAILED'
+                        : 'WORKSPACE.SPORTS.FEED_NONE_LEFT'
+                    ) | translate
                 }}</span>
-                @if (!controls.fullscreen()) {
+                @if (failed.next; as next) {
                     <button
                         type="button"
-                        class="stage__more"
-                        data-test-id="sport-stage-more"
-                        (click)="more.emit()"
+                        class="stage__fallback-try"
+                        data-test-id="sport-feed-try-next"
+                        [attr.aria-label]="
+                            'WORKSPACE.SPORTS.TRY_FEED'
+                                | translate: { feed: feedText(next) }
+                        "
+                        (click)="tryNext()"
                     >
-                        {{ 'WORKSPACE.SPORTS.MATCHES_AND_TABLE' | translate }}
-                        <mat-icon aria-hidden="true">expand_more</mat-icon>
+                        <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+                        <span class="stage__fallback-action">{{
+                            'WORKSPACE.SPORTS.TRY_ANOTHER_FEED' | translate
+                        }}</span>
+                        <span class="stage__fallback-feed">{{
+                            feedText(next)
+                        }}</span>
                     </button>
                 }
+            </div>
+        } @else if (switched(); as feed) {
+            <div
+                class="stage__fallback stage__fallback--info"
+                role="status"
+                data-test-id="sport-feed-switched"
+            >
+                <mat-icon class="stage__fallback-icon" aria-hidden="true"
+                    >swap_horiz</mat-icon
+                >
+                <span class="stage__fallback-text">{{
+                    'WORKSPACE.SPORTS.FEED_SWITCHED' | translate: { feed }
+                }}</span>
+            </div>
+        }
+        @if (rowCards().length > 0) {
+            @let rowTitle =
+                (feedsView()
+                    ? 'WORKSPACE.SPORTS.MATCH_FEEDS'
+                    : 'WORKSPACE.SPORTS.CHANNELS'
+                ) | translate;
+            <div class="stage__row-head">
+                <span class="stage__row-title" data-test-id="sport-row-title">
+                    {{ rowTitle }}
+                    @if (feedsView()) {
+                        <span class="stage__row-count">{{
+                            'WORKSPACE.SPORTS.FEEDS'
+                                | translate: { count: feeds().length }
+                        }}</span>
+                    }
+                </span>
+                <span class="stage__row-actions">
+                    @if (feeds().length > 1) {
+                        <button
+                            type="button"
+                            class="stage__more"
+                            data-test-id="sport-row-toggle"
+                            [attr.aria-pressed]="allChannels()"
+                            (click)="allChannels.set(!allChannels())"
+                        >
+                            {{
+                                (allChannels()
+                                    ? 'WORKSPACE.SPORTS.MATCH_FEEDS_SHORT'
+                                    : 'WORKSPACE.SPORTS.ALL_CHANNELS'
+                                ) | translate
+                            }}
+                        </button>
+                    }
+                    @if (!controls.fullscreen()) {
+                        <button
+                            type="button"
+                            class="stage__more"
+                            data-test-id="sport-stage-more"
+                            (click)="more.emit()"
+                        >
+                            {{
+                                'WORKSPACE.SPORTS.MATCHES_AND_TABLE' | translate
+                            }}
+                            <mat-icon aria-hidden="true">expand_more</mat-icon>
+                        </button>
+                    }
+                </span>
             </div>
             <div
                 class="stage__cards"
                 role="group"
-                [attr.aria-label]="'WORKSPACE.SPORTS.CHANNELS' | translate"
+                data-test-id="sport-stage-cards"
+                [attr.aria-label]="rowTitle"
             >
-                @for (card of cards(); track card.key) {
+                @for (card of rowCards(); track card.key) {
                     @let on = card.channel.streamId === selection?.streamId;
                     <lib-sport-signal-card
                         [card]="card"
@@ -172,6 +257,7 @@
                         "
                         [progress]="on ? progress() : null"
                         [fallbackLogo]="section().logo"
+                        [failed]="isBroken(card)"
                         (picked)="play($event)"
                     />
                 }

@@ -1,6 +1,11 @@
 import { brandOfFamily } from '@iptvnator/portal/shared/util';
-import { feedTitle, type ChannelFamily } from './channel-families';
+import {
+    feedTitle,
+    parseChannelName,
+    type ChannelFamily,
+} from './channel-families';
 import { familyRank } from './match-channels';
+import type { MatchFeed } from './match-feeds';
 import type { SportChannel, SportMatch } from './sports-catalog';
 
 /**
@@ -22,6 +27,31 @@ export interface SignalCard {
     readonly logos: readonly string[];
     /** The match on the signal, when its name says it. */
     readonly match: SportMatch | null;
+    /** One of the signals of the match in focus (see `feedCards`). */
+    readonly feed?: MatchFeed;
+}
+
+/**
+ * "Señales de este partido": one card per signal that carries `match`, in
+ * any language, in its feeds' order (see match-feeds).
+ */
+export function feedCards(match: SportMatch): SignalCard[] {
+    return (match.feeds ?? []).map((feed) => {
+        const brand = brandOfFamily(parseChannelName(feed.name).key);
+        const icon = feed.channel.icon;
+        return {
+            key: `feed:${feed.channel.streamId}`,
+            name: feed.name,
+            number: feed.number,
+            channel: feed.channel,
+            logos: [
+                ...(brand?.logo ? [brand.logo] : []),
+                ...(icon ? [icon] : []),
+            ],
+            match,
+            feed,
+        };
+    });
 }
 
 export function signalCards(

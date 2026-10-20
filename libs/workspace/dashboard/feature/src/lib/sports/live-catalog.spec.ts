@@ -1,6 +1,7 @@
 import {
     eventCategoryIds,
     fixtureCategoryIds,
+    listingCategoryIds,
     reloadedAll,
     reloadEventCategories,
     toLiveCatalog,
@@ -220,6 +221,45 @@ describe('fixtureCategoryIds', () => {
             '3',
             '4',
         ]);
+    });
+});
+
+describe('listingCategoryIds', () => {
+    const STORED: LiveCatalog = {
+        categories: [
+            { category_id: '1', category_name: '|UK| ✪ UEFA CHAMPIONS LEAGUE' },
+            { category_id: '2', category_name: '|ES| ✪ M LCAMPEON' },
+            { category_id: '3', category_name: '|US| ✪ NHL' },
+            { category_id: '4', category_name: '|DE| ✪ UEFA CHAMPIONS LEAGUE' },
+        ],
+        streams: [
+            {
+                stream_id: 1,
+                name: 'UEFA | 01 - AZ Alkmaar vs H Be’er Sheva 17:45 pm',
+                category_id: '1',
+            },
+            { stream_id: 2, name: 'UEFA  | 16 -', category_id: '1' },
+            { stream_id: 3, name: '|ES| M+LCAMPEON 2 ᴴᴰ', category_id: '2' },
+            {
+                stream_id: 4,
+                name: 'NHL | 01 - 6pm Blue Jackets at Wild',
+                category_id: '3',
+            },
+            {
+                stream_id: 5,
+                name: 'NHL | 02 - 8pm Hurricanes at Flames',
+                category_id: '3',
+            },
+            { stream_id: 6, name: 'DE | No Event', category_id: '4' },
+        ],
+    };
+
+    it('lists the kept numbered listings of the competitions on now', () => {
+        expect(
+            listingCategoryIds(STORED, new Set(['champions-league']))
+        ).toEqual(['1']);
+        expect(listingCategoryIds(STORED, new Set(['laliga']))).toEqual([]);
+        expect(listingCategoryIds(STORED, new Set())).toEqual([]);
     });
 });
 

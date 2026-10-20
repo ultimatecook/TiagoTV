@@ -106,6 +106,7 @@
             [seriesNavigation]="seriesNavigation()"
             (timeUpdate)="handleTimeUpdate($event, application)"
             (playbackEnded)="playbackEnded.emit()"
+            (playbackLost)="playbackLost.emit()"
             (previousEpisodeRequested)="previousEpisodeRequested.emit()"
             (nextEpisodeRequested)="nextEpisodeRequested.emit()"
             (recordingStopped)="recordingStopped.emit($event)"

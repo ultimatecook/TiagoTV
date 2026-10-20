@@ -17,6 +17,7 @@ import { EmbeddedMpvSessionController } from './embedded-mpv-session-controller'
             [playback]="playback"
             [seriesNavigation]="seriesNavigation"
             (playbackEnded)="endedCount = endedCount + 1"
+            (playbackLost)="lostCount = lostCount + 1"
             (previousEpisodeRequested)="previousCount = previousCount + 1"
             (nextEpisodeRequested)="nextCount = nextCount + 1"
         />
@@ -40,6 +41,7 @@ class EmbeddedMpvPlayerHostComponent {
     };
 
     endedCount = 0;
+    lostCount = 0;
     previousCount = 0;
     nextCount = 0;
 }
@@ -215,6 +217,36 @@ describe('EmbeddedMpvPlayerComponent series navigation', () => {
         fixture.detectChanges();
 
         expect(fixture.componentInstance.endedCount).toBe(1);
+    });
+
+    it('reports a lost stream once it fails, not while the main process reloads it', () => {
+        const update = (changes: Partial<EmbeddedMpvSession>) => {
+            controller.session.update((session) =>
+                session ? { ...session, ...changes } : session
+            );
+            fixture.detectChanges();
+        };
+
+        update({
+            status: 'error',
+            error: 'Connection reset by peer',
+            reconnect: {
+                attempt: 1,
+                maxAttempts: 6,
+                nextAttemptAt: '2026-06-06T12:00:04Z',
+            },
+        });
+        expect(fixture.componentInstance.lostCount).toBe(0);
+
+        // The reloads ran out: the host may try another stream, once.
+        update({ reconnect: undefined });
+        update({ updatedAt: '2026-06-06T12:00:30Z' });
+        expect(fixture.componentInstance.lostCount).toBe(1);
+
+        // Retry played it again, and it failed again.
+        update({ status: 'playing', error: undefined });
+        update({ status: 'error', error: 'HTTP 403' });
+        expect(fixture.componentInstance.lostCount).toBe(2);
     });
 
     it('hides episode navigation for live playback', () => {

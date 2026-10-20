@@ -84,6 +84,51 @@ export function parseSportEvent(name: string): SportEvent | null {
     };
 }
 
+/** A match inside a channel's name: "A vs B", "A vs. B", "A v B". */
+const VERSUS = /\s+vs?\.?\s+/i;
+/**
+ * What leads a named channel's match, up to its last separator: "UEFA |
+ * 13 -", "Scottish Cup 3:", "TOD EV 019|" (a clock's colon is not one).
+ */
+const LEAD = /^.*(?:\||:(?!\d{2})|\s[-–]\s)\s*/;
+/** What trails it: a listing's notes, a date, another segment. */
+const TRAIL = /\s*(?:\/\/|\(|\||@|\bstart\s*:|\s[-–]\s).*$/i;
+const LEADING_CLOCK = /^\d{1,2}[:.]\d{2}\s*(?:[ap]m)?\s+/i;
+const TRAILING_CLOCK = /\s+\d{1,2}(?:[:.]\d{2})?\s*(?:[ap]m)?$/i;
+const ISO_DATE = /\b(\d{4})-(\d{2})-(\d{2})\b/;
+const DAY_MS = 24 * 3600_000;
+
+/**
+ * A channel that is no event slot but names a match ("UEFA | 13 - Aston
+ * Villa vs Ajax 20:00 pm", "Scottish Cup 3: Celtic vs Hibernian 15.00"):
+ * both sides and the slot's number; null for any other name, or one
+ * whose date (an announced slot's) is not around `now`.
+ */
+export function parseNamedMatch(
+    name: string,
+    now = new Date()
+): { home: string; away: string; number: number | null } | null {
+    const sides = name.split(VERSUS);
+    if (sides.length !== 2 || isStaleSlot(name, now)) {
+        return null;
+    }
+    const date = ISO_DATE.exec(name);
+    if (
+        date &&
+        Math.abs(Date.parse(`${date[0]}T12:00:00Z`) - now.getTime()) >
+            2 * DAY_MS
+    ) {
+        return null;
+    }
+    const lead = LEAD.exec(sides[0])?.[0] ?? '';
+    const home = sides[0].slice(lead.length).replace(LEADING_CLOCK, '').trim();
+    const away = sides[1].replace(TRAIL, '').replace(TRAILING_CLOCK, '').trim();
+    const number = /(?:^|\D)(\d{1,3})(?!\d)/.exec(lead)?.[1];
+    return home && away && home.length <= 40 && away.length <= 40
+        ? { home, away, number: number ? Number(number) : null }
+        : null;
+}
+
 /** "ES | No Event", "GB | No Event": an event slot waiting for its match. */
 export function isIdleEventChannel(name: string): boolean {
     return /\|\s*no event\s*$/i.test(name.trim());

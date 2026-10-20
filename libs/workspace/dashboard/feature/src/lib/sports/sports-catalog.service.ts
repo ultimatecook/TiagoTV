@@ -316,6 +316,11 @@ export class SportsCatalogService {
             foreignMatchOn: this.today().some(
                 (match) => match.via.length > 0 && this.isLive(match)
             ),
+            liveSections: new Set(
+                this.today()
+                    .filter((match) => this.isLive(match))
+                    .map((match) => match.sectionId)
+            ),
             fetchCategory: (categoryId) =>
                 this.api.getLiveStreams(credentials, {
                     categoryId,

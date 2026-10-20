@@ -1,7 +1,11 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { playRequest, SportsBoardService } from './sports-board.service';
+import {
+    playRequest,
+    playRequestMatch,
+    SportsBoardService,
+} from './sports-board.service';
 import { buildSportsCatalog, type SportMatch } from './sports-catalog';
 import { SportsCatalogService } from './sports-catalog.service';
 
@@ -62,7 +66,7 @@ describe('SportsBoardService', () => {
         ).toEqual([1, null, null]);
     });
 
-    it('opens a match on its competition’s page, asking it to play', () => {
+    it('opens a match on its competition’s page, asking it to play and to list its signals', () => {
         const match = CATALOG.laliga.matches.find(
             (entry) => entry.streamId === 2
         ) as SportMatch;
@@ -78,6 +82,7 @@ describe('SportsBoardService', () => {
                         title: 'Sevilla FC - Real Betis',
                         icon: null,
                     },
+                    tiagotvSportsMatch: match.key,
                 },
             }
         );
@@ -85,9 +90,12 @@ describe('SportsBoardService', () => {
             state: unknown;
         };
         expect(playRequest(state.state)?.streamId).toBe(2);
+        expect(playRequestMatch(state.state)).toBe(match.key);
     });
 
     it('reads only a well-formed request from the navigation', () => {
+        expect(playRequestMatch(null)).toBeNull();
+        expect(playRequestMatch({ tiagotvSportsMatch: 3 })).toBeNull();
         expect(playRequest(null)).toBeNull();
         expect(playRequest({})).toBeNull();
         expect(

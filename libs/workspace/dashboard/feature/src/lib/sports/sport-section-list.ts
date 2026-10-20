@@ -185,7 +185,9 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
         category: /champions|lcampeon/i,
         channel: /champions league|lcampeon|liga de campeones/i,
         // UEFA's: the AFC's, CAF's and CONCACAF's go to "Resto del mundo".
-        competition: /^(uefa )?(champions league|liga de campeones)\b/i,
+        // The French feeds call it "Ligue des champions".
+        competition:
+            /^(uefa )?(champions league|liga de campeones|ligue des champions)\b/i,
     },
     {
         id: 'europa-league',
@@ -199,7 +201,7 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
         tint: '#5a2a06',
         category: /europa league/i,
         channel: /europa league/i,
-        competition: /^(uefa )?europa league\b/i,
+        competition: /^(uefa )?(europa league|ligue europa)\b/i,
     },
     {
         id: 'liga-argentina',

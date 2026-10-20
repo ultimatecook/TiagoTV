@@ -7,6 +7,7 @@ import {
 } from '@iptvnator/ui/playback';
 import type { LeagueTable } from '../league-tables';
 import type { SignalCard } from '../signal-cards';
+import { SportFeedFallback } from '../sport-feed-fallback';
 import {
     buildSportsCatalog,
     type SportChannel,
@@ -26,6 +27,8 @@ import { SportSectionPageComponent } from './sport-section-page.component';
 class StageStub {
     readonly section = input<unknown>();
     readonly cards = input<readonly SignalCard[]>([]);
+    readonly feeds = input<readonly SignalCard[]>([]);
+    readonly match = input<SportMatch | null>(null);
     readonly liveCount = input(0);
     readonly more = output<void>();
 }
@@ -34,12 +37,18 @@ const CATALOG = buildSportsCatalog(
     [
         { category_id: 1, category_name: '|ES| ✪ PREMIER LEAGUE PPV' },
         { category_id: 2, category_name: '|UK| ✪ SKY SPORTS' },
+        { category_id: 3, category_name: '|FR| ✪ DAZN EVENT' },
     ],
     [
         {
             stream_id: 1,
             category_id: 1,
             name: 'Live | Leeds United - Manchester United | Premier League | ES',
+        },
+        {
+            stream_id: 3,
+            category_id: 3,
+            name: 'Live | Leeds vs. Man Utd | Premier League | FR',
         },
         {
             stream_id: 2,
@@ -149,6 +158,7 @@ describe('SportSectionPageComponent', () => {
                 providers: [
                     { provide: SportTvPlayback, useValue: tv },
                     { provide: SportTvGuide, useValue: {} },
+                    SportFeedFallback,
                 ],
             },
         });
@@ -161,6 +171,10 @@ describe('SportSectionPageComponent', () => {
 
     const query = (selector: string) =>
         fixture.nativeElement.querySelector(selector) as HTMLElement | null;
+    const stage = () =>
+        fixture.debugElement.query(
+            (element) => element.componentInstance instanceof StageStub
+        ).componentInstance as StageStub;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -280,6 +294,48 @@ describe('SportSectionPageComponent', () => {
         expect(query('lib-page-state')?.textContent).toContain(
             'WORKSPACE.SPORTS.NO_MATCHES'
         );
+    });
+
+    it('lists the signals of the match the way in asked for, in every language', async () => {
+        history.replaceState(
+            {
+                tiagotvSportsPlay: {
+                    streamId: 1,
+                    categoryId: '1',
+                    title: 'Leeds United - Manchester United',
+                    icon: null,
+                },
+                tiagotvSportsMatch: CATALOG['premier-league'].matches[0].key,
+            },
+            ''
+        );
+        await render('premier-league');
+        fixture.detectChanges();
+
+        expect(stage().match()?.title).toBe('Leeds United - Manchester United');
+        expect(
+            stage()
+                .feeds()
+                .map((card) => [card.channel.streamId, card.feed?.label])
+        ).toEqual([
+            [1, 'España'],
+            [3, 'Francés'],
+        ]);
+    });
+
+    it('puts a match in focus when its feed plays', async () => {
+        await render('premier-league');
+        expect(stage().match()).toBeNull();
+
+        tv.selection.set({
+            streamId: 3,
+            categoryId: '3',
+            title: 'Leeds vs. Man Utd',
+            icon: null,
+        });
+        fixture.detectChanges();
+        expect(stage().match()?.title).toBe('Leeds United - Manchester United');
+        tv.selection.set(null);
     });
 
     it('plays a match on the stage', async () => {

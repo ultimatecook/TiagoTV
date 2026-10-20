@@ -68,6 +68,24 @@ export function competitionChannels(
 }
 
 /**
+ * Each channel's copies, by stream id: the HD and SD streams of its feed
+ * ("M+ LaLigaTV FHD Orange", "|ES| M LA LIGA TV ᴴᴰ"), itself among them.
+ */
+export function channelCopies(
+    channels: readonly SportChannel[]
+): Map<number, readonly SportChannel[]> {
+    const copies = new Map<number, readonly SportChannel[]>();
+    for (const family of groupChannelFamilies(channels)) {
+        for (const feed of family.feeds) {
+            for (const channel of feed.channels) {
+                copies.set(channel.streamId, feed.channels);
+            }
+        }
+    }
+    return copies;
+}
+
+/**
  * A competition's channel family, by how surely it shows its matches:
  * the broadcasters' own (0), the others (1), the pay-per-view passes (2).
  */

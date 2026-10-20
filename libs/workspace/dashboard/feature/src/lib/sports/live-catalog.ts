@@ -185,6 +185,45 @@ export function fixtureCategoryIds(
         .map(([id]) => id);
 }
 
+/** A numbered listing's slot: "UEFA | 05 - PSG vs Barcelona 21:00 pm", "UEFA  | 16 -". */
+const LISTING_SLOT = /^\s*[a-z][\w .+]{1,20}\|\s*\d{1,2}\s*-/i;
+
+/**
+ * The kept categories of numbered listings that a competition in
+ * `sections` claims ("|UK| ✪ UEFA CHAMPIONS LEAGUE": "UEFA | 05 - PSG vs
+ * Barcelona 21:00 pm"). They are renamed through the day like event
+ * channels, so while one of the competition's matches is on they are
+ * reloaded too, for the match's page to list them among its signals.
+ */
+export function listingCategoryIds(
+    live: LiveCatalog,
+    sections: ReadonlySet<SportSectionId>
+): string[] {
+    const followed = SPORT_SECTIONS.filter(
+        (section) => sections.has(section.id) && !section.catchAll
+    );
+    const claimed = new Set<string>();
+    for (const category of live.categories) {
+        const name = category.category_name;
+        if (
+            isSpanishOrEnglishCategory(name, 'live') &&
+            followed.some((section) => channelInSection(section, name, name))
+        ) {
+            claimed.add(String(category.category_id));
+        }
+    }
+    const slots = new Map<string, number>();
+    for (const stream of live.streams) {
+        const id = String(stream.category_id ?? '');
+        if (claimed.has(id) && LISTING_SLOT.test(stream.name)) {
+            slots.set(id, (slots.get(id) ?? 0) + 1);
+        }
+    }
+    return [...slots.entries()]
+        .filter(([, count]) => count > 1)
+        .map(([id]) => id);
+}
+
 /**
  * The stored catalog with today's event channels: each event category
  * reloaded from the panel takes its fresh list (where its stored list

@@ -1,13 +1,17 @@
-import {
-    channelFamilyName,
-    parseChannelName,
-} from '@iptvnator/portal/shared/util';
 import { categoryLanguageCode } from '@iptvnator/shared/interfaces';
 import {
+    channelCopies,
     competitionChannels,
     SINGLE_COMPETITION_SECTIONS,
     type MatchChannel,
 } from './match-channels';
+import {
+    categoryChannelName,
+    matchFeeds,
+    type FeedContext,
+    type FeedQuality,
+    type NamedChannel,
+} from './match-feeds';
 import { parseSportEvent, type SportEvent } from './sport-events';
 import {
     namesOtherSport,
@@ -18,13 +22,16 @@ import {
 import type { SportChannel, SportMatch } from './sports-catalog';
 import { isSameTeam, teamDisplayName, teamKey } from './team-names';
 
+export { categoryChannelName } from './match-feeds';
+
 /**
  * TiagoTV sports: one match, many event slots — on the Spanish and English
- * feeds the viewer keeps, and on other languages' feeds, which are read
- * for their fixtures only ("FR| ✪ DAZN LALIGA ES" names Real Madrid -
- * Sevilla when no Spanish feed does) and never played. The slots of one
- * match make one card: a kept feed plays it; without one, the
- * competition's channels are offered ("M+ LaLiga TV", "DAZN LaLiga").
+ * feeds the viewer keeps, and on other languages' feeds ("FR| ✪ DAZN
+ * LALIGA ES" names Real Madrid - Sevilla when no Spanish feed does). The
+ * slots of one match make one card: a kept feed plays it; without one,
+ * the competition's channels are offered ("M+ LaLiga TV", "DAZN LaLiga").
+ * Another language's feed never plays by default, but the match's page
+ * lists it among its signals (`SportMatch.feeds`, see match-feeds).
  */
 export interface EventSlot {
     readonly channel: SportChannel;
@@ -35,6 +42,20 @@ export interface EventSlot {
     readonly categoryName: string;
     /** When the panel named the slot (ms), if it says. */
     readonly namedAt?: number | null;
+    /** Its quality, where its name says ("ᴴᴰ", "SD"). */
+    readonly quality?: FeedQuality | null;
+}
+
+/** What the matches' signals are read from besides their slots. */
+export interface MatchSources {
+    /** The channels that name a match without being event slots. */
+    readonly named?: readonly NamedChannel[];
+    /** Every category's name, by id: a `via` channel's language. */
+    readonly categoryNames?: ReadonlyMap<string, string>;
+    /** The section's channels with their HD and SD copies. */
+    readonly copies?: readonly SportChannel[];
+    /** The qualities their names give, by stream id. */
+    readonly qualities?: ReadonlyMap<number, FeedQuality>;
 }
 
 interface Fixture {
@@ -100,13 +121,24 @@ export function buildMatches(
     section: SportSection,
     slots: readonly EventSlot[],
     channels: readonly SportChannel[],
-    now: Date
+    now: Date,
+    sources: MatchSources = {}
 ): SportMatch[] {
     let offered: MatchChannel[] | null = null;
     const offers = () =>
         (offered ??= SINGLE_COMPETITION_SECTIONS.has(section.id)
             ? competitionChannels(channels)
             : []);
+    let copies: Map<number, readonly SportChannel[]> | null = null;
+    const context: FeedContext = {
+        named: sources.named ?? [],
+        categoryNames: sources.categoryNames ?? new Map(),
+        copiesOf: (option) =>
+            (copies ??= channelCopies(sources.copies ?? channels)).get(
+                option.channel.streamId
+            ) ?? [option.channel],
+        qualityOf: (streamId) => sources.qualities?.get(streamId) ?? null,
+    };
     const matches: SportMatch[] = [];
     for (const fixture of mergeSlots(section.id, slots, now)) {
         const match = fixture.ended
@@ -114,7 +146,8 @@ export function buildMatches(
             : toMatch(
                   section.id,
                   fixture,
-                  fixture.slots.some(isKept) ? [] : offers()
+                  fixture.slots.some(isKept) ? [] : offers(),
+                  context
               );
         if (match) {
             matches.push(match);
@@ -200,7 +233,8 @@ function isSameFixture(
 function toMatch(
     sectionId: SportSectionId,
     fixture: Fixture,
-    offers: readonly MatchChannel[]
+    offers: readonly MatchChannel[],
+    context: FeedContext
 ): SportMatch | null {
     // A feed filed under another sport's category plays last (see below).
     const own = fixture.slots
@@ -245,6 +279,12 @@ function toMatch(
         sectionId,
         liveSince: liveSince === null ? null : new Date(liveSince),
         via: own.length ? [] : offers,
+        feeds: matchFeeds(
+            fixture.slots,
+            fixture.teams,
+            own.length ? [] : offers,
+            context
+        ),
         // Its feed's category names where it plays, unless that names
         // another sport (a Ligue 1 match under Formula 1): no "Ver en F1".
         channelName: own[0]
@@ -257,17 +297,6 @@ function toMatch(
 
 function misfiled(sectionId: SportSectionId, slot: EventSlot): boolean {
     return namesOtherSport(sectionId, slot.categoryName);
-}
-
-/** "|ES| ✪ PREMIER LEAGUE PPV" → "Premier League PPV", "|ES| ✪ DAZN EVENT" → "DAZN". */
-export function categoryChannelName(categoryName: string): string | null {
-    const name = categoryName
-        .replace(/[✪★☆]/g, ' ')
-        .replace(/\b(solo )?event(o)?s?\b/gi, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    const { key } = parseChannelName(name);
-    return key ? channelFamilyName(key, [name]) : null;
 }
 
 /** When the first of its "Live" feeds was so named (ms), if the panel says. */
