@@ -103,21 +103,7 @@
                                 controls.paused() ? 'play_arrow' : 'pause'
                             }}</mat-icon>
                         </button>
-                        <button
-                            type="button"
-                            class="stage__control"
-                            [attr.aria-label]="
-                                (controls.muted()
-                                    ? 'WORKSPACE.SPORTS.UNMUTE'
-                                    : 'WORKSPACE.SPORTS.MUTE'
-                                ) | translate
-                            "
-                            (click)="controls.toggleMute()"
-                        >
-                            <mat-icon aria-hidden="true">{{
-                                controls.muted() ? 'volume_off' : 'volume_up'
-                            }}</mat-icon>
-                        </button>
+                        <lib-stage-volume data-test-id="sport-volume" />
                     }
                     <button
                         type="button"

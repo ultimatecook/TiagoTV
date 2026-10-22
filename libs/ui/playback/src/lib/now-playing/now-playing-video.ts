@@ -9,7 +9,12 @@ const MEDIA_EVENTS = [
     'loadedmetadata',
     'volumechange',
     'ended',
+    'enterpictureinpicture',
+    'leavepictureinpicture',
 ] as const;
+
+/** `HTMLMediaElement.HAVE_METADATA`: PiP needs the picture's size. */
+const HAVE_METADATA = 1;
 
 /**
  * The mini-player's view of the media element its embedded web player
@@ -35,6 +40,12 @@ export class NowPlayingVideo {
     readonly muted = signal(false);
     readonly loop = signal(false);
     readonly ended = signal(false);
+    /** The bar's picture is in picture-in-picture. */
+    readonly pictureInPicture = signal(false);
+    /** The browser offers PiP for it now (metadata in, API enabled). */
+    readonly canPictureInPicture = signal(false);
+    /** The page's picture was in PiP: ask once the bar's is ready. */
+    private resumePictureInPicture: boolean;
 
     /**
      * @param startPaused the page had paused it: keep it paused here too,
@@ -47,8 +58,10 @@ export class NowPlayingVideo {
             readonly startPaused: boolean;
             readonly volume: number;
             readonly muted: boolean;
+            readonly pictureInPicture?: boolean;
         }
     ) {
+        this.resumePictureInPicture = options.pictureInPicture === true;
         this.pendingStart = options.startTime > 0 ? options.startTime : 0;
         this.pausePending = options.startPaused;
         this.volume.set(options.volume);
@@ -136,6 +149,23 @@ export class NowPlayingVideo {
         }
     }
 
+    /**
+     * The same picture in the system's floating window (no second stream):
+     * called from the button's click, whose user activation PiP needs.
+     */
+    togglePictureInPicture(): void {
+        const video = this.video;
+        if (!video) {
+            return;
+        }
+        const document = video.ownerDocument;
+        if (document?.pictureInPictureElement === video) {
+            void document.exitPictureInPicture?.()?.catch(() => undefined);
+        } else if (this.canPictureInPicture()) {
+            void video.requestPictureInPicture?.()?.catch(() => undefined);
+        }
+    }
+
     toggleLoop(): void {
         this.repeat = !this.repeat;
         if (this.video) {
@@ -191,6 +221,28 @@ export class NowPlayingVideo {
         this.volume.set(video.volume);
         this.muted.set(video.muted);
         this.ended.set(video.ended);
+        this.syncPictureInPicture(video);
+    }
+
+    private syncPictureInPicture(video: HTMLVideoElement): void {
+        const document = video.ownerDocument;
+        if (!document) {
+            return;
+        }
+        this.pictureInPicture.set(document.pictureInPictureElement === video);
+        const able =
+            document.pictureInPictureEnabled === true &&
+            typeof video.requestPictureInPicture === 'function' &&
+            !video.disablePictureInPicture &&
+            video.readyState >= HAVE_METADATA;
+        this.canPictureInPicture.set(able);
+        if (able && this.resumePictureInPicture) {
+            // Once: refused without a recent user gesture, which is fine.
+            this.resumePictureInPicture = false;
+            if (document.pictureInPictureElement !== video) {
+                void video.requestPictureInPicture().catch(() => undefined);
+            }
+        }
     }
 }
 

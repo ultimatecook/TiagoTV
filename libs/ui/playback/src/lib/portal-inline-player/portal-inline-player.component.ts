@@ -1,4 +1,3 @@
-import { ClipboardModule } from '@angular/cdk/clipboard';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -12,10 +11,7 @@ import {
     TemplateRef,
     viewChild,
 } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
     PlaybackPositionData,
     PlayerContentInfo,
@@ -26,8 +22,11 @@ import {
 } from '@iptvnator/shared/interfaces';
 import type { PlaybackFallbackRequest } from '@iptvnator/playback/util';
 import type { PlaybackDiagnosticCode } from '@iptvnator/playback/util';
-import { SettingsStore } from '@iptvnator/services';
-import { redactSensitiveData } from '@iptvnator/shared/logging';
+import {
+    injectTranslationTick,
+    SettingsStore,
+    TitlePlatformStore,
+} from '@iptvnator/services';
 import { applyChannelNameStrip } from '@iptvnator/shared/m3u-utils';
 import type { PlayerMediaTitle, PlayerUpNextItem } from '../player-controls';
 import {
@@ -41,6 +40,8 @@ import {
     type SeasonLoadStates,
 } from './portal-inline-player-episode-panel.host';
 import { WebPlayerViewComponent } from '../web-player-view/web-player-view.component';
+import { InlinePlayerHeaderComponent } from './inline-player-header.component';
+import { inlinePlayerHeading } from './inline-player-heading';
 import type {
     SeriesEpisodeMetadata,
     SeriesPlaybackNavigation,
@@ -61,11 +62,8 @@ import type { UpNextRailItem } from './up-next-rail.util';
     templateUrl: './portal-inline-player.component.html',
     styleUrl: './portal-inline-player.component.scss',
     imports: [
-        ClipboardModule,
         FullscreenEpisodePanelComponent,
-        MatButtonModule,
-        MatIconModule,
-        MatTooltipModule,
+        InlinePlayerHeaderComponent,
         TranslateModule,
         UpNextRailComponent,
         VodSourcesChipComponent,
@@ -86,6 +84,8 @@ import type { UpNextRailItem } from './up-next-rail.util';
     host: {
         class: 'portal-inline-player',
         '[attr.data-has-player]': 'hasPlayback()',
+        '[attr.data-platform]': 'brand()?.id ?? null',
+        '[style.--player-accent]': 'brand()?.ambient ?? null',
     },
 })
 export class PortalInlinePlayerComponent {
@@ -147,10 +147,8 @@ export class PortalInlinePlayerComponent {
         )
     );
     readonly streamUrl = computed(() => this.playback()?.streamUrl ?? '');
-    /** Copy keeps the full address; its hover title must not show it. */
-    readonly streamUrlTitle = computed(() =>
-        String(redactSensitiveData(this.streamUrl()))
-    );
+    /** The title's streaming platform: its logo and accent dress the player. */
+    readonly brand = inject(TitlePlatformStore).brand;
     readonly startTime = computed(() => this.playback()?.startTime ?? 0);
     /**
      * Poster used for the "Ambient mode" fill behind the player. Live channels
@@ -184,27 +182,28 @@ export class PortalInlinePlayerComponent {
         () => this.playback()?.contentInfo
     );
     readonly hasPlayback = computed(() => !!this.playback()?.streamUrl);
-    readonly episodeMetadataText = computed(() => {
-        const metadata = this.episodeMetadata();
-        if (!metadata) {
-            return '';
+    private readonly translate = inject(TranslateService);
+    private readonly languageTick = injectTranslationTick();
+    /**
+     * The header's two lines (and the fullscreen title's): the film or show
+     * as it is called, the episode as "S1:E2 · Name" ("T1:E2" in Spanish).
+     * A live channel keeps its (optionally stripped) name.
+     */
+    readonly heading = computed<PlayerMediaTitle | null>(() => {
+        const playback = this.playback();
+        if (playback?.isLive) {
+            const primary = this.title()?.trim();
+            return primary ? { primary, secondary: null } : null;
         }
-
-        return metadata.title
-            ? `${metadata.label} - ${metadata.title}`
-            : metadata.label;
+        this.languageTick();
+        return inlinePlayerHeading({
+            title: playback?.title,
+            seriesTitle: this.seriesTitle(),
+            episode: this.episodeMetadata(),
+            code: (season, episode) => this.episodeCode(season, episode),
+        });
     });
-    readonly playerMediaTitle = computed<PlayerMediaTitle | null>(() => {
-        const metadata = this.episodeMetadata();
-        const primary = (
-            (metadata ? this.seriesTitle() : null) || this.title()
-        )?.trim();
-        if (!primary) {
-            return null;
-        }
-
-        return { primary, secondary: metadata?.label ?? null };
-    });
+    readonly playerMediaTitle = this.heading;
 
     private readonly stageViewport =
         viewChild<ElementRef<HTMLElement>>('stageViewport');
@@ -335,6 +334,12 @@ export class PortalInlinePlayerComponent {
 
     onCopied(): void {
         this.streamUrlCopied.emit();
+    }
+
+    private episodeCode(season: number, episode: number): string {
+        const key = 'PORTALS.PLAYER_EPISODE_CODE';
+        const code = this.translate.instant(key, { season, episode });
+        return code && code !== key ? code : `S${season}:E${episode}`;
     }
 
     onExternalFallbackRequested(request: PlaybackFallbackRequest): void {

@@ -160,6 +160,12 @@
                                 (removeAll)="removeAll()"
                             />
                         }
+                        @case ('diagnostics') {
+                            <app-settings-diagnostics-section
+                                [version]="appUpdate.version()"
+                                [buildCommit]="buildCommit"
+                            />
+                        }
                         @case ('about') {
                             <app-settings-about-section
                                 [isDesktop]="isDesktop"

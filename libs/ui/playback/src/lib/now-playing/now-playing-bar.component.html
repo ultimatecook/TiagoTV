@@ -189,6 +189,33 @@
                 timeLabel()
             }}</span>
         }
+        @if (video.canPictureInPicture() || video.pictureInPicture()) {
+            @let inPip = video.pictureInPicture();
+            <button
+                type="button"
+                class="now-playing__button"
+                data-test-id="now-playing-pip"
+                [class.is-active]="inPip"
+                [attr.aria-pressed]="inPip"
+                [matTooltip]="
+                    (inPip
+                        ? 'EMBEDDED_MPV.PLAYER.EXIT_PICTURE_IN_PICTURE'
+                        : 'EMBEDDED_MPV.PLAYER.ENTER_PICTURE_IN_PICTURE'
+                    ) | translate
+                "
+                [attr.aria-label]="
+                    (inPip
+                        ? 'EMBEDDED_MPV.PLAYER.EXIT_PICTURE_IN_PICTURE'
+                        : 'EMBEDDED_MPV.PLAYER.ENTER_PICTURE_IN_PICTURE'
+                    ) | translate
+                "
+                (click)="togglePictureInPicture()"
+            >
+                <mat-icon>{{
+                    inPip ? 'picture_in_picture_alt' : 'picture_in_picture'
+                }}</mat-icon>
+            </button>
+        }
         <div class="now-playing__volume">
             <input
                 class="now-playing__volume-slider"

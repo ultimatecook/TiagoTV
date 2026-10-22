@@ -56,6 +56,29 @@ describe('ControlsShortcuts', () => {
         expect(handlers.toggleMute).toHaveBeenCalledTimes(1);
     });
 
+    it('toggles picture-in-picture with P where the player offers it', () => {
+        const toggle = jest.fn(() => true);
+        shortcuts.detach();
+        shortcuts.attach({ ...handlers, togglePictureInPicture: toggle });
+
+        expect(dispatchKey('p')).toBe(true);
+        expect(dispatchKey('P')).toBe(true);
+        expect(toggle).toHaveBeenCalledTimes(2);
+
+        // Cmd/Ctrl+P stay the app's and the system's.
+        expect(dispatchKey('p', { metaKey: true })).toBe(false);
+        expect(dispatchKey('p', { ctrlKey: true })).toBe(false);
+        expect(toggle).toHaveBeenCalledTimes(2);
+
+        // No PiP right now: the key keeps its default.
+        toggle.mockReturnValue(false);
+        expect(dispatchKey('p')).toBe(false);
+    });
+
+    it('leaves P alone for a player without picture-in-picture', () => {
+        expect(dispatchKey('p')).toBe(false);
+    });
+
     it('ignores every shortcut while the host sits inside an inert region', () => {
         const inertRegion = document.createElement('div');
         inertRegion.setAttribute('inert', '');

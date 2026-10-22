@@ -12,7 +12,6 @@ import {
     PlaybackDiagnosticSource,
     type PlaybackDiagnostic,
     type PlaybackFallbackRequest,
-    type PlaybackRecommendationTarget,
 } from '@iptvnator/playback/util';
 import {
     VideoPlayer,
@@ -27,7 +26,11 @@ import type { WebPlayerApplicationHandoffCoordinator } from './web-player-applic
 import type { WebPlayerApplicationToken } from './web-player-application-state';
 import type { WebPlayerLiveAutoFormat } from './web-player-live-auto-format';
 import { WebPlayerLiveStartGuard } from './web-player-live-start-guard';
-import { createWebPlayerRecommendations } from './web-player-recovery-policy';
+import {
+    createWebPlayerRecommendations,
+    EMBEDDED_MPV_TARGET,
+    type DiagnosticPlayerTarget,
+} from './web-player-recovery-policy';
 
 export interface WebPlayerRecoveryControllerDeps {
     readonly recoverySession: PlaybackRecoverySession;
@@ -175,10 +178,16 @@ export class WebPlayerRecoveryController {
         this.deps.emitPlaybackFailed(issue.code);
     }
 
-    requestRecommendedPlayer(target: PlaybackRecommendationTarget): void {
+    requestRecommendedPlayer(target: DiagnosticPlayerTarget): void {
         const { recoverySession, externalRecovery } = this.deps;
         const diagnostic = this.visiblePlaybackDiagnostic();
         if (!diagnostic) {
+            return;
+        }
+        if (target === EMBEDDED_MPV_TARGET) {
+            // The failing engine unmounts (its connection with it) before
+            // Embedded MPV opens the stream: one stream at a time.
+            recoverySession.useEmbeddedMpv();
             return;
         }
         const available = this.recommendations().some(

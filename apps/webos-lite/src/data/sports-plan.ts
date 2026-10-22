@@ -2,6 +2,7 @@ import { isSpanishOrEnglishCategory } from '@iptvnator/shared/interfaces';
 import {
     channelInSection,
     isIdleEventChannel,
+    isSectionCategory,
     parseSportEvent,
     sectionForCompetition,
     SPORT_SECTIONS,
@@ -113,8 +114,9 @@ export interface KeptPlan {
     readonly stored: Map<string, readonly SportsCatalogStream[]>;
 }
 
+/** A competition's own category, or its broadcasters' country's ("|LAT| ✪ ARGENTINA"). */
 function isCompetition(name: string): boolean {
-    return SPORT_SECTIONS.some((section) => !!section.category && section.category.test(name));
+    return isSectionCategory(name);
 }
 
 export function planKept(categories: readonly XtreamCategory[], notes: SportsNotes, now: number): KeptPlan {

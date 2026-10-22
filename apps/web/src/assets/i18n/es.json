@@ -316,6 +316,73 @@
         "NAV_REMOTE": "Remoto",
         "NAV_DATA": "Datos",
         "NAV_BACKUP": "Copia de seguridad y datos",
+        "NAV_DIAGNOSTICS": "Diagnóstico",
+        "DIAGNOSTICS": {
+            "TITLE": "Diagnóstico",
+            "SUBTITLE": "De dónde salen Series, Películas y Buscar, y los últimos pedidos del catálogo al proveedor. Nunca muestra direcciones ni datos de la cuenta.",
+            "NO_SOURCE": "Agregá una fuente Xtream para ver su catálogo acá.",
+            "BUILD": "App e interfaz",
+            "BUILD_DESCRIPTION": "La versión de la app instalada y la compilación de la interfaz que usa (la interfaz se actualiza sola).",
+            "UI_BUILD": "Interfaz {{build}}",
+            "UI_PACKAGED": "Interfaz del instalador",
+            "RELOAD": "Recargar catálogo",
+            "RELOAD_DESCRIPTION": "Olvida las listas guardadas de las plataformas y se las vuelve a pedir al proveedor, de a una.",
+            "RELOADING": "Recargando…",
+            "CATALOG": "Catálogo de series y películas",
+            "CATALOG_DESCRIPTION": "Por tipo: el catálogo que guardó la app, la lista propia de cada plataforma y lo que muestran ahora Series y Películas.",
+            "SERIES": "Series",
+            "MOVIES": "Películas",
+            "IMPORT": "Importación: {{status}}",
+            "STORED": "Guardado: {{categories}} categorías · {{rows}} títulos",
+            "NOT_STORED": "No hay nada guardado",
+            "LISTS": "Listas de plataformas: {{answered}} de {{total}}",
+            "COMPLETE": "completas",
+            "INCOMPLETE": "incompletas",
+            "LAST_LIST": "Última lista: {{time}}",
+            "RETRIES": "{{count}} esperando reintento",
+            "SHOWN": "Se muestran ahora",
+            "NONE_SHOWN": "Nada todavía",
+            "COL_CATEGORY": "Categoría",
+            "COL_PLATFORM": "Plataforma",
+            "COL_STORED": "Guardados",
+            "COL_LIST": "Lista",
+            "COL_IN_STORED": "De esos, guardados",
+            "COL_UPDATED": "Actualizada",
+            "COL_STATE": "Estado",
+            "COL_TIME": "Hora",
+            "COL_REQUEST": "Pedido",
+            "COL_DURATION": "Duración",
+            "COL_ITEMS": "Ítems",
+            "COL_RESULT": "Resultado",
+            "REQUESTS": "Últimos pedidos al proveedor",
+            "REQUESTS_DESCRIPTION": "Los últimos 30 pedidos del catálogo: qué se pidió, cuánto tardó y cómo terminó.",
+            "NO_REQUESTS": "Todavía no hubo pedidos en esta sesión.",
+            "WHOLE_CATALOG": "catálogo completo",
+            "WHILE_PLAYING": "mientras se reproducía",
+            "STATUS": {
+                "COMPLETED": "completa",
+                "FAILED": "falló",
+                "CANCELLED": "cancelada",
+                "IDLE": "sin hacer",
+                "IMPORTING": "en curso",
+                "UNKNOWN": "desconocida"
+            },
+            "STATE": {
+                "OK": "OK",
+                "EMPTY": "vacía",
+                "FAILED": "falló",
+                "PENDING": "pendiente"
+            },
+            "RESULT": {
+                "OK": "OK",
+                "EMPTY": "vacía",
+                "TIMEOUT": "tiempo agotado",
+                "HTTP": "HTTP {{status}}",
+                "CANCELLED": "cancelado",
+                "NETWORK": "red",
+                "ERROR": "error"
+            }
+        },
         "NAV_SERVER": "Servidor",
         "SERVER_DESCRIPTION": "Las fuentes, los favoritos y el progreso de visualización se guardan en este servidor y los comparten todos los dispositivos que lo abren.",
         "SERVER_CONNECTION": "Conexión",
@@ -791,7 +858,7 @@
             "RECORDING_FAILED_TO_START": "No se pudo iniciar la grabación.",
             "RECORDING_FAILED_TO_STOP": "No se pudo detener la grabación.",
             "SAVED_TO": "Guardada en {{path}}",
-            "ENTER_PICTURE_IN_PICTURE": "Activar imagen en imagen",
+            "ENTER_PICTURE_IN_PICTURE": "Imagen en imagen",
             "EXIT_PICTURE_IN_PICTURE": "Salir de imagen en imagen",
             "ENTER_FULLSCREEN": "Entrar en pantalla completa",
             "EXIT_FULLSCREEN": "Salir de pantalla completa",
@@ -831,7 +898,8 @@
             "STATS_CONTAINER": "Contenedor",
             "STATS_BUFFER": "Búfer",
             "STATS_DROPPED_FRAMES": "Fotogramas descartados",
-            "STATS_UNAVAILABLE": "Aún no hay datos del stream"
+            "STATS_UNAVAILABLE": "Aún no hay datos del stream",
+            "PICTURE_IN_PICTURE_UNAVAILABLE": "Imagen en imagen no está disponible con la vista nativa de MPV integrado. Para usarla, activa Ajustes → Reproducción → «Embedded MPV: motor frame-copy»."
         }
     },
     "PLAYBACK_DIAGNOSTICS": {
@@ -879,7 +947,7 @@
         "INLINE_FAILURE_TITLE": "Copia la URL o inténtalo de nuevo",
         "UNTRANSFERABLE_FAILURE_TITLE": "No se pudo continuar la reproducción protegida",
         "RECOMMENDATIONS_LABEL": "Acciones de recuperación recomendadas",
-        "ACTION_TRY_PLAYER": "Probar {{player}}",
+        "ACTION_TRY_PLAYER": "Probar con {{player}}",
         "ACTION_TRY_PLAYER_HINT": "Temporal para este elemento; el reproductor guardado no cambiará",
         "REASON_RETRY_TRANSIENT_FAILURE": "Reintentar con el mismo reproductor tras un fallo temporal de carga",
         "REASON_RETRY_UNKNOWN_FAILURE": "Reintentar porque el error no identificó otro reproductor compatible",
@@ -903,7 +971,7 @@
         "ACTION_OPEN_MPV_HINT": "reproductor configurado",
         "ACTION_OPEN_VLC_HINT": "reproductor configurado",
         "ACTION_COPY_URL": "Copiar URL del stream",
-        "ACTION_RETRY": "Reintentar",
+        "ACTION_RETRY": "Reintentar con este reproductor",
         "DETAILS_SUMMARY": "Detalles técnicos",
         "CODEC_HINT": "Se detectó {{codecs}}. Los reproductores de navegador Chromium/Electron suelen tener compatibilidad limitada con estos códecs.",
         "DETAIL_CODE": "Código de diagnóstico",
@@ -925,7 +993,12 @@
         "ACTION_COPY_DIAGNOSTIC": "Copiar diagnóstico",
         "REPORT_COPIED": "Diagnóstico copiado",
         "COPY_FAILED": "No se pudo copiar. Inténtalo de nuevo.",
-        "REPORT_PRIVACY": "Copia datos técnicos sin URL del flujo, credenciales ni mensajes de error originales."
+        "REPORT_PRIVACY": "Copia datos técnicos sin URL del flujo, credenciales ni mensajes de error originales.",
+        "ACTION_TRY_EMBEDDED_MPV": "Probar con MPV integrado",
+        "REASON_EMBEDDED_MPV": "Reproduce los contenedores y códecs de audio que el navegador no puede",
+        "ONLY_THIS_TIME": "Solo esta vez",
+        "PLAYER_SAVED": "{{player}} será tu reproductor",
+        "EMBEDDED_MPV_NAME": "MPV integrado"
     },
     "LAYOUT": {
         "HIDE_CHANNELS_LIST": "Ocultar lista de canales",
@@ -1577,7 +1650,9 @@
             "SERVER_STATUS": "No se pudo conectar con el servidor (error {{status}})",
             "SERVER_UNREACHABLE": "No se pudo conectar con el servidor",
             "SERVER_PAUSED": "El servidor no responde. Las solicitudes se pausaron tras varios fallos seguidos."
-        }
+        },
+        "PLAYER_MORE_OPTIONS": "Más opciones",
+        "PLAYER_EPISODE_CODE": "T{{season}}:E{{episode}}"
     },
     "INFORMATION": "Información",
     "DOWNLOADS": {
@@ -2204,7 +2279,8 @@
                 "COMMAND_PALETTE_RUN": "Ejecutar el elemento seleccionado de la paleta de comandos",
                 "CLOSE_DIALOGS": "Cerrar diálogo o descartar superposición",
                 "DOWNLOADS_OPEN_ITEM": "Abrir en la biblioteca el elemento de descarga enfocado",
-                "OPEN_PLAYLIST_SWITCHER": "Cambiar de fuente"
+                "OPEN_PLAYLIST_SWITCHER": "Cambiar de fuente",
+                "PICTURE_IN_PICTURE": "Imagen en imagen"
             }
         },
         "GLOBAL_FAVORITES": {
@@ -2498,6 +2574,13 @@
                 "GB": "Reino Unido",
                 "US": "Estados Unidos"
             }
+        },
+        "STAGE": {
+            "MUTE": "Silenciar",
+            "UNMUTE": "Activar sonido",
+            "MUTED": "Sin sonido",
+            "VOLUME": "Volumen",
+            "VOLUME_LEVEL": "Volumen {{percent}} %"
         }
     },
     "LOADING": "Cargando",

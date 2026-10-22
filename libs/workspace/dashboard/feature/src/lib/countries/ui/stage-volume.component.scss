@@ -1,0 +1,187 @@
+@use '../../../../../../../ui/styles/focus-ring';
+@use '../../../../../../../ui/playback/src/lib/player-controls/player-palette';
+
+// The speaker as the stages draw their controls (a 44px glyph button that
+// lights on hover), and beside it a glass slider that opens while the
+// pointer or the keyboard is on either.
+:host {
+    @include player-palette.focus-ring-token;
+    display: contents;
+}
+
+.volume {
+    display: flex;
+    align-items: center;
+    border-radius: 999px;
+    transition: background-color 160ms ease;
+
+    &:hover,
+    &:focus-within {
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+
+.volume__speaker {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tv-text, #fff);
+    cursor: pointer;
+    app-region: no-drag;
+
+    mat-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 22px;
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+// Closed: no width, nothing to tab to visually; it still takes focus by
+// Tab (which opens it through `:focus-within`).
+.volume__track {
+    display: flex;
+    align-items: center;
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+        width 200ms ease,
+        opacity 160ms ease,
+        padding 200ms ease;
+}
+
+.volume:hover .volume__track,
+.volume:focus-within .volume__track {
+    width: 112px;
+    padding-right: 14px;
+    opacity: 1;
+}
+
+.volume__slider {
+    --level: 0%;
+    width: 100%;
+    height: 24px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+    appearance: none;
+    app-region: no-drag;
+
+    &::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 999px;
+        background: linear-gradient(
+            to right,
+            #fff var(--level),
+            rgba(255, 255, 255, 0.28) var(--level)
+        );
+    }
+
+    &::-webkit-slider-thumb {
+        width: 14px;
+        height: 14px;
+        margin-top: -5px;
+        border: 0;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+        appearance: none;
+    }
+
+    &::-moz-range-track {
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.28);
+    }
+
+    &::-moz-range-progress {
+        height: 4px;
+        border-radius: 999px;
+        background: #fff;
+    }
+
+    &::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border: 0;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    &:focus-visible {
+        outline: none;
+
+        &::-webkit-slider-thumb {
+            @include focus-ring.focus-ring-declarations($offset: 2px);
+        }
+    }
+}
+
+// The level for a moment, at the top of the picture, as a TV shows it.
+.osd {
+    position: fixed;
+    top: calc(var(--tv-topbar-h, 84px) + 24px);
+    left: 50%;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(18, 18, 20, 0.62);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+    transform: translateX(-50%);
+    pointer-events: none;
+    animation: osd-in 160ms ease-out;
+
+    mat-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 22px;
+    }
+}
+
+.osd__bar {
+    display: block;
+    width: 96px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.24);
+
+    i {
+        display: block;
+        height: 100%;
+        background: #fff;
+    }
+}
+
+@keyframes osd-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -6px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .volume__track,
+    .osd {
+        transition: none;
+        animation: none;
+    }
+}

@@ -180,6 +180,27 @@ export function withKnownGenres(
     });
 }
 
+/**
+ * The stored rows per category (the provider's id) and every stored
+ * title's id, for Diagnóstico: which platform titles the stored copy holds.
+ */
+export function storedRowCounts(
+    data: StoredVodCatalogData,
+    kind: CatalogKind
+): { byCategory: Map<string, number>; ids: Set<number> } {
+    const byCategory = new Map<string, number>();
+    const ids = new Set<number>();
+    for (const row of data.rows) {
+        const categoryId = String(row.category_id ?? '');
+        byCategory.set(categoryId, (byCategory.get(categoryId) ?? 0) + 1);
+        const id = Number(rowId(row, kind));
+        if (Number.isFinite(id)) {
+            ids.add(id);
+        }
+    }
+    return { byCategory, ids };
+}
+
 /** "EL HOYO (2019) ES" and "EL HOYO": the same name. */
 function storedNameKey(row: StoredVodRow): string {
     const name = row.name ?? row.title ?? '';

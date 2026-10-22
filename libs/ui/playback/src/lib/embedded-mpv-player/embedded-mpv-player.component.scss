@@ -324,6 +324,13 @@
     position: relative;
 }
 
+/* Shown to say PiP exists but not on this engine; still hoverable for its
+   tooltip, so it is dimmed rather than `disabled`. */
+.embedded-mpv-player__control-button--unavailable {
+    opacity: 0.4;
+    cursor: default;
+}
+
 /* A dock panel morphs the whole controls row into a single full-width
    cell; the strip keeps its fixed height so MPV bounds stay untouched. */
 .embedded-mpv-player__controls--panel {

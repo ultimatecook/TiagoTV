@@ -211,6 +211,14 @@ export const APP_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutDefinition[] = [
         order: 50,
     },
     {
+        id: 'picture-in-picture',
+        group: 'playback',
+        labelKey: 'WORKSPACE.SHORTCUTS.ITEMS.PICTURE_IN_PICTURE',
+        icon: 'picture_in_picture_alt',
+        keys: ['P'],
+        order: 55,
+    },
+    {
         id: 'close-player-popovers',
         group: 'playback',
         labelKey: 'WORKSPACE.SHORTCUTS.ITEMS.CLOSE_PLAYER_POPOVERS',

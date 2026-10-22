@@ -87,6 +87,13 @@ export const SETTINGS_SECTION_DEFINITIONS: readonly SettingsSectionDefinition[] 
             icon: 'backup',
             group: 'data',
         },
+        {
+            // TiagoTV: what Series, Películas and Buscar are built from.
+            id: 'diagnostics',
+            navLabelKey: 'SETTINGS.NAV_DIAGNOSTICS',
+            icon: 'monitor_heart',
+            group: 'data',
+        },
         { id: 'about', navLabelKey: 'SETTINGS.NAV_ABOUT', icon: 'info' },
     ];
 

@@ -78,19 +78,10 @@
                         current && !controls.paused() ? 'pause' : 'play_arrow'
                     }}</mat-icon>
                 </button>
-                <button
-                    type="button"
-                    class="control"
-                    data-test-id="countries-mute"
-                    [disabled]="!current"
-                    [attr.aria-label]="'WORKSPACE.COUNTRIES.MUTE' | translate"
-                    [attr.aria-pressed]="controls.muted()"
-                    (click)="controls.toggleMute()"
-                >
-                    <mat-icon aria-hidden="true">{{
-                        controls.muted() ? 'volume_off' : 'volume_up'
-                    }}</mat-icon>
-                </button>
+                <lib-stage-volume
+                    data-test-id="countries-volume"
+                    [idle]="!current"
+                />
                 <button
                     type="button"
                     class="control"

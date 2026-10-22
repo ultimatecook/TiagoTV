@@ -149,6 +149,7 @@ export { KickoffMemory } from './lib/sports/match-clock';
 export { isIdleEventChannel, parseSportEvent } from './lib/sports/sport-events';
 export {
     channelInSection,
+    isSectionCategory,
     sectionForCompetition,
 } from './lib/sports/sport-sections';
 export { sectionsWithChannels } from './lib/sports/match-channels';

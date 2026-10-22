@@ -24,6 +24,12 @@ export interface NowPlayingHandoff {
     /** The page the playback came from; the bar's artwork returns there. */
     readonly returnUrl: string;
     readonly returnState: Record<string, unknown> | null;
+    /**
+     * The page's picture was in picture-in-picture: the bar's player asks
+     * for it again (the browser allows it while the leaving click's user
+     * activation lasts, else the bar's PiP button does it).
+     */
+    readonly pictureInPicture?: boolean;
 }
 
 export interface NowPlayingSession extends NowPlayingHandoff {

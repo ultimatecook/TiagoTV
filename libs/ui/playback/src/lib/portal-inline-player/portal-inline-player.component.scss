@@ -1,132 +1,83 @@
+// The title page's player: the picture large where the hero was, rounded
+// like the window (`--tv-window-radius`), with a minimal header over its
+// top (the title, the sources chip, "…" and close) that comes and goes
+// with the player's controls, as on the En vivo and league stages.
+//
+// A platform's title page runs up under the shell's bar
+// (apps/web/src/_platform-themes.scss): there the stage bleeds under it,
+// rounds only its top corners (the window's own: `--inline-radius-*`)
+// and its header starts below the bar (`--inline-top-inset`).
 :host {
+    --inline-top-inset: 0px;
+    --inline-radius-top: var(--tv-window-radius, 18px);
+    --inline-radius-bottom: var(--tv-window-radius, 18px);
+    // Room below the stage: the page's next section peeks in.
+    --inline-stage-max: calc(
+        100dvh - var(--tv-topbar-h, 84px) + var(--inline-top-inset) - 56px
+    );
     display: block;
     width: 100%;
 }
 
 .player-shell {
-    display: grid;
-    gap: 14px;
-    padding: 18px;
-    margin-top: 8px;
-    border-radius: 18px;
-    border: 1px solid rgba(20, 20, 20, 0.08);
-    background:
-        linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.78),
-            rgba(255, 250, 245, 0.92)
-        ),
-        rgba(255, 250, 245, 0.9);
-    box-shadow:
-        0 20px 56px rgba(25, 20, 20, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    // No backdrop-filter here: blurring over a live video viewport forces an
-    // expensive re-blur every frame and makes the browse↔watch morph stutter.
+    position: relative;
 }
 
 .player-shell__header {
-    display: grid;
-    gap: 8px;
-    // Allow the nowrap title to shrink instead of widening the grid track
-    // and pushing the actions out of the viewport.
-    min-width: 0;
-}
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 3;
+    padding: calc(var(--inline-top-inset) + 18px) 24px 56px;
+    border-radius: var(--inline-radius-top) var(--inline-radius-top) 0 0;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.62) 0%,
+        rgba(0, 0, 0, 0.3) 55%,
+        transparent 100%
+    );
+    // Clicks on the picture under the scrim still reach the player; only
+    // the buttons take them.
+    pointer-events: none;
+    transition: opacity 200ms ease-out;
 
-.player-shell__eyebrow {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: rgba(26, 26, 26, 0.58);
-}
-
-.player-shell__title-row {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: space-between;
-    min-width: 0;
-}
-
-.player-shell__heading {
-    flex: 1;
-    min-width: 0;
-}
-
-.player-shell__title {
-    margin: 0;
-    font-size: clamp(1.05rem, 1vw + 0.9rem, 1.4rem);
-    font-weight: 700;
-    line-height: 1.2;
-    color: #161616;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.player-shell__episode-meta {
-    color: rgba(26, 26, 26, 0.64);
-    font-size: 0.95rem;
-    font-weight: 600;
-}
-
-.player-shell__actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: flex-end;
-    align-items: center;
-}
-
-// The sources chip sits between a plain text button (Copy Stream URL) and an
-// outlined one (Close player). It is a peer of the latter, so it borrows that
-// shape — outlined pill, transparent fill, Material's 40px button height —
-// rather than carrying the filled surface it wears in the detail hero.
-.player-shell__actions ::ng-deep app-vod-sources-chip .sources-chip {
-    min-height: 40px;
-    padding: 0 16px;
-    border: 1px solid var(--mat-sys-outline, rgb(255 255 255 / 24%));
-    border-radius: 20px;
-    background: transparent;
-    color: inherit;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition:
-        background-color 140ms ease,
-        border-color 140ms ease;
-
-    &:hover {
-        background: rgb(255 255 255 / 8%);
-        border-color: rgb(255 255 255 / 38%);
+    ::ng-deep .head__actions {
+        pointer-events: auto;
     }
 }
 
-// The viewport is the "theater stage": it spans the full content width and,
-// on wide-short windows, becomes wider than 16:9. The player is centered and
-// letterboxed inside it, so the leftover is always the black stage (or the
-// ambient fill) — never a stray strip of app background.
+// With the shared controls, the header hides and shows with them (and
+// stays while the pointer or the keyboard is on its buttons).
+.player-shell:has(.player-controls__bar):not(
+        :has(.player-controls__bar--visible)
+    ):not(:has(.player-shell__header :is(:hover, :focus-within)))
+    .player-shell__header {
+    opacity: 0;
+}
+
+// The theater stage: the full width, never taller than the window leaves
+// room for; wider than 16:9 on wide-short windows. The player is centred
+// and letterboxed in it (or docked left beside the Up Next rail).
 .player-shell__viewport {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    // Definite width is load-bearing: with `width: auto`, `max-height` would
-    // transfer through `aspect-ratio` into a max-width and re-clamp the stage
-    // to 16:9 — recreating the app-surface gap on wide-short windows.
+    // Definite width is load-bearing: with `width: auto`, `max-height`
+    // would transfer through `aspect-ratio` into a max-width and re-clamp
+    // the stage to 16:9, leaving a strip of page beside it.
     width: 100%;
-    // There is no global border-box reset, so the rail modifier's padding
-    // would otherwise widen the stage past its container and get clipped.
     box-sizing: border-box;
     min-height: 320px;
-    max-height: min(70vh, 720px);
+    max-height: max(320px, var(--inline-stage-max));
     aspect-ratio: 16 / 9;
-    border-radius: 14px;
+    border-radius: var(--inline-radius-top) var(--inline-radius-top)
+        var(--inline-radius-bottom) var(--inline-radius-bottom);
     background: #000;
 }
 
-// Player: largest 16:9 box that fits the stage height, horizontally centered.
-// The stage is never narrower than 16:9, so height-driven sizing never overflows.
 .player-shell__viewport > app-web-player-view {
     position: relative;
     z-index: 1;
@@ -138,16 +89,11 @@
     aspect-ratio: 16 / 9;
 }
 
-// "Up Next" rail: instead of centering, the player docks left and the
-// leftover column becomes the episode rail. The rail is an opaque panel on
-// top of the stage, so the ambient fill stays behind it (and shows in the
-// flexible gap between player and rail on very wide stages).
+// "Up Next" rail: the player docks left and the leftover column is the
+// rail, below the header.
 .player-shell__viewport--with-rail {
     justify-content: space-between;
     gap: 18px;
-    // Insets the docked player and the rail from the stage edges; the player
-    // keeps sizing itself as the largest 16:9 box fitting the (now smaller)
-    // content height.
     padding: 12px;
 }
 
@@ -158,9 +104,10 @@
     align-self: stretch;
     min-width: 0;
     max-width: 440px;
+    margin-top: calc(var(--inline-top-inset) + 64px);
 }
 
-// "Ambient mode": a blurred, dimmed copy of the poster fills the whole stage
+// "Ambient mode": a blurred, dimmed copy of the poster fills the stage
 // behind the player, turning the letterbox margins into atmosphere.
 .player-shell__ambient {
     position: absolute;
@@ -174,42 +121,56 @@
     pointer-events: none;
 }
 
-:host-context(.dark-theme) .player-shell {
-    border-color: rgba(255, 255, 255, 0.12);
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent),
-        rgba(12, 12, 12, 0.72);
-    box-shadow:
-        0 24px 80px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+// The header owns the top of the picture outside full screen: the
+// controls' own top scrim would darken it twice, and their corner button
+// (stream info) moves below the header. In full screen (the player view
+// is the full screen element) the controls' title and scrim take over.
+:host ::ng-deep app-web-player-view:not(:fullscreen) {
+    .player-controls__top-scrim {
+        display: none;
+    }
+
+    .player-controls__corner {
+        top: calc(var(--inline-top-inset) + 84px);
+    }
 }
 
-:host-context(.dark-theme) .player-shell__eyebrow {
-    color: rgba(255, 255, 255, 0.6);
+// The platform's accent on the controls: the progress fill and the play
+// button take its colour (Netflix red, Prime blue…).
+:host([data-platform]) ::ng-deep app-player-controls {
+    --pc-progress: var(--player-accent);
+    --pc-accent-blue: var(--player-accent);
+    --pc-accent-blue-strong: color-mix(
+        in srgb,
+        var(--player-accent) 80%,
+        #000
+    );
+    --pc-accent-blue-hover: color-mix(in srgb, var(--player-accent) 66%, #000);
 }
 
-:host-context(.dark-theme) .player-shell__title {
-    color: #fff;
+:host([data-platform]) ::ng-deep app-up-next-rail {
+    --pc-progress: var(--player-accent);
 }
 
-:host-context(.dark-theme) .player-shell__episode-meta {
-    color: rgba(255, 255, 255, 0.68);
+// Native-view Embedded MPV paints a platform view above every page
+// element: nothing can lie over its picture, and it must not run under
+// the shell's bar. The header stands above the picture instead.
+.player-shell:has(.embedded-mpv-player--controls-enabled) {
+    --inline-stage-max: calc(100dvh - var(--tv-topbar-h, 84px) - 150px);
+
+    .player-shell__header {
+        position: static;
+        padding: calc(var(--inline-top-inset) + 14px) 4px 14px;
+        border-radius: 0;
+        background: none;
+        opacity: 1;
+    }
 }
 
 @media (max-width: 900px) {
-    .player-shell {
-        padding: 14px;
-    }
-
-    .player-shell__title-row {
-        flex-direction: column;
-        // Centered, the nowrap heading took its full text width and spilled
-        // past both card edges; stretched, the title ellipsizes in the card.
-        align-items: stretch;
-    }
-
-    .player-shell__actions {
-        justify-content: flex-start;
+    .player-shell__header {
+        padding-right: 14px;
+        padding-left: 14px;
     }
 
     .player-shell__viewport {

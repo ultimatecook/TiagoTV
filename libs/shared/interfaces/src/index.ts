@@ -83,6 +83,7 @@ export * from './lib/xtream-response.interface';
 export * from './lib/xtream-portal.utils';
 export * from './lib/content-language';
 export * from './lib/display-title';
+export * from './lib/source-name';
 export * from './lib/sharp-image-url';
 export * from './lib/display-channel-name';
 export * from './lib/tidy-channel-title';

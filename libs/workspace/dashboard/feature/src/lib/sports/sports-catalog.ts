@@ -1,5 +1,5 @@
 import { isSpanishOrEnglishCategory } from '@iptvnator/shared/interfaces';
-import type { MatchChannel } from './match-channels';
+import { rankedChannels, type MatchChannel } from './match-channels';
 import { isMatchOn, isMatchOver, startOf } from './match-clock';
 import {
     feedQuality,
@@ -208,7 +208,10 @@ export function buildSportsCatalog(
 
     const catalog = {} as Record<SportSectionId, SportSectionContent>;
     for (const section of SPORT_SECTIONS) {
-        const sectionChannels = [...channels.get(section.id)!.values()];
+        // In the order the page lists them, for TiagoTV liviano's row too.
+        const sectionChannels = rankedChannels([
+            ...channels.get(section.id)!.values(),
+        ]);
         catalog[section.id] = {
             matches: buildMatches(
                 section,

@@ -33,6 +33,8 @@ export interface NowPlayingTeardown {
     readonly fallbackVolume: number;
     readonly returnUrl: string;
     readonly returnState: Record<string, unknown> | null;
+    /** The page's picture was in picture-in-picture when it was left. */
+    readonly pictureInPicture?: boolean;
 }
 
 /** Closer than this to the end, a film is finished: nothing to continue. */
@@ -84,6 +86,7 @@ export function resolveNowPlayingHandoff(
         muted: video?.muted ?? false,
         returnUrl: teardown.returnUrl,
         returnState: teardown.returnState,
+        ...(teardown.pictureInPicture ? { pictureInPicture: true } : {}),
     };
 }
 

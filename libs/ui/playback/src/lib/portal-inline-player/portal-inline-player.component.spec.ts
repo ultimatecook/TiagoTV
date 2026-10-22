@@ -2,7 +2,7 @@ import { Component, input, output, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { SettingsStore } from '@iptvnator/services';
+import { SettingsStore, TitlePlatformStore } from '@iptvnator/services';
 import { ResolvedPortalPlayback } from '@iptvnator/shared/interfaces';
 import { PlaybackFallbackRequest } from '@iptvnator/playback/util';
 import type { PortalInlinePlayerComponent as PortalInlinePlayerComponentInstance } from './portal-inline-player.component';
@@ -123,9 +123,19 @@ describe('PortalInlinePlayerComponent', () => {
 
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.textContent).toContain(
-            'S01E02 - Episode 2'
-        );
+        const header = fixture.nativeElement.querySelector(
+            'app-inline-player-header'
+        ) as HTMLElement;
+        expect(
+            header.querySelector('.player-shell__title')?.textContent?.trim()
+        ).toBe('Episode 2');
+        // The episode's name only repeats the title: the code stands alone.
+        expect(
+            header
+                .querySelector('.player-shell__episode-meta')
+                ?.textContent?.trim()
+        ).toBe('S1:E2');
+        expect(header.textContent).not.toContain('Now playing');
 
         const webPlayer = fixture.debugElement.query(
             By.directive(StubWebPlayerViewComponent)
@@ -179,7 +189,7 @@ describe('PortalInlinePlayerComponent', () => {
     });
 
     describe('playerMediaTitle', () => {
-        it('uses the series title with the episode label for episode playback', () => {
+        it('uses the series title with the short episode code for episode playback', () => {
             fixture.componentRef.setInput('playback', {
                 streamUrl: 'https://example.test/series/1002.mp4',
                 title: 'Episode 2',
@@ -195,7 +205,7 @@ describe('PortalInlinePlayerComponent', () => {
 
             expect(component.playerMediaTitle()).toEqual({
                 primary: 'Breaking Code',
-                secondary: 'S01E02',
+                secondary: 'S1:E2',
             });
 
             const webPlayer = fixture.debugElement.query(
@@ -203,7 +213,7 @@ describe('PortalInlinePlayerComponent', () => {
             ).componentInstance as StubWebPlayerViewComponent;
             expect(webPlayer.mediaTitle()).toEqual({
                 primary: 'Breaking Code',
-                secondary: 'S01E02',
+                secondary: 'S1:E2',
             });
         });
 
@@ -221,7 +231,7 @@ describe('PortalInlinePlayerComponent', () => {
 
             expect(component.playerMediaTitle()).toEqual({
                 primary: 'Episode 2',
-                secondary: 'S01E02',
+                secondary: 'S1:E2',
             });
         });
 
@@ -268,6 +278,86 @@ describe('PortalInlinePlayerComponent', () => {
             )
         ).not.toContain('arrow_back');
         expect('backClicked' in component).toBe(false);
+    });
+
+    it('names an episode by its show, and the episode by code and name', () => {
+        fixture.componentRef.setInput('playback', {
+            streamUrl: 'https://example.test/series/1002.mp4',
+            title: 'Our Great National Parks (2022) ES - S01E02 - Chilean Patagonia',
+        });
+        fixture.componentRef.setInput(
+            'seriesTitle',
+            'Our Great National Parks (2022) ES'
+        );
+        fixture.componentRef.setInput('episodeMetadata', {
+            label: 'S01E02',
+            title: 'Our Great National Parks (2022) ES - S01E02 - Chilean Patagonia',
+            seasonNumber: 1,
+            episodeNumber: 2,
+        });
+        fixture.detectChanges();
+
+        expect(component.heading()).toEqual({
+            primary: 'Our Great National Parks',
+            secondary: 'S1:E2 · Chilean Patagonia',
+        });
+        expect(fixture.nativeElement.textContent).not.toContain('(2022)');
+    });
+
+    it('wears the title platform: its logo in the header and its accent on the controls', () => {
+        const store = TestBed.inject(TitlePlatformStore);
+        store.useResolver(() => ({
+            id: 'netflix',
+            name: 'Netflix',
+            logo: './assets/platforms/netflix.svg',
+            logoTone: 'brand',
+            ambient: '#e50914',
+        }));
+        const release = store.show({
+            playlistId: 'p1',
+            kind: 'movie',
+            itemId: 7,
+        });
+        fixture.componentRef.setInput('playback', {
+            streamUrl: 'https://example.test/vod/7.mp4',
+            title: 'Muertos S.L. (2024) ES',
+        });
+        fixture.detectChanges();
+
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.getAttribute('data-platform')).toBe('netflix');
+        expect(host.style.getPropertyValue('--player-accent')).toBe('#e50914');
+        const logo = host.querySelector(
+            '[data-test-id="inline-player-brand"]'
+        ) as HTMLImageElement;
+        expect(logo.getAttribute('alt')).toBe('Netflix');
+        expect(host.querySelector('.player-shell__title')?.textContent?.trim()).toBe(
+            'Muertos S.L.'
+        );
+
+        release();
+        fixture.detectChanges();
+        expect(host.hasAttribute('data-platform')).toBe(false);
+        expect(
+            host.querySelector('[data-test-id="inline-player-brand"]')
+        ).toBeNull();
+    });
+
+    it('closes from its round close button', () => {
+        const closed = jest.fn();
+        component.closed.subscribe(closed);
+        fixture.componentRef.setInput('playback', {
+            streamUrl: 'https://example.test/vod/1.mp4',
+            title: 'Movie',
+        });
+        fixture.detectChanges();
+
+        const close = fixture.nativeElement.querySelector(
+            '[data-test-id="inline-player-close"]'
+        ) as HTMLButtonElement;
+        expect(close.getAttribute('aria-label')).toBe('PORTALS.CLOSE_PLAYER');
+        close.click();
+        expect(closed).toHaveBeenCalledTimes(1);
     });
 
     describe('with strip country prefix enabled', () => {

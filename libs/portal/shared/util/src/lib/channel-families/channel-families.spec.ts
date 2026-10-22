@@ -41,6 +41,8 @@ describe('parseChannelName', () => {
         ['|ARG| DIRECT TV SPORTS 2', 'directv sports', 2, false],
         ['|ARGENT ᴴᴰ -  ESPN ARG ᴴᴰ-', 'espn', null, false],
         ['|US| Fox Sports 1 ᴴᴰ US', 'fox sports', 1, false],
+        // ESPN Premium, listed by its name before 2022.
+        ['|ARG| FOX SPORTS PREMIUM ᴴᴰ', 'espn premium', null, false],
         ['|UK| SKY F1 ˢᴰ', 'sky sports f1', null, false],
         ['|ES| DAZN FORMULA 1 ᴴᴰ', 'dazn f1', null, false],
         ['|ES|NBA TV 7', 'nba', 7, false],
@@ -103,9 +105,7 @@ describe('channelFamilyName for the live brands', () => {
     });
 
     it("writes the brands' other feeds their way", () => {
-        expect(channelFamilyName('fox sports premium', [])).toBe(
-            'FOX Sports Premium'
-        );
+        expect(channelFamilyName('espn premium', [])).toBe('ESPN Premium');
         expect(channelFamilyName('tyc sports internacional', [])).toBe(
             'TyC Sports Internacional'
         );

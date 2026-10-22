@@ -10,6 +10,7 @@ import {
     VideoPlayer,
     type ExternalPlayerName,
     type NormalizedVodMeta,
+    visibleSourceName,
 } from '@iptvnator/shared/interfaces';
 import type { DetailActionButtonState } from '@iptvnator/ui/components';
 import {
@@ -64,7 +65,7 @@ export function createVodDetailsHeroState(deps: VodDetailsHeroStateDeps) {
     };
     const kindLabel = computed(() => {
         const kind = translate('WORKSPACE.DASHBOARD.TYPE_MOVIE');
-        const source = deps.sourceLabel()?.trim();
+        const source = visibleSourceName(deps.sourceLabel());
         return source ? `${kind} · ${source}` : kind;
     });
     const durationSeconds = computed(() =>

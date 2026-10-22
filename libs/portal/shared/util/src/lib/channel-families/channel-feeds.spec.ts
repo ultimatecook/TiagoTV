@@ -109,10 +109,10 @@ describe('channelFeedGroup', () => {
         expect(group?.name).toBe('ESPN');
         expect(group?.brand?.id).toBe('espn');
         expect(lineUp(group)).toEqual([
-            ['AR', ['ESPN', '*ESPN 2', 'ESPN+']],
+            ['AR', ['ESPN', '*ESPN 2', 'ESPN Premium', 'ESPN+']],
             ['US', ['ESPN', 'ESPN 2', 'ESPN 3', 'ESPN News']],
         ]);
-        expect(group?.alternatives).toBe(6);
+        expect(group?.alternatives).toBe(7);
     });
 
     it('offers every copy of the feed that plays, the first copy of the others', () => {
@@ -120,7 +120,7 @@ describe('channelFeedGroup', () => {
 
         expect(lineUp(group)?.[0]).toEqual([
             'AR',
-            ['ESPN', '*ESPN #2', 'ESPN 2', 'ESPN+'],
+            ['ESPN', '*ESPN #2', 'ESPN 2', 'ESPN Premium', 'ESPN+'],
         ]);
         expect(group?.regions[0].options[0].channel).toBe(espnArg);
     });
@@ -133,7 +133,7 @@ describe('channelFeedGroup', () => {
         ).toEqual(['US', 'AR']);
     });
 
-    it('gathers all of FOX Sports, its premium feed after the numbered ones', () => {
+    it('gathers all of FOX Sports, not ESPN Premium (its old name)', () => {
         const group = channelFeedGroup(fox1, catalog);
 
         expect(group?.key).toBe('fox-sports');
@@ -146,7 +146,6 @@ describe('channelFeedGroup', () => {
                     'FOX Sports 1 #3',
                     'FOX Sports 2',
                     'FOX Sports 3',
-                    'FOX Sports Premium',
                 ],
             ],
             ['US', ['FOX Sports 1', 'FOX Sports 2', 'Fox Sports Florida']],
@@ -165,7 +164,6 @@ describe('channelFeedGroup', () => {
                 '*FOX Sports 1 #3',
                 'FOX Sports 2',
                 'FOX Sports 3',
-                'FOX Sports Premium',
             ],
         ]);
     });

@@ -118,4 +118,78 @@ describe('NowPlayingVideo', () => {
         expect(controller.attached()).toBe(false);
         expect(controller.paused()).toBe(true);
     });
+
+    describe('picture-in-picture', () => {
+        function withPictureInPicture(
+            options: Partial<
+                ConstructorParameters<typeof NowPlayingVideo>[0]
+            > = {}
+        ) {
+            const doc = {
+                pictureInPictureEnabled: true,
+                pictureInPictureElement: null as unknown,
+                exitPictureInPicture: jest.fn(async () => {
+                    doc.pictureInPictureElement = null;
+                    fake.dispatchEvent(new Event('leavepictureinpicture'));
+                }),
+            };
+            const { fake, controller } = mount(options);
+            const request = jest.fn(async () => {
+                doc.pictureInPictureElement = fake;
+                fake.dispatchEvent(new Event('enterpictureinpicture'));
+                return {} as PictureInPictureWindow;
+            });
+            Object.assign(fake, {
+                ownerDocument: doc,
+                readyState: 0,
+                disablePictureInPicture: false,
+                requestPictureInPicture: request,
+            });
+            return { fake, controller, doc, request };
+        }
+
+        it('is offered once the picture has its size, on the same element', async () => {
+            const { fake, controller, doc, request } = withPictureInPicture();
+            fake.dispatchEvent(new Event('play'));
+            expect(controller.canPictureInPicture()).toBe(false);
+
+            Object.assign(fake, { readyState: 1 });
+            fake.loadMetadata(100);
+            expect(controller.canPictureInPicture()).toBe(true);
+
+            controller.togglePictureInPicture();
+            await Promise.resolve();
+            expect(request).toHaveBeenCalledTimes(1);
+            expect(controller.pictureInPicture()).toBe(true);
+
+            controller.togglePictureInPicture();
+            await Promise.resolve();
+            expect(doc.exitPictureInPicture).toHaveBeenCalledTimes(1);
+            expect(controller.pictureInPicture()).toBe(false);
+            controller.destroy();
+        });
+
+        it('asks for it again when the page had its picture in PiP', async () => {
+            const { fake, controller, request } = withPictureInPicture({
+                pictureInPicture: true,
+            });
+            Object.assign(fake, { readyState: 1 });
+            fake.loadMetadata(100);
+            fake.dispatchEvent(new Event('timeupdate'));
+            await Promise.resolve();
+
+            // Once: a refusal (no recent click) is not retried.
+            expect(request).toHaveBeenCalledTimes(1);
+            controller.destroy();
+        });
+
+        it('offers nothing where the browser has no PiP', () => {
+            const { fake, controller, doc } = withPictureInPicture();
+            doc.pictureInPictureEnabled = false;
+            Object.assign(fake, { readyState: 1 });
+            fake.loadMetadata(100);
+            expect(controller.canPictureInPicture()).toBe(false);
+            controller.destroy();
+        });
+    });
 });

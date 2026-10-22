@@ -1,0 +1,378 @@
+<section class="settings-group" id="diagnostics">
+    <header class="settings-group__header">
+        <h2>{{ 'SETTINGS.DIAGNOSTICS.TITLE' | translate }}</h2>
+        <p>{{ 'SETTINGS.DIAGNOSTICS.SUBTITLE' | translate }}</p>
+    </header>
+
+    <section class="settings-section">
+        <div class="settings-card">
+            <div class="setting-item" data-setting-id="diagnostics-build">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.DIAGNOSTICS.BUILD' | translate }}</h4>
+                    <p>
+                        {{
+                            'SETTINGS.DIAGNOSTICS.BUILD_DESCRIPTION' | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control diagnostics-build">
+                    <code data-test-id="diagnostics-version">{{
+                        version() || '—'
+                    }}</code>
+                    <span class="settings-chip">
+                        @if (uiBuild(); as build) {
+                            {{
+                                'SETTINGS.DIAGNOSTICS.UI_BUILD'
+                                    | translate: { build: build }
+                            }}
+                        } @else {
+                            {{ 'SETTINGS.DIAGNOSTICS.UI_PACKAGED' | translate }}
+                        }
+                    </span>
+                    @if (bundle) {
+                        <code class="diagnostics-build__hash">{{
+                            bundle
+                        }}</code>
+                    }
+                    @if (buildCommit()) {
+                        <code class="diagnostics-build__hash">{{
+                            buildCommit().slice(0, 7)
+                        }}</code>
+                    }
+                </div>
+            </div>
+            <div class="setting-item" data-setting-id="diagnostics-reload">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.DIAGNOSTICS.RELOAD' | translate }}</h4>
+                    <p>
+                        {{
+                            'SETTINGS.DIAGNOSTICS.RELOAD_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control">
+                    <button
+                        mat-stroked-button
+                        type="button"
+                        data-test-id="diagnostics-reload"
+                        [disabled]="reloading() || !hasSource()"
+                        (click)="reload()"
+                    >
+                        @if (reloading()) {
+                            <mat-progress-spinner
+                                class="button-spinner"
+                                diameter="16"
+                                mode="indeterminate"
+                            />
+                            {{ 'SETTINGS.DIAGNOSTICS.RELOADING' | translate }}
+                        } @else {
+                            <mat-icon>refresh</mat-icon>
+                            {{ 'SETTINGS.DIAGNOSTICS.RELOAD' | translate }}
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="settings-section">
+        <div class="settings-card">
+            <div class="setting-item" data-setting-id="diagnostics-catalog">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.DIAGNOSTICS.CATALOG' | translate }}</h4>
+                    <p>
+                        {{
+                            'SETTINGS.DIAGNOSTICS.CATALOG_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+            </div>
+            @if (!hasSource()) {
+                <div class="setting-item__sub">
+                    <p class="diagnostics-note">
+                        {{ 'SETTINGS.DIAGNOSTICS.NO_SOURCE' | translate }}
+                    </p>
+                </div>
+            }
+            @for (report of kinds(); track report.kind) {
+                <div class="setting-item__sub diagnostics-kind">
+                    <h5 class="diagnostics-kind__title">
+                        {{
+                            (report.kind === 'series'
+                                ? 'SETTINGS.DIAGNOSTICS.SERIES'
+                                : 'SETTINGS.DIAGNOSTICS.MOVIES'
+                            ) | translate
+                        }}
+                    </h5>
+                    <div class="diagnostics-chips">
+                        @if (report.importStatus; as status) {
+                            <span class="settings-chip">{{
+                                'SETTINGS.DIAGNOSTICS.IMPORT'
+                                    | translate
+                                        : {
+                                              status:
+                                                  (statusKey(status)
+                                                  | translate),
+                                          }
+                            }}</span>
+                        }
+                        <span class="settings-chip">
+                            @if (report.storedRows !== null) {
+                                {{
+                                    'SETTINGS.DIAGNOSTICS.STORED'
+                                        | translate
+                                            : {
+                                                  categories:
+                                                      report.storedCategories,
+                                                  rows: report.storedRows,
+                                              }
+                                }}
+                            } @else {
+                                {{
+                                    'SETTINGS.DIAGNOSTICS.NOT_STORED'
+                                        | translate
+                                }}
+                            }
+                        </span>
+                        <span
+                            class="settings-chip"
+                            [class.settings-chip--success]="
+                                report.total > 0 &&
+                                report.answered === report.total
+                            "
+                            [class.settings-chip--warn]="
+                                report.answered < report.total
+                            "
+                        >
+                            {{
+                                'SETTINGS.DIAGNOSTICS.LISTS'
+                                    | translate
+                                        : {
+                                              answered: report.answered,
+                                              total: report.total,
+                                          }
+                            }}
+                            ·
+                            {{
+                                (report.total > 0 &&
+                                report.answered === report.total
+                                    ? 'SETTINGS.DIAGNOSTICS.COMPLETE'
+                                    : 'SETTINGS.DIAGNOSTICS.INCOMPLETE'
+                                ) | translate
+                            }}
+                        </span>
+                        @if (report.lastRefresh; as at) {
+                            <span class="settings-chip">{{
+                                'SETTINGS.DIAGNOSTICS.LAST_LIST'
+                                    | translate
+                                        : { time: (at | date: 'd MMM, HH:mm') }
+                            }}</span>
+                        }
+                    </div>
+
+                    <p class="diagnostics-label">
+                        {{ 'SETTINGS.DIAGNOSTICS.SHOWN' | translate }}
+                    </p>
+                    <div class="diagnostics-chips">
+                        @for (entry of report.shown; track entry.platform) {
+                            <span class="settings-chip settings-chip--accent"
+                                >{{ entry.platform }} · {{ entry.titles }}</span
+                            >
+                        } @empty {
+                            <span class="settings-chip">{{
+                                'SETTINGS.DIAGNOSTICS.NONE_SHOWN' | translate
+                            }}</span>
+                        }
+                    </div>
+
+                    @if (report.categories.length > 0) {
+                        <div class="diagnostics-table" role="table">
+                            <div
+                                class="diagnostics-table__row diagnostics-table__row--head diagnostics-table__row--catalog"
+                                role="row"
+                            >
+                                <span role="columnheader">{{
+                                    'SETTINGS.DIAGNOSTICS.COL_CATEGORY'
+                                        | translate
+                                }}</span>
+                                <span role="columnheader">{{
+                                    'SETTINGS.DIAGNOSTICS.COL_PLATFORM'
+                                        | translate
+                                }}</span>
+                                <span role="columnheader" class="num">{{
+                                    'SETTINGS.DIAGNOSTICS.COL_STORED'
+                                        | translate
+                                }}</span>
+                                <span role="columnheader" class="num">{{
+                                    'SETTINGS.DIAGNOSTICS.COL_LIST' | translate
+                                }}</span>
+                                <span role="columnheader" class="num">{{
+                                    'SETTINGS.DIAGNOSTICS.COL_IN_STORED'
+                                        | translate
+                                }}</span>
+                                <span role="columnheader">{{
+                                    'SETTINGS.DIAGNOSTICS.COL_UPDATED'
+                                        | translate
+                                }}</span>
+                                <span role="columnheader">{{
+                                    'SETTINGS.DIAGNOSTICS.COL_STATE' | translate
+                                }}</span>
+                            </div>
+                            @for (
+                                category of report.categories;
+                                track category.label + category.platform
+                            ) {
+                                <div
+                                    class="diagnostics-table__row diagnostics-table__row--catalog"
+                                    role="row"
+                                >
+                                    <span role="cell" class="strong">{{
+                                        category.label
+                                    }}</span>
+                                    <span role="cell">{{
+                                        category.platform
+                                    }}</span>
+                                    <span role="cell" class="num">{{
+                                        category.stored ?? '—'
+                                    }}</span>
+                                    <span role="cell" class="num">{{
+                                        category.listed ?? '—'
+                                    }}</span>
+                                    <span role="cell" class="num">{{
+                                        category.listedStored ?? '—'
+                                    }}</span>
+                                    <span role="cell">{{
+                                        category.at
+                                            ? (category.at
+                                              | date: 'd MMM, HH:mm')
+                                            : '—'
+                                    }}</span>
+                                    <span role="cell">
+                                        <span
+                                            class="settings-chip"
+                                            [class.settings-chip--success]="
+                                                category.state === 'ok'
+                                            "
+                                            [class.settings-chip--warn]="
+                                                category.state !== 'ok'
+                                            "
+                                            >{{
+                                                stateKey(category.state)
+                                                    | translate
+                                            }}</span
+                                        >
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (pendingRetries() > 0) {
+                <div class="setting-item__sub">
+                    <span class="settings-chip settings-chip--warn">{{
+                        'SETTINGS.DIAGNOSTICS.RETRIES'
+                            | translate: { count: pendingRetries() }
+                    }}</span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <section class="settings-section">
+        <div class="settings-card">
+            <div class="setting-item" data-setting-id="diagnostics-requests">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.DIAGNOSTICS.REQUESTS' | translate }}</h4>
+                    <p>
+                        {{
+                            'SETTINGS.DIAGNOSTICS.REQUESTS_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+            </div>
+            <div class="setting-item__sub">
+                @if (requests().length === 0) {
+                    <p class="diagnostics-note">
+                        {{ 'SETTINGS.DIAGNOSTICS.NO_REQUESTS' | translate }}
+                    </p>
+                } @else {
+                    <div class="diagnostics-table" role="table">
+                        <div
+                            class="diagnostics-table__row diagnostics-table__row--head diagnostics-table__row--requests"
+                            role="row"
+                        >
+                            <span role="columnheader">{{
+                                'SETTINGS.DIAGNOSTICS.COL_TIME' | translate
+                            }}</span>
+                            <span role="columnheader">{{
+                                'SETTINGS.DIAGNOSTICS.COL_REQUEST' | translate
+                            }}</span>
+                            <span role="columnheader">{{
+                                'SETTINGS.DIAGNOSTICS.COL_CATEGORY' | translate
+                            }}</span>
+                            <span role="columnheader" class="num">{{
+                                'SETTINGS.DIAGNOSTICS.COL_DURATION' | translate
+                            }}</span>
+                            <span role="columnheader" class="num">{{
+                                'SETTINGS.DIAGNOSTICS.COL_ITEMS' | translate
+                            }}</span>
+                            <span role="columnheader">{{
+                                'SETTINGS.DIAGNOSTICS.COL_RESULT' | translate
+                            }}</span>
+                        </div>
+                        @for (entry of requests(); track $index) {
+                            <div
+                                class="diagnostics-table__row diagnostics-table__row--requests"
+                                role="row"
+                            >
+                                <span role="cell">{{
+                                    entry.at | date: 'HH:mm:ss'
+                                }}</span>
+                                <span role="cell"
+                                    ><code>{{ entry.action }}</code></span
+                                >
+                                <span role="cell" class="strong">{{
+                                    entry.label ??
+                                        ('SETTINGS.DIAGNOSTICS.WHOLE_CATALOG'
+                                            | translate)
+                                }}</span>
+                                <span role="cell" class="num">{{
+                                    seconds(entry.ms)
+                                }}</span>
+                                <span role="cell" class="num">{{
+                                    entry.items ?? '—'
+                                }}</span>
+                                <span role="cell">
+                                    <span
+                                        class="settings-chip"
+                                        [class.settings-chip--success]="
+                                            entry.result === 'ok'
+                                        "
+                                        [class.settings-chip--warn]="
+                                            entry.result !== 'ok'
+                                        "
+                                        >{{
+                                            resultKey(entry)
+                                                | translate
+                                                    : { status: entry.status }
+                                        }}</span
+                                    >
+                                    @if (entry.playing) {
+                                        <span class="diagnostics-note">{{
+                                            'SETTINGS.DIAGNOSTICS.WHILE_PLAYING'
+                                                | translate
+                                        }}</span>
+                                    }
+                                </span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+</section>

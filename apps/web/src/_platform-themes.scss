@@ -100,8 +100,7 @@ html[data-platform-theme] app-portal-detail-shell {
     // may rest there: the bar's tabs and circles take those clicks, and in
     // Electron its band moves the window. The hero's artwork stays under
     // the bar and its text below it (a hero without a backdrop is only as
-    // tall as its text), the trailer's sound toggle moves below it too,
-    // and the watch state starts the player below the bar.
+    // tall as its text), the trailer's sound toggle moves below it too.
     .hero__content {
         padding-top: calc(var(--tv-topbar-h) + 24px);
     }
@@ -110,11 +109,20 @@ html[data-platform-theme] app-portal-detail-shell {
         top: calc(var(--tv-topbar-h) + 16px);
     }
 
-    &.shell-host--watch {
-        padding-top: var(--tv-topbar-h);
+    // The watch state's picture takes the hero's place: edge to edge, up
+    // under the bar like the hero, its top corners the window's. Its
+    // header (title, "…", close) starts below the bar (see the inline
+    // player's `--inline-top-inset`).
+    .shell__player--active {
+        padding: 0;
     }
 
-    // Scrolled up under the band, the player's own row stays clickable.
+    app-portal-inline-player {
+        --inline-top-inset: var(--tv-topbar-h);
+        --inline-radius-bottom: 0px;
+    }
+
+    // Scrolled up under the band, the player's own buttons stay clickable.
     .player-shell__header {
         app-region: no-drag;
     }
@@ -871,6 +879,12 @@ $clean-font: 'Helvetica Neue', 'DM Sans', Helvetica, sans-serif;
             }
         }
     }
+}
+
+// Prime Video's logo before "MOVIE" / "SERIES", as the others carry
+// theirs: the eyebrow names the platform, never the source's address.
+@include title-page('prime-video') {
+    @include kind-logo('./assets/platforms/prime-video.svg', 64px, 20px);
 }
 
 @mixin title-face($size, $family: inherit, $spacing: -0.02em) {

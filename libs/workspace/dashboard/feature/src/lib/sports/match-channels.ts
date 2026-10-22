@@ -39,9 +39,13 @@ export const SINGLE_COMPETITION_SECTIONS: ReadonlySet<SportSectionId> =
 const EVENT_NAMED = /\bvs?\b|@/;
 /** Pay-per-view passes, whose numbered feeds carry anything. */
 const PASS = /\bppv\b|\+$/;
-/** The broadcasters' own channels, by family key (see channel-families). */
+/**
+ * The broadcasters' own channels, by family key (see channel-families).
+ * TyC Sports is not one: it airs the Copa Argentina, not the league
+ * rounds, which ESPN Premium and TNT Sports share.
+ */
 const BROADCASTER =
-    /^(m\+ |dazn\b|sky sports\b|espn\b|fox sports\b|tnt sports\b|tyc sports\b|directv sports\b|bein sports\b|eurosport\b)/;
+    /^(m\+ |dazn\b|sky sports\b|espn\b|fox sports\b|tnt sports\b|directv sports\b|bein sports\b|eurosport\b)/;
 /** How many of a competition's channels a match offers. */
 const OFFERED = 4;
 
@@ -53,12 +57,10 @@ const OFFERED = 4;
 export function competitionChannels(
     channels: readonly SportChannel[]
 ): MatchChannel[] {
-    return groupChannelFamilies(channels)
+    return rankFamilies(groupChannelFamilies(channels))
         .filter((family) => !EVENT_NAMED.test(family.key))
-        .map((family) => ({ family, rank: familyRank(family.key) }))
-        .sort((a, b) => a.rank - b.rank)
         .slice(0, OFFERED)
-        .map(({ family }) => {
+        .map((family) => {
             const channel = family.feeds[0].channels[0];
             return {
                 name: family.name,
@@ -91,6 +93,38 @@ export function channelCopies(
  */
 export function familyRank(key: string): number {
     return PASS.test(key) ? 2 : BROADCASTER.test(key) ? 0 : 1;
+}
+
+/** Families by rank, in their order within one (a stable sort on Chrome 53). */
+function rankFamilies<T extends { readonly key: string }>(
+    families: readonly T[]
+): T[] {
+    return families
+        .map((family, index) => ({
+            family,
+            index,
+            rank: familyRank(family.key),
+        }))
+        .sort((a, b) => a.rank - b.rank || a.index - b.index)
+        .map(({ family }) => family);
+}
+
+/**
+ * A section's channels in the order its page lists them (see
+ * signal-cards): by family, ranked, each family's feeds in their order
+ * and each feed's copies behind the one that plays. TiagoTV liviano's
+ * row shows them so.
+ */
+export function rankedChannels(
+    channels: readonly SportChannel[]
+): SportChannel[] {
+    const ranked: SportChannel[] = [];
+    for (const family of rankFamilies(groupChannelFamilies(channels))) {
+        for (const feed of family.feeds) {
+            ranked.push(...feed.channels);
+        }
+    }
+    return ranked;
 }
 
 /**

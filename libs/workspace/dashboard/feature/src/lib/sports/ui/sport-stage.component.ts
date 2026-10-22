@@ -17,7 +17,11 @@ import {
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { WebPlayerViewComponent } from '@iptvnator/ui/playback';
-import { CountryTvControls } from '../../countries/country-tv-controls';
+import {
+    CountryTvControls,
+    VOLUME_STEP,
+} from '../../countries/country-tv-controls';
+import { StageVolumeComponent } from '../../countries/ui/stage-volume.component';
 import { OVERLAY_IDLE_MS } from '../../countries/country-tv-idle';
 import { liveKeyAction, onLivePage } from '../../countries/country-tv-keys';
 import { ChannelFavoritesService } from '../../my-list/channel-favorites.service';
@@ -54,6 +58,7 @@ const IDLE_MS = OVERLAY_IDLE_MS;
     imports: [
         MatIcon,
         SportSignalCardComponent,
+        StageVolumeComponent,
         TranslatePipe,
         WebPlayerViewComponent,
     ],
@@ -325,6 +330,11 @@ export class SportStageComponent {
         if (action === 'favorite') {
             event.preventDefault();
             this.toggleFavorite();
+        } else if (action === 'volumeUp' || action === 'volumeDown') {
+            event.preventDefault();
+            this.controls.adjustVolume(
+                action === 'volumeUp' ? VOLUME_STEP : -VOLUME_STEP
+            );
         } else if (
             action === 'play' ||
             action === 'mute' ||

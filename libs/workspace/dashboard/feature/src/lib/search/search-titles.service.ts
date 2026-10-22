@@ -8,7 +8,10 @@ import {
 import { RuntimeCapabilitiesService } from '@iptvnator/services';
 import type { XtreamCategory } from '@iptvnator/shared/interfaces';
 import { CatalogMembership } from '../catalog/catalog-membership';
+import { CatalogPlatformLists } from '../catalog/catalog-platform-lists';
+import { PlatformsCatalogService } from '../platforms/platforms-catalog.service';
 import { primaryXtreamSource, xtreamSourceCredentials } from '../xtream-source';
+import { listTitleHits, mergeTitleHits } from './search-list-hits';
 import {
     catalogQuery,
     toTitleHits,
@@ -31,14 +34,18 @@ const CATEGORY_TYPE: Record<TitleKind, 'vod' | 'series'> = {
 /**
  * Series and movies for the search page: the Xtream catalog search the app
  * already has (SQLite in Electron, the session cache in the browser), on
- * the primary source, scoped to the kept languages. A kind the app has not
- * stored yet is not searched: nothing here downloads a catalog.
+ * the primary source, scoped to the kept languages, together with the
+ * platforms' own lists (`CatalogPlatformLists`, kept across launches),
+ * which carry the platforms' titles the stored copy may lack. A kind with
+ * neither is not searched: nothing here downloads a catalog.
  */
 @Injectable()
 export class SearchTitlesService {
     private readonly dataSource = inject(XTREAM_DATA_SOURCE);
     private readonly runtime = inject(RuntimeCapabilitiesService);
     private readonly membership = inject(CatalogMembership);
+    private readonly lists = inject(CatalogPlatformLists);
+    private readonly platforms = inject(PlatformsCatalogService);
     private readonly playlists = inject(Store).selectSignal(
         selectAllPlaylistsMeta
     );
@@ -68,15 +75,41 @@ export class SearchTitlesService {
         kind: TitleKind
     ): Promise<readonly TitleHit[] | null> {
         const source = this.source();
-        if (!source || !(await this.dataSource.hasContent(source._id, kind))) {
+        if (!source) {
             return null;
         }
+        // The last categories known show the platforms at once.
+        void this.platforms.loadShelves();
         void this.membership.refresh(kind);
+        const [stored, listed] = await Promise.all([
+            this.searchStored(source._id, query, term, kind).catch(() => null),
+            this.lists.ready().then(() => {
+                const lists = this.lists.view(kind).lists;
+                return lists.some((list) => list.titles.length > 0)
+                    ? listTitleHits(lists, kind, term)
+                    : null;
+            }),
+        ]);
+        return stored === null && listed === null
+            ? null
+            : mergeTitleHits(stored ?? [], listed ?? []);
+    }
+
+    /** The stored catalog's answers, or null where it holds none of the kind. */
+    private async searchStored(
+        playlistId: string,
+        query: string,
+        term: string,
+        kind: TitleKind
+    ): Promise<TitleHit[] | null> {
+        if (!(await this.dataSource.hasContent(playlistId, kind))) {
+            return null;
+        }
         const [items, names] = await Promise.all([
-            this.dataSource.searchContent(source._id, catalogQuery(query), [
+            this.dataSource.searchContent(playlistId, catalogQuery(query), [
                 kind,
             ]),
-            this.namesOf(source._id, kind),
+            this.namesOf(playlistId, kind),
         ]);
         // The platform that lists the title, wherever its row is stored.
         return toTitleHits(

@@ -105,6 +105,7 @@ describe('Series and Películas on a first run', () => {
         titlesOf: jest.Mock;
         loadShelves: jest.Mock;
         categoryTitles: jest.Mock;
+        categoryName: jest.Mock;
         open: jest.Mock;
         play: jest.Mock;
     };
@@ -149,6 +150,7 @@ describe('Series and Películas on a first run', () => {
                     platform ? showsOf(platform) : []
                 );
             }),
+            categoryName: jest.fn(() => null),
             open: jest.fn(),
             play: jest.fn(),
         };

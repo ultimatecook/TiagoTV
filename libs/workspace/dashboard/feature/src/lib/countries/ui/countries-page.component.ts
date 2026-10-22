@@ -27,7 +27,7 @@ import {
     type TvCard,
     type TvCategoryId,
 } from '../country-tv-categories';
-import { CountryTvControls } from '../country-tv-controls';
+import { CountryTvControls, VOLUME_STEP } from '../country-tv-controls';
 import { CountryTvFavorites } from '../country-tv-favorites';
 import { CountryTvGuide } from '../country-tv-guide';
 import { OverlayIdle } from '../country-tv-idle';
@@ -378,6 +378,12 @@ export class CountriesPageComponent {
                 break;
             case 'mute':
                 this.controls.toggleMute();
+                break;
+            case 'volumeUp':
+            case 'volumeDown':
+                this.controls.adjustVolume(
+                    action === 'volumeUp' ? VOLUME_STEP : -VOLUME_STEP
+                );
                 break;
             case 'fullscreen':
                 this.controls.toggleFullscreen();

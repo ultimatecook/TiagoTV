@@ -5,6 +5,9 @@ import type {
 } from '@iptvnator/playback/util';
 import type { ExternalPlayerName } from '@iptvnator/shared/interfaces';
 
+/** A built-in web engine, or Embedded MPV, for the rest of this stream. */
+export type TemporaryPlayer = InlinePlaybackPlayer | 'embedded-mpv';
+
 export interface PlaybackBinding {
     readonly generation: number;
     readonly target: InlinePlaybackPlayer;
@@ -15,7 +18,7 @@ export class PlaybackRecoverySession {
         ReadonlySet<PlaybackRecommendationTarget>
     >(new Set());
     private readonly temporaryPlayerOverrideState =
-        signal<InlinePlaybackPlayer | null>(null);
+        signal<TemporaryPlayer | null>(null);
     private readonly switchPendingState = signal(false);
     private readonly activeBindingState = signal<PlaybackBinding | null>(null);
     private readonly sessionKey = signal<string | null>(null);
@@ -26,7 +29,7 @@ export class PlaybackRecoverySession {
     public readonly attemptedTargets: Signal<
         ReadonlySet<PlaybackRecommendationTarget>
     > = this.attemptedTargetsState.asReadonly();
-    public readonly temporaryPlayerOverride: Signal<InlinePlaybackPlayer | null> =
+    public readonly temporaryPlayerOverride: Signal<TemporaryPlayer | null> =
         this.temporaryPlayerOverrideState.asReadonly();
     public readonly switchPending: Signal<boolean> =
         this.switchPendingState.asReadonly();
@@ -123,6 +126,16 @@ export class PlaybackRecoverySession {
         this.switchPendingState.set(true);
         this.invalidatePlaybackBinding();
         return true;
+    }
+
+    /**
+     * The error screen's Embedded MPV: it takes the stream over (the web
+     * engine's binding ends; MPV reports no diagnostics to bind).
+     */
+    useEmbeddedMpv(): void {
+        this.temporaryPlayerOverrideState.set('embedded-mpv');
+        this.switchPendingState.set(false);
+        this.invalidatePlaybackBinding();
     }
 
     beginRetry(): boolean {

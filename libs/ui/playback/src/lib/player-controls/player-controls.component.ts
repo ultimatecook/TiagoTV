@@ -244,6 +244,7 @@ export class PlayerControlsComponent implements OnDestroy {
             seekBy: (delta) => this.seekBy(delta),
             adjustVolume: (delta) => this.volumeInteractions.adjust(delta),
             toggleMute: () => this.volumeInteractions.toggleMute(),
+            togglePictureInPicture: () => this.togglePictureInPicture(),
         });
         effect((onCleanup) => {
             const playerSurface = this.playerSurface();
@@ -255,12 +256,8 @@ export class PlayerControlsComponent implements OnDestroy {
         });
         effect(() => {
             const controller = this.controller();
-            if (
-                !this.volume.beginCapabilityEpoch(
-                    controller,
-                    this.capabilities().volume
-                )
-            ) {
+            const volumeOn = this.capabilities().volume;
+            if (!this.volume.beginCapabilityEpoch(controller, volumeOn)) {
                 return;
             }
             const volume = this.controllerVolume();
@@ -395,12 +392,15 @@ export class PlayerControlsComponent implements OnDestroy {
         this.controller().commands.toggleRecording();
     }
 
-    togglePictureInPicture(): void {
+    /** The button, and P: false when this player offers no PiP now. */
+    togglePictureInPicture(): boolean {
         this.reveal();
-        const state = this.state();
-        if (this.capabilities().pictureInPicture && state.canPictureInPicture) {
+        const { canPictureInPicture } = this.state();
+        const ok = canPictureInPicture && this.capabilities().pictureInPicture;
+        if (ok) {
             this.controller().commands.togglePictureInPicture();
         }
+        return ok;
     }
     async toggleFullscreen(): Promise<void> {
         this.reveal();

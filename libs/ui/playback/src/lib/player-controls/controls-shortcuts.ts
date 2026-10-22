@@ -20,6 +20,8 @@ export interface ControlsShortcutHandlers {
     seekBy: (deltaSeconds: number) => void;
     adjustVolume: (delta: number) => void;
     toggleMute: () => void;
+    /** P: picture-in-picture; false when the player offers none now. */
+    togglePictureInPicture?: () => boolean;
 }
 
 const INTERACTIVE_SELECTOR = [
@@ -168,6 +170,14 @@ export class ControlsShortcuts {
                 }
                 event.preventDefault();
                 handlers.toggleMute();
+                return;
+            case 'p':
+            case 'P':
+                // Called in the key's own task: the browser's PiP request
+                // needs that user activation.
+                if (handlers.togglePictureInPicture?.()) {
+                    event.preventDefault();
+                }
                 return;
         }
     }

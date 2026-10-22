@@ -38,7 +38,7 @@ export const CHANNEL_BRANDS: readonly ChannelBrand[] = [
         logo: `${LOGOS}fox-sports.png`,
         logoSize: 1.18,
         background: 'linear-gradient(140deg, #020b1f 0%, #0d3c8f 100%)',
-        families: [/^fox sports$/, /^fox sports premium$/],
+        families: [/^fox sports$/],
         owns: /^fox sports\b/,
     },
     {

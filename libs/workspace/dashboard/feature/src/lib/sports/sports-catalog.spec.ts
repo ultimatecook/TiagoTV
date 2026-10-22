@@ -321,4 +321,78 @@ describe('buildSportsCatalog', () => {
         ]);
         expect(catalog.laliga.channels).toEqual([]);
     });
+
+    it("gives the Liga Profesional Argentina's broadcasters, and no generic channel", () => {
+        const catalog = buildSportsCatalog(
+            [
+                { category_id: 20, category_name: '|LAT|  ✪ ARGENTINA' },
+                {
+                    category_id: 21,
+                    category_name: '|LAT|  ✪ ARGENTINA LIGA PROFESIONAL FOT',
+                },
+                { category_id: 22, category_name: '|UK| ✪ SPORTS' },
+                { category_id: 23, category_name: '|DE| ✪ DAZN EVENT' },
+            ],
+            [
+                stream(20, '|ARG| TYC SPORTS ᴴᴰ', 20),
+                stream(21, '|ARG| ESPN', 20),
+                stream(22, '|ARG| FOX SPORTS 2 ᴴᴰ', 20),
+                stream(23, '|ARG| TELEFE ᴴᴰ', 20),
+                stream(24, '|ARG| FOX SPORTS PREMIUM ᴴᴰ', 20),
+                stream(25, '|ARG| TNT SPORTS ᴴᴰ', 20),
+                stream(
+                    26,
+                    'US (P+) Argentina Liga Profesional De Futbol 1',
+                    21
+                ),
+                stream(
+                    27,
+                    'US (P+) Argentina Liga Profesional De Futbol 2',
+                    21
+                ),
+                stream(28, '|UK| TNT SPORTS 1 ᴴᴰ', 22),
+                stream(
+                    29,
+                    'Live | Boca Juniors vs. River Plate | Liga Profesional Argentina | DE',
+                    23
+                ),
+            ],
+            NOW
+        );
+
+        const argentina = catalog['liga-argentina'];
+        // ESPN Premium and TNT Sports first (each airs half of a round),
+        // then the league's own feeds, TyC Sports (the Copa Argentina) last.
+        expect(argentina.channels.map((c) => c.streamId)).toEqual([
+            24, 25, 26, 27, 20,
+        ]);
+        // A match no kept feed names plays on those channels.
+        expect(argentina.matches.map((match) => match.title)).toEqual([
+            'Boca Juniors - River Plate',
+        ]);
+        expect(argentina.matches[0].via.map((option) => option.name)).toEqual([
+            'ESPN Premium',
+            'TNT Sports',
+            'Argentina Liga Profesional De Futbol',
+            'TyC Sports',
+        ]);
+        expect(argentina.matches[0].channelName).toBe('ESPN Premium');
+        expect(catalog['rest-of-world'].channels).toEqual([]);
+    });
+
+    it("leaves LALIGA+'s passes out of LaLiga", () => {
+        const catalog = buildSportsCatalog(
+            [
+                { category_id: 30, category_name: '|ES| ✪ LALIGA+ PPV' },
+                { category_id: 31, category_name: '|ES| ✪ LALIGA ORANGE' },
+            ],
+            [
+                stream(30, 'ES: LALIGA+ PPV 4', 30),
+                stream(31, 'M+ LaLigaTV 2 HD Orange', 31),
+            ],
+            NOW
+        );
+
+        expect(catalog.laliga.channels.map((c) => c.streamId)).toEqual([31]);
+    });
 });

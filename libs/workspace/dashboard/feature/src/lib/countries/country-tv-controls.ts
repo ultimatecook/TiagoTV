@@ -1,4 +1,5 @@
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
+import { clampVolume, PlayerVolumeService } from '@iptvnator/ui/playback';
 
 /** Keeps the player's own keyboard shortcuts off inside the page. */
 export const SHORTCUTS_SUSPENDED = 'data-player-shortcuts-suspended';
@@ -14,9 +15,12 @@ const MEDIA_EVENTS = [
 ] as const;
 const STOPPED = new Set(['pause', 'emptied', 'ended', 'error', 'loadstart']);
 
+/** One step of the volume keys (+/−) and of the scroll wheel. */
+export const VOLUME_STEP = 0.05;
+
 /**
  * "En vivo"'s own controls over the player: the overlay's pause, volume
- * and full screen, and Space/K, M and F. The player's controls bar is
+ * and full screen, and Space/K, M, +/− and F. The player's controls bar is
  * hidden there and its shortcuts suspended (`SHORTCUTS_SUSPENDED` on the
  * stage), so the page drives it the way its keys would: play/pause and
  * mute go to the player's controller as its own K and M, else straight to
@@ -28,6 +32,8 @@ const STOPPED = new Set(['pause', 'emptied', 'ended', 'error', 'loadstart']);
  *
  * The state comes from the player's `<video>` (HTML5, Video.js,
  * ArtPlayer); Embedded MPV has none, and there the page keeps its own.
+ * The level is the app's one (`PlayerVolumeService`, saved across
+ * launches): set on the `<video>`, or asked of Embedded MPV.
  *
  * Component-provided: it lives as long as the page.
  */
@@ -38,6 +44,11 @@ export class CountryTvControls {
     /** The picture is moving (a video said `playing` since it last stopped). */
     readonly playing = signal(false);
     readonly muted = signal(false);
+    private readonly volumes = inject(PlayerVolumeService);
+    /** 0–1, the level the slider shows (the saved one until a player says). */
+    readonly volume = signal(this.volumes.stored());
+    /** Changes with every level or mute change: the OSD shows for a while. */
+    readonly volumeChange = signal(0);
     /** The stage, or the player on it, is full screen. */
     readonly fullscreen = signal(false);
     /**
@@ -93,6 +104,11 @@ export class CountryTvControls {
 
     toggleMute(): void {
         const video = this.video;
+        if (!this.muted() && this.volume() === 0) {
+            // Silent by its level, not muted: sound comes back at half.
+            this.setVolume(0.5);
+            return;
+        }
         if (this.forward('m')) {
             if (!video) {
                 this.muted.update((muted) => !muted);
@@ -100,6 +116,28 @@ export class CountryTvControls {
         } else if (video) {
             video.muted = !video.muted;
         }
+        this.volumeChange.update((count) => count + 1);
+    }
+
+    /** The slider, the wheel and +/−: a level for every engine. */
+    setVolume(value: number): void {
+        const level = clampVolume(value);
+        this.volume.set(level);
+        const video = this.video;
+        if (video) {
+            video.volume = level;
+            video.muted = level === 0;
+            this.volumes.save(level);
+        } else {
+            this.volumes.request(level);
+            this.muted.set(level === 0);
+        }
+        this.volumeChange.update((count) => count + 1);
+    }
+
+    adjustVolume(delta: number): void {
+        const from = this.muted() ? 0 : this.volume();
+        this.setVolume(from + delta);
     }
 
     toggleFullscreen(): void {
@@ -194,6 +232,7 @@ export class CountryTvControls {
         }
         this.paused.set(video.paused);
         this.muted.set(video.muted || video.volume === 0);
+        this.volume.set(clampVolume(video.volume));
     }
 
     /**

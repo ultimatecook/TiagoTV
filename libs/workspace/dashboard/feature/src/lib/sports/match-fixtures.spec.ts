@@ -108,11 +108,11 @@ describe('matches from every language', () => {
             away: 'Sevilla',
             start: new Date('2026-10-18T19:00:00Z'),
         });
+        // Not LALIGA+'s passes: that platform never aired the top flight.
         expect(madrid?.via.map((option) => option.name)).toEqual([
             'M+ LaLiga TV',
             'DAZN LaLiga',
             'LaLiga TV',
-            'LaLiga+ PPV',
         ]);
         // Its own feed plays the Spanish match; the others offer channels.
         expect(matches[1].via).toEqual([]);

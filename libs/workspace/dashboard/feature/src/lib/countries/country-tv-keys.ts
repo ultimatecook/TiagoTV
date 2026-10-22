@@ -1,6 +1,8 @@
 /**
  * "En vivo"'s keys, as a TV's remote: Space or K plays and pauses, M
- * mutes, F goes full screen, L adds the channel to Mi lista or takes it
+ * mutes, + and − turn the volume up and down (the arrows already walk the
+ * cards here, so they are not the volume as in the player), F goes full
+ * screen, L adds the channel to Mi lista or takes it
  * off, an arrow brings the overlay's cards under focus, Esc closes the
  * country menu or the overlay. A key a focused control handles itself (a
  * card's arrows and L, a field's typing) stays its; Enter still presses
@@ -8,7 +10,14 @@
  * control, Space pauses as on a TV.
  */
 export type LiveKeyAction =
-    'play' | 'mute' | 'fullscreen' | 'favorite' | 'cards' | 'collapse';
+    | 'play'
+    | 'mute'
+    | 'volumeUp'
+    | 'volumeDown'
+    | 'fullscreen'
+    | 'favorite'
+    | 'cards'
+    | 'collapse';
 
 const ACTIONS: Readonly<Record<string, LiveKeyAction>> = {
     ' ': 'play',
@@ -16,6 +25,10 @@ const ACTIONS: Readonly<Record<string, LiveKeyAction>> = {
     K: 'play',
     m: 'mute',
     M: 'mute',
+    '+': 'volumeUp',
+    '=': 'volumeUp',
+    '-': 'volumeDown',
+    _: 'volumeDown',
     f: 'fullscreen',
     F: 'fullscreen',
     l: 'favorite',

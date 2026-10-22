@@ -20,6 +20,7 @@ import type {
     TvCategoryId,
 } from '../country-tv-categories';
 import { CountryTvControls } from '../country-tv-controls';
+import { StageVolumeComponent } from './stage-volume.component';
 import { CountryTvFavorites } from '../country-tv-favorites';
 import { CountryTvListings } from '../country-tv-listings';
 import { CountryTvPlayback } from '../country-tv-playback';
@@ -35,7 +36,12 @@ import { CountryTvCardsComponent } from './country-tv-cards.component';
  */
 @Component({
     selector: 'lib-country-tv-overlay',
-    imports: [CountryTvCardsComponent, MatIcon, TranslatePipe],
+    imports: [
+        CountryTvCardsComponent,
+        MatIcon,
+        StageVolumeComponent,
+        TranslatePipe,
+    ],
     templateUrl: './country-tv-overlay.component.html',
     styleUrl: './country-tv-overlay.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

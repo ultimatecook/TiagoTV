@@ -14,6 +14,7 @@ import {
     type TmdbEnrichedCastMember,
     type TmdbGenreFacet,
     type TmdbSeriesStatus,
+    visibleSourceName,
 } from '@iptvnator/shared/interfaces';
 import { castMembersFromNames, splitPeopleNames } from './cast-crew.util';
 import type { VodMoreMenuSection } from './vod-more-menu.model';
@@ -94,7 +95,7 @@ export function createSeriesHeroState(deps: SeriesHeroStateDeps) {
     return {
         kindLabel: computed(() => {
             const kind = translate('WORKSPACE.DASHBOARD.TYPE_SERIES');
-            const source = deps.sourceLabel()?.trim();
+            const source = visibleSourceName(deps.sourceLabel());
             return source ? `${kind} · ${source}` : kind;
         }),
         title: computed(() => titleParts().title),

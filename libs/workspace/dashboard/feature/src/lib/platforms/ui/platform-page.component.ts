@@ -8,6 +8,7 @@ import {
     inject,
     input,
     linkedSignal,
+    untracked,
 } from '@angular/core';
 import {
     ActivatedRoute,
@@ -20,10 +21,12 @@ import {
     registerWorkspaceBack,
     WorkspaceBackNavigationService,
 } from '@iptvnator/portal/shared/data-access';
+import { CatalogPlatformLists } from '../../catalog/catalog-platform-lists';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
 import { buildBrandRows } from '../platform-brands';
 import { platformDesign, tileDress } from '../platform-design';
 import { pickRecommendations } from '../platform-hero';
+import { titleKey, type PlatformTitle } from '../platform-titles';
 import { buildPlatformRows } from '../platform-rows';
 import { daySeed } from '../platform-seed';
 import { PlatformThemeService } from '../platform-theme.service';
@@ -50,7 +53,9 @@ const SCROLL_RESTORE_MS = 800;
  * cards, Disney+'s carousel and brand tiles… Then what is new, its movies,
  * its series and its genres, one row each; a row's title opens all of it.
  * The hero's picks and the rows' mix are the day's (`daySeed`), taken once
- * so they hold still while the page is open.
+ * so they hold still while the page is open. Its lists come one at a time
+ * (`CatalogPlatformLists`, shared with Series and Películas): the rows
+ * fill as they arrive, and the hero keeps its titles meanwhile.
  *
  * A row shown whole is a history entry of its own (`?row=`): Back closes
  * it, a title opened from it comes back to it, and Back or Forward between
@@ -74,7 +79,8 @@ const SCROLL_RESTORE_MS = 800;
     host: { '[attr.data-look]': 'design()?.look' },
 })
 export class PlatformPageComponent {
-    readonly catalog = inject(PlatformsCatalogService);
+    private readonly lists = inject(CatalogPlatformLists);
+    private readonly catalog = inject(PlatformsCatalogService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly backNavigation = inject(WorkspaceBackNavigationService);
@@ -92,13 +98,33 @@ export class PlatformPageComponent {
     });
     readonly titles = computed(() => {
         const platform = this.platform();
-        return platform ? this.catalog.titlesOf(platform.id) : null;
+        return platform ? this.lists.platformTitles(platform.id) : null;
+    });
+    /** Nothing to show: the platform's every list (or its categories) failed. */
+    readonly failed = computed(() => {
+        const platform = this.platform();
+        if (!platform) {
+            return false;
+        }
+        const progress = this.lists.platformProgress(platform.id);
+        return progress.total > 0
+            ? !progress.loading && progress.failed === progress.total
+            : this.catalog.failed();
     });
     private readonly seed = daySeed();
-    /** The titles the hero recommends, which the rows beside it leave out. */
-    readonly hero = computed(() =>
-        pickRecommendations(this.titles() ?? [], HERO_COUNT, this.seed)
-    );
+    /**
+     * The titles the hero recommends, which the rows beside it leave out.
+     * They stay while more lists arrive, once the hero is full.
+     */
+    readonly hero = linkedSignal<
+        readonly PlatformTitle[],
+        readonly PlatformTitle[]
+    >({
+        source: () => this.titles() ?? [],
+        computation: (titles, previous) =>
+            keptHero(titles, previous?.value) ??
+            pickRecommendations(titles, HERO_COUNT, this.seed),
+    });
     readonly rows = computed(() => {
         const titles = this.titles();
         const platform = this.platform();
@@ -151,7 +177,7 @@ export class PlatformPageComponent {
         effect(() => {
             const platform = this.platform();
             if (platform) {
-                void this.catalog.loadTitles(platform.id);
+                untracked(() => void this.lists.loadPlatform(platform.id));
             }
         });
         // The glass takes the platform's colour while its page is open;
@@ -216,6 +242,19 @@ export class PlatformPageComponent {
             cancelRestore?.();
         });
     }
+}
+
+/** The hero shown so far, in the titles now, once it was full; else null. */
+function keptHero(
+    titles: readonly PlatformTitle[],
+    shown: readonly PlatformTitle[] | undefined
+): PlatformTitle[] | null {
+    if (!shown || shown.length < HERO_COUNT) {
+        return null;
+    }
+    const byKey = new Map(titles.map((title) => [titleKey(title), title]));
+    const kept = shown.map((title) => byKey.get(titleKey(title)));
+    return kept.every((title) => !!title) ? (kept as PlatformTitle[]) : null;
 }
 
 /** Scrolls back to `top` once the view is tall enough; the user's wheel wins. */

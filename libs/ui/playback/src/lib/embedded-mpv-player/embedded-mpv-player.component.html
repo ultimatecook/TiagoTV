@@ -498,6 +498,28 @@
                         </button>
                     }
 
+                    <!-- The native view paints a platform layer no page
+                         element can copy: no PiP here (frame-copy has it).
+                         aria-disabled, not disabled, keeps the tooltip. -->
+                    <button
+                        mat-icon-button
+                        type="button"
+                        class="embedded-mpv-player__control-button embedded-mpv-player__control-button--unavailable"
+                        data-test-id="embedded-mpv-pip-unavailable"
+                        aria-disabled="true"
+                        [attr.aria-label]="
+                            'EMBEDDED_MPV.PLAYER.PICTURE_IN_PICTURE_UNAVAILABLE'
+                                | translate
+                        "
+                        [matTooltip]="
+                            'EMBEDDED_MPV.PLAYER.PICTURE_IN_PICTURE_UNAVAILABLE'
+                                | translate
+                        "
+                        matTooltipPosition="above"
+                    >
+                        <mat-icon>picture_in_picture_alt</mat-icon>
+                    </button>
+
                     <button
                         mat-icon-button
                         type="button"
