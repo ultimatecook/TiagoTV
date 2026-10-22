@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import type {
@@ -36,7 +35,6 @@ const UI_STAMP = 'tiagotv-ui.json';
     imports: [
         DatePipe,
         MatButtonModule,
-        MatIconModule,
         MatProgressSpinnerModule,
         TranslateModule,
     ],

@@ -324,7 +324,6 @@
             "BUILD": "App e interfaz",
             "BUILD_DESCRIPTION": "La versión de la app instalada y la compilación de la interfaz que usa (la interfaz se actualiza sola).",
             "UI_BUILD": "Interfaz {{build}}",
-            "UI_PACKAGED": "Interfaz del instalador",
             "RELOAD": "Recargar catálogo",
             "RELOAD_DESCRIPTION": "Olvida las listas guardadas de las plataformas y se las vuelve a pedir al proveedor, de a una.",
             "RELOADING": "Recargando…",

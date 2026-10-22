@@ -750,7 +750,9 @@ switches to it.
    while the menu is open. A click on the picture sends them away or brings
    them back; Esc closes the menu, else leaves full screen (where the window
    lets the page see Esc there), else sends them away (focus moves to the
-   page). Space or K plays and pauses, M mutes, F goes full screen and back,
+   page). Space or K plays and pauses, M mutes, + and − (also = and _)
+   turn the volume up and down 5 % (not the arrows: they walk the cards
+   here), F goes full screen and back,
    L puts the channel on Mi lista or takes it off (on a focused card, that
    card's), an arrow brings focus to the playing card (`country-tv-keys.ts`);
    keys a focused control handles stay its own (the cards' arrows, Enter on a
@@ -781,7 +783,16 @@ switches to it.
    the page's keys drive it. Play/pause and mute go to the player's
    controller as its own K and M (the suspension lifted for that one key),
    else straight to its `<video>`, whose events give the overlay its state;
-   Embedded MPV has no `<video>` and counts as playing once mounted. Full
+   Embedded MPV has no `<video>` and counts as playing once mounted. The
+   volume (`StageVolumeComponent`, `countries/ui/`, shared with the league
+   stage) is the speaker (mute, in step with M) and, while the pointer or
+   the keyboard is on it, a glass slider beside it: click or drag sets the
+   level, the wheel and the slider's own arrows step it, and every change
+   shows "Volume 60 %" at the top of the picture for a moment. The level is
+   the app's one (`CountryTvControls.setVolume`): set on the `<video>`, or
+   asked of Embedded MPV through `PlayerVolumeService` (its existing volume
+   bridge), and saved under the players' `volume` key. Unmuting a level of
+   0 brings the sound back at half. Full
    screen takes the whole page, overlay included. The player's diagnostic
    (what failed, Retry, Copy URL, Details, the external players) sits
    between the country button and the overlay's controls: it is bounded by

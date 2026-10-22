@@ -10,13 +10,14 @@ import {
     PlaybackRecommendationReason,
     type PlaybackDiagnostic,
     type PlaybackRecommendation,
-    type PlaybackRecommendationTarget,
 } from '@iptvnator/playback/util';
 import type {
     ResolvedPortalPlayback,
     VodSourceDescriptor,
 } from '@iptvnator/shared/interfaces';
+import { signal } from '@angular/core';
 import { PlaybackDiagnosticPanelComponent } from './playback-diagnostic-panel.component';
+import { PlayerChoiceService } from './player-choice.service';
 import type { ExternalRecoveryStates } from '../web-player-view/external-playback-recovery';
 
 const DIAGNOSTIC: PlaybackDiagnostic = {
@@ -121,13 +122,22 @@ function externalStates(
 describe('PlaybackDiagnosticPanelComponent', () => {
     let fixture: ComponentFixture<PlaybackDiagnosticPanelComponent>;
     let component: PlaybackDiagnosticPanelComponent;
+    let choice: {
+        embeddedMpvAvailable: ReturnType<typeof signal<boolean>>;
+        remember: jest.Mock;
+    };
 
     beforeEach(async () => {
+        choice = {
+            embeddedMpvAvailable: signal(false),
+            remember: jest.fn(async () => undefined),
+        };
         await TestBed.configureTestingModule({
             imports: [
                 PlaybackDiagnosticPanelComponent,
                 TranslateModule.forRoot(),
             ],
+            providers: [{ provide: PlayerChoiceService, useValue: choice }],
         })
             .overrideComponent(PlaybackDiagnosticPanelComponent, {
                 add: { styles: [PANEL_STYLE_SOURCE] },
@@ -170,7 +180,7 @@ describe('PlaybackDiagnosticPanelComponent', () => {
     });
 
     it('keeps the focused external button mounted through launch and started states', () => {
-        const players: PlaybackRecommendationTarget[] = [];
+        const players: string[] = [];
         component.playerRequested.subscribe((target) => players.push(target));
         fixture.componentRef.setInput('recommendations', [
             recommendation('player', {
@@ -454,7 +464,7 @@ describe('PlaybackDiagnosticPanelComponent', () => {
 
     it('emits exact retry, player, source play, and source check requests', () => {
         const retries: void[] = [];
-        const players: PlaybackRecommendationTarget[] = [];
+        const players: string[] = [];
         const playedSources: string[] = [];
         const checkedSources: string[] = [];
         component.retryRequested.subscribe(() => retries.push(undefined));
@@ -656,36 +666,90 @@ describe('PlaybackDiagnosticPanelComponent', () => {
         );
     });
 
-    it('shows the temporary hint only for built-in player targets', () => {
+    it('saves the chosen player as the default, unless only this time', () => {
+        const players: string[] = [];
+        component.playerRequested.subscribe((target) => players.push(target));
         fixture.componentRef.setInput('recommendations', [
             recommendation('player', {
                 target: 'videojs',
                 priority: 'primary',
             }),
             recommendation('player', { target: 'mpv' }),
-            recommendation('player', { target: 'vlc' }),
+            recommendation('retry'),
         ]);
         fixture.detectChanges();
+        const button = (id: string) =>
+            fixture.nativeElement.querySelector(
+                `[data-test-id="${id}"]`
+            ) as HTMLButtonElement;
 
-        const builtIn = fixture.nativeElement.querySelector(
-            '[data-test-id="playback-recommendation-videojs"]'
-        ) as HTMLButtonElement;
-        const mpv = fixture.nativeElement.querySelector(
-            '[data-test-id="playback-fallback-mpv"]'
-        ) as HTMLButtonElement;
-        const vlc = fixture.nativeElement.querySelector(
-            '[data-test-id="playback-fallback-vlc"]'
-        ) as HTMLButtonElement;
+        button('playback-recommendation-videojs').click();
+        expect(choice.remember).toHaveBeenCalledWith('videojs');
+        expect(players).toEqual(['videojs']);
 
-        expect(builtIn.textContent).toContain(
+        button('playback-once-mpv').click();
+        expect(choice.remember).toHaveBeenCalledTimes(1);
+        expect(players).toEqual(['videojs', 'mpv']);
+
+        // "Only this time" belongs to players; Retry keeps the player.
+        expect(button('playback-once-videojs')).not.toBeNull();
+        expect(
+            fixture.nativeElement.querySelectorAll(
+                '.web-player-diagnostic__once'
+            )
+        ).toHaveLength(2);
+        expect(fixture.nativeElement.textContent).not.toContain(
             'leaves your saved preference unchanged'
         );
-        expect(mpv.textContent).not.toContain(
-            'leaves your saved preference unchanged'
+    });
+
+    it('offers Embedded MPV first where this machine has it', () => {
+        const players: string[] = [];
+        component.playerRequested.subscribe((target) => players.push(target));
+        fixture.componentRef.setInput('recommendations', [
+            recommendation('retry', { priority: 'primary' }),
+        ]);
+        fixture.detectChanges();
+        const embedded = () =>
+            fixture.nativeElement.querySelector(
+                '[data-test-id="playback-recommendation-embedded-mpv"]'
+            ) as HTMLButtonElement | null;
+        expect(embedded()).toBeNull();
+
+        choice.embeddedMpvAvailable.set(true);
+        fixture.detectChanges();
+        const cards = Array.from(
+            fixture.nativeElement.querySelectorAll(
+                '.web-player-diagnostic__player-card'
+            ) as NodeListOf<HTMLElement>
         );
-        expect(vlc.textContent).not.toContain(
-            'leaves your saved preference unchanged'
+        expect(cards[0]).toBe(embedded());
+        expect(embedded()?.textContent).toContain(
+            'PLAYBACK_DIAGNOSTICS.ACTION_TRY_EMBEDDED_MPV'
         );
+
+        embedded()?.click();
+        expect(choice.remember).toHaveBeenCalledWith('embedded-mpv');
+        (
+            fixture.nativeElement.querySelector(
+                '[data-test-id="playback-once-embedded-mpv"]'
+            ) as HTMLButtonElement
+        ).click();
+        expect(choice.remember).toHaveBeenCalledTimes(1);
+        expect(players).toEqual(['embedded-mpv', 'embedded-mpv']);
+    });
+
+    it('chooses nothing while a switch is pending', () => {
+        choice.embeddedMpvAvailable.set(true);
+        fixture.componentRef.setInput('pending', true);
+        fixture.detectChanges();
+        const players: string[] = [];
+        component.playerRequested.subscribe((target) => players.push(target));
+
+        component.choose('embedded-mpv', true);
+
+        expect(players).toEqual([]);
+        expect(choice.remember).not.toHaveBeenCalled();
     });
 
     it('wraps long translated action labels instead of ellipsizing them', () => {
@@ -711,7 +775,7 @@ describe('PlaybackDiagnosticPanelComponent', () => {
         }
     });
 
-    it('wraps long translated reasons and temporary hints without clipping', () => {
+    it('wraps long translated reasons without clipping', () => {
         fixture.componentRef.setInput('recommendations', [
             recommendation('player', {
                 target: 'videojs',
@@ -726,12 +790,9 @@ describe('PlaybackDiagnosticPanelComponent', () => {
             ) as NodeListOf<HTMLElement>
         );
 
-        expect(hints).toHaveLength(2);
+        expect(hints).toHaveLength(1);
         expect(hints[0].textContent).toContain(
             'different playback engine that may support the stream format'
-        );
-        expect(hints[1].textContent).toContain(
-            'leaves your saved preference unchanged'
         );
         for (const hint of hints) {
             const styles = getComputedStyle(hint);
@@ -773,7 +834,7 @@ describe('PlaybackDiagnosticPanelComponent', () => {
             '@container playback-diagnostic (max-height: 560px)'
         );
         expect(styles).toMatch(
-            /web-player-diagnostic__recommendations[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\)/
+            /web-player-diagnostic__recommendations \{\s*flex-direction: column;/
         );
         expect(styles).toContain('flex-wrap: wrap');
         expect(styles).toContain('min-width: 0');

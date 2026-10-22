@@ -104,8 +104,8 @@ export class CountryTvControls {
 
     toggleMute(): void {
         const video = this.video;
-        if (!this.muted() && this.volume() === 0) {
-            // Silent by its level, not muted: sound comes back at half.
+        if (this.volume() === 0) {
+            // Silent by its level: sound comes back at half.
             this.setVolume(0.5);
             return;
         }

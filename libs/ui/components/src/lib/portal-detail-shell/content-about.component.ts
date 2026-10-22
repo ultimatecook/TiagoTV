@@ -8,6 +8,7 @@ import {
     ChangeDetectionStrategy,
 } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
+import { displayTitle } from '@iptvnator/shared/interfaces';
 
 /**
  * Watch-state metadata block ("About the show / movie"). Rendered by
@@ -36,8 +37,8 @@ import { TranslateModule } from '@ngx-translate/core';
                     />
                 }
                 <div class="about__info">
-                    @if (title()) {
-                        <h4 class="about__title">{{ title() }}</h4>
+                    @if (shownTitle()) {
+                        <h4 class="about__title">{{ shownTitle() }}</h4>
                     }
                     @if (tagsTemplate(); as tags) {
                         <div class="about__tags details__tags">
@@ -65,6 +66,11 @@ export class ContentAboutComponent {
     readonly description = input<string>();
     readonly tagsTemplate = input<TemplateRef<unknown> | null>(null);
     readonly metaTemplate = input<TemplateRef<unknown> | null>(null);
+    /** As the hero names it: no catalog year or language tag. */
+    protected readonly shownTitle = computed(() => {
+        const title = this.title()?.trim();
+        return title ? displayTitle(title) : '';
+    });
 
     // Keyed by URL so a different poster gets its own load attempt.
     protected readonly failedPosterUrl = signal<string | undefined>(undefined);

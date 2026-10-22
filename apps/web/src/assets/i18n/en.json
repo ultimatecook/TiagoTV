@@ -324,7 +324,6 @@
             "BUILD": "App and interface",
             "BUILD_DESCRIPTION": "The installed app's version and the interface build it runs (the interface updates over the air).",
             "UI_BUILD": "Interface {{build}}",
-            "UI_PACKAGED": "Interface from the installer",
             "RELOAD": "Reload catalog",
             "RELOAD_DESCRIPTION": "Forgets the platforms' saved lists and asks the provider for them again, one at a time.",
             "RELOADING": "Reloading…",

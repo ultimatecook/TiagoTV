@@ -1,3 +1,4 @@
+import { DIAGNOSTICS_SETTINGS_SEARCH_ENTRIES } from './settings-search-entries-diagnostics';
 import { PLAYBACK_SETTINGS_SEARCH_ENTRIES } from './settings-search-entries-playback';
 import { SettingsSearchEntry } from './settings-search.types';
 
@@ -335,42 +336,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
         descriptionKey: 'SETTINGS.REMOVE_ALL_DESCRIPTION',
         keywords: ['reset', 'delete', 'remove', 'wipe', 'playlists'],
     },
-    {
-        id: 'diagnostics-build',
-        section: 'diagnostics',
-        labelKey: 'SETTINGS.DIAGNOSTICS.BUILD',
-        descriptionKey: 'SETTINGS.DIAGNOSTICS.BUILD_DESCRIPTION',
-        keywords: ['diagnostics', 'version', 'build', 'interface', 'update'],
-    },
-    {
-        id: 'diagnostics-reload',
-        section: 'diagnostics',
-        labelKey: 'SETTINGS.DIAGNOSTICS.RELOAD',
-        descriptionKey: 'SETTINGS.DIAGNOSTICS.RELOAD_DESCRIPTION',
-        keywords: ['diagnostics', 'reload', 'refresh', 'catalog', 'cache'],
-    },
-    {
-        id: 'diagnostics-catalog',
-        section: 'diagnostics',
-        labelKey: 'SETTINGS.DIAGNOSTICS.CATALOG',
-        descriptionKey: 'SETTINGS.DIAGNOSTICS.CATALOG_DESCRIPTION',
-        keywords: [
-            'diagnostics',
-            'catalog',
-            'series',
-            'movies',
-            'platforms',
-            'netflix',
-            'import',
-        ],
-    },
-    {
-        id: 'diagnostics-requests',
-        section: 'diagnostics',
-        labelKey: 'SETTINGS.DIAGNOSTICS.REQUESTS',
-        descriptionKey: 'SETTINGS.DIAGNOSTICS.REQUESTS_DESCRIPTION',
-        keywords: ['diagnostics', 'requests', 'provider', 'errors', 'debug'],
-    },
+    ...DIAGNOSTICS_SETTINGS_SEARCH_ENTRIES,
     {
         id: 'version',
         section: 'about',

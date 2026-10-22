@@ -63,7 +63,9 @@ interface RowRules {
  * shows in two places at most (the hero counts as one), and each row puts
  * the titles the page has not shown yet first. Only "new" goes by date:
  * the others by rating, each row mixed by its own draw of the day, and
- * need six titles of their own. A genre row holds only its genre's.
+ * need six titles of their own. A genre row holds only its genre's. A
+ * platform of one kind (Hulu, Apple TV: series only) lists its genres
+ * before its one kind's row, so a mid-size catalog shows them too.
  */
 export function buildPlatformRows(
     titles: readonly PlatformTitle[],
@@ -127,16 +129,27 @@ export function buildPlatformRows(
         ['movies', 'WORKSPACE.PLATFORMS.MOVIES', 'movie'],
         ['series', 'WORKSPACE.PLATFORMS.SERIES', 'series'],
     ] as const;
-    for (const [id, labelKey, kind] of kinds) {
-        add(
-            { id, labelKey },
-            byDailyRating(
-                titles.filter((title) => title.kind === kind),
-                seed,
-                id
-            ),
-            { fresh: MIN_FRESH }
-        );
+    const kindRows = kinds.filter(([, , kind]) =>
+        titles.some((title) => title.kind === kind)
+    );
+    const addKindRows = () => {
+        for (const [id, labelKey, kind] of kindRows) {
+            add(
+                { id, labelKey },
+                byDailyRating(
+                    titles.filter((title) => title.kind === kind),
+                    seed,
+                    id
+                ),
+                { fresh: MIN_FRESH }
+            );
+        }
+    };
+    // A platform of one kind (series only): its genres first, which a row
+    // of everything it carries would leave without titles of their own.
+    const genresFirst = kindRows.length === 1;
+    if (!genresFirst) {
+        addKindRows();
     }
 
     const byGenre = new Map<PlatformGenre, PlatformTitle[]>();
@@ -160,6 +173,9 @@ export function buildPlatformRows(
                 );
             }
         });
+    if (genresFirst) {
+        addKindRows();
+    }
     return rows;
 }
 

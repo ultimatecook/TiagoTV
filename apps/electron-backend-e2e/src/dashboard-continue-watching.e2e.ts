@@ -298,7 +298,7 @@ test.describe('Dashboard Continue Watching', () => {
                 .click();
             await expect(
                 page.locator('.player-shell__episode-meta')
-            ).toContainText('S01E02', { timeout: 30_000 });
+            ).toContainText('S1:E2', { timeout: 30_000 });
 
             // Skipping ahead: episode 3 is finished after episode 2 was
             // left. The series goes on after the episode watched last, not
@@ -342,7 +342,7 @@ test.describe('Dashboard Continue Watching', () => {
                 .click();
             await expect(
                 page.locator('.player-shell__episode-meta')
-            ).toContainText('S01E04', { timeout: 30_000 });
+            ).toContainText('S1:E4', { timeout: 30_000 });
         } finally {
             await closeElectronApp(app);
         }

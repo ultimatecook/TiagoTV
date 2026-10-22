@@ -104,6 +104,21 @@ describe('platform rows', () => {
         ]);
     });
 
+    it('shows a mid-size series-only platform by genre, not in two rows', () => {
+        // Hulu or Apple TV: 74 series, no movies.
+        const titles = catalog(222).filter((item) => item.kind === 'series');
+        expect(titles).toHaveLength(74);
+        const hero = titles.slice(0, 6);
+
+        const rows = buildPlatformRows(titles, { hero, seed: 20380 });
+
+        expect(rows[0].id).toBe('newest');
+        expect(
+            rows.filter((row) => row.id.startsWith('genre-')).length
+        ).toBeGreaterThanOrEqual(2);
+        expect(Math.max(...places(rows, hero).values())).toBeLessThanOrEqual(2);
+    });
+
     it('keeps the hero out of the rows beside it, a title in two places', () => {
         const titles = catalog();
         const hero = [titles[0], titles[1], titles[5]];

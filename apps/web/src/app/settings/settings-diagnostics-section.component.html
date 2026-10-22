@@ -19,16 +19,12 @@
                     <code data-test-id="diagnostics-version">{{
                         version() || '—'
                     }}</code>
-                    <span class="settings-chip">
-                        @if (uiBuild(); as build) {
-                            {{
-                                'SETTINGS.DIAGNOSTICS.UI_BUILD'
-                                    | translate: { build: build }
-                            }}
-                        } @else {
-                            {{ 'SETTINGS.DIAGNOSTICS.UI_PACKAGED' | translate }}
-                        }
-                    </span>
+                    @if (uiBuild(); as build) {
+                        <span class="settings-chip">{{
+                            'SETTINGS.DIAGNOSTICS.UI_BUILD'
+                                | translate: { build: build }
+                        }}</span>
+                    }
                     @if (bundle) {
                         <code class="diagnostics-build__hash">{{
                             bundle
@@ -67,7 +63,6 @@
                             />
                             {{ 'SETTINGS.DIAGNOSTICS.RELOADING' | translate }}
                         } @else {
-                            <mat-icon>refresh</mat-icon>
                             {{ 'SETTINGS.DIAGNOSTICS.RELOAD' | translate }}
                         }
                     </button>

@@ -1,5 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { CountryTvControls, SHORTCUTS_SUSPENDED } from './country-tv-controls';
+import { PlayerVolumeService } from '@iptvnator/ui/playback';
+import {
+    CountryTvControls,
+    SHORTCUTS_SUSPENDED,
+    VOLUME_STEP,
+} from './country-tv-controls';
 
 /** Lets the MutationObserver callbacks run. */
 const settle = () => new Promise((resolve) => setTimeout(resolve));
@@ -175,6 +180,60 @@ describe('CountryTvControls', () => {
             controls.toggleFullscreen();
             expect(stage.requestFullscreen).toHaveBeenCalled();
             expect(view.requestFullscreen).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('volume', () => {
+        beforeEach(() => localStorage.removeItem('volume'));
+
+        it('sets the level on the player’s video and saves it for every player', async () => {
+            const video = videoIn(stage);
+            await settle();
+            const change = controls.volumeChange();
+
+            controls.setVolume(0.42);
+
+            expect(video.volume).toBe(0.42);
+            expect(video.muted).toBe(false);
+            expect(controls.volume()).toBe(0.42);
+            expect(localStorage.getItem('volume')).toBe('0.42');
+            expect(controls.volumeChange()).toBe(change + 1);
+
+            controls.adjustVolume(VOLUME_STEP);
+            expect(video.volume).toBe(0.47);
+            controls.setVolume(0);
+            expect(video.muted).toBe(true);
+            controls.adjustVolume(-VOLUME_STEP);
+            expect(video.volume).toBe(0);
+        });
+
+        it('asks Embedded MPV, which has no video, for the level', async () => {
+            const view = document.createElement('app-web-player-view');
+            view.appendChild(document.createElement('app-embedded-mpv-player'));
+            stage.appendChild(view);
+            await settle();
+            const volumes = TestBed.inject(PlayerVolumeService);
+
+            controls.setVolume(0.3);
+
+            expect(volumes.latest()?.volume).toBe(0.3);
+            expect(volumes.stored()).toBe(0.3);
+            expect(controls.muted()).toBe(false);
+            controls.setVolume(0);
+            expect(controls.muted()).toBe(true);
+        });
+
+        it('brings back sound at half when unmuting a silent level', async () => {
+            const video = videoIn(stage);
+            await settle();
+            controls.setVolume(0);
+            video.muted = false;
+            video.dispatchEvent(new Event('volumechange'));
+            expect(controls.muted()).toBe(true);
+
+            controls.toggleMute();
+            expect(video.volume).toBe(0.5);
+            expect(video.muted).toBe(false);
         });
     });
 

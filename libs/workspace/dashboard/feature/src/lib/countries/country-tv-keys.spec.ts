@@ -28,6 +28,15 @@ describe('liveKeyAction', () => {
         expect(liveKeyAction(press('a'))).toBeNull();
     });
 
+    it('turns the volume with + and − (the arrows walk the cards here)', () => {
+        expect(liveKeyAction(press('+'))).toBe('volumeUp');
+        expect(liveKeyAction(press('='))).toBe('volumeUp');
+        expect(liveKeyAction(press('-'))).toBe('volumeDown');
+        expect(liveKeyAction(press('_'))).toBe('volumeDown');
+        expect(liveKeyAction(press('+', document.body, { metaKey: true }))).toBeNull();
+        expect(liveKeyAction(press('-', document.createElement('input')))).toBeNull();
+    });
+
     it('leaves a focused control its own keys, but not Esc', () => {
         const button = document.createElement('button');
         expect(liveKeyAction(press('ArrowLeft', button))).toBeNull();
