@@ -24,7 +24,7 @@ const movie = (itemId: number): TitlePlatformRef => ({
 
 const pageRef: WritableSignal<TitlePlatformRef | null> = signal(null);
 
-@Component({ selector: 'app-test-title-page', template: '' })
+@Component({ selector: 'lib-test-title-page', template: '' })
 class TitlePageComponent {
     constructor() {
         publishTitlePlatform(pageRef);

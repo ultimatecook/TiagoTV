@@ -1,4 +1,5 @@
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
+import { MatTooltip } from '@angular/material/tooltip';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -567,7 +568,7 @@ describe('PlaybackDiagnosticPanelComponent', () => {
         );
     });
 
-    it('copies the full Xtream stream URL but keeps its account off the tooltip', () => {
+    it('copies the full Xtream stream URL but never shows the provider’s address', () => {
         const streamUrl =
             'http://portal.example/movie/fake-user/fake-pass/42.mkv';
         fixture.componentRef.setInput('playback', { ...PLAYBACK, streamUrl });
@@ -577,9 +578,11 @@ describe('PlaybackDiagnosticPanelComponent', () => {
             By.css('[data-test-id="playback-copy-url"]')
         );
         expect(button.injector.get(CdkCopyToClipboard).text).toBe(streamUrl);
-        expect(component.streamUrlTitle()).toContain('portal.example');
-        expect(component.streamUrlTitle()).not.toContain('fake-user');
-        expect(component.streamUrlTitle()).not.toContain('fake-pass');
+        const tooltip = button.injector.get(MatTooltip).message;
+        expect(tooltip).toBe('PLAYBACK_DIAGNOSTICS.COPY_URL_HINT');
+        expect(fixture.nativeElement.textContent).not.toContain(
+            'portal.example'
+        );
     });
 
     it('uses runtime capability for browser-access guidance without implying an external action', () => {

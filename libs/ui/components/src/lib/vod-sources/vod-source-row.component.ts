@@ -15,7 +15,7 @@ import {
     sourceNeedsCheck,
 } from './vod-source-tags';
 import { VodSourceTagListComponent } from './vod-source-tag-list.component';
-import { playlistDisplayLabel } from '@iptvnator/shared/interfaces';
+import { sourceDisplayLabel } from '@iptvnator/shared/interfaces';
 
 /**
  * One alternative source for the movie being viewed.
@@ -49,13 +49,11 @@ export class VodSourceRowComponent {
 
     /**
      * Short, credential-safe label. Playlist names are routinely the pasted
-     * URL, which carries `username=`/`password=` — never render that raw.
+     * URL, which carries `username=`/`password=`, or the provider's address:
+     * never render either; such a source reads as its kind ("Xtream").
      */
     readonly displayLabel = computed(() =>
-        playlistDisplayLabel(
-            this.source().playlistName,
-            this.source().playlistId
-        )
+        sourceDisplayLabel(this.source().playlistName, this.source().portalType)
     );
 
     // From the display label, not the raw name: every URL-named playlist would

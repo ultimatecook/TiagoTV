@@ -997,7 +997,8 @@
         "REASON_EMBEDDED_MPV": "Plays the containers and audio codecs the browser cannot",
         "ONLY_THIS_TIME": "Only this time",
         "PLAYER_SAVED": "{{player}} is now your player",
-        "EMBEDDED_MPV_NAME": "Embedded MPV"
+        "EMBEDDED_MPV_NAME": "Embedded MPV",
+        "COPY_URL_HINT": "Copies the stream’s address, to open it in another player"
     },
     "LAYOUT": {
         "HIDE_CHANNELS_LIST": "Hide channels list",

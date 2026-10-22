@@ -1,4 +1,8 @@
-import { isHostLikeName, visibleSourceName } from './source-name';
+import {
+    isHostLikeName,
+    sourceDisplayLabel,
+    visibleSourceName,
+} from './source-name';
 
 describe('source names on the title pages', () => {
     it.each([
@@ -40,5 +44,15 @@ describe('source names on the title pages', () => {
         expect(visibleSourceName(null)).toBeNull();
         expect(visibleSourceName('   ')).toBeNull();
         expect(isHostLikeName(undefined)).toBe(false);
+    });
+
+    it('labels a source by its kind where its name is an address', () => {
+        expect(sourceDisplayLabel('line.example.online', 'xtream')).toBe(
+            'Xtream'
+        );
+        expect(
+            sourceDisplayLabel('http://portal.test:8080/c/', 'stalker')
+        ).toBe('Stalker');
+        expect(sourceDisplayLabel('Casa', 'xtream')).toBe('Casa');
     });
 });

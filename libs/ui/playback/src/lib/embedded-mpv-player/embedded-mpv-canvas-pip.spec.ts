@@ -38,10 +38,13 @@ describe('EmbeddedMpvCanvasPictureInPicture', () => {
                 }) as unknown as MediaStream
         );
         HTMLMediaElement.prototype.play = jest.fn(() => Promise.resolve());
-        request = jest.fn(async function (this: HTMLVideoElement) {
-            pipElement = this;
-            this.dispatchEvent(new Event('enterpictureinpicture'));
+        const enter = (video: HTMLVideoElement) => {
+            pipElement = video;
+            video.dispatchEvent(new Event('enterpictureinpicture'));
             return {} as PictureInPictureWindow;
+        };
+        request = jest.fn(async function (this: HTMLVideoElement) {
+            return enter(this);
         });
         Object.defineProperty(
             HTMLVideoElement.prototype,

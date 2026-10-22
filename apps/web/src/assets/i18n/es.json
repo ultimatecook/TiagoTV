@@ -997,7 +997,8 @@
         "REASON_EMBEDDED_MPV": "Reproduce los contenedores y códecs de audio que el navegador no puede",
         "ONLY_THIS_TIME": "Solo esta vez",
         "PLAYER_SAVED": "{{player}} será tu reproductor",
-        "EMBEDDED_MPV_NAME": "MPV integrado"
+        "EMBEDDED_MPV_NAME": "MPV integrado",
+        "COPY_URL_HINT": "Copia la dirección del stream, para abrirla en otro reproductor"
     },
     "LAYOUT": {
         "HIDE_CHANNELS_LIST": "Ocultar lista de canales",

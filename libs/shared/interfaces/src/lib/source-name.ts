@@ -41,3 +41,20 @@ export function visibleSourceName(
     const label = playlistDisplayLabel(raw);
     return isHostLikeName(label) ? null : label;
 }
+
+const PORTAL_NAMES: Readonly<Record<string, string>> = {
+    xtream: 'Xtream',
+    stalker: 'Stalker',
+    m3u: 'M3U',
+};
+
+/**
+ * A source's label where one must be shown (the sources list of a title):
+ * its own name, else the kind of source rather than its address.
+ */
+export function sourceDisplayLabel(
+    name: string | null | undefined,
+    portalType: string
+): string {
+    return visibleSourceName(name) ?? PORTAL_NAMES[portalType] ?? portalType;
+}
