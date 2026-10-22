@@ -353,6 +353,11 @@
     }
 }
 
+// On Mi lista: the heart filled, in the live red.
+.stage__control--saved mat-icon {
+    color: var(--tv-live-red);
+}
+
 .stage__control--main {
     background: #fff;
     color: #0b0b09;

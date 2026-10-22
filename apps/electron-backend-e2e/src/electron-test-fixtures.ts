@@ -1276,6 +1276,20 @@ export async function switchUnifiedCollectionContent(
     page: Page,
     contentLabel: 'Live TV' | 'Movies' | 'Series'
 ): Promise<void> {
+    // TiagoTV's Mi lista: its channels are a row of cards always on screen
+    // (no Live TV tab), the movies and series under their own head, which
+    // names the one type there is instead of offering chips.
+    if (/\/workspace\/global-favorites/.test(new URL(page.url()).pathname)) {
+        if (contentLabel === 'Live TV') {
+            return;
+        }
+        const head = page.locator('.collection-section-head');
+        await expect(head).toBeVisible();
+        if ((await head.locator('.content-toggle').count()) === 0) {
+            await expect(head).toContainText(flexibleTextPattern(contentLabel));
+            return;
+        }
+    }
     const toggleGroup = page.locator('.content-toggle');
 
     await expect(toggleGroup).toBeVisible();
@@ -1318,11 +1332,21 @@ async function clickButtonToggleOption(
 }
 
 export function channelItemByTitle(page: Page, title: string): Locator {
-    return page.getByTestId('channel-item').filter({
-        has: page.locator('.channel-name', {
-            hasText: flexibleTextPattern(title),
-        }),
-    });
+    return page
+        .getByTestId('channel-item')
+        .filter({
+            has: page.locator('.channel-name', {
+                hasText: flexibleTextPattern(title),
+            }),
+        })
+        .or(
+            // Mi lista's channel cards (TiagoTV).
+            page.getByTestId('my-list-channel').filter({
+                has: page.locator('.channel__name', {
+                    hasText: flexibleTextPattern(title),
+                }),
+            })
+        );
 }
 
 export function contentCardByTitle(page: Page, title: string): Locator {

@@ -94,6 +94,24 @@
                 <button
                     type="button"
                     class="control"
+                    data-test-id="countries-my-list"
+                    [class.control--saved]="saved()"
+                    [attr.aria-label]="
+                        (saved()
+                            ? 'WORKSPACE.MY_LIST.REMOVE'
+                            : 'WORKSPACE.MY_LIST.ADD'
+                        ) | translate
+                    "
+                    [attr.aria-pressed]="saved()"
+                    (click)="toggleFavorite()"
+                >
+                    <mat-icon aria-hidden="true">{{
+                        saved() ? 'favorite' : 'favorite_border'
+                    }}</mat-icon>
+                </button>
+                <button
+                    type="button"
+                    class="control"
                     data-test-id="countries-open-live"
                     [attr.aria-label]="
                         'WORKSPACE.COUNTRIES.OPEN_LIVE' | translate
@@ -157,5 +175,6 @@
                 | translate: { name: countryName() }
         "
         (picked)="picked.emit($event)"
+        (favoriteToggled)="toggleCardFavorite($event)"
     />
 </div>

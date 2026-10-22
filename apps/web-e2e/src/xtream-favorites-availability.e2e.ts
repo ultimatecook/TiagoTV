@@ -466,7 +466,9 @@ test('@xtream @collections cold shared live playback records the selected favori
             return route.abort();
         await route.fallback();
     });
-    await page.reload();
+    // The source's own favourites: Mi lista's channels are cards that play
+    // on "En vivo", this list plays them in place.
+    await page.goto(`/workspace/xtreams/${encodeURIComponent(id)}/favorites`);
     const row = page
         .locator('app-channel-list-item')
         .filter({ hasText: 'Played favorite B' });

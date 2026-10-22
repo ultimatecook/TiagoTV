@@ -1,9 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { MatIcon } from '@angular/material/icon';
+import { Router } from '@angular/router';
 import { TranslateModule, TranslatePipe } from '@ngx-translate/core';
 import { UnifiedRecentDataService } from '@iptvnator/portal/shared/data-access';
-import { PORTAL_PLAYER } from '@iptvnator/portal/shared/util';
+import {
+    LIVE_CHANNEL_PLAY_STATE_KEY,
+    PORTAL_PLAYER,
+} from '@iptvnator/portal/shared/util';
 import {
     XtreamStore,
     XtreamUrlService,
@@ -15,6 +19,7 @@ import {
     EmbeddedMpvOverlayVisibilityService,
     NowPlayingDockService,
 } from '@iptvnator/ui/playback';
+import { ChannelFavoritesService } from '../../my-list/channel-favorites.service';
 import { SportsCatalogService } from '../../sports/sports-catalog.service';
 import { buildCountriesTv, type TvCountry } from '../countries-catalog';
 import { CountriesCatalogService } from '../countries-catalog.service';
@@ -23,6 +28,7 @@ import { CountryTvGuide } from '../country-tv-guide';
 import { OVERLAY_IDLE_MS } from '../country-tv-idle';
 import { CountryTvListings } from '../country-tv-listings';
 import { CountryTvPlayback } from '../country-tv-playback';
+import { CountryTvRequest } from '../country-tv-request';
 import {
     COUNTRY_STORAGE_KEY,
     LAST_CHANNEL_STORAGE_KEY,
@@ -63,21 +69,36 @@ describe('CountriesPageComponent', () => {
     const countries = signal<TvCountry[] | null>(null);
     const hasSource = signal(true);
     const failed = signal(false);
+    const source = signal({
+        _id: 'source-1',
+        serverUrl: 'http://panel.test',
+        username: 'user',
+        password: 'secret',
+    } as PlaylistMeta);
     const catalog = {
         countries,
         hasSource,
         failed,
+        source,
         loading: signal(false),
         keepFresh: jest.fn(),
         retry: jest.fn(),
     };
+    const saved = signal<ReadonlySet<number>>(new Set());
+    const favorites = {
+        has: (streams: number | readonly number[]) =>
+            (typeof streams === 'number' ? [streams] : streams).some((stream) =>
+                saved().has(stream)
+            ),
+        toggle: jest.fn(async () => true),
+        refresh: jest.fn(async () => undefined),
+    };
+    const router = {
+        currentNavigation: () => null,
+        navigate: jest.fn(async () => true),
+    };
     const sports = {
-        source: signal({
-            _id: 'source-1',
-            serverUrl: 'http://panel.test',
-            username: 'user',
-            password: 'secret',
-        } as PlaylistMeta),
+        source,
         today: signal([]),
         isLive: () => true,
         play: jest.fn(),
@@ -89,6 +110,8 @@ describe('CountriesPageComponent', () => {
             providers: [
                 { provide: CountriesCatalogService, useValue: catalog },
                 { provide: SportsCatalogService, useValue: sports },
+                { provide: ChannelFavoritesService, useValue: favorites },
+                { provide: Router, useValue: router },
                 {
                     provide: XtreamUrlService,
                     useValue: {
@@ -141,6 +164,7 @@ describe('CountriesPageComponent', () => {
                     CountryTvPlayback,
                     CountryTvListings,
                     CountryTvControls,
+                    CountryTvRequest,
                     {
                         provide: CountryTvGuide,
                         useValue: { nowNext: signal(null), nowOn: () => null },
@@ -177,6 +201,7 @@ describe('CountriesPageComponent', () => {
         countries.set(COUNTRIES);
         hasSource.set(true);
         failed.set(false);
+        saved.set(new Set());
     });
 
     afterEach(() => jest.useRealTimers());
@@ -409,6 +434,116 @@ describe('CountriesPageComponent', () => {
             find('countries-picker')?.click();
             await settle();
             expect(release).toHaveBeenCalled();
+        });
+    });
+
+    describe('Mi lista', () => {
+        const key = (target: EventTarget, name: string) =>
+            target.dispatchEvent(
+                new KeyboardEvent('keydown', {
+                    key: name,
+                    bubbles: true,
+                    cancelable: true,
+                })
+            );
+        const ask = (streamId: number, playlistId = 'source-1') =>
+            history.replaceState(
+                {
+                    navigationId: 7,
+                    [LIVE_CHANNEL_PLAY_STATE_KEY]: {
+                        playlistId,
+                        streamId,
+                        categoryId: '4',
+                        title: '|ES| 24h',
+                        icon: null,
+                    },
+                },
+                ''
+            );
+
+        afterEach(() => history.replaceState(null, ''));
+
+        it('puts the channel playing on the list from its heart, and with L', async () => {
+            await render();
+            const heart = find('countries-my-list') as HTMLButtonElement;
+            expect(heart.getAttribute('aria-pressed')).toBe('false');
+            expect(heart.getAttribute('aria-label')).toBe(
+                'WORKSPACE.MY_LIST.ADD'
+            );
+            expect(favorites.refresh).toHaveBeenCalled();
+
+            heart.click();
+            expect(favorites.toggle).toHaveBeenCalledWith(21, [21]);
+
+            saved.set(new Set([21]));
+            fixture.detectChanges();
+            expect(heart.getAttribute('aria-pressed')).toBe('true');
+            expect(heart.textContent?.trim()).toBe('favorite');
+
+            key(document.body, 'l');
+            expect(favorites.toggle).toHaveBeenCalledTimes(2);
+            expect(favorites.toggle).toHaveBeenLastCalledWith(21, [21]);
+        });
+
+        it('saves a card’s channel from its heart, or with L on the card', async () => {
+            saved.set(new Set([20]));
+            await render();
+            const heart = find('country-tv-card-fav-20') as HTMLButtonElement;
+            expect(heart.getAttribute('aria-pressed')).toBe('true');
+            expect(heart.tabIndex).toBe(-1);
+            expect(
+                find('country-tv-card-fav-21')?.getAttribute('aria-pressed')
+            ).toBe('false');
+
+            heart.click();
+            expect(favorites.toggle).toHaveBeenCalledWith(20, [20]);
+
+            // L on a card is that card's, not the stage's channel.
+            key(card(21) as HTMLElement, 'L');
+            expect(favorites.toggle).toHaveBeenCalledTimes(2);
+            expect(favorites.toggle).toHaveBeenLastCalledWith(21, [21]);
+        });
+
+        it('plays the channel Mi lista asked for, once', async () => {
+            ask(14);
+            await render();
+
+            expect(tv().playback()?.streamUrl).toMatch(/\/14\.ts$/);
+            expect(find('countries-picker')?.textContent).toContain(
+                'WORKSPACE.COUNTRIES.NAMES.ES'
+            );
+            expect(router.navigate).not.toHaveBeenCalled();
+            // Back onto the entry opens it as any visit does.
+            expect(history.state[LIVE_CHANNEL_PLAY_STATE_KEY]).toBeUndefined();
+            expect(history.state.navigationId).toBe(7);
+        });
+
+        it('hands a channel no country lists to the live view, in place', async () => {
+            ask(99);
+            await render();
+
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['/workspace', 'xtreams', 'source-1', 'live'],
+                expect.objectContaining({
+                    replaceUrl: true,
+                    state: expect.objectContaining({
+                        openXtreamLiveItemId: 99,
+                        openXtreamLivePlaylistId: 'source-1',
+                    }),
+                })
+            );
+            expect(tv().playback()).toBeNull();
+        });
+
+        it('hands another source’s channel to its live view', async () => {
+            ask(14, 'other-source');
+            await render();
+
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['/workspace', 'xtreams', 'other-source', 'live'],
+                expect.objectContaining({ replaceUrl: true })
+            );
+            expect(tv().playback()).toBeNull();
         });
     });
 

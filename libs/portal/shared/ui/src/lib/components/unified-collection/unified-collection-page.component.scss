@@ -296,6 +296,39 @@ app-unified-live-tab {
     }
 }
 
+// Mi lista's rows (`channelRow`): its channels, then the movies or series
+// under their own head (the type chips, Clear), in one scroller.
+.collection-content--rows {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    app-collection-channel-row:not(:empty) {
+        margin-bottom: var(--tv-section-gap, 44px);
+    }
+
+    app-unified-grid-tab {
+        display: flex;
+        overflow: visible;
+    }
+}
+
+.collection-section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    padding: 0 var(--tv-page-x) 12px;
+}
+
+.collection-section-title {
+    @include kit.section-title;
+}
+
+.collection-section-head .collection-clear {
+    margin-left: auto;
+}
+
 // Mi lista and Vistos recientemente start under the bar's spacer in the
 // shell's scroller: the page is that scroller's height less the bar, so the
 // page never scrolls by the bar's height and its grid is the one scroller,

@@ -497,12 +497,12 @@ test('@xtream @collections a cold Recent heart cannot remove a different saved f
         )
     ).toEqual(['live:42']);
     await page.goto('/workspace/global-favorites');
+    // Mi lista's channels are cards; the red heart takes one off.
     const original = page
-        .locator('app-channel-list-item')
+        .locator('.channels__item')
         .filter({ hasText: 'Original saved channel' });
     await expect(original).toBeVisible();
-    await original.hover();
-    await original.locator('.favorite-button').click();
+    await original.locator('[data-test-id="my-list-channel-remove"]').click();
     await expect(original).toHaveCount(0);
     await page.goto('/workspace/global-recent');
     await page.reload();
@@ -513,7 +513,7 @@ test('@xtream @collections a cold Recent heart cannot remove a different saved f
     await page.goto('/workspace/global-favorites');
     await expect(
         page
-            .locator('app-channel-list-item')
+            .locator('.channels__item')
             .filter({ hasText: 'Viewed replacement channel' })
     ).toBeVisible();
     await expect(original).toHaveCount(0);

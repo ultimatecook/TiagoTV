@@ -52,7 +52,12 @@ Current workspace routes:
 3. `/workspace/dashboard`
 4. `/workspace/sources`
 5. `/workspace/playlists/:id/:view` (plus `favorites` and `recent` siblings)
-6. `/workspace/global-favorites`
+6. `/workspace/global-favorites` (TiagoTV's Mi lista: its live channels
+   are a row of cards first, `app-collection-channel-row` with the
+   collection page's `channelRow`, then the movies and series under their
+   type chips and Clear; a channel card plays on "En vivo", or in its own
+   source's favourites for M3U and Stalker, and its red heart removes it —
+   see [Workspace Dashboard](./workspace-dashboard.md#by-country-page-tiagotv))
 7. `/workspace/global-recent`
 8. `/workspace/search`
 9. `/workspace/downloads`

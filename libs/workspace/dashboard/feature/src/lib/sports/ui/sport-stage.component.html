@@ -85,55 +85,78 @@
                     <p class="stage__programme">{{ programme() }}</p>
                 }
             </div>
-            @if (current) {
+            @if (selection) {
                 <div class="stage__controls">
-                    <button
-                        type="button"
-                        class="stage__control stage__control--main"
-                        [attr.aria-label]="
-                            (controls.paused()
-                                ? 'WORKSPACE.SPORTS.PLAY'
-                                : 'WORKSPACE.SPORTS.PAUSE'
-                            ) | translate
-                        "
-                        (click)="playPause()"
-                    >
-                        <mat-icon aria-hidden="true">{{
-                            controls.paused() ? 'play_arrow' : 'pause'
-                        }}</mat-icon>
-                    </button>
+                    @if (current) {
+                        <button
+                            type="button"
+                            class="stage__control stage__control--main"
+                            [attr.aria-label]="
+                                (controls.paused()
+                                    ? 'WORKSPACE.SPORTS.PLAY'
+                                    : 'WORKSPACE.SPORTS.PAUSE'
+                                ) | translate
+                            "
+                            (click)="playPause()"
+                        >
+                            <mat-icon aria-hidden="true">{{
+                                controls.paused() ? 'play_arrow' : 'pause'
+                            }}</mat-icon>
+                        </button>
+                        <button
+                            type="button"
+                            class="stage__control"
+                            [attr.aria-label]="
+                                (controls.muted()
+                                    ? 'WORKSPACE.SPORTS.UNMUTE'
+                                    : 'WORKSPACE.SPORTS.MUTE'
+                                ) | translate
+                            "
+                            (click)="controls.toggleMute()"
+                        >
+                            <mat-icon aria-hidden="true">{{
+                                controls.muted() ? 'volume_off' : 'volume_up'
+                            }}</mat-icon>
+                        </button>
+                    }
                     <button
                         type="button"
                         class="stage__control"
+                        data-test-id="sport-my-list"
+                        [class.stage__control--saved]="saved()"
                         [attr.aria-label]="
-                            (controls.muted()
-                                ? 'WORKSPACE.SPORTS.UNMUTE'
-                                : 'WORKSPACE.SPORTS.MUTE'
+                            (saved()
+                                ? 'WORKSPACE.MY_LIST.REMOVE'
+                                : 'WORKSPACE.MY_LIST.ADD'
                             ) | translate
                         "
-                        (click)="controls.toggleMute()"
+                        [attr.aria-pressed]="saved()"
+                        (click)="toggleFavorite()"
                     >
                         <mat-icon aria-hidden="true">{{
-                            controls.muted() ? 'volume_off' : 'volume_up'
+                            saved() ? 'favorite' : 'favorite_border'
                         }}</mat-icon>
                     </button>
-                    <button
-                        type="button"
-                        class="stage__control"
-                        [attr.aria-label]="
-                            (controls.fullscreen()
-                                ? 'WORKSPACE.SPORTS.EXIT_FULLSCREEN'
-                                : 'WORKSPACE.SPORTS.FULLSCREEN'
-                            ) | translate
-                        "
-                        (click)="controls.toggleFullscreen()"
-                    >
-                        <mat-icon aria-hidden="true">{{
-                            controls.fullscreen()
-                                ? 'fullscreen_exit'
-                                : 'fullscreen'
-                        }}</mat-icon>
-                    </button>
+                    @if (current) {
+                        <button
+                            type="button"
+                            class="stage__control"
+                            data-test-id="sport-fullscreen"
+                            [attr.aria-label]="
+                                (controls.fullscreen()
+                                    ? 'WORKSPACE.SPORTS.EXIT_FULLSCREEN'
+                                    : 'WORKSPACE.SPORTS.FULLSCREEN'
+                                ) | translate
+                            "
+                            (click)="controls.toggleFullscreen()"
+                        >
+                            <mat-icon aria-hidden="true">{{
+                                controls.fullscreen()
+                                    ? 'fullscreen_exit'
+                                    : 'fullscreen'
+                            }}</mat-icon>
+                        </button>
+                    }
                 </div>
             }
         </div>

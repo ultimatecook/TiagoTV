@@ -20,6 +20,7 @@ import type {
     TvCategoryId,
 } from '../country-tv-categories';
 import { CountryTvControls } from '../country-tv-controls';
+import { CountryTvFavorites } from '../country-tv-favorites';
 import { CountryTvListings } from '../country-tv-listings';
 import { CountryTvPlayback } from '../country-tv-playback';
 import { CountryTvCardsComponent } from './country-tv-cards.component';
@@ -29,7 +30,8 @@ import { CountryTvCardsComponent } from './country-tv-cards.component';
  * name and what it shows now, the controls (play/pause, sound, Live TV,
  * full screen) and the programme's progress, the country's category chips
  * and its channels in glass cards. The channel's other feeds ("UHD",
- * "HD"), when it has any, sit beside the controls.
+ * "HD"), when it has any, sit beside the controls; the heart puts the
+ * channel on Mi lista (a card's own heart, the card's).
  */
 @Component({
     selector: 'lib-country-tv-overlay',
@@ -52,6 +54,7 @@ export class CountryTvOverlayComponent {
     readonly tv = inject(CountryTvPlayback);
     readonly controls = inject(CountryTvControls);
     private readonly listings = inject(CountryTvListings);
+    private readonly favorites = inject(CountryTvFavorites);
     private readonly row = viewChild(CountryTvCardsComponent);
 
     readonly selection = this.tv.selection;
@@ -62,6 +65,11 @@ export class CountryTvOverlayComponent {
     readonly now = computed(() => {
         const selection = this.selection();
         return selection ? this.listings.nowOn(selection.channel) : null;
+    });
+    /** The channel on the stage is on Mi lista. */
+    readonly saved = computed(() => {
+        const selection = this.selection();
+        return !!selection && this.favorites.isSaved(selection.channel);
     });
     readonly copies = computed(() => {
         const copies = this.selection()?.channel.copies ?? [];
@@ -101,6 +109,19 @@ export class CountryTvOverlayComponent {
         } else {
             this.controls.togglePlay();
         }
+    }
+
+    /** The heart, or L: the channel playing (that copy) on Mi lista. */
+    toggleFavorite(): void {
+        const selection = this.selection();
+        if (selection) {
+            this.favorites.toggle(selection.channel, selection.copy);
+        }
+    }
+
+    /** A card's heart, or L on a card: the copy the card starts on. */
+    toggleCardFavorite(card: TvCard): void {
+        this.favorites.toggle(card.channel);
     }
 
     playCopy(copy: CountryChannel): void {

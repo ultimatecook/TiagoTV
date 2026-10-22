@@ -28,11 +28,13 @@ import {
     type TvCategoryId,
 } from '../country-tv-categories';
 import { CountryTvControls } from '../country-tv-controls';
+import { CountryTvFavorites } from '../country-tv-favorites';
 import { CountryTvGuide } from '../country-tv-guide';
 import { OverlayIdle } from '../country-tv-idle';
 import { liveKeyAction, onLivePage } from '../country-tv-keys';
 import { CountryTvListings } from '../country-tv-listings';
 import { CountryTvPlayback } from '../country-tv-playback';
+import { CountryTvRequest } from '../country-tv-request';
 import {
     browserStorage,
     countrySelection,
@@ -66,7 +68,9 @@ interface CategoryChoice {
  * overlay goes after a few quiet seconds while a channel plays and comes
  * back on a mouse move or a key (`OverlayIdle`). The page opens on the
  * country chosen last, on its last channel (`openingSelection`); a
- * country's route (`/workspace/countries/es`) opens on that country.
+ * country's route (`/workspace/countries/es`) opens on that country, and
+ * Mi lista's channel plays on arrival (`CountryTvRequest`). The heart and
+ * L put the channel on Mi lista (`CountryTvFavorites`).
  */
 @Component({
     selector: 'lib-countries-page',
@@ -82,6 +86,7 @@ interface CategoryChoice {
         CountryTvGuide,
         CountryTvListings,
         CountryTvControls,
+        CountryTvRequest,
     ],
     templateUrl: './countries-page.component.html',
     styleUrl: './countries-page.component.scss',
@@ -93,6 +98,8 @@ export class CountriesPageComponent {
     readonly controls = inject(CountryTvControls);
     private readonly mpvOverlays = inject(EmbeddedMpvOverlayVisibilityService);
     private readonly settings = inject(SettingsStore);
+    private readonly favorites = inject(CountryTvFavorites);
+    private readonly request = inject(CountryTvRequest);
     private readonly live = viewChild<ElementRef<HTMLElement>>('live');
     private readonly overlayElement = viewChild(CountryTvOverlayComponent, {
         read: ElementRef,
@@ -163,6 +170,7 @@ export class CountriesPageComponent {
     constructor() {
         const destroyRef = inject(DestroyRef);
         this.catalog.keepFresh(destroyRef);
+        this.favorites.refresh();
         effect(() => {
             const countries = this.countries();
             if (countries && countries.length > 0 && !this.opened) {
@@ -288,6 +296,11 @@ export class CountriesPageComponent {
 
     private open(countries: readonly TvCountry[]): void {
         this.opened = true;
+        const asked = this.request.play(countries);
+        if (asked) {
+            this.chosen.set(asked === 'elsewhere' ? null : asked.definition.id);
+            return;
+        }
         const routeId = findCountryDefinition(this.countryId())?.id ?? null;
         const selection = openingSelection(
             countries,
@@ -368,6 +381,9 @@ export class CountriesPageComponent {
                 break;
             case 'fullscreen':
                 this.controls.toggleFullscreen();
+                break;
+            case 'favorite':
+                this.overlay()?.toggleFavorite();
                 break;
             case 'cards':
                 this.overlay()?.focusCards();

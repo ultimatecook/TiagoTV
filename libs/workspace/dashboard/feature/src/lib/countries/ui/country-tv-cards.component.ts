@@ -15,8 +15,10 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
+import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import type { TvCard } from '../country-tv-categories';
+import { CountryTvFavorites } from '../country-tv-favorites';
 import { CountryTvListings } from '../country-tv-listings';
 import {
     cardsWindow,
@@ -28,13 +30,15 @@ import {
  * "En vivo"'s row of channel cards: glass cards with the channel's logo
  * (its name in Bebas when no logo loads), name, what it shows now and how
  * far in, "REPRODUCIENDO" on the playing one and "FÚTBOL" on those
- * showing football now. A card plays its channel in place. The row is one
- * tab stop: the arrows, Page Up/Down, Home and End move along it, Enter
- * plays. It renders the cards near its view only (`cardsWindow`).
+ * showing football now. A card plays its channel in place; its heart (on
+ * hover, or always once saved) puts the channel on Mi lista. The row is
+ * one tab stop: the arrows, Page Up/Down, Home and End move along it,
+ * Enter plays, L saves. It renders the cards near its view only
+ * (`cardsWindow`).
  */
 @Component({
     selector: 'lib-country-tv-cards',
-    imports: [TranslatePipe],
+    imports: [MatIcon, TranslatePipe],
     templateUrl: './country-tv-cards.component.html',
     styleUrl: './country-tv-cards.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,8 +53,11 @@ export class CountryTvCardsComponent {
     /** The row's accessible name. */
     readonly label = input('');
     readonly picked = output<TvCard>();
+    /** A card's heart, or L on a card. */
+    readonly favoriteToggled = output<TvCard>();
 
     private readonly listings = inject(CountryTvListings);
+    private readonly favorites = inject(CountryTvFavorites);
     private readonly injector = inject(Injector);
     private readonly track =
         viewChild.required<ElementRef<HTMLElement>>('track');
@@ -107,6 +114,7 @@ export class CountryTvCardsComponent {
                     logo:
                         channel.icons.find((icon) => !failed.has(icon)) ?? null,
                     hue: hueOf(channel.title),
+                    saved: this.favorites.isSaved(channel),
                     now,
                     progress: now?.progress ?? null,
                 };
@@ -179,6 +187,12 @@ export class CountryTvCardsComponent {
             event.ctrlKey ||
             event.metaKey
         ) {
+            return;
+        }
+        // The focused card's channel, not the stage's (the page's L).
+        if (event.key === 'l' || event.key === 'L') {
+            event.preventDefault();
+            this.favoriteToggled.emit(this.cards()[index]);
             return;
         }
         const last = this.cards().length - 1;

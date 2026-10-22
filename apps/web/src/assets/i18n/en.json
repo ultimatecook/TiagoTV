@@ -2224,6 +2224,17 @@
             "NO_ITEMS_BODY": "Tap the star icon on any channel, movie, or series to save it here.",
             "UNKNOWN_CHANNEL": "Unknown"
         },
+        "MY_LIST": {
+            "ADD": "Add to My List",
+            "REMOVE": "Remove from My List",
+            "ADD_NAMED": "Add {{name}} to My List",
+            "REMOVE_NAMED": "Remove {{name}} from My List",
+            "SAVE_FAILED": "My List could not be updated.",
+            "CHANNELS": "Channels",
+            "LIVE": "Live",
+            "WATCH": "Watch {{name}}",
+            "EMPTY_BODY": "Tap the heart on a channel in Live, or My List on a movie or series, to save it here."
+        },
         "GLOBAL_RECENT": {
             "NO_PLAYLISTS_TITLE": "Nothing watched yet",
             "NO_PLAYLISTS_BODY": "Add a source and your watching history will appear here.",

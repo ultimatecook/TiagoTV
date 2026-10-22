@@ -85,6 +85,7 @@ export * from './lib/content-language';
 export * from './lib/display-title';
 export * from './lib/sharp-image-url';
 export * from './lib/display-channel-name';
+export * from './lib/tidy-channel-title';
 export * from './lib/xtream-restore-state.util';
 export * from './lib/xtream-favorite.interface';
 export * from './lib/xtream-server-timezone.util';

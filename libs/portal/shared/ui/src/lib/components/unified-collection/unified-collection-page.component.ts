@@ -51,6 +51,7 @@ import {
 } from '@iptvnator/portal/shared/data-access';
 import { RuntimeCapabilitiesService } from '@iptvnator/services';
 import { EmptyStateComponent } from '@iptvnator/playlist/shared/ui';
+import { CollectionChannelRowComponent } from './collection-channel-row.component';
 import { UnifiedLiveTabComponent } from './unified-live-tab.component';
 import { UnifiedGridTabComponent } from './unified-grid-tab.component';
 import {
@@ -82,6 +83,7 @@ import { UnifiedCollectionDetailDirective } from './unified-collection-detail.di
     providers: [UnifiedCollectionDataService],
     imports: [
         ChannelListSkeletonComponent,
+        CollectionChannelRowComponent,
         EmptyStateComponent,
         NgTemplateOutlet,
         MatButtonToggleModule,
@@ -109,6 +111,11 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
     readonly defaultScope = input<CollectionScope>();
     /** A page-specific heading, e.g. "Mi lista" for the global favorites. */
     readonly titleKey = input<string>();
+    /**
+     * TiagoTV's Mi lista: the live channels as a row of cards above the
+     * movies and series (`app-collection-channel-row`), not a Live tab.
+     */
+    readonly channelRow = input(false);
 
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
@@ -147,8 +154,17 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
         getOpenLiveCollectionItemState(window.history.state)
     );
 
+    readonly channelItems = computed(() =>
+        this.channelRow()
+            ? this.allItems().filter((item) => item.contentType === 'live')
+            : []
+    );
     private readonly contentType = createCollectionContentTypeState(
-        this.allItems,
+        computed(() =>
+            this.channelRow()
+                ? this.allItems().filter((item) => item.contentType !== 'live')
+                : this.allItems()
+        ),
         this.viewStateHistory.current()?.selectedContentType ?? 'live'
     );
     readonly selectedContentType = this.contentType.selected;
@@ -193,7 +209,12 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
     readonly clearButtonTooltipKey = this.labels.clearTooltipKey;
     readonly emptyStateIcon = this.labels.emptyStateIcon;
     readonly emptyStateTitleKey = this.labels.emptyStateTitleKey;
-    readonly emptyStateBodyKey = this.labels.emptyStateBodyKey;
+    /** Mi lista says where its hearts are (En vivo's, the titles'). */
+    readonly emptyStateBodyKey = computed(() =>
+        this.channelRow()
+            ? 'WORKSPACE.MY_LIST.EMPTY_BODY'
+            : this.labels.emptyStateBodyKey()
+    );
 
     private readonly favoritesSort = createFavoritesSortState();
     readonly favSortMode = this.favoritesSort.mode;
@@ -406,6 +427,7 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
         this.autoSelectContentType();
         if (
             this.pendingAutoOpenLiveItem() &&
+            !this.channelRow() &&
             items.some((item) => item.contentType === 'live')
         ) {
             this.selectedContentType.set('live');

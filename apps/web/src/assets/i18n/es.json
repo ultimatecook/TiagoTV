@@ -2224,6 +2224,17 @@
             "NO_ITEMS_BODY": "Toca el icono de estrella en cualquier canal, película o serie para guardarlo aquí.",
             "UNKNOWN_CHANNEL": "Desconocido"
         },
+        "MY_LIST": {
+            "ADD": "Agregar a Mi lista",
+            "REMOVE": "Quitar de Mi lista",
+            "ADD_NAMED": "Agregar {{name}} a Mi lista",
+            "REMOVE_NAMED": "Quitar {{name}} de Mi lista",
+            "SAVE_FAILED": "No se pudo actualizar Mi lista.",
+            "CHANNELS": "Canales",
+            "LIVE": "En vivo",
+            "WATCH": "Ver {{name}}",
+            "EMPTY_BODY": "Toca el corazón de un canal en En vivo, o «Mi lista» en una película o serie, para guardarlo aquí."
+        },
         "GLOBAL_RECENT": {
             "NO_PLAYLISTS_TITLE": "Aún no has visto nada",
             "NO_PLAYLISTS_BODY": "Añade una fuente y tu historial de visualización aparecerá aquí.",
