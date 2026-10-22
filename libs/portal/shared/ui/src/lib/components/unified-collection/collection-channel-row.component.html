@@ -1,0 +1,92 @@
+@if (channels().length > 0) {
+    <section
+        class="channels"
+        aria-labelledby="my-list-channels-title"
+        data-test-id="my-list-channels"
+    >
+        <h2 class="channels__title" id="my-list-channels-title">
+            {{ 'WORKSPACE.MY_LIST.CHANNELS' | translate }}
+            <span class="channels__count">{{ channels().length }}</span>
+        </h2>
+        <ul class="channels__row">
+            @for (channel of channels(); track channel.item.uid) {
+                <li class="channels__item">
+                    <button
+                        type="button"
+                        class="channel"
+                        data-test-id="my-list-channel"
+                        [disabled]="channel.unavailable"
+                        [attr.aria-label]="
+                            'WORKSPACE.MY_LIST.WATCH'
+                                | translate: { name: channel.name }
+                        "
+                        (click)="play(channel.item)"
+                    >
+                        <span
+                            class="channel__thumb"
+                            [class.channel__thumb--word]="!channel.logo"
+                        >
+                            @if (channel.logo; as logo) {
+                                <img
+                                    class="channel__logo"
+                                    [src]="logo"
+                                    alt=""
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer"
+                                    draggable="false"
+                                    (error)="logoFailed(logo)"
+                                />
+                            } @else {
+                                <span
+                                    class="channel__word"
+                                    aria-hidden="true"
+                                    >{{ channel.name }}</span
+                                >
+                            }
+                            @if (channel.flag) {
+                                <img
+                                    class="channel__flag"
+                                    [src]="channel.flag"
+                                    alt=""
+                                    draggable="false"
+                                />
+                            }
+                        </span>
+                        <span class="channel__text">
+                            <span class="channel__name">{{
+                                channel.name
+                            }}</span>
+                            <span class="channel__meta">
+                                @if (channel.unavailable) {
+                                    {{
+                                        (channel.item.catalogStatus ===
+                                        'missing'
+                                            ? 'WORKSPACE.GLOBAL_FAVORITES.CATALOG_MISSING'
+                                            : 'WORKSPACE.GLOBAL_FAVORITES.CATALOG_UNKNOWN'
+                                        ) | translate
+                                    }}
+                                } @else if (showSource()) {
+                                    {{ channel.item.playlistName }}
+                                } @else {
+                                    {{ 'WORKSPACE.MY_LIST.LIVE' | translate }}
+                                }
+                            </span>
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        class="channel__remove"
+                        data-test-id="my-list-channel-remove"
+                        [attr.aria-label]="
+                            'WORKSPACE.MY_LIST.REMOVE_NAMED'
+                                | translate: { name: channel.name }
+                        "
+                        (click)="removeItem.emit(channel.item)"
+                    >
+                        <mat-icon aria-hidden="true">favorite</mat-icon>
+                    </button>
+                </li>
+            }
+        </ul>
+    </section>
+}

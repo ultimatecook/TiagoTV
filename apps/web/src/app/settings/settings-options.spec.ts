@@ -102,6 +102,7 @@ describe('buildSettingsSectionNavItems', () => {
             'remote-control',
             'server',
             'backup',
+            'diagnostics',
             'about',
         ]);
     });
@@ -121,6 +122,7 @@ describe('buildSettingsSectionNavItems', () => {
         expect(groupOf('remote-control')).toBe('devices');
         expect(groupOf('server')).toBe('data');
         expect(groupOf('backup')).toBe('data');
+        expect(groupOf('diagnostics')).toBe('data');
         expect(groupOf('about')).toBeUndefined();
     });
 

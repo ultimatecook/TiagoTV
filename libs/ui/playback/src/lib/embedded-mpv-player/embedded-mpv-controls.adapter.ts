@@ -39,6 +39,7 @@ import {
 } from './embedded-mpv-format.utils';
 import { resolveRecordingFeedback } from './embedded-mpv-controls-recording-feedback';
 import { EmbeddedMpvControlsRecording } from './embedded-mpv-controls-recording';
+import { EmbeddedMpvCanvasPictureInPicture } from './embedded-mpv-canvas-pip';
 import { EmbeddedMpvSessionController } from './embedded-mpv-session-controller';
 import { EmbeddedMpvSubtitleSettings } from './embedded-mpv-subtitle-settings';
 import { toPlayerStreamStats } from './embedded-mpv-stream-stats';
@@ -49,6 +50,8 @@ export interface EmbeddedMpvControlsContext {
     readonly recordingFolder: Signal<string>;
     /** Channel/EPG snapshot the live host captured for the recording tracker. */
     readonly recordingMetadata?: Signal<RecordingStartMetadata | null>;
+    /** The frame-copy engine's canvas, the picture PiP copies. */
+    readonly frameCanvas?: () => HTMLCanvasElement | null;
 }
 
 interface MappedPlayerStatus {
@@ -105,6 +108,14 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
         () => toPlayerStreamStats(this.controller.session()) !== null
     );
 
+    /** Frame-copy only: its canvas plays in the browser's PiP window. */
+    private readonly canvasPip = new EmbeddedMpvCanvasPictureInPicture({
+        canvas: () => this.configuredContext()?.frameCanvas?.() ?? null,
+        frameCopy: () => this.controller.support()?.engine === 'frame-copy',
+        status: () => this.controller.session()?.status,
+        togglePaused: () => void this.controller.togglePaused(),
+    });
+
     readonly streamStats: PlayerStreamStatsSource = {
         sample: () => toPlayerStreamStats(this.controller.session()),
     };
@@ -130,7 +141,7 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
             playbackSpeed: optionalCapabilities?.playbackSpeed ?? false,
             aspectRatio: optionalCapabilities?.aspectOverride ?? false,
             recording: optionalCapabilities?.recording ?? false,
-            pictureInPicture: false,
+            pictureInPicture: this.canvasPip.available(),
             fullscreen: true,
             seriesNavigation: !isLive && context.seriesNavigation() !== null,
             streamStats: this.hasStreamStats(),
@@ -213,8 +224,8 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
                 ),
                 transitionKey: this.recordingTransitionKey(),
             },
-            pictureInPictureActive: false,
-            canPictureInPicture: false,
+            pictureInPictureActive: this.canvasPip.active(),
+            canPictureInPicture: this.canvasPip.ready(),
             canPreviousEpisode:
                 hasSeriesNavigation && seriesNavigation?.canPrevious === true,
             canNextEpisode:
@@ -237,7 +248,7 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
         setPlaybackSpeed: (speed) => void this.controller.setSpeed(speed),
         setAspectRatio: (value) => void this.controller.setAspect(value),
         toggleRecording: () => void this.toggleRecording(),
-        togglePictureInPicture: () => undefined,
+        togglePictureInPicture: () => this.canvasPip.toggle(),
     };
 
     constructor() {
@@ -276,7 +287,10 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
             );
         });
 
-        this.destroyRef.onDestroy(() => this.recordingControls.destroy());
+        this.destroyRef.onDestroy(() => {
+            this.recordingControls.destroy();
+            this.canvasPip.destroy();
+        });
     }
 
     configure(context: EmbeddedMpvControlsContext): void {

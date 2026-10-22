@@ -1,0 +1,65 @@
+@let current = heading();
+<div class="head__info">
+    @if (brand(); as platform) {
+        @if (platform.logo && !logoFailed()) {
+            <img
+                class="head__brand"
+                data-test-id="inline-player-brand"
+                [class.head__brand--white]="platform.logoTone === 'white'"
+                [src]="platform.logo"
+                [alt]="platform.name"
+                draggable="false"
+                (error)="logoFailed.set(true)"
+            />
+        } @else {
+            <span class="head__brand-name" data-test-id="inline-player-brand">
+                {{ platform.name }}
+            </span>
+        }
+    }
+    @if (current) {
+        <h3 class="head__title player-shell__title">{{ current.primary }}</h3>
+        @if (current.secondary) {
+            <p class="head__episode player-shell__episode-meta">
+                {{ current.secondary }}
+            </p>
+        }
+    }
+</div>
+
+<div class="head__actions">
+    <ng-content />
+    <button
+        type="button"
+        class="head__control"
+        data-test-id="inline-player-more"
+        [matMenuTriggerFor]="moreMenu"
+        [attr.aria-label]="'PORTALS.PLAYER_MORE_OPTIONS' | translate"
+        [matTooltip]="'PORTALS.PLAYER_MORE_OPTIONS' | translate"
+    >
+        <mat-icon aria-hidden="true">more_horiz</mat-icon>
+    </button>
+    <button
+        type="button"
+        class="head__control"
+        data-test-id="inline-player-close"
+        [attr.aria-label]="'PORTALS.CLOSE_PLAYER' | translate"
+        [matTooltip]="'PORTALS.CLOSE_PLAYER' | translate"
+        (click)="closed.emit()"
+    >
+        <mat-icon aria-hidden="true">close</mat-icon>
+    </button>
+</div>
+
+<mat-menu #moreMenu="matMenu" xPosition="before" class="inline-player-menu">
+    <button
+        mat-menu-item
+        type="button"
+        data-test-id="inline-player-copy-url"
+        [cdkCopyToClipboard]="streamUrl()"
+        (click)="onCopied()"
+    >
+        <mat-icon aria-hidden="true">link</mat-icon>
+        <span>{{ 'PORTALS.COPY_STREAM_URL' | translate }}</span>
+    </button>
+</mat-menu>

@@ -76,6 +76,9 @@ const ALIASES: readonly [RegExp, string][] = [
     [/\bdirect? ?tv\b/g, 'directv'],
     [/\bd ?sports\b/g, 'directv sports'],
     [/\b(bein|fox|sky|tnt|tyc|directv|espn) sport\b/g, '$1 sports'],
+    // Argentina's FOX Sports Premium is ESPN Premium since May 2022 (the
+    // league's channel); providers still list it by its old name.
+    [/^fox sports premium\b/, 'espn premium'],
     [/\btv\b/g, ' '],
 ];
 
@@ -129,7 +132,6 @@ const KNOWN_NAMES: Record<string, string> = {
     'espn premium': 'ESPN Premium',
     'espn extra': 'ESPN Extra',
     'fox sports': 'FOX Sports',
-    'fox sports premium': 'FOX Sports Premium',
     'tyc sports': 'TyC Sports',
     'tyc sports internacional': 'TyC Sports Internacional',
     'tnt sports': 'TNT Sports',

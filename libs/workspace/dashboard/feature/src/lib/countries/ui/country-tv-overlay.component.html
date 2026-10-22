@@ -78,17 +78,26 @@
                         current && !controls.paused() ? 'pause' : 'play_arrow'
                     }}</mat-icon>
                 </button>
+                <lib-stage-volume
+                    data-test-id="countries-volume"
+                    [idle]="!current"
+                />
                 <button
                     type="button"
                     class="control"
-                    data-test-id="countries-mute"
-                    [disabled]="!current"
-                    [attr.aria-label]="'WORKSPACE.COUNTRIES.MUTE' | translate"
-                    [attr.aria-pressed]="controls.muted()"
-                    (click)="controls.toggleMute()"
+                    data-test-id="countries-my-list"
+                    [class.control--saved]="saved()"
+                    [attr.aria-label]="
+                        (saved()
+                            ? 'WORKSPACE.MY_LIST.REMOVE'
+                            : 'WORKSPACE.MY_LIST.ADD'
+                        ) | translate
+                    "
+                    [attr.aria-pressed]="saved()"
+                    (click)="toggleFavorite()"
                 >
                     <mat-icon aria-hidden="true">{{
-                        controls.muted() ? 'volume_off' : 'volume_up'
+                        saved() ? 'favorite' : 'favorite_border'
                     }}</mat-icon>
                 </button>
                 <button
@@ -157,5 +166,6 @@
                 | translate: { name: countryName() }
         "
         (picked)="picked.emit($event)"
+        (favoriteToggled)="toggleCardFavorite($event)"
     />
 </div>

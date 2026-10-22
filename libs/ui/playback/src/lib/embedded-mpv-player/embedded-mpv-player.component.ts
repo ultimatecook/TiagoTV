@@ -34,6 +34,7 @@ import type {
 } from '../player-controls/player-controls.model';
 import type { SeriesPlaybackNavigation } from '../portal-inline-player/series-playback-navigation';
 import { embeddedMpvTimelineSegments } from './embedded-mpv-chapter-segments';
+import { followPlayerVolumeRequests } from '../now-playing/player-volume.service';
 import { EmbeddedMpvControlsAdapter } from './embedded-mpv-controls.adapter';
 import { EmbeddedMpvDockPanelComponent } from './embedded-mpv-dock-panel.component';
 import { EmbeddedMpvDockPanelState } from './embedded-mpv-dock-panels';
@@ -425,11 +426,16 @@ export class EmbeddedMpvPlayerComponent implements OnDestroy {
             revealControls: () => this.legacyInteractions.revealControls(),
         });
 
+        // The En vivo and league stages set the level from their own slider.
+        followPlayerVolumeRequests((value) => this.applyVolume(value));
+
         this.sharedControls.configure({
             playback: this.playback,
             seriesNavigation: this.seriesNavigation,
             recordingFolder: this.recordingFolder,
             recordingMetadata: this.recordingMetadata,
+            frameCanvas: () =>
+                this.viewport()?.nativeElement.querySelector('canvas') ?? null,
         });
 
         // Single owner of the "a recording just stopped" edge, for every

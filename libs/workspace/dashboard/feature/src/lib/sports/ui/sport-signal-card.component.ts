@@ -2,12 +2,14 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
+    inject,
     input,
     linkedSignal,
     output,
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
+import { ChannelFavoritesService } from '../../my-list/channel-favorites.service';
 import type { SignalCard } from '../signal-cards';
 import { feedFlag, injectFeedLanguage } from './feed-language';
 
@@ -17,7 +19,8 @@ import { feedFlag, injectFeedLanguage } from './feed-language';
  * one on the stage says "Playing". A signal of the match in focus says
  * its language instead (a flag where one is bundled), its quality, and
  * whether its name carries the match or it may show it; one that failed
- * says so.
+ * says so. Its heart (on hover, or always once saved), or L on the card,
+ * puts the signal's channel on Mi lista.
  */
 @Component({
     selector: 'lib-sport-signal-card',
@@ -28,9 +31,11 @@ import { feedFlag, injectFeedLanguage } from './feed-language';
             type="button"
             class="signal"
             [class.signal--on]="active()"
+            [class.signal--saved]="saved()"
             [attr.aria-pressed]="active()"
             [attr.data-test-id]="'sport-signal-' + item.channel.streamId"
             (click)="picked.emit(item)"
+            (keydown)="onKeydown($event)"
         >
             <span class="signal__screen">
                 @if (logo(); as src) {
@@ -109,6 +114,26 @@ import { feedFlag, injectFeedLanguage } from './feed-language';
                 </span>
             }
         </button>
+        <!-- Out of the tab order: L on the card does the same. -->
+        <button
+            type="button"
+            class="fav"
+            tabindex="-1"
+            [class.fav--on]="saved()"
+            [attr.data-test-id]="'sport-signal-fav-' + item.channel.streamId"
+            [attr.aria-label]="
+                (saved()
+                    ? 'WORKSPACE.MY_LIST.REMOVE_NAMED'
+                    : 'WORKSPACE.MY_LIST.ADD_NAMED'
+                ) | translate: { name: item.name }
+            "
+            [attr.aria-pressed]="saved()"
+            (click)="toggleFavorite()"
+        >
+            <mat-icon aria-hidden="true">{{
+                saved() ? 'favorite' : 'favorite_border'
+            }}</mat-icon>
+        </button>
     `,
     styleUrl: './sport-signal-card.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -132,6 +157,11 @@ export class SportSignalCardComponent {
     readonly failed = input(false);
     readonly picked = output<SignalCard>();
 
+    private readonly favorites = inject(ChannelFavoritesService);
+    /** The signal's channel is on Mi lista. */
+    readonly saved = computed(() =>
+        this.favorites.has(this.card().channel.streamId)
+    );
     private readonly feedLanguage = injectFeedLanguage();
     readonly language = computed(() => this.feedLanguage(this.card().feed));
     readonly flag = computed(() => {
@@ -147,5 +177,22 @@ export class SportSignalCardComponent {
 
     logoFailed(): void {
         this.logoIndex.update((index) => index + 1);
+    }
+
+    toggleFavorite(): void {
+        void this.favorites.toggle(this.card().channel.streamId);
+    }
+
+    /** L on the card: this signal, not the stage's (the stage's own L). */
+    onKeydown(event: KeyboardEvent): void {
+        if (
+            (event.key === 'l' || event.key === 'L') &&
+            !event.altKey &&
+            !event.ctrlKey &&
+            !event.metaKey
+        ) {
+            event.preventDefault();
+            this.toggleFavorite();
+        }
     }
 }

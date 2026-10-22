@@ -20,7 +20,6 @@ import {
     type PlaybackDiagnostic,
     type PlaybackDiagnosticCode,
     type PlaybackFallbackRequest,
-    type PlaybackRecommendationTarget,
 } from '@iptvnator/playback/util';
 import { PORTAL_EXTERNAL_PLAYBACK } from '@iptvnator/portal/shared/util';
 import { RuntimeCapabilitiesService, SettingsStore } from '@iptvnator/services';
@@ -70,6 +69,7 @@ import {
     resolveRenderableWebPlayer,
     toInlinePlaybackPlayer,
     toVideoPlayer,
+    type DiagnosticPlayerTarget,
 } from './web-player-recovery-policy';
 import { resolveWebPlayerSharedControls } from './web-player-shared-controls';
 import { WEB_PLAYER_PLAYBACK_SMOOTHNESS } from './web-player-playback-smoothness';
@@ -460,7 +460,7 @@ export class WebPlayerViewComponent implements OnInit, OnDestroy {
         this.timeUpdate.emit(event);
     }
 
-    requestRecommendedPlayer(target: PlaybackRecommendationTarget): void {
+    requestRecommendedPlayer(target: DiagnosticPlayerTarget): void {
         this.recovery.requestRecommendedPlayer(target);
     }
 

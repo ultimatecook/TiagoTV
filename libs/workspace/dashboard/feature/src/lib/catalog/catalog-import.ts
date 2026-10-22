@@ -8,6 +8,7 @@ import {
     XtreamPendingRestoreService,
 } from '@iptvnator/services';
 import type { XtreamSourceCredentials } from '../xtream-source';
+import { CatalogRequestLog } from './catalog-request-log';
 import { CatalogRequests, delay } from './catalog-requests';
 import type { CatalogKind } from './catalog-titles';
 
@@ -43,6 +44,7 @@ export class CatalogImport {
     private readonly pendingRestore = inject(XtreamPendingRestoreService);
     private readonly parentalLock = inject(ParentalLockService);
     private readonly requests = inject(CatalogRequests);
+    private readonly log = inject(CatalogRequestLog);
 
     private readonly running = new Map<string, Promise<boolean>>();
     /** Kinds whose import failed this session: the fallback serves them. */
@@ -135,12 +137,26 @@ export class CatalogImport {
         const categoryType = kind === 'movie' ? 'vod' : 'series';
         for (let attempt = 0; ; attempt++) {
             try {
-                await this.dataSource.getCategories(
-                    playlistId,
-                    credentials,
-                    categoryType
+                await this.log.track(
+                    `get_${categoryType}_categories`,
+                    null,
+                    () =>
+                        this.dataSource.getCategories(
+                            playlistId,
+                            credentials,
+                            categoryType
+                        )
                 );
-                await this.dataSource.getContent(playlistId, credentials, kind);
+                await this.log.track(
+                    kind === 'movie' ? 'get_vod_streams' : 'get_series',
+                    null,
+                    () =>
+                        this.dataSource.getContent(
+                            playlistId,
+                            credentials,
+                            kind
+                        )
+                );
                 return;
             } catch (error) {
                 if (attempt > 0) {

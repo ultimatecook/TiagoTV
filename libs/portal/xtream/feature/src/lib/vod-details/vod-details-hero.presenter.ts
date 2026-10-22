@@ -18,8 +18,13 @@ import {
     type TmdbEnrichedCastMember,
     type TmdbGenreFacet,
     type XtreamVodInfo,
+    visibleSourceName,
 } from '@iptvnator/shared/interfaces';
-import { SettingsStore, injectTranslationTick } from '@iptvnator/services';
+import {
+    SettingsStore,
+    TitlePlatformStore,
+    injectTranslationTick,
+} from '@iptvnator/services';
 import type { CrossPortalSimilarItem } from '@iptvnator/services';
 import {
     castMembersFromNames,
@@ -77,6 +82,7 @@ export class VodDetailsHeroPresenter {
     private readonly languageTick = injectTranslationTick();
     private readonly xtreamStore = inject(XtreamStore);
     private readonly settingsStore = inject(SettingsStore);
+    private readonly titlePlatforms = inject(TitlePlatformStore);
     private readonly trailerDialog = inject(TrailerDialogService);
     private readonly bindings = signal<VodDetailsHeroBindings | null>(null);
 
@@ -86,10 +92,16 @@ export class VodDetailsHeroPresenter {
 
     private readonly info = computed(() => this.bindings()?.info() ?? null);
 
+    /**
+     * "Movie", after the platform's logo (its theme draws it) or with the
+     * source's own name; never the provider's address.
+     */
     readonly kindLabel = computed(() => {
         this.languageTick();
         const kind = this.translate.instant('WORKSPACE.DASHBOARD.TYPE_MOVIE');
-        const source = this.xtreamStore.currentPlaylist()?.name?.trim();
+        const source = this.titlePlatforms.brand()
+            ? null
+            : visibleSourceName(this.xtreamStore.currentPlaylist()?.name);
         return source ? `${kind} · ${source}` : kind;
     });
 

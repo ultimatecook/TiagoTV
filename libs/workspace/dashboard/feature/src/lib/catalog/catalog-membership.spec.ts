@@ -26,10 +26,16 @@ const primeTitles = toPlatformTitles(
     { id: '1270', kind: 'series', language: 'EN' },
     [{ series_id: 5, name: 'The Boys' }]
 );
+const NOTHING: PlatformListsView = {
+    lists: [],
+    total: 2,
+    answered: 0,
+    failed: 0,
+};
 
 describe('CatalogMembership', () => {
-    let view: PlatformListsView;
-    let lists: { load: jest.Mock; view: jest.Mock };
+    let view: ReturnType<typeof signal<PlatformListsView>>;
+    let lists: { refresh: jest.Mock; view: jest.Mock };
     let source: ReturnType<typeof signal<{ _id: string } | null>>;
 
     const create = () => {
@@ -47,71 +53,68 @@ describe('CatalogMembership', () => {
 
     beforeEach(() => {
         localStorage.clear();
-        jest.useRealTimers();
         source = signal<{ _id: string } | null>({ _id: 'p1' });
-        view = {
-            lists: [{ platform: PRIME, titles: primeTitles }],
-            total: 2,
-            answered: 2,
-            failed: 0,
-        };
+        view = signal<PlatformListsView>(NOTHING);
         lists = {
-            load: jest.fn(async () => undefined),
-            view: jest.fn(() => view),
+            // The lists answer: Prime Video lists "The Boys".
+            refresh: jest.fn(async () =>
+                view.set({
+                    lists: [{ platform: PRIME, titles: primeTitles }],
+                    total: 2,
+                    answered: 2,
+                    failed: 0,
+                })
+            ),
+            view: jest.fn(() => view()),
         };
     });
 
     afterEach(() => TestBed.resetTestingModule());
 
-    it("learns the platforms' members, names their platform and keeps them", async () => {
+    it("learns the platforms' members as their lists answer", async () => {
         const membership = create();
         expect(membership.members('series').size).toBe(0);
 
         await membership.refresh('series');
 
-        expect(lists.load).toHaveBeenCalledWith('series');
+        expect(lists.refresh).toHaveBeenCalledWith('series');
         expect(membership.members('series').get('1270')).toEqual(new Set([5]));
         expect(membership.platformOf('series', 5)).toBe(PRIME);
         expect(membership.platformOf('series', 99)).toBeNull();
+    });
+
+    it('keeps the members for the next launch, before any list answers', async () => {
+        await create().refresh('series');
         const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
         expect(stored.playlistId).toBe('p1');
         expect(stored.kinds.series.members).toEqual({ '1270': [5] });
-    });
-
-    it('asks again only twice a day, and reads the last answer at launch', async () => {
-        await create().refresh('series');
         TestBed.resetTestingModule();
-        lists.load.mockClear();
 
+        view.set(NOTHING);
         const next = create();
-        await next.refresh('series');
 
-        expect(lists.load).not.toHaveBeenCalled();
         expect(next.platformOf('series', 5)).toBe(PRIME);
-    });
-
-    it('tries again sooner after a partial answer', async () => {
-        jest.useFakeTimers({ now: 1_000_000_000_000 });
-        view = { ...view, failed: 1 };
-        const membership = create();
-        await membership.refresh('series');
-        lists.load.mockClear();
-
-        await membership.refresh('series');
-        expect(lists.load).not.toHaveBeenCalled();
-
-        jest.setSystemTime(1_000_000_000_000 + 31 * 60 * 1000);
-        await membership.refresh('series');
-        expect(lists.load).toHaveBeenCalledTimes(1);
     });
 
     it("keeps another source's members apart", async () => {
         const membership = create();
         await membership.refresh('series');
+        view.set(NOTHING);
 
         source.set({ _id: 'p2' });
 
         expect(membership.members('series').size).toBe(0);
         expect(membership.platformOf('series', 5)).toBeNull();
+    });
+
+    it('forgets the kept members on a reload', async () => {
+        const membership = create();
+        await membership.refresh('series');
+        view.set(NOTHING);
+
+        membership.clear();
+
+        expect(membership.members('series').size).toBe(0);
+        expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
     });
 });

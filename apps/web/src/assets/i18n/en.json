@@ -316,6 +316,72 @@
         "NAV_REMOTE": "Remote",
         "NAV_DATA": "Data",
         "NAV_BACKUP": "Backup & data",
+        "NAV_DIAGNOSTICS": "Diagnostics",
+        "DIAGNOSTICS": {
+            "TITLE": "Diagnostics",
+            "SUBTITLE": "What Series, Movies and Search are built from, and the catalog's last requests to the provider. Addresses and account details are never shown.",
+            "NO_SOURCE": "Add an Xtream source to see its catalog here.",
+            "BUILD": "App and interface",
+            "BUILD_DESCRIPTION": "The installed app's version and the interface build it runs (the interface updates over the air).",
+            "UI_BUILD": "Interface {{build}}",
+            "RELOAD": "Reload catalog",
+            "RELOAD_DESCRIPTION": "Forgets the platforms' saved lists and asks the provider for them again, one at a time.",
+            "RELOADING": "Reloading…",
+            "CATALOG": "Series and movies catalog",
+            "CATALOG_DESCRIPTION": "Per kind: the catalog the app stored, each platform's own list, and what Series and Movies show now.",
+            "SERIES": "Series",
+            "MOVIES": "Movies",
+            "IMPORT": "Import: {{status}}",
+            "STORED": "Stored: {{categories}} categories · {{rows}} titles",
+            "NOT_STORED": "Nothing stored",
+            "LISTS": "Platform lists: {{answered}} of {{total}}",
+            "COMPLETE": "complete",
+            "INCOMPLETE": "incomplete",
+            "LAST_LIST": "Last list: {{time}}",
+            "RETRIES": "{{count}} waiting to retry",
+            "SHOWN": "Shown now",
+            "NONE_SHOWN": "Nothing yet",
+            "COL_CATEGORY": "Category",
+            "COL_PLATFORM": "Platform",
+            "COL_STORED": "Stored",
+            "COL_LIST": "List",
+            "COL_IN_STORED": "Of those, stored",
+            "COL_UPDATED": "Updated",
+            "COL_STATE": "State",
+            "COL_TIME": "Time",
+            "COL_REQUEST": "Request",
+            "COL_DURATION": "Duration",
+            "COL_ITEMS": "Items",
+            "COL_RESULT": "Result",
+            "REQUESTS": "Last provider requests",
+            "REQUESTS_DESCRIPTION": "The catalog's last 30 requests: what was asked, how long it took and how it ended.",
+            "NO_REQUESTS": "No requests yet in this session.",
+            "WHOLE_CATALOG": "whole catalog",
+            "WHILE_PLAYING": "while playing",
+            "STATUS": {
+                "COMPLETED": "complete",
+                "FAILED": "failed",
+                "CANCELLED": "cancelled",
+                "IDLE": "not done",
+                "IMPORTING": "in progress",
+                "UNKNOWN": "unknown"
+            },
+            "STATE": {
+                "OK": "OK",
+                "EMPTY": "empty",
+                "FAILED": "failed",
+                "PENDING": "pending"
+            },
+            "RESULT": {
+                "OK": "OK",
+                "EMPTY": "empty",
+                "TIMEOUT": "timeout",
+                "HTTP": "HTTP {{status}}",
+                "CANCELLED": "cancelled",
+                "NETWORK": "network",
+                "ERROR": "error"
+            }
+        },
         "NAV_SERVER": "Server",
         "SERVER_DESCRIPTION": "Sources, favorites and watch progress are stored on this server and shared by every device that opens it.",
         "SERVER_CONNECTION": "Connection",
@@ -791,8 +857,8 @@
             "RECORDING_FAILED_TO_START": "Recording failed to start.",
             "RECORDING_FAILED_TO_STOP": "Recording failed to stop.",
             "SAVED_TO": "Saved to {{path}}",
-            "ENTER_PICTURE_IN_PICTURE": "Enter picture-in-picture",
-            "EXIT_PICTURE_IN_PICTURE": "Exit picture-in-picture",
+            "ENTER_PICTURE_IN_PICTURE": "Picture in picture",
+            "EXIT_PICTURE_IN_PICTURE": "Exit picture in picture",
             "ENTER_FULLSCREEN": "Enter fullscreen",
             "EXIT_FULLSCREEN": "Exit fullscreen",
             "CHANNEL_LIST": "Channel list",
@@ -831,7 +897,8 @@
             "STATS_CONTAINER": "Container",
             "STATS_BUFFER": "Buffer",
             "STATS_DROPPED_FRAMES": "Dropped frames",
-            "STATS_UNAVAILABLE": "No stream data yet"
+            "STATS_UNAVAILABLE": "No stream data yet",
+            "PICTURE_IN_PICTURE_UNAVAILABLE": "Picture in picture isn't available with Embedded MPV's native view. Turn on Settings → Playback → “Embedded MPV: frame-copy engine” to use it."
         }
     },
     "PLAYBACK_DIAGNOSTICS": {
@@ -879,7 +946,7 @@
         "INLINE_FAILURE_TITLE": "Copy the URL or try again",
         "UNTRANSFERABLE_FAILURE_TITLE": "Protected playback could not continue",
         "RECOMMENDATIONS_LABEL": "Recommended recovery actions",
-        "ACTION_TRY_PLAYER": "Try {{player}}",
+        "ACTION_TRY_PLAYER": "Try with {{player}}",
         "ACTION_TRY_PLAYER_HINT": "Temporary for this item; your saved player stays unchanged",
         "REASON_RETRY_TRANSIENT_FAILURE": "Retry the same player after a temporary loading failure",
         "REASON_RETRY_UNKNOWN_FAILURE": "Retry because the failure did not identify another compatible player",
@@ -903,7 +970,7 @@
         "ACTION_OPEN_MPV_HINT": "configured player",
         "ACTION_OPEN_VLC_HINT": "configured player",
         "ACTION_COPY_URL": "Copy stream URL",
-        "ACTION_RETRY": "Retry",
+        "ACTION_RETRY": "Retry with this player",
         "DETAILS_SUMMARY": "Technical details",
         "CODEC_HINT": "Detected {{codecs}}. Chromium/Electron browser players often have limited support for these codecs.",
         "DETAIL_CODE": "Diagnostic code",
@@ -925,7 +992,13 @@
         "ACTION_COPY_DIAGNOSTIC": "Copy diagnostics",
         "REPORT_COPIED": "Diagnostics copied",
         "COPY_FAILED": "Copy failed. Try again.",
-        "REPORT_PRIVACY": "Copies technical facts without stream URLs, credentials or raw error messages."
+        "REPORT_PRIVACY": "Copies technical facts without stream URLs, credentials or raw error messages.",
+        "ACTION_TRY_EMBEDDED_MPV": "Try with Embedded MPV",
+        "REASON_EMBEDDED_MPV": "Plays the containers and audio codecs the browser cannot",
+        "ONLY_THIS_TIME": "Only this time",
+        "PLAYER_SAVED": "{{player}} is now your player",
+        "EMBEDDED_MPV_NAME": "Embedded MPV",
+        "COPY_URL_HINT": "Copies the stream’s address, to open it in another player"
     },
     "LAYOUT": {
         "HIDE_CHANNELS_LIST": "Hide channels list",
@@ -1459,7 +1532,7 @@
             "LOADING_MORE_RESULTS": "Loading more results..."
         },
         "STREAM_URL_COPIED": "Stream URL copied to clipboard",
-        "COPY_STREAM_URL": "Copy Stream URL",
+        "COPY_STREAM_URL": "Copy stream URL",
         "NOW_PLAYING": "Now playing",
         "UP_NEXT": "Up next",
         "CLOSE_PLAYER": "Close player",
@@ -1577,7 +1650,9 @@
             "SERVER_STATUS": "Couldn't connect to the server (error {{status}})",
             "SERVER_UNREACHABLE": "Couldn't connect to the server",
             "SERVER_PAUSED": "The server isn't responding. Requests were paused after repeated failures."
-        }
+        },
+        "PLAYER_MORE_OPTIONS": "More options",
+        "PLAYER_EPISODE_CODE": "S{{season}}:E{{episode}}"
     },
     "INFORMATION": "Information",
     "DOWNLOADS": {
@@ -2204,7 +2279,8 @@
                 "COMMAND_PALETTE_RUN": "Run selected command palette item",
                 "CLOSE_DIALOGS": "Close dialog or dismiss overlay",
                 "DOWNLOADS_OPEN_ITEM": "Open focused download item in the library",
-                "OPEN_PLAYLIST_SWITCHER": "Switch source"
+                "OPEN_PLAYLIST_SWITCHER": "Switch source",
+                "PICTURE_IN_PICTURE": "Picture in picture"
             }
         },
         "GLOBAL_FAVORITES": {
@@ -2223,6 +2299,17 @@
             "NO_ITEMS_TITLE": "No favorites yet",
             "NO_ITEMS_BODY": "Tap the star icon on any channel, movie, or series to save it here.",
             "UNKNOWN_CHANNEL": "Unknown"
+        },
+        "MY_LIST": {
+            "ADD": "Add to My List",
+            "REMOVE": "Remove from My List",
+            "ADD_NAMED": "Add {{name}} to My List",
+            "REMOVE_NAMED": "Remove {{name}} from My List",
+            "SAVE_FAILED": "My List could not be updated.",
+            "CHANNELS": "Channels",
+            "LIVE": "Live",
+            "WATCH": "Watch {{name}}",
+            "EMPTY_BODY": "Tap the heart on a channel in Live, or My List on a movie or series, to save it here."
         },
         "GLOBAL_RECENT": {
             "NO_PLAYLISTS_TITLE": "Nothing watched yet",
@@ -2487,6 +2574,13 @@
                 "GB": "United Kingdom",
                 "US": "United States"
             }
+        },
+        "STAGE": {
+            "MUTE": "Mute",
+            "UNMUTE": "Unmute",
+            "MUTED": "Muted",
+            "VOLUME": "Volume",
+            "VOLUME_LEVEL": "Volume {{percent}}%"
         }
     },
     "LOADING": "Loading",

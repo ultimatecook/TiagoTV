@@ -497,4 +497,24 @@ describe('PlaybackRecoverySession', () => {
         expect(stale.recordFailure(oldBinding)).toBe(false);
         expect(stale.switchPending()).toBe(true);
     });
+
+    it('hands the stream to Embedded MPV from the error screen', () => {
+        const session = new PlaybackRecoverySession();
+        session.syncSession('channel-a');
+        const binding = session.beginPlayback(InlinePlaybackPlayer.VideoJs);
+        expect(session.recordFailure(binding)).toBe(true);
+
+        session.useEmbeddedMpv();
+
+        // The failing web engine's binding ends (it unmounts, closing its
+        // connection) before Embedded MPV opens the stream.
+        expect(session.temporaryPlayerOverride()).toBe('embedded-mpv');
+        expect(session.activeBinding()).toBeNull();
+        expect(session.accepts(binding)).toBe(false);
+        expect(session.switchPending()).toBe(false);
+
+        // A new stream starts on the saved player again.
+        session.syncSession('channel-b');
+        expect(session.temporaryPlayerOverride()).toBeNull();
+    });
 });

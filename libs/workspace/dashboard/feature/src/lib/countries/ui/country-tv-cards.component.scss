@@ -72,8 +72,8 @@
     app-region: no-drag;
 
     // The pages' card hover: a lift (the row's padding holds it) and the
-    // white ring.
-    &:hover {
+    // white ring; its heart, over it, keeps it.
+    .slot:hover & {
         background: rgba(255, 255, 255, 0.18);
         box-shadow:
             page-ui.$card-ring,
@@ -84,6 +84,70 @@
 
     &:focus-visible {
         @include focus-ring.focus-ring-declarations($offset: 1px);
+    }
+}
+
+// A card and its heart (Mi lista), which a button cannot hold.
+.slot {
+    position: relative;
+    flex: none;
+    display: flex;
+}
+
+// Top right of the logo's plate, shown on hover or keyboard focus, and
+// always, filled red, once the channel is on Mi lista.
+.fav {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 160ms ease,
+        background-color 160ms ease,
+        transform page-ui.$card-ease;
+    app-region: no-drag;
+
+    mat-icon {
+        width: 16px;
+        height: 16px;
+        font-size: 16px;
+    }
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.82);
+    }
+
+    &:focus-visible {
+        opacity: 1;
+        @include focus-ring.focus-ring-declarations($offset: 1px);
+    }
+
+    .slot:hover &,
+    .slot:has(:focus-visible) &,
+    .slot--saved & {
+        opacity: 1;
+    }
+
+    .slot:hover & {
+        transform: page-ui.$card-lift;
+    }
+
+    .slot--saved & mat-icon {
+        color: var(--tv-live-red);
+    }
+
+    @media (hover: none) {
+        opacity: 1;
     }
 }
 
@@ -233,10 +297,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .card {
+    .card,
+    .fav {
         transition: none;
 
-        &:hover {
+        .slot:hover & {
             transform: none;
         }
     }

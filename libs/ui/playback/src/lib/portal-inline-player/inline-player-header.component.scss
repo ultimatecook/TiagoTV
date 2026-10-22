@@ -1,0 +1,131 @@
+@use '../../../../styles/focus-ring';
+@use '../player-controls/player-palette';
+
+// Over the picture, like the En vivo and league stages' overlays: white
+// type on a soft top scrim, round 44px glyph buttons that light on hover.
+:host {
+    @include player-palette.focus-ring-token;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    min-width: 0;
+    color: #fff;
+}
+
+.head__info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.head__brand {
+    display: block;
+    width: auto;
+    max-width: 120px;
+    height: 22px;
+    margin-bottom: 4px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+.head__brand--white {
+    filter: brightness(0) invert(1);
+}
+
+.head__brand-name {
+    margin-bottom: 2px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.head__title {
+    margin: 0;
+    overflow: hidden;
+    font-size: clamp(20px, 1.6vw + 8px, 28px);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+}
+
+.head__episode {
+    margin: 0;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 15px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+}
+
+.head__actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+}
+
+.head__control {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.28);
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 160ms ease;
+    app-region: no-drag;
+
+    mat-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 22px;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.16);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations;
+    }
+}
+
+// The sources chip, a peer of the round buttons: a glass pill.
+:host ::ng-deep app-vod-sources-chip .sources-chip {
+    min-height: 36px;
+    margin-right: 6px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.28);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    app-region: no-drag;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.16);
+    }
+}
+
+@media (max-width: 640px) {
+    .head__episode {
+        font-size: 13px;
+    }
+
+    .head__control {
+        width: 40px;
+        height: 40px;
+    }
+}

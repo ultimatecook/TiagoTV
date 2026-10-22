@@ -1,3 +1,4 @@
+import { DIAGNOSTICS_SETTINGS_SEARCH_ENTRIES } from './settings-search-entries-diagnostics';
 import { PLAYBACK_SETTINGS_SEARCH_ENTRIES } from './settings-search-entries-playback';
 import { SettingsSearchEntry } from './settings-search.types';
 
@@ -335,6 +336,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
         descriptionKey: 'SETTINGS.REMOVE_ALL_DESCRIPTION',
         keywords: ['reset', 'delete', 'remove', 'wipe', 'playlists'],
     },
+    ...DIAGNOSTICS_SETTINGS_SEARCH_ENTRIES,
     {
         id: 'version',
         section: 'about',

@@ -1,5 +1,5 @@
 import {
-    playlistDisplayLabel,
+    sourceDisplayLabel,
     type VodSourceDescriptor,
 } from '@iptvnator/shared/interfaces';
 
@@ -42,9 +42,9 @@ export function groupVodSources(
 
     return [...byPlaylist.entries()].map(([key, groupSources]) => ({
         key,
-        label: playlistDisplayLabel(
+        label: sourceDisplayLabel(
             groupSources[0].playlistName,
-            groupSources[0].playlistId
+            groupSources[0].portalType
         ),
         // The playing copy must be the face of the group, or the user sees
         // "5 copies" with no indication that one of them is on screen.
@@ -54,4 +54,3 @@ export function groupVodSources(
         hasActive: groupSources.some((s) => s.isActive),
     }));
 }
-

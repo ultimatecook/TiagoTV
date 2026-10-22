@@ -1,0 +1,51 @@
+@let level = percent();
+<div class="volume" (wheel)="onWheel($event)">
+    <button
+        type="button"
+        class="volume__speaker"
+        data-test-id="stage-mute"
+        [attr.aria-label]="
+            (controls.muted()
+                ? 'WORKSPACE.STAGE.UNMUTE'
+                : 'WORKSPACE.STAGE.MUTE'
+            ) | translate
+        "
+        [attr.aria-pressed]="controls.muted()"
+        (click)="controls.toggleMute()"
+    >
+        <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+    </button>
+    <span class="volume__track">
+        <input
+            class="volume__slider"
+            data-test-id="stage-volume"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            [value]="level"
+            [style.--level]="level + '%'"
+            [attr.aria-label]="'WORKSPACE.STAGE.VOLUME' | translate"
+            [attr.aria-valuetext]="
+                'WORKSPACE.STAGE.VOLUME_LEVEL' | translate: { percent: level }
+            "
+            [attr.data-idle]="idle() || null"
+            (input)="onInput($event)"
+        />
+    </span>
+</div>
+
+@if (osd()) {
+    <div class="osd" data-test-id="stage-volume-osd" role="status">
+        <mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+        <span>{{
+            controls.muted()
+                ? ('WORKSPACE.STAGE.MUTED' | translate)
+                : ('WORKSPACE.STAGE.VOLUME_LEVEL'
+                  | translate: { percent: level })
+        }}</span>
+        <span class="osd__bar" aria-hidden="true">
+            <i [style.width.%]="level"></i>
+        </span>
+    </div>
+}

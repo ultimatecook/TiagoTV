@@ -12,6 +12,7 @@ import {
     type StreamingPlatformId,
 } from '../platforms/streaming-platforms';
 import { CatalogImport } from './catalog-import';
+import { CatalogPlatformLists } from './catalog-platform-lists';
 import { StoredVodCatalog } from './catalog-stored';
 import { toStoredVodCatalog } from './catalog-stored-rows';
 import { CatalogService } from './catalog.service';
@@ -43,6 +44,7 @@ describe('CatalogService', () => {
         loadShelves: jest.Mock;
         loadTitles: jest.Mock;
         categoryTitles: jest.Mock;
+        categoryName: jest.Mock;
         open: jest.Mock;
     };
     let service: CatalogService;
@@ -85,11 +87,13 @@ describe('CatalogService', () => {
             categoryTitles: jest.fn(async (category) =>
                 toPlatformTitles(category, [
                     {
+                        stream_id: Number(category.id),
                         series_id: Number(category.id),
                         name: `Show of ${category.id}`,
                     },
                 ])
             ),
+            categoryName: jest.fn(() => null),
             open: jest.fn(),
         };
         TestBed.configureTestingModule({
@@ -251,7 +255,8 @@ describe('CatalogService', () => {
 
     it("reuses the lists a platform's page already loaded", async () => {
         stored.read.mockResolvedValue(null);
-        await platforms.loadTitles('netflix');
+        await TestBed.inject(CatalogPlatformLists).loadPlatform('netflix');
+        platforms.categoryTitles.mockClear();
 
         await service.load('series');
 
@@ -261,6 +266,121 @@ describe('CatalogService', () => {
         expect(
             service.titles('series')?.map((title) => title.platform.id)
         ).toEqual(['netflix', 'disney-plus']);
+    });
+
+    describe('a stored catalog that holds only Netflix', () => {
+        const SERIES_SHELVES = buildPlatformShelves(
+            [],
+            [
+                { category_id: '2331', category_name: '|ES| ✪ NETFLIX SERIES' },
+                { category_id: '1270', category_name: '|EN| ✪ AMAZON-PRIME' },
+                { category_id: '2330', category_name: '|ES| ✪ HBO-MAX' },
+            ]
+        );
+        const LISTS: Record<string, { series_id: number; name: string }[]> = {
+            '2331': [{ series_id: 6, name: 'DARK' }],
+            '1270': [
+                { series_id: 5, name: 'The Boys' },
+                { series_id: 8, name: 'Reacher' },
+            ],
+            '2330': [{ series_id: 9, name: 'The Last of Us' }],
+        };
+        /** The background refresh's requests, one after the other. */
+        const settle = async () => {
+            for (let turn = 0; turn < 10; turn++) {
+                await new Promise((resolve) => setTimeout(resolve, 0));
+            }
+        };
+        const shown = () =>
+            (service.titles('series') ?? []).map((title) => [
+                title.title,
+                title.platform.id,
+            ]);
+
+        beforeEach(() => {
+            // An old or partial import: Netflix's rows alone.
+            stored.read.mockResolvedValue(
+                toStoredVodCatalog(
+                    SERIES_SHELVES.flatMap((shelf) => shelf.categories).map(
+                        (category) => ({
+                            category_id: category.id,
+                            category_name:
+                                category.id === '2331'
+                                    ? '|ES| ✪ NETFLIX SERIES'
+                                    : category.id === '1270'
+                                      ? '|EN| ✪ AMAZON-PRIME'
+                                      : '|ES| ✪ HBO-MAX',
+                            parent_id: 0,
+                        })
+                    ),
+                    [
+                        { series_id: 6, name: 'DARK', category_id: '2331' },
+                        { series_id: 7, name: 'ELITE', category_id: '2331' },
+                    ],
+                    false
+                )
+            );
+            platforms.loadShelves.mockImplementation(async () =>
+                platforms.shelves.set(SERIES_SHELVES)
+            );
+            platforms.categoryTitles.mockImplementation(async (category) =>
+                toPlatformTitles(category, LISTS[category.id] ?? [])
+            );
+        });
+
+        it("shows the other platforms' titles from their own lists", async () => {
+            await service.load('series');
+            expect(shown()).toEqual(
+                expect.arrayContaining([
+                    ['DARK', 'netflix'],
+                    ['ELITE', 'netflix'],
+                ])
+            );
+            expect(shown()).toHaveLength(2);
+
+            await settle();
+
+            expect(shown()).toEqual(
+                expect.arrayContaining([
+                    ['DARK', 'netflix'],
+                    ['ELITE', 'netflix'],
+                    ['The Boys', 'prime-video'],
+                    ['Reacher', 'prime-video'],
+                    ['The Last of Us', 'hbo-max'],
+                ])
+            );
+            expect(shown()).toHaveLength(5);
+        });
+
+        it('still refreshes the lists when the Home read the stored copy first', async () => {
+            // The Home's hero reads the stored copy at launch…
+            await service.loadStored('series');
+            // …and Series opens a moment later, while that read is fresh.
+            await service.load('series');
+            await settle();
+
+            expect(stored.read).toHaveBeenCalledTimes(1);
+            expect(
+                platforms.categoryTitles.mock.calls.map(
+                    ([category]) => category.id
+                )
+            ).toEqual(['2331', '1270', '2330']);
+            expect(shown()).toEqual(
+                expect.arrayContaining([['The Boys', 'prime-video']])
+            );
+        });
+
+        it('refreshes once a session, not on every visit', async () => {
+            await service.load('series');
+            await settle();
+            platforms.categoryTitles.mockClear();
+
+            await service.load('series');
+            await service.loadStored('series');
+            await settle();
+
+            expect(platforms.categoryTitles).not.toHaveBeenCalled();
+        });
     });
 
     it('fails only once nothing loaded and the platforms failed', async () => {

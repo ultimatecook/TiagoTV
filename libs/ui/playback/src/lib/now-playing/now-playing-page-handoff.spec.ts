@@ -70,6 +70,38 @@ describe('NowPlayingPageHandoff', () => {
         });
     });
 
+    it('hands the picture-in-picture state over with the stream', () => {
+        const page = create();
+        page.record({ currentTime: 42, duration: 3600, playing: true });
+        const video = document.createElement('video');
+        document.body.appendChild(video);
+        video.dispatchEvent(
+            new Event('enterpictureinpicture', { bubbles: true })
+        );
+
+        router.currentNavigation.set({ id: 2 });
+        page.release(SNAPSHOT);
+        video.remove();
+
+        expect(
+            TestBed.inject(NowPlayingDockService).session()?.pictureInPicture
+        ).toBe(true);
+    });
+
+    it('hands no picture-in-picture over once the picture left it', () => {
+        const page = create();
+        page.record({ currentTime: 42, duration: 3600, playing: true });
+        document.dispatchEvent(new Event('enterpictureinpicture'));
+        document.dispatchEvent(new Event('leavepictureinpicture'));
+
+        router.currentNavigation.set({ id: 2 });
+        page.release(SNAPSHOT);
+
+        expect(
+            TestBed.inject(NowPlayingDockService).session()?.pictureInPicture
+        ).toBeUndefined();
+    });
+
     it('also hands over once the URL already moved on', () => {
         const page = create();
         page.record({ currentTime: 42, duration: 3600, playing: true });

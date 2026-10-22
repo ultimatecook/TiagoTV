@@ -2,6 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { MatIcon } from '@angular/material/icon';
 import { TranslateModule, TranslatePipe } from '@ngx-translate/core';
+import { ChannelFavoritesService } from '../../my-list/channel-favorites.service';
 import type { MatchFeed } from '../match-feeds';
 import { feedCards, type SignalCard } from '../signal-cards';
 import { SportFeedFallback } from '../sport-feed-fallback';
@@ -11,6 +12,13 @@ import { SportTvGuide } from '../sport-tv-guide';
 import { SportTvPlayback } from '../sport-tv-playback';
 import { SportSignalCardComponent } from './sport-signal-card.component';
 import { SportStageComponent } from './sport-stage.component';
+
+const saved = signal<ReadonlySet<number>>(new Set());
+const favorites = {
+    has: (stream: number) => saved().has(stream),
+    toggle: jest.fn(async () => true),
+    refresh: jest.fn(async () => undefined),
+};
 
 describe('SportStageComponent full screen', () => {
     let fixture: ComponentFixture<SportStageComponent>;
@@ -30,7 +38,9 @@ describe('SportStageComponent full screen', () => {
     const element = () => fixture.nativeElement as HTMLElement;
     const stage = () => element().querySelector('.stage') as HTMLElement;
     const fullscreenButton = () =>
-        element().querySelectorAll<HTMLButtonElement>('.stage__control')[2];
+        element().querySelector<HTMLButtonElement>(
+            '[data-test-id="sport-fullscreen"]'
+        ) as HTMLButtonElement;
 
     beforeEach(async () => {
         document.exitFullscreen = jest.fn(async () => undefined);
@@ -54,6 +64,7 @@ describe('SportStageComponent full screen', () => {
                     useValue: { nowNext: signal(null) },
                 },
                 SportFeedFallback,
+                { provide: ChannelFavoritesService, useValue: favorites },
             ],
         });
         TestBed.overrideComponent(SportStageComponent, {
@@ -142,6 +153,32 @@ describe('SportStageComponent full screen', () => {
         } finally {
             jest.useRealTimers();
         }
+    });
+
+    it('puts the channel playing on Mi lista from its heart, and with L', () => {
+        saved.set(new Set());
+        favorites.toggle.mockClear();
+        stage().getBoundingClientRect = () =>
+            ({ bottom: window.innerHeight }) as DOMRect;
+        const heart = element().querySelector(
+            '[data-test-id="sport-my-list"]'
+        ) as HTMLButtonElement;
+        expect(heart.getAttribute('aria-pressed')).toBe('false');
+        expect(favorites.refresh).toHaveBeenCalled();
+
+        heart.click();
+        expect(favorites.toggle).toHaveBeenCalledWith(7);
+
+        saved.set(new Set([7]));
+        fixture.detectChanges();
+        expect(heart.getAttribute('aria-pressed')).toBe('true');
+        expect(heart.getAttribute('aria-label')).toBe(
+            'WORKSPACE.MY_LIST.REMOVE'
+        );
+
+        key(document.body, 'l');
+        expect(favorites.toggle).toHaveBeenCalledTimes(2);
+        saved.set(new Set());
     });
 
     it('hands full screen to a native-view Embedded MPV picture', async () => {
@@ -238,6 +275,7 @@ describe('SportStageComponent signals of a match', () => {
                 },
                 { provide: SportTvGuide, useValue: { nowNext: signal(null) } },
                 SportFeedFallback,
+                { provide: ChannelFavoritesService, useValue: favorites },
             ],
         });
         TestBed.overrideComponent(SportStageComponent, {
@@ -261,9 +299,11 @@ describe('SportStageComponent signals of a match', () => {
     });
 
     const shown = () =>
-        [...element().querySelectorAll('lib-sport-signal-card button')].map(
-            (button) => button.getAttribute('data-test-id')
-        );
+        [
+            ...element().querySelectorAll(
+                'lib-sport-signal-card button.signal'
+            ),
+        ].map((button) => button.getAttribute('data-test-id'));
 
     it('lists the match’s signals in every language, the channels a click away', () => {
         expect(text('[data-test-id="sport-row-title"]')).toContain(
@@ -317,6 +357,38 @@ describe('SportStageComponent signals of a match', () => {
         expect(play).toHaveBeenCalledWith(
             expect.objectContaining({ streamId: 20 })
         );
+    });
+
+    it('puts a signal on Mi lista from its own heart, or L on it', () => {
+        favorites.toggle.mockClear();
+        saved.set(new Set([31]));
+        fixture.detectChanges();
+        const heart = (streamId: number) =>
+            element().querySelector(
+                `[data-test-id="sport-signal-fav-${streamId}"]`
+            ) as HTMLButtonElement;
+        expect(heart(31).getAttribute('aria-pressed')).toBe('true');
+        expect(heart(31).classList).toContain('fav--on');
+        expect(heart(20).getAttribute('aria-pressed')).toBe('false');
+        expect(heart(20).tabIndex).toBe(-1);
+
+        heart(20).click();
+        expect(favorites.toggle).toHaveBeenCalledWith(20);
+
+        // L on a signal is that signal's, not the stage's channel (11).
+        const signal20 = element().querySelector(
+            '[data-test-id="sport-signal-20"]'
+        ) as HTMLButtonElement;
+        signal20.dispatchEvent(
+            new KeyboardEvent('keydown', {
+                key: 'L',
+                bubbles: true,
+                cancelable: true,
+            })
+        );
+        expect(favorites.toggle).toHaveBeenCalledTimes(2);
+        expect(favorites.toggle).toHaveBeenLastCalledWith(20);
+        saved.set(new Set());
     });
 
     it('only offers another signal when the viewer picked the one that fails', () => {

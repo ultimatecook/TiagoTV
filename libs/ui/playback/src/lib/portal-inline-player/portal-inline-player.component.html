@@ -3,65 +3,36 @@
         class="player-shell"
         [attr.aria-label]="'PORTALS.INLINE_PLAYER' | translate"
     >
-        <header class="player-shell__header">
-            <div class="player-shell__title-row">
-                <div class="player-shell__heading">
-                    <div class="player-shell__eyebrow">
-                        {{ 'PORTALS.NOW_PLAYING' | translate }}
-                    </div>
-                    <h3 class="player-shell__title" [matTooltip]="title()">
-                        {{ title() }}
-                        @if (episodeMetadataText(); as episodeText) {
-                            <span class="player-shell__episode-meta">
-                                · {{ episodeText }}
-                            </span>
-                        }
-                    </h3>
-                </div>
-                <div class="player-shell__actions">
-                    @if (allSources().length > 1) {
-                        <app-vod-sources-chip
-                            class="player-shell__sources"
-                            [sources]="allSources()"
-                            [count]="alternativeSources().length"
-                            [matchKind]="sourcesMatchKind()"
-                            [resumeLabel]="sourcesResumeLabel()"
-                            [autoFailoverEnabled]="sourcesAutoFailoverEnabled()"
-                            [autoFailoverSupported]="
-                                sourcesAutoFailoverSupported()
-                            "
-                            [playbackLive]="sourcesPlaybackLive()"
-                            (playRequested)="
-                                alternativeSourceRequested.emit($event)
-                            "
-                            (pinRequested)="sourcePinRequested.emit($event)"
-                            (checkRequested)="sourceCheckRequested.emit($event)"
-                            (autoFailoverToggled)="
-                                sourcesAutoFailoverToggled.emit($event)
-                            "
-                        />
-                    }
-                    <button
-                        mat-button
-                        type="button"
-                        [cdkCopyToClipboard]="streamUrl()"
-                        [matTooltip]="streamUrlTitle()"
-                        (click)="onCopied()"
-                    >
-                        <mat-icon>content_copy</mat-icon>
-                        {{ 'PORTALS.COPY_STREAM_URL' | translate }}
-                    </button>
-                    <button
-                        mat-stroked-button
-                        type="button"
-                        (click)="onClose()"
-                    >
-                        <mat-icon>close</mat-icon>
-                        {{ 'PORTALS.CLOSE_PLAYER' | translate }}
-                    </button>
-                </div>
-            </div>
-        </header>
+        <!-- Over the top of the picture (above it for native-view Embedded
+             MPV, which no page element can cover): the title, the sources
+             chip, "…" and close. -->
+        <app-inline-player-header
+            class="player-shell__header"
+            [heading]="heading()"
+            [brand]="brand()"
+            [streamUrl]="streamUrl()"
+            (closed)="onClose()"
+            (streamUrlCopied)="onCopied()"
+        >
+            @if (allSources().length > 1) {
+                <app-vod-sources-chip
+                    class="player-shell__sources"
+                    [sources]="allSources()"
+                    [count]="alternativeSources().length"
+                    [matchKind]="sourcesMatchKind()"
+                    [resumeLabel]="sourcesResumeLabel()"
+                    [autoFailoverEnabled]="sourcesAutoFailoverEnabled()"
+                    [autoFailoverSupported]="sourcesAutoFailoverSupported()"
+                    [playbackLive]="sourcesPlaybackLive()"
+                    (playRequested)="alternativeSourceRequested.emit($event)"
+                    (pinRequested)="sourcePinRequested.emit($event)"
+                    (checkRequested)="sourceCheckRequested.emit($event)"
+                    (autoFailoverToggled)="
+                        sourcesAutoFailoverToggled.emit($event)
+                    "
+                />
+            }
+        </app-inline-player-header>
 
         <div
             class="player-shell__viewport"

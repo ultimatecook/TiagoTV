@@ -16,84 +16,109 @@
         @for (vm of shown(); track vm.card.channel.key) {
             @let channel = vm.card.channel;
             @let label = vm.card.row.label;
-            <button
-                type="button"
-                class="card"
-                [class.card--on]="vm.on"
-                [attr.data-card]="vm.index"
-                [attr.data-test-id]="
-                    'country-tv-card-' + channel.copies[0].streamId
-                "
-                [attr.tabindex]="vm.index === resting() ? 0 : -1"
-                [attr.aria-current]="vm.on ? 'true' : null"
-                (click)="pick(vm.card, vm.index)"
-            >
-                <span
-                    class="card__thumb"
-                    [class.card__thumb--word]="!vm.logo"
-                    [style.--plate-hue]="vm.hue"
-                >
-                    @if (vm.logo; as logo) {
-                        <img
-                            class="card__logo"
-                            [src]="logo"
-                            alt=""
-                            loading="lazy"
-                            decoding="async"
-                            referrerpolicy="no-referrer"
-                            draggable="false"
-                            (error)="logoFailed(logo)"
-                        />
-                    } @else {
-                        <span
-                            class="card__word"
-                            aria-hidden="true"
-                            [class.card__word--long]="channel.title.length > 14"
-                            >{{ channel.title }}</span
-                        >
-                    }
-                    @if (vm.now?.football) {
-                        <span
-                            class="card__tag"
-                            data-test-id="countries-football"
-                        >
-                            <i class="card__tag-dot" aria-hidden="true"></i>
-                            {{ 'WORKSPACE.COUNTRIES.FOOTBALL' | translate }}
-                        </span>
-                    }
-                    @if (vm.on) {
-                        <span class="card__playing" aria-hidden="true">{{
-                            'WORKSPACE.COUNTRIES.PLAYING' | translate
-                        }}</span>
-                    }
-                </span>
-                <span class="card__text">
-                    <span class="card__name">{{ channel.title }}</span>
-                    <span class="card__now">
-                        @if (vm.now; as now) {
-                            {{ now.title }}
-                        } @else if (channel.subtitle) {
-                            {{ channel.subtitle }}
-                        } @else {
-                            {{
-                                label.key
-                                    ? (label.key | translate: label.params)
-                                    : label.text
-                            }}
-                        }
-                    </span>
-                </span>
-                <span
-                    class="card__bar"
-                    aria-hidden="true"
-                    [class.card__bar--unknown]="vm.progress === null"
+            <div class="slot" [class.slot--saved]="vm.saved">
+                <button
+                    type="button"
+                    class="card"
+                    [class.card--on]="vm.on"
+                    [attr.data-card]="vm.index"
+                    [attr.data-test-id]="
+                        'country-tv-card-' + channel.copies[0].streamId
+                    "
+                    [attr.tabindex]="vm.index === resting() ? 0 : -1"
+                    [attr.aria-current]="vm.on ? 'true' : null"
+                    (click)="pick(vm.card, vm.index)"
                 >
                     <span
-                        class="card__fill"
-                        [style.width.%]="vm.progress ?? 0"
-                    ></span>
-                </span>
-            </button>
+                        class="card__thumb"
+                        [class.card__thumb--word]="!vm.logo"
+                        [style.--plate-hue]="vm.hue"
+                    >
+                        @if (vm.logo; as logo) {
+                            <img
+                                class="card__logo"
+                                [src]="logo"
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                referrerpolicy="no-referrer"
+                                draggable="false"
+                                (error)="logoFailed(logo)"
+                            />
+                        } @else {
+                            <span
+                                class="card__word"
+                                aria-hidden="true"
+                                [class.card__word--long]="
+                                    channel.title.length > 14
+                                "
+                                >{{ channel.title }}</span
+                            >
+                        }
+                        @if (vm.now?.football) {
+                            <span
+                                class="card__tag"
+                                data-test-id="countries-football"
+                            >
+                                <i class="card__tag-dot" aria-hidden="true"></i>
+                                {{ 'WORKSPACE.COUNTRIES.FOOTBALL' | translate }}
+                            </span>
+                        }
+                        @if (vm.on) {
+                            <span class="card__playing" aria-hidden="true">{{
+                                'WORKSPACE.COUNTRIES.PLAYING' | translate
+                            }}</span>
+                        }
+                    </span>
+                    <span class="card__text">
+                        <span class="card__name">{{ channel.title }}</span>
+                        <span class="card__now">
+                            @if (vm.now; as now) {
+                                {{ now.title }}
+                            } @else if (channel.subtitle) {
+                                {{ channel.subtitle }}
+                            } @else {
+                                {{
+                                    label.key
+                                        ? (label.key | translate: label.params)
+                                        : label.text
+                                }}
+                            }
+                        </span>
+                    </span>
+                    <span
+                        class="card__bar"
+                        aria-hidden="true"
+                        [class.card__bar--unknown]="vm.progress === null"
+                    >
+                        <span
+                            class="card__fill"
+                            [style.width.%]="vm.progress ?? 0"
+                        ></span>
+                    </span>
+                </button>
+                <!-- Out of the row's tab order: L on the card does the same. -->
+                <button
+                    type="button"
+                    class="fav"
+                    tabindex="-1"
+                    [attr.data-test-id]="
+                        'country-tv-card-fav-' + channel.copies[0].streamId
+                    "
+                    [attr.aria-label]="
+                        (vm.saved
+                            ? 'WORKSPACE.MY_LIST.REMOVE_NAMED'
+                            : 'WORKSPACE.MY_LIST.ADD_NAMED'
+                        ) | translate: { name: channel.title }
+                    "
+                    [attr.aria-pressed]="vm.saved"
+                    (click)="favoriteToggled.emit(vm.card)"
+                >
+                    <mat-icon aria-hidden="true">{{
+                        vm.saved ? 'favorite' : 'favorite_border'
+                    }}</mat-icon>
+                </button>
+            </div>
         }
     </div>
 </div>

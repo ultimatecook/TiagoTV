@@ -49,6 +49,16 @@ describe('resolveNowPlayingHandoff', () => {
         });
     });
 
+    it('tells the mini-player the picture was in picture-in-picture', () => {
+        expect(
+            resolveNowPlayingHandoff(teardown({ pictureInPicture: true }))
+                ?.pictureInPicture
+        ).toBe(true);
+        expect(resolveNowPlayingHandoff(teardown())).not.toHaveProperty(
+            'pictureInPicture'
+        );
+    });
+
     it('stays out when the page closed its player, or never played', () => {
         expect(
             resolveNowPlayingHandoff(teardown({ navigatingAway: false }))

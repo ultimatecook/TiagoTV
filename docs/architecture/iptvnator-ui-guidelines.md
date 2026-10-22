@@ -515,7 +515,9 @@ Screen readers must still get the full text, such as "Sort: Date Added
 
 VOD and series detail screens share `app-portal-detail-shell` and
 `app-content-hero` (`libs/ui/components`). The hero orders its column as
-kind label ("Movie · playlist") → title → chips → description (three lines,
+kind label ("Movie · playlist"; just "Movie" after the platform's logo on a
+streaming platform's title, and never a source name that is an address:
+`visibleSourceName`) → title → chips → description (three lines,
 "More") → resume bar → action row → credits, with the poster bottom-aligned
 on the left and the backdrop filling the hero behind a two-layer scrim built
 from `--app-content-solid` (the opaque page colour; the dark theme's
@@ -548,6 +550,15 @@ no tail in the narrow layout. Series titles drop their season marker (`splitSeas
 "Season N" chip. Rows a provider cannot serve are left out of the menu, never
 disabled. The page-level Sass mixin (`libs/ui/styles/_detail-view.scss`)
 only carries the page shell, meta items and the episodes section.
+
+In the watch state the player (`app-portal-inline-player`) takes the
+hero's place: the picture large and rounded with `--tv-window-radius`, and
+over its top a minimal header (`app-inline-player-header`) that comes and
+goes with the player's controls: the platform's logo, the title as the hero
+names it (`displayTitle`), the episode as "S1:E2 · Name" ("T1:E2" in
+Spanish), the sources chip when there are several, a "…" menu (Copy stream
+URL; the address itself is never shown) and a round close button. On a
+platform's title page the controls take its accent (progress, play button).
 
 With `detailTrailerBackdrop` on (Settings → Playback → "Play trailers in
 details background", default off) the hosts hand the trailer embed URL to the

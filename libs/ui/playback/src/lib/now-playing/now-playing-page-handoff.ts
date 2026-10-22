@@ -1,5 +1,6 @@
 import {
     afterNextRender,
+    DestroyRef,
     effect,
     inject,
     Injector,
@@ -19,10 +20,17 @@ import {
     type PlaybackStreamHolder,
 } from './playback-stream-owner';
 
+const PIP_EVENTS = ['enterpictureinpicture', 'leavepictureinpicture'];
+
 /** What a page player describes about its stream when it is torn down. */
 export type NowPlayingPageSnapshot = Omit<
     NowPlayingTeardown,
-    'dockable' | 'navigatingAway' | 'progress' | 'returnUrl' | 'returnState'
+    | 'dockable'
+    | 'navigatingAway'
+    | 'progress'
+    | 'returnUrl'
+    | 'returnState'
+    | 'pictureInPicture'
 >;
 
 /**
@@ -46,6 +54,15 @@ export class NowPlayingPageHandoff {
     /** The history entry it runs on; null without the Navigation API. */
     private readonly originEntryKey = currentHistoryEntryKey();
     private progress: NowPlayingProgress | null = null;
+    /**
+     * The page's picture is in picture-in-picture. One stream plays at a
+     * time, so a PiP video while this page plays is its own; the engine's
+     * teardown exits PiP asynchronously, after the hand-over read this.
+     */
+    private pictureInPicture = false;
+    private readonly onPictureInPicture = (event: Event) => {
+        this.pictureInPicture = event.type === 'enterpictureinpicture';
+    };
     private readonly stoppedState = signal(false);
     private readonly holder: PlaybackStreamHolder = {
         stop: () => this.stopForAnotherPlayer(),
@@ -76,6 +93,20 @@ export class NowPlayingPageHandoff {
                 }
             });
         });
+        if (typeof document !== 'undefined') {
+            for (const type of PIP_EVENTS) {
+                document.addEventListener(type, this.onPictureInPicture, true);
+            }
+            inject(DestroyRef).onDestroy(() => {
+                for (const type of PIP_EVENTS) {
+                    document.removeEventListener(
+                        type,
+                        this.onPictureInPicture,
+                        true
+                    );
+                }
+            });
+        }
     }
 
     /**
@@ -118,6 +149,7 @@ export class NowPlayingPageHandoff {
             progress: this.progress,
             returnUrl: this.originUrl,
             returnState: this.originState,
+            pictureInPicture: this.pictureInPicture,
         });
         if (handoff) {
             this.dock.handOff(handoff);

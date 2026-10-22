@@ -37,7 +37,7 @@ export interface FeedCandidate extends FamilyChannel {
 
 export interface ChannelFeedOption<T extends FeedCandidate = FeedCandidate> {
     readonly channel: T;
-    /** "ESPN 2", "FOX Sports Premium". */
+    /** "ESPN 2", "ESPN Premium". */
     readonly label: string;
     /** 1 for the copy a feed plays first, 2… for its other copies. */
     readonly copy: number;

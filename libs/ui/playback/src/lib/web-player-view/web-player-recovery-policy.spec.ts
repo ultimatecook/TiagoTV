@@ -6,7 +6,13 @@ import {
     type PlaybackRecommendationTarget,
 } from '@iptvnator/playback/util';
 import type { ExternalRecoveryStates } from './external-playback-recovery';
-import { createWebPlayerRecommendations } from './web-player-recovery-policy';
+import { VideoPlayer } from '@iptvnator/shared/interfaces';
+import {
+    createWebPlayerRecommendations,
+    diagnosticTargetPlayer,
+    EMBEDDED_MPV_TARGET,
+    toVideoPlayer,
+} from './web-player-recovery-policy';
 
 const DIAGNOSTIC: PlaybackDiagnostic = {
     code: PlaybackDiagnosticCode.UnsupportedContainer,
@@ -165,5 +171,21 @@ describe('createWebPlayerRecommendations external outcomes', () => {
 
         expect([...attemptedTargets]).toEqual(attemptedBefore);
         expect(JSON.stringify(states)).toBe(statesBefore);
+    });
+});
+
+describe('error-screen player targets', () => {
+    it('stand for the saved-player setting they write', () => {
+        expect(diagnosticTargetPlayer(EMBEDDED_MPV_TARGET)).toBe(
+            VideoPlayer.EmbeddedMpv
+        );
+        expect(diagnosticTargetPlayer('mpv')).toBe(VideoPlayer.MPV);
+        expect(diagnosticTargetPlayer('vlc')).toBe(VideoPlayer.VLC);
+        expect(diagnosticTargetPlayer('html5')).toBe(VideoPlayer.Html5Player);
+        expect(diagnosticTargetPlayer('videojs')).toBe(VideoPlayer.VideoJs);
+        expect(diagnosticTargetPlayer('artplayer')).toBe(VideoPlayer.ArtPlayer);
+        expect(toVideoPlayer(EMBEDDED_MPV_TARGET)).toBe(
+            VideoPlayer.EmbeddedMpv
+        );
     });
 });

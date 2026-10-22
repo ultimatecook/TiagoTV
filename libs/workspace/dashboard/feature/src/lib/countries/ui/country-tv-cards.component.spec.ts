@@ -3,6 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { buildCountriesTv } from '../countries-catalog';
 import type { CountryChannelGroup } from '../country-channels';
 import { countryCards, type TvCard } from '../country-tv-categories';
+import { CountryTvFavorites } from '../country-tv-favorites';
 import { CountryTvListings, type TvNow } from '../country-tv-listings';
 import { OVERSCAN } from '../country-tv-window';
 import { CountryTvCardsComponent, hueOf } from './country-tv-cards.component';
@@ -35,7 +36,16 @@ describe('CountryTvCardsComponent', () => {
     async function render(playing: number | null = null, on = true) {
         TestBed.configureTestingModule({
             imports: [CountryTvCardsComponent, TranslateModule.forRoot()],
-            providers: [{ provide: CountryTvListings, useValue: listings }],
+            providers: [
+                { provide: CountryTvListings, useValue: listings },
+                {
+                    provide: CountryTvFavorites,
+                    useValue: {
+                        isSaved: (channel: CountryChannelGroup) =>
+                            channel.title === 'Station 5',
+                    },
+                },
+            ],
         });
         fixture = TestBed.createComponent(CountryTvCardsComponent);
         fixture.componentRef.setInput('cards', CARDS);
@@ -111,6 +121,45 @@ describe('CountryTvCardsComponent', () => {
         );
         card(4)?.click();
         expect(picked[0]?.channel.title).toBe('Station 4');
+    });
+
+    it('puts a card’s channel on Mi lista from its heart, or with L', async () => {
+        await render();
+        const toggled: TvCard[] = [];
+        fixture.componentInstance.favoriteToggled.subscribe((entry) =>
+            toggled.push(entry)
+        );
+        const heart = (streamId: number) =>
+            element().querySelector<HTMLButtonElement>(
+                `[data-test-id="country-tv-card-fav-${streamId}"]`
+            );
+        expect(heart(1005)?.getAttribute('aria-pressed')).toBe('true');
+        expect(heart(1005)?.closest('.slot')?.classList).toContain(
+            'slot--saved'
+        );
+        expect(heart(1004)?.getAttribute('aria-pressed')).toBe('false');
+        expect(heart(1004)?.getAttribute('aria-label')).toBe(
+            'WORKSPACE.MY_LIST.ADD_NAMED'
+        );
+        // Out of the row's one tab stop.
+        expect(heart(1004)?.tabIndex).toBe(-1);
+
+        heart(1004)?.click();
+        expect(toggled.map((entry) => entry.channel.title)).toEqual([
+            'Station 4',
+        ]);
+
+        const key = new KeyboardEvent('keydown', {
+            key: 'l',
+            bubbles: true,
+            cancelable: true,
+        });
+        card(6)?.dispatchEvent(key);
+        expect(key.defaultPrevented).toBe(true);
+        expect(toggled.map((entry) => entry.channel.title)).toEqual([
+            'Station 4',
+            'Station 6',
+        ]);
     });
 
     it('is one tab stop the arrows, Home and End move along', async () => {

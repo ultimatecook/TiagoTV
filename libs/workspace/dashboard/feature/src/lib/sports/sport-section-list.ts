@@ -55,6 +55,12 @@ export interface SportSection {
     readonly tint: string;
     readonly category: RegExp | null;
     readonly channel: RegExp | null;
+    /**
+     * The competition's broadcasters, whose channels carry it without
+     * being named after it (ESPN Premium and TNT Sports in Argentina).
+     * Generic sports channels are no broadcaster: they show anything.
+     */
+    readonly broadcasters?: readonly SectionBroadcaster[];
     /** Channels named this way stay out, whatever their category. */
     readonly notChannel?: RegExp;
     readonly competition: RegExp;
@@ -66,8 +72,22 @@ export interface SportSection {
     readonly catchAll?: boolean;
 }
 
+/** A broadcaster's channels, by their name ("|ARG| TNT SPORT"). */
+export interface SectionBroadcaster {
+    readonly channel: RegExp;
+    /**
+     * Only in the categories named so: the one country whose feed carries
+     * the competition ("|LAT| ✪ ARGENTINA"), not the UK's TNT Sports.
+     */
+    readonly category?: RegExp;
+}
+
 const ART = './assets/sports/';
 const LOGO = './assets/sports/logos/';
+
+/** The words of Argentina's football competitions ("Copa Argentina"). */
+const ARGENTINE_FOOTBALL =
+    '(primera|apertura|clausura|torneo|copa|supercopa|trofeo|superliga|liga profesional|lpf)';
 
 export const SPORT_SECTIONS: readonly SportSection[] = [
     {
@@ -96,8 +116,11 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
         tint: '#5c1420',
         category: /la ?liga/i,
         channel: /la ?liga|dazn liga/i,
-        // The second division has its own card; the third none.
-        notChannel: /hypermotion|primera federaci/i,
+        // The second division has its own card; the third none. LALIGA+
+        // ("ES: LALIGA+ PPV 3") was LaLiga's platform for the other
+        // competitions (Primera Federación, handball, futsal), never the
+        // top flight's matches; it closed in June 2026.
+        notChannel: /hypermotion|primera federaci|\bla ?liga ?\+/i,
         competition: /^(spanish )?la ?liga( ea sports)?$/i,
     },
     {
@@ -213,13 +236,33 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
         logo: `${LOGO}liga-argentina.png`,
         logoSize: 1.35,
         tint: '#14466e',
+        // Its own feeds: "US (P+) Argentina Liga Profesional De Futbol 3".
         category: /liga profesional/i,
-        // ESPN Premium ("|ARG| FOX SPORTS PREMIUM") carries its matches.
-        channel: /liga profesional|\blpf\b|^\s*\|arg\|.*\bpremium\b/i,
+        channel: /liga profesional|\blpf\b/i,
+        broadcasters: [
+            // Each airs half of every round, in Argentina's feeds only;
+            // ESPN Premium is still listed by its name before 2022
+            // ("|ARG| FOX SPORTS PREMIUM"). Not ESPN, FOX Sports 1-3,
+            // DSports or DeporTV: they carry no league match.
+            {
+                channel: /\b(espn|fox sports?) premium\b|\btnt sports?\b/i,
+                category: /argentin/i,
+            },
+            // The Copa Argentina, and the matches TyC produces for abroad.
+            { channel: /\btyc sports?\b/i },
+        ],
         // The Liga Profesional, its cups and the Copa Argentina; not the
-        // Primera Nacional and the other lower divisions.
-        competition:
-            /^(?!.*\b(primera nacional|nacional b|primera [bc]|federal|ascenso|reserva)\b)(?=.*\b(liga profesional|lpf|argentin\w*)\b)/i,
+        // Primera Nacional and the other lower divisions, not another
+        // country's "Liga Profesional" (Panamá's LPF, the Saudi league)
+        // nor another Argentine sport ("Liga Argentina de Vóley").
+        competition: new RegExp(
+            [
+                '^(?!.*\\b(primera nacional|nacional b|primera [bc]|federal|ascenso|reserva|proyecci[oó]n|promocional)\\b)',
+                '(?!.*\\b(saud\\w*|panam\\w*|bolivi\\w*|colombi\\w*|paragu\\w*|urugu\\w*|ecuador\\w*|chile\\w*|per[uú]|venezuel\\w*|m[eé]xic\\w*)(?![a-z]))',
+                `(?=.*\\b(liga profesional|lpf)\\b|.*\\bargentin\\w*\\b.*\\b${ARGENTINE_FOOTBALL}\\b|.*\\b${ARGENTINE_FOOTBALL}\\b.*\\bargentin)`,
+            ].join(''),
+            'i'
+        ),
     },
     {
         id: 'libertadores',
@@ -290,10 +333,12 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
         logo: `${LOGO}rest-of-world.svg`,
         logoSize: 0.85,
         tint: '#0d4040',
-        // GOL Mundial's events, and the football channels no card claims.
+        // GOL Mundial's events, and the football channels no card claims:
+        // not Spain's GOL (LaLiga summaries, films) nor Fox Soccer Plus,
+        // closed years ago.
         category: /gol mundial/i,
         channel:
-            /\bgol mundial\b|sky sports football|fox soccer|saudi pro league|\bgol ?tv\b/i,
+            /\bgol mundial\b|sky sports football|saudi pro league|^(?!\s*\|?es\b).*\bgol ?tv\b/i,
         competition: /(?!)/,
         catchAll: true,
     },
@@ -311,7 +356,7 @@ export const SPORT_SECTIONS: readonly SportSection[] = [
         category: /\bnba\b|\bacb\b|baloncesto|basket/i,
         channel: /\bnba\b|\bacb\b|baloncesto|euroleague|euroliga/i,
         competition:
-            /\bnba\b|liga endesa|\bacb\b|euroleague|euroliga|eurocup|basket\w*|baloncesto/i,
+            /\bnba\b|liga endesa|\bacb\b|euroleague|euroliga|eurocup|basket\w*|baloncesto|b[aá]squet\w*/i,
     },
 ];
 

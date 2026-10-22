@@ -12,11 +12,32 @@ import {
 } from '@iptvnator/portal/shared/data-access';
 import type { WorkspaceBackTarget } from '@iptvnator/portal/shared/util';
 import { Subject } from 'rxjs';
+import { CatalogPlatformLists } from '../../catalog/catalog-platform-lists';
 import { PlatformsCatalogService } from '../platforms-catalog.service';
+import {
+    titleKey,
+    toPlatformTitles,
+    type PlatformTitle,
+} from '../platform-titles';
 import { PlatformThemeService } from '../platform-theme.service';
 import { PlatformPageComponent } from './platform-page.component';
 
+/** A platform list's titles, each with a poster (the hero needs one). */
+const titlesOf = (kind: 'movie' | 'series', from: number, count: number) =>
+    toPlatformTitles(
+        { id: kind === 'movie' ? '1535' : '1270', kind, language: 'EN' },
+        Array.from({ length: count }, (_, index) => ({
+            stream_id: from + index,
+            series_id: from + index,
+            name: `${kind} ${from + index}`,
+            stream_icon: `http://img/${from + index}.jpg`,
+            cover: `http://img/${from + index}.jpg`,
+        }))
+    );
+
 describe('PlatformPageComponent — a row shown whole', () => {
+    const pageTitles = signal<PlatformTitle[] | null>([]);
+    const loadPlatform = jest.fn().mockResolvedValue(undefined);
     const events = new Subject<unknown>();
     const router = { events, navigate: jest.fn() };
     const route = {};
@@ -40,10 +61,19 @@ describe('PlatformPageComponent — a row shown whole', () => {
                 },
                 {
                     provide: PlatformsCatalogService,
+                    useValue: { failed: signal(false) },
+                },
+                {
+                    provide: CatalogPlatformLists,
                     useValue: {
-                        titlesOf: () => [],
-                        loadTitles: jest.fn().mockResolvedValue(undefined),
-                        failed: signal(false),
+                        platformTitles: () => pageTitles(),
+                        loadPlatform,
+                        platformProgress: () => ({
+                            total: 0,
+                            answered: 0,
+                            failed: 0,
+                            loading: false,
+                        }),
                     },
                 },
                 { provide: PlatformThemeService, useValue: { start: jest.fn() } },
@@ -59,7 +89,26 @@ describe('PlatformPageComponent — a row shown whole', () => {
 
     beforeEach(() => {
         targets.length = 0;
+        pageTitles.set([]);
         jest.clearAllMocks();
+    });
+
+    it("asks its lists and keeps its hero while the others arrive", () => {
+        // The series list answered first…
+        pageTitles.set(titlesOf('series', 100, 8));
+        const fixture = create();
+        const hero = fixture.componentInstance.hero().map(titleKey);
+        expect(loadPlatform).toHaveBeenCalledWith('prime-video');
+        expect(hero).toHaveLength(6);
+
+        // …then the movies: more rows, the same hero.
+        pageTitles.set([
+            ...titlesOf('movie', 200, 8),
+            ...titlesOf('series', 100, 8),
+        ]);
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.hero().map(titleKey)).toEqual(hero);
     });
 
     it('opens the row as a history entry of its own (?row=)', () => {

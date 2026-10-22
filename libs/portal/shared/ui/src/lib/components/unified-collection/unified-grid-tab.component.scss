@@ -48,6 +48,17 @@
     align-content: start;
 }
 
+// Mi lista's rows: the page scrolls, the grid grows to its titles.
+:host-context(.collection-content--rows) {
+    flex: none;
+    overflow: visible;
+
+    .grid-container {
+        flex: none;
+        overflow: visible;
+    }
+}
+
 .empty-state {
     // Nothing of this type, or nothing matches the search: the state
     // message in its dashed box at the page gutter (`_tv-kit.scss`).

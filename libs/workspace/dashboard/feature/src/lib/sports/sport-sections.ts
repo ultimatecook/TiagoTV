@@ -30,7 +30,7 @@ const NOT_TOP_FLIGHT =
  * Basketball shares competition names with football too ("Basketball
  * Champions League", "Basketball Bundesliga"): only its own card takes it.
  */
-const BASKETBALL = /basket\w*|baloncesto/i;
+const BASKETBALL = /basket\w*|baloncesto|b[aá]squet/i;
 
 /**
  * The other sports whose events also have two sides ("Chicago Grizzlies
@@ -39,22 +39,22 @@ const BASKETBALL = /basket\w*|baloncesto/i;
  */
 const NOT_FOOTBALL = new RegExp(
     [
-        'basket\\w*|baloncesto|\\bnba\\b|wnba|euro(league|liga|cup)|\\bacb\\b|\\bbbl\\b|\\blnb\\b|betclic [eé]lite',
+        'basket\\w*|baloncesto|b[aá]squet|\\bnba\\b|wnba|euro(league|liga|cup)|\\bacb\\b|\\bbbl\\b|\\blnb\\b|betclic [eé]lite',
         'hockey|\\bnhl\\b|\\bkhl\\b|eishockey',
         '\\bnfl\\b|\\bncaa\\w*|college football|american football|f[uú]tbol americano|\\b[cux]fl\\b',
-        'handball|balonmano|\\behf\\b|asobal|volley\\w*|voleibol|pallavolo|superlega|\\blvf\\b|credem',
+        'handball|balonmano|\\behf\\b|asobal|volley\\w*|voleibol|v[oó]ley|pallavolo|superlega|\\blvf\\b|credem',
         'rugby|investec|six nations|top 14|cricket|\\bipl\\b|\\bt20\\b',
         'darts?\\b|\\bpdc\\b|snooker|tennis|tenis|\\batp\\b|\\bwta\\b|padel|p[aá]del|squash|badminton',
         'golf|\\bpga\\b|cycling|ciclismo|\\buci\\b|formula|nascar|indycar|rally|superbike|\\bfi[am]\\b|grand prix',
         'boxing|boxeo|\\bpbc\\b|bkfc|\\bufc\\b|\\bmma\\b|kickboxing|fight|wrestling|\\bwwe\\b|ring magazine',
         'curling|\\bski|biathlon|athletics|atletismo|swimming|nataci[oó]n|e-?sports?|baseball|b[eé]isbol|\\bmlb\\b',
-        'futsal|f[uú]tbol sala|beach soccer|f[uú]tbol playa|horse|h[ií]pica|lacrosse|netball|\\bafl\\b|chess|ajedrez',
+        'futsal|f[uú]tbol sala|beach soccer|f[uú]tbol playa|horse|h[ií]pica|\\bpolo\\b|lacrosse|netball|\\bafl\\b|chess|ajedrez',
     ].join('|'),
     'i'
 );
 /** Team names that say their sport: "Valencia Basket", "HC Davos". */
 const NOT_FOOTBALL_SIDE =
-    /basket|baloncesto|hockey|volley|voleibol|handball|balonmano|rugby|futsal/i;
+    /basket|baloncesto|b[aá]squet|hockey|volley|voleibol|v[oó]ley|handball|balonmano|rugby|futsal/i;
 /** Names that say nothing of the sport: "LA Galaxy vs. San Diego FC | all". */
 const UNKNOWN_COMPETITION = /^(all|tb[ac]|general|various|varios)?$/i;
 
@@ -77,10 +77,14 @@ export function sectionForCompetition(
     if (NOT_TOP_FLIGHT.test(name)) {
         return null;
     }
+    // A football card takes no other sport's competition of its name
+    // ("Liga Argentina de Vóley", "Libertadores de Futsal").
+    const otherSport = NOT_FOOTBALL.test(name) || NOT_FOOTBALL_SIDE.test(title);
     const own = SPORT_SECTIONS.find(
         (section) =>
             !section.catchAll &&
             isSectionSport(section, name) &&
+            (SPORT_OF[section.id] !== undefined || !otherSport) &&
             section.competition.test(name)
     );
     if (own) {
@@ -119,7 +123,28 @@ export function channelInSection(
     }
     return (
         (section.category?.test(categoryName) ?? false) ||
-        (section.channel?.test(channelName) ?? false)
+        (section.channel?.test(channelName) ?? false) ||
+        (section.broadcasters ?? []).some(
+            (broadcaster) =>
+                broadcaster.channel.test(channelName) &&
+                (broadcaster.category?.test(categoryName) ?? true)
+        )
+    );
+}
+
+/**
+ * Whether a category holds some section's channels: a competition's own
+ * ("|ES| ✪ DAZN LA LIGA") or the one country's whose broadcasters carry
+ * one ("|LAT| ✪ ARGENTINA"). TiagoTV liviano reads only these and the
+ * event categories.
+ */
+export function isSectionCategory(categoryName: string): boolean {
+    return SPORT_SECTIONS.some(
+        (section) =>
+            (section.category?.test(categoryName) ?? false) ||
+            (section.broadcasters ?? []).some((broadcaster) =>
+                broadcaster.category?.test(categoryName)
+            )
     );
 }
 

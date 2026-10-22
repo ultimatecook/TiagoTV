@@ -207,6 +207,35 @@ start position (pre-existing).
 - Not done: storing `category_ids` in SQLite (a main-process schema change
   that would need a new installer).
 
+### Still "solo Netflix" after that fix (2026-10-22)
+
+- Causes found: the refresh never ran after the Home (its `loadStored`
+  made Series/Películas "fresh" for 10 min, and only `read()` refreshed);
+  Series/Películas could only file *stored* rows, so titles missing from
+  SQLite never showed; Buscar searched SQLite only; platform pages fired
+  every category at once (`Promise.all`, one failure lost all) and a
+  non-list answer read as an empty list; a series-only platform of ~80
+  titles laid out "Novedades" + "Series" only (no fresh titles left for
+  genres).
+- Fix (renderer only): `catalog/catalog-platform-lists.ts` is the one store
+  of the platforms' lists (Series/Películas, Buscar, platform pages): one
+  request at a time (`CatalogRequests`, page work before the background
+  refresh), partial results kept, a quick retry, then `CatalogListRetry`
+  (when a `<video>`/`<audio>` stops — `CatalogStreamActivity`; Embedded MPV
+  is not seen — and at 2/5/15/30 min). Answers persist in IndexedDB
+  (`tiagotv-catalog`, `CatalogListStore`, card fields only) and show at
+  once on the next launch. `CatalogService` refreshes them once a session
+  (12 h) from `load` *and* `loadStored`, behind the import, and shows
+  stored rows ∪ the lists (`unionPlatformLists`). Buscar merges list hits
+  (`search-list-hits.ts`). One-kind platforms list genres before their
+  kind row (`platform-rows.ts`).
+- Ajustes → Diagnóstico (`settings-diagnostics-section`,
+  `CatalogDiagnosticsService`): import status, stored rows per platform
+  category vs. each list (and how many of its titles SQLite holds), what
+  Series/Películas show per platform, retries pending, the last 30
+  requests (`CatalogRequestLog`: action, category name, time, size,
+  result — never URLs or the account) and "Recargar catálogo".
+
 ## Questions still open with the user
 
 - Should Series/Películas also include kept-language titles that are on no

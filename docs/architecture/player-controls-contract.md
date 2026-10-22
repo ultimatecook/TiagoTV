@@ -70,7 +70,9 @@ element picture-in-picture through the adapter's attached `<video>`. Shared
 ArtPlayer keeps its vendor `pip` option disabled so the shared button is the
 only PiP button. Preference-off native/vendor controls keep their own UI;
 exact-owner PiP teardown also applies in that mode.
-Embedded MPV advertises no PiP capability and its command is a no-op.
+Embedded MPV's frame-copy engine offers PiP through a copy of its canvas (see
+"Standard element picture-in-picture"); the native-view engine offers none and
+its dock shows the button dimmed with the reason as its tooltip.
 
 `Settings.webPlayerSharedControls` is default-ON: an absent stored value means
 the user never chose and gets the shared controls; only an explicit boolean
@@ -104,6 +106,20 @@ Those pure contracts and policies live in `@iptvnator/playback/util` (Nx
 project `playback-util`). `WebPlayerViewComponent` owns their in-memory,
 session-local application. No diagnostic or recommendation state or command is
 added to `PlayerController`.
+
+The error screen (`PlaybackDiagnosticPanelComponent`) sits centred in the
+player area, both ways, on every host (the En vivo and league stages, the
+title page, full screen). Its player buttons switch this stream at once and
+save the player as the default (`PlayerChoiceService.remember`: the same
+`player` setting Settings → Playback → Video player writes, then a short
+"… is now your player" toast); "Only this time" under each switches without
+saving. Where the machine has Embedded MPV (`VodEmbeddedMpvAvailability`) the
+first, primary button is "Try with Embedded MPV": Embedded MPV raises no
+diagnostics, so the recommendation policy never names it, and the view
+switches by `PlaybackRecoverySession.useEmbeddedMpv()` (a temporary override
+that also ends the failing web engine's binding, so that engine unmounts and
+closes its connection before Embedded MPV opens the stream). Retry, copy
+diagnostics, copy URL and the technical details stay as secondary actions.
 
 The only controls-layer participation is interaction gating. While the sibling
 diagnostic panel is visible, a web-player host disables shared surface and
@@ -971,7 +987,8 @@ be.
 
 ### Keyboard ownership
 
-Unmodified Space/K, F, arrow keys, and M are playback shortcuts. Playback keys
+Unmodified Space/K, F, arrow keys, M and P (picture-in-picture, where
+offered) are playback shortcuts. Playback keys
 with Meta/Cmd, Control, or Alt are ignored and are not prevented, so app and OS
 accelerators retain ownership. Escape remains available to close controls
 popovers even when a modifier is held or playback shortcuts are unavailable.
@@ -1341,8 +1358,39 @@ transfers PiP to a replacement video or closes another video's PiP.
 
 Standard element PiP displays the browser/OS video surface, not Angular shared
 control chrome. Subtitle rendering in that surface is browser-dependent.
-AirPlay, Cast, Document Picture-in-Picture, a PiP keyboard shortcut, and an
-Embedded MPV popup or native mini-window are out of scope.
+The button's tooltip reads "Picture in picture" / "Imagen en imagen".
+
+`P` toggles PiP wherever the shared button would (see "Keyboard ownership"):
+`ControlsShortcuts` calls the optional `togglePictureInPicture` handler in the
+key's own task, so the browser's user-activation requirement is met, and
+prevents the key only when the handler reports that PiP was available. The
+shortcut help lists it (`picture-in-picture`).
+
+Embedded MPV's frame-copy engine draws on a DOM canvas, so
+`EmbeddedMpvCanvasPictureInPicture` (`embedded-mpv-canvas-pip.ts`) plays that
+canvas's own `captureStream(30)` in a hidden, muted `<video>` beside it and
+requests PiP for that element: the same session and connection (MPV keeps the
+sound), no second stream. The capability is present on frame-copy in a
+browser with `pictureInPictureEnabled` and `captureStream`; the action is
+ready once the session plays or is paused. The PiP window's own play/pause
+drive the session (`togglePaused` when the states differ); leaving PiP, or
+the player's teardown, exits the window and stops the copy's tracks. The
+native-view engine paints a platform view no page element can read, so it
+reports no PiP; its dock shows a dimmed, `aria-disabled` PiP button whose
+tooltip names the frame-copy setting. An always-on-top native mini-window for
+the native view (main-process and addon work) is not implemented.
+
+The now-playing pill (`NowPlayingVideo`) offers PiP on its own `<video>` once
+the metadata is in. A page that is left while its picture is in PiP says so in
+the hand-over (`NowPlayingHandoff.pictureInPicture`, tracked by
+`NowPlayingPageHandoff` from the bubbling `enter`/`leavepictureinpicture`
+events, since the engine's teardown exits PiP asynchronously); the pill asks
+for PiP once on its new element. The browser grants that only while the
+leaving click's user activation lasts; otherwise the pill's PiP button does
+it. The pill necessarily reconnects (the page's engine and its connection end
+with the page), as every hand-over does.
+
+AirPlay, Cast and Document Picture-in-Picture are out of scope.
 
 ### Quality (bitrate/level) selection
 
@@ -1638,10 +1686,18 @@ The web-player preference does not affect Embedded MPV. Frame-copy always uses
 the shared DOM controls, while native-view keeps its compositor-safe legacy
 dock.
 
-`EmbeddedMpvControlsAdapter` reports `pictureInPicture: false`,
-`pictureInPictureActive: false`, and `canPictureInPicture: false`;
-`togglePictureInPicture()` is a no-op. Neither renderer opens an MPV
-popup/mini-window.
+`EmbeddedMpvControlsAdapter` reports PiP only for the frame-copy engine,
+through the canvas copy described in "Standard element picture-in-picture";
+on the native-view engine `pictureInPicture`, `pictureInPictureActive` and
+`canPictureInPicture` stay false and the command is a no-op. Neither renderer
+opens an MPV popup/mini-window.
+
+The level a page sets from outside the player (the En vivo and league
+stages' sliders) reaches Embedded MPV through `PlayerVolumeService`: the
+stage asks for a level, `followPlayerVolumeRequests` in
+`EmbeddedMpvPlayerComponent` applies the levels asked after it mounted
+through the existing `setEmbeddedMpvVolume` bridge, and the level persists
+under the shared `volume` key. No main-process change is involved.
 
 ### Frame-copy engine
 
@@ -1776,6 +1832,7 @@ The Embedded MPV integration lives in:
 
 ```text
 libs/ui/playback/src/lib/embedded-mpv-player/
+├── embedded-mpv-canvas-pip.ts          # frame-copy PiP: canvas copy in a hidden <video>
 ├── embedded-mpv-controls.adapter.ts
 ├── embedded-mpv-controls-recording.ts
 ├── embedded-mpv-controls-recording-feedback.ts

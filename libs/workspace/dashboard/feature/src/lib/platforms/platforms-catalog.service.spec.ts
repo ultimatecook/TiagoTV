@@ -167,8 +167,29 @@ describe('PlatformsCatalogService', () => {
         expect(titles.map((title) => [title.title, title.genres])).toEqual([
             ['MUERTOS S.L.', ['comedy']],
         ]);
-        // Not kept as the platform's titles: its page loads all of them.
-        expect(catalog.titlesOf('netflix')).toBeNull();
+        // Diagnóstico names it as the provider does.
+        expect(
+            catalog.categoryName({ id: '2331', kind: 'series', language: 'ES' })
+        ).toBe('|ES| ✪ NETFLIX SERIES');
+        expect(
+            catalog.categoryName({ id: '2331', kind: 'movie', language: 'ES' })
+        ).toBeNull();
+    });
+
+    it('asks for the movie and series categories one after the other', async () => {
+        let running = 0;
+        let most = 0;
+        api.getCategories = jest.fn(async (_credentials, kind: string) => {
+            most = Math.max(most, ++running);
+            await Promise.resolve();
+            running--;
+            return kind === 'vod' ? netflixVod : [];
+        });
+
+        await TestBed.inject(PlatformsCatalogService).loadShelves();
+
+        expect(api.getCategories).toHaveBeenCalledTimes(2);
+        expect(most).toBe(1);
     });
 
     it('tries a failed load again shortly', async () => {
@@ -176,7 +197,6 @@ describe('PlatformsCatalogService', () => {
         try {
             api.getCategories = jest
                 .fn()
-                .mockRejectedValueOnce(new Error('busy'))
                 .mockRejectedValueOnce(new Error('busy'))
                 .mockImplementation((_credentials, kind: string) =>
                     Promise.resolve(kind === 'vod' ? netflixVod : [])

@@ -7,6 +7,7 @@ import {
     resolveXtreamVodPlaybackSource,
     XtreamStore,
 } from '@iptvnator/portal/xtream/data-access';
+import { publishTitlePlatform } from '@iptvnator/services';
 import {
     getXtreamVodInfo,
     XtreamCategory,
@@ -59,6 +60,26 @@ export class VodDetailsSelectionService {
         initialValue: this.route.snapshot.params,
     });
 
+    /** The category the route opened the movie in, as the URL has it. */
+    readonly routeCategoryId = computed<string | null>(
+        () => this.routeParams()['categoryId'] ?? null
+    );
+
+    constructor() {
+        // The page wears the movie's platform, wherever it was opened from.
+        publishTitlePlatform(() => {
+            const playlistId = this.xtreamStore.currentPlaylist()?.id;
+            const vodId = this.selectedVodId();
+            return playlistId && Number.isFinite(vodId) && vodId > 0
+                ? {
+                      playlistId,
+                      kind: 'movie',
+                      itemId: vodId,
+                      categoryId: this.routeCategoryId(),
+                  }
+                : null;
+        });
+    }
     readonly selectedVodId = computed(() =>
         Number(this.routeParams()['vodId'])
     );

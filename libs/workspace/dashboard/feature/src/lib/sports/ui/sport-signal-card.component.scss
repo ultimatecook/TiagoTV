@@ -2,6 +2,7 @@
 @use '../../ui-state/page-ui';
 
 :host {
+    position: relative;
     display: block;
     min-width: 0;
 }
@@ -35,8 +36,9 @@
         box-shadow page-ui.$card-ease,
         transform page-ui.$card-ease;
 
-    // The pages' card hover: a lift and the white ring.
-    &:hover {
+    // The pages' card hover: a lift and the white ring; its heart, over
+    // it, keeps it.
+    :host(:hover) & {
         background-color: rgba(255, 255, 255, 0.08);
         box-shadow:
             page-ui.$card-ring,
@@ -91,6 +93,15 @@
     font-size: 12px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+}
+
+// The heart's place, while it shows.
+:host(:hover),
+:host(:has(:focus-visible)),
+.signal--saved {
+    .signal__number {
+        right: 38px;
+    }
 }
 
 .signal__playing {
@@ -222,11 +233,68 @@
     }
 }
 
+// Mi lista: top right of the screen, shown on hover or keyboard focus,
+// and always, filled red, once the channel is on the list.
+.fav {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 160ms ease,
+        background-color 160ms ease,
+        transform page-ui.$card-ease;
+    app-region: no-drag;
+
+    mat-icon {
+        width: 16px;
+        height: 16px;
+        font-size: 16px;
+    }
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.82);
+    }
+
+    &:focus-visible {
+        @include focus-ring.focus-ring-declarations($offset: 1px);
+    }
+
+    :host(:hover) &,
+    :host(:has(:focus-visible)) &,
+    &.fav--on {
+        opacity: 1;
+    }
+
+    :host(:hover) & {
+        transform: page-ui.$card-lift;
+    }
+
+    @media (hover: none) {
+        opacity: 1;
+    }
+}
+
+.fav--on mat-icon {
+    color: var(--tv-live-red);
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .signal {
+    .signal,
+    .fav {
         transition: none;
 
-        &:hover {
+        :host(:hover) & {
             transform: none;
         }
     }

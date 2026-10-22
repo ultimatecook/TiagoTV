@@ -5,9 +5,16 @@ import {
     type SeriesQuickStartAction,
 } from '@iptvnator/portal/shared/util';
 import { XtreamStore } from '@iptvnator/portal/xtream/data-access';
-import { SettingsStore, injectTranslationTick } from '@iptvnator/services';
+import {
+    SettingsStore,
+    TitlePlatformStore,
+    injectTranslationTick,
+} from '@iptvnator/services';
 import type { CrossPortalSimilarItem } from '@iptvnator/services';
-import { youtubeEmbedUrl } from '@iptvnator/shared/interfaces';
+import {
+    visibleSourceName,
+    youtubeEmbedUrl,
+} from '@iptvnator/shared/interfaces';
 import {
     createSeriesHeroState,
     TrailerDialogService,
@@ -35,6 +42,7 @@ export class SerialDetailsHeroPresenter {
     private readonly xtreamStore = inject(XtreamStore);
     private readonly trailerDialog = inject(TrailerDialogService);
     private readonly settingsStore = inject(SettingsStore);
+    private readonly titlePlatforms = inject(TitlePlatformStore);
     private readonly bindings = signal<SerialDetailsHeroBindings | null>(null);
     private readonly info = computed(
         () => this.bindings()?.selectedItem()?.info ?? null
@@ -65,7 +73,13 @@ export class SerialDetailsHeroPresenter {
 
     readonly hero = createSeriesHeroState({
         title: computed(() => this.info()?.name),
-        sourceLabel: computed(() => this.xtreamStore.currentPlaylist()?.name),
+        // The platform's logo (its theme draws it), else the source's own
+        // name; never the provider's address.
+        sourceLabel: computed(() =>
+            this.titlePlatforms.brand()
+                ? null
+                : visibleSourceName(this.xtreamStore.currentPlaylist()?.name)
+        ),
         status: computed(() => this.info()?.tmdb_status),
         year: computed(() => {
             const releaseDate = this.info()?.releaseDate;

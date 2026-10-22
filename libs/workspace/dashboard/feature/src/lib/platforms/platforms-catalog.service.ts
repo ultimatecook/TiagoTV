@@ -8,6 +8,7 @@ import {
     type DetailPlayMode,
 } from '@iptvnator/portal/shared/util';
 import { XtreamApiService } from '@iptvnator/portal/xtream/data-access';
+import { CatalogRequestLog } from '../catalog/catalog-request-log';
 import { primaryXtreamSource, xtreamSourceCredentials } from '../xtream-source';
 import type { PlatformGenre } from './platform-genres';
 import { titleExtras, type PlatformTitleExtras } from './platform-hero';
@@ -16,14 +17,12 @@ import {
     type PlatformTitle,
     type PlatformTitleVersion,
 } from './platform-titles';
-import { mergePlatformTitles } from './platform-versions';
 import {
     buildGenreCategories,
     buildPlatformShelves,
     type PlatformCatalogCategory,
     type PlatformCategory,
     type PlatformShelf,
-    type StreamingPlatformId,
 } from './streaming-platforms';
 
 /** Category lists change with the provider's line-up, not by the minute. */
@@ -53,16 +52,21 @@ interface Loaded<T> {
 interface PlatformCatalog {
     readonly shelves: readonly PlatformShelf[];
     readonly genreCategories: ReadonlyMap<string, readonly PlatformGenre[]>;
+    /** "movie:1535" → "✪ ORIGINAL AMAZON  MULTI". */
+    readonly names: ReadonlyMap<string, string>;
 }
 
 /**
  * The platforms of the Xtream source: which ones it carries (from its VOD
- * and series categories) and, per platform, its titles, loaded when its
- * page opens.
+ * and series categories), one category's list on request, and the hero
+ * titles' pages. The platforms' lists themselves are kept by
+ * `CatalogPlatformLists`, which Series, Películas, Buscar and the platform
+ * pages share.
  */
 @Injectable({ providedIn: 'root' })
 export class PlatformsCatalogService {
     private readonly api = inject(XtreamApiService);
+    private readonly log = inject(CatalogRequestLog);
     private readonly router = inject(Router);
     private readonly playlists = inject(Store).selectSignal(
         selectAllPlaylistsMeta
@@ -70,19 +74,12 @@ export class PlatformsCatalogService {
     private readonly loadedCatalog = signal<Loaded<PlatformCatalog> | null>(
         null
     );
-    private readonly loadedTitles = signal<
-        ReadonlyMap<StreamingPlatformId, Loaded<readonly PlatformTitle[]>>
-    >(new Map());
     private readonly loadedExtras = signal<
         ReadonlyMap<string, PlatformTitleExtras>
     >(new Map());
     private readonly extrasRequested = new Set<string>();
     private catalogRequest: Promise<void> | null = null;
     private retry: ReturnType<typeof setTimeout> | null = null;
-    private readonly titleRequests = new Map<
-        StreamingPlatformId,
-        Promise<void>
-    >();
 
     readonly source = computed(() => primaryXtreamSource(this.playlists()));
     private readonly catalog = computed(() => {
@@ -94,15 +91,11 @@ export class PlatformsCatalogService {
     readonly shelves = computed(() => this.catalog()?.shelves ?? null);
     readonly failed = signal(false);
 
-    /**
-     * The platform's titles, newest first, once loaded: one per show, its
-     * Spanish and English versions together.
-     */
-    titlesOf(id: StreamingPlatformId): readonly PlatformTitle[] | null {
-        const loaded = this.loadedTitles().get(id);
-        return loaded && loaded.playlistId === this.source()?._id
-            ? loaded.value
-            : null;
+    /** A platform category's name, as the provider calls it. */
+    categoryName(category: PlatformCategory): string | null {
+        return (
+            this.catalog()?.names.get(`${category.kind}:${category.id}`) ?? null
+        );
     }
 
     loadShelves(): Promise<void> {
@@ -122,10 +115,13 @@ export class PlatformsCatalogService {
             }
         }
         const credentials = xtreamSourceCredentials(source);
-        this.catalogRequest ??= Promise.all([
-            this.api.getCategories(credentials, 'vod', OPTIONS),
-            this.api.getCategories(credentials, 'series', OPTIONS),
-        ])
+        // One after the other: the provider refuses bursts.
+        const ask = (type: 'vod' | 'series') =>
+            this.log.track(`get_${type}_categories`, null, () =>
+                this.api.getCategories(credentials, type, OPTIONS)
+            );
+        this.catalogRequest ??= ask('vod')
+            .then(async (vod) => [vod, await ask('series')] as const)
             .then(([vod, series]) => {
                 this.failed.set(false);
                 this.loadedCatalog.set({
@@ -146,47 +142,9 @@ export class PlatformsCatalogService {
         return this.catalogRequest;
     }
 
-    async loadTitles(id: StreamingPlatformId): Promise<void> {
-        await this.loadShelves();
-        const source = this.source();
-        const catalog = this.catalog();
-        const shelf = catalog?.shelves.find((item) => item.platform.id === id);
-        if (
-            !source ||
-            !catalog ||
-            !shelf ||
-            isFresh(this.loadedTitles().get(id) ?? null, source._id)
-        ) {
-            return;
-        }
-        let request = this.titleRequests.get(id);
-        if (!request) {
-            request = Promise.all(
-                shelf.categories.map((category) =>
-                    this.categoryTitles(category)
-                )
-            )
-                .then((lists) => {
-                    this.failed.set(false);
-                    this.loadedTitles.update((state) =>
-                        new Map(state).set(id, {
-                            playlistId: source._id,
-                            value: mergePlatformTitles(lists),
-                            at: Date.now(),
-                        })
-                    );
-                })
-                .catch(() => this.failed.set(true))
-                .finally(() => this.titleRequests.delete(id));
-            this.titleRequests.set(id, request);
-        }
-        return request;
-    }
-
     /**
-     * One of the platforms' categories, asked now (one request): what
-     * Series / Películas load, category by category, while the app keeps
-     * no catalog. Not kept here: a platform's page loads all its own.
+     * One of the platforms' categories, asked now (one request); its
+     * caller (`CatalogPlatformLists`) keeps it and queues the requests.
      */
     async categoryTitles(
         category: PlatformCategory
@@ -234,8 +192,12 @@ export class PlatformsCatalogService {
             this.extrasRequested.add(key);
             const details =
                 title.kind === 'movie'
-                    ? this.api.getVodInfo(credentials, title.id, OPTIONS)
-                    : this.api.getSeriesInfo(credentials, title.id, OPTIONS);
+                    ? this.log.track('get_vod_info', null, () =>
+                          this.api.getVodInfo(credentials, title.id, OPTIONS)
+                      )
+                    : this.log.track('get_series_info', null, () =>
+                          this.api.getSeriesInfo(credentials, title.id, OPTIONS)
+                      );
             void details
                 .then((answer) =>
                     this.loadedExtras.update((state) =>
@@ -301,9 +263,19 @@ function toCatalog(
     vod: readonly PlatformCatalogCategory[],
     series: readonly PlatformCatalogCategory[]
 ): PlatformCatalog {
+    const names = new Map<string, string>();
+    for (const [kind, categories] of [
+        ['movie', vod],
+        ['series', series],
+    ] as const) {
+        for (const category of categories) {
+            names.set(`${kind}:${category.category_id}`, category.category_name);
+        }
+    }
     return {
         shelves: buildPlatformShelves(vod, series),
         genreCategories: buildGenreCategories([...vod, ...series]),
+        names,
     };
 }
 

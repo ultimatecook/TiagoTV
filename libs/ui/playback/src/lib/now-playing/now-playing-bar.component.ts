@@ -40,10 +40,10 @@ const POSITION_SAVE_INTERVAL_SECONDS = 10;
 /**
  * The bottom "now playing" pill. It continues the stream a page handed over
  * (`NowPlayingDockService`) in a small video where the artwork sits, with
- * close, skip, play/pause, repeat, time and volume, and saves the resume
- * position like the page did. The artwork opens the same player
- * full-window (Escape or minimize shrinks it back); the title leads back to
- * the page.
+ * close, skip, play/pause, repeat, time, picture-in-picture and volume,
+ * and saves the resume position like the page did. The artwork opens the
+ * same player full-window (Escape or minimize shrinks it back); the title
+ * leads back to the page.
  */
 @Component({
     selector: 'app-now-playing-bar',
@@ -155,6 +155,7 @@ export class NowPlayingBarComponent
             startPaused: session.paused,
             volume: session.volume,
             muted: session.muted,
+            pictureInPicture: session.pictureInPicture,
         });
         effect(
             () => {
@@ -195,6 +196,10 @@ export class NowPlayingBarComponent
 
     toggleMuted(): void {
         this.video.toggleMuted();
+    }
+
+    togglePictureInPicture(): void {
+        this.video.togglePictureInPicture();
     }
 
     onVolumeInput(event: Event): void {

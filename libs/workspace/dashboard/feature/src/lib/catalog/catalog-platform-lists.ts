@@ -1,199 +1,336 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import {
+    computed,
+    effect,
+    inject,
+    Injectable,
+    signal,
+    untracked,
+    type Signal,
+} from '@angular/core';
 import { PlatformsCatalogService } from '../platforms/platforms-catalog.service';
 import type { PlatformTitle } from '../platforms/platform-titles';
-import { mergePlatformTitles } from '../platforms/platform-versions';
 import type {
     PlatformCategory,
     StreamingPlatform,
+    StreamingPlatformId,
 } from '../platforms/streaming-platforms';
 import { takeTurns } from './catalog-fairness';
-import { CatalogRequests, delay } from './catalog-requests';
-import type { CatalogKind, PlatformTitleList } from './catalog-titles';
+import {
+    answerKey,
+    CatalogListAnswers,
+    type CategoryListState,
+} from './catalog-list-answers';
+import {
+    CATALOG_RETRY_DELAYS_MS,
+    CatalogListRetry,
+    type CatalogRetryOutcome,
+} from './catalog-list-retry';
+import {
+    categoriesOfKind,
+    listsView,
+    platformTitlesOf,
+    progressOf,
+    type PlatformListsProgress,
+    type PlatformListsView,
+} from './catalog-list-views';
+import { categoryLabel, CatalogRequestLog } from './catalog-request-log';
+import {
+    CatalogRequests,
+    delay,
+    type CatalogPriority,
+} from './catalog-requests';
+import type { CatalogKind } from './catalog-titles';
 
-/** A category's list changes with the provider's uploads, not by the minute. */
-const FRESH_MS = 30 * 60 * 1000;
-/** The categories that failed are asked once more, this much later. */
+export type { PlatformListsProgress, PlatformListsView };
+
+/** A platform's page asks again for its lists older than this. */
+export const PLATFORM_LISTS_FRESH_MS = 60 * 60 * 1000;
+/** The background refresh asks each list at most twice a day. */
+export const PLATFORM_LISTS_REFRESH_MS = 12 * 60 * 60 * 1000;
+/** The lists that failed are asked once more, this much later. */
 export const CATALOG_LISTS_RETRY_MS = 5_000;
-
-interface CategoryAnswer {
-    readonly playlistId: string;
-    /** Null: the request failed. */
-    readonly titles: readonly PlatformTitle[] | null;
-    readonly at: number;
-}
 
 interface Queued {
     readonly platform: StreamingPlatform;
     readonly category: PlatformCategory;
 }
 
-/** What the platforms' lists of one kind hold so far. */
-export interface PlatformListsView {
-    readonly lists: readonly PlatformTitleList[];
-    /** The platforms carrying the kind, by the source's categories. */
-    readonly total: number;
-    /** Of those, the ones that answered (or failed) at least once. */
-    readonly answered: number;
-    /** Of those, the ones every request of which failed. */
-    readonly failed: number;
-}
-
 /**
- * Series / Películas where no catalog is stored and none can be imported
- * (the browser build, or a failed import): the platforms' own categories
- * of the kind, one request at a time (`CatalogRequests`) and with the
- * platforms taking turns — every platform's first category, then each
- * one's second… — so the first answers come from several platforms, not
- * all from the biggest one. A platform whose page already loaded its lists
- * asks nothing again.
+ * The platforms' own category lists, one store for the whole app: Series
+ * and Películas (with the stored catalog, or alone where nothing is
+ * stored), Buscar, and each platform's page. A list is asked once, one
+ * request at a time (`CatalogRequests`); what answered shows at once (a
+ * page fills as its lists arrive), and what failed is asked again a little
+ * later, then by `CatalogListRetry` (when playback stops, and on a timer).
+ * The answers persist across launches (`CatalogListAnswers`), so the next
+ * launch shows them before any request.
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogPlatformLists {
     private readonly platforms = inject(PlatformsCatalogService);
     private readonly requests = inject(CatalogRequests);
-    private readonly answers = signal<ReadonlyMap<string, CategoryAnswer>>(
-        new Map()
-    );
-    private readonly loading = new Map<CatalogKind, Promise<void>>();
+    private readonly answers = inject(CatalogListAnswers);
+    private readonly retry = inject(CatalogListRetry);
+    private readonly log = inject(CatalogRequestLog);
+
+    /** The loads running now: their key → the kind or platform loading. */
+    private readonly running = signal<ReadonlyMap<string, string>>(new Map());
+    private readonly inflight = new Map<string, Promise<CatalogRetryOutcome>>();
+    private readonly loads = new Map<string, Promise<void>>();
+    private readonly platformViews = new Map<
+        StreamingPlatformId,
+        Signal<PlatformTitle[] | null>
+    >();
     private readonly views = {
-        movie: computed(() => this.compute('movie')),
-        series: computed(() => this.compute('series')),
+        movie: computed(() => this.computeView('movie')),
+        series: computed(() => this.computeView('series')),
     };
+
+    constructor() {
+        // The kept lists show as soon as the source is known.
+        effect(() => {
+            if (this.platforms.source()?._id) {
+                untracked(() => void this.answers.ready());
+            }
+        });
+    }
 
     view(kind: CatalogKind): PlatformListsView {
         return this.views[kind]();
     }
 
-    private compute(kind: CatalogKind): PlatformListsView {
-        const playlistId = this.platforms.source()?._id;
-        const answers = this.answers();
-        const lists: PlatformTitleList[] = [];
-        let total = 0;
-        let answered = 0;
-        let failed = 0;
-        for (const shelf of this.platforms.shelves() ?? []) {
-            const categories = ofKind(shelf.categories, kind);
-            if (categories.length === 0) {
-                continue;
-            }
-            total++;
-            const own = this.platforms.titlesOf(shelf.platform.id);
-            if (own) {
-                lists.push({ platform: shelf.platform, titles: own });
-                answered++;
-                continue;
-            }
-            const known = categories
-                .map((category) => answers.get(answerKey(kind, category)))
-                .filter((answer) => answer?.playlistId === playlistId);
-            const loaded = known
-                .map((answer) => answer?.titles)
-                .filter((titles) => !!titles) as (readonly PlatformTitle[])[];
-            if (loaded.length > 0) {
-                lists.push({
-                    platform: shelf.platform,
-                    titles: mergePlatformTitles(loaded),
-                });
-            }
-            if (known.length > 0) {
-                answered++;
-            }
-            if (known.length === categories.length && loaded.length === 0) {
-                failed++;
-            }
-        }
-        return { lists, total, answered, failed };
+    /** Whether the kind's lists are being asked now. */
+    loading(kind: CatalogKind): boolean {
+        return [...this.running().values()].includes(kind);
     }
 
-    /** Asks for the kind's lists not loaded yet (or no longer fresh). */
-    load(kind: CatalogKind): Promise<void> {
-        let request = this.loading.get(kind);
-        if (!request) {
-            request = this.loadAll(kind).finally(() =>
-                this.loading.delete(kind)
+    /** A platform's titles, both kinds, newest first; null until one answered. */
+    platformTitles(id: StreamingPlatformId): PlatformTitle[] | null {
+        let view = this.platformViews.get(id);
+        if (!view) {
+            view = computed(() =>
+                platformTitlesOf(this.shelfOf(id), this.answers.lookup())
             );
-            this.loading.set(kind, request);
+            this.platformViews.set(id, view);
+        }
+        return view();
+    }
+
+    platformProgress(id: StreamingPlatformId): PlatformListsProgress {
+        return progressOf(
+            this.shelfOf(id),
+            this.answers.lookup(),
+            [...this.running().values()].includes(id)
+        );
+    }
+
+    /** A category's list as known now, for Diagnóstico. */
+    categoryState(category: PlatformCategory): CategoryListState {
+        return this.answers.state(category);
+    }
+
+    /** Resolves once the lists kept from the last launch are read. */
+    ready(): Promise<void> {
+        return this.answers.ready();
+    }
+
+    /** Asks the kind's lists not known yet (or older than `maxAge`). */
+    load(
+        kind: CatalogKind,
+        priority: CatalogPriority = 'normal',
+        maxAge = PLATFORM_LISTS_FRESH_MS
+    ): Promise<void> {
+        return this.once(`${kind}:${priority}`, kind, async (playlistId) => {
+            const wanted: Queued[] = [];
+            for (const shelf of this.platforms.shelves() ?? []) {
+                for (const category of categoriesOfKind(
+                    shelf.categories,
+                    kind
+                )) {
+                    // A list that just failed waits for its retry.
+                    if (
+                        priority === 'normal' ||
+                        !this.answers.failedWithin(
+                            playlistId,
+                            category,
+                            CATALOG_RETRY_DELAYS_MS[0]
+                        )
+                    ) {
+                        wanted.push({ platform: shelf.platform, category });
+                    }
+                }
+            }
+            // The platforms take turns: the first answers are several's.
+            await this.askAll(playlistId, takeTurns(wanted), priority, maxAge);
+        });
+    }
+
+    /** The background refresh: Series, Películas and Buscar keep it current. */
+    refresh(kind: CatalogKind): Promise<void> {
+        return this.load(kind, 'background', PLATFORM_LISTS_REFRESH_MS);
+    }
+
+    /** A platform's page: its lists, both kinds, one at a time. */
+    loadPlatform(id: StreamingPlatformId): Promise<void> {
+        return this.once(`platform:${id}`, id, async (playlistId) => {
+            const shelf = this.shelfOf(id);
+            if (shelf) {
+                const items = shelf.categories.map((category) => ({
+                    platform: shelf.platform,
+                    category,
+                }));
+                await this.askAll(
+                    playlistId,
+                    items,
+                    'normal',
+                    PLATFORM_LISTS_FRESH_MS
+                );
+            }
+        });
+    }
+
+    /** Forgets every list, here and across launches (Diagnóstico). */
+    async clear(): Promise<void> {
+        this.inflight.clear();
+        this.retry.clear();
+        await this.answers.clear();
+    }
+
+    private computeView(kind: CatalogKind): PlatformListsView {
+        return listsView(
+            this.platforms.shelves() ?? [],
+            kind,
+            this.answers.lookup()
+        );
+    }
+
+    /** "EN · AMAZON-PRIME": how Diagnóstico names the category. */
+    private labelOf(category: PlatformCategory): string {
+        const name = this.platforms.categoryName(category);
+        return name ? categoryLabel(name) : category.id;
+    }
+
+    private shelfOf(id: StreamingPlatformId) {
+        return this.platforms
+            .shelves()
+            ?.find((shelf) => shelf.platform.id === id);
+    }
+
+    /** Runs `task` once at a time, with the kept lists read and shelves known. */
+    private once(
+        key: string,
+        busyKey: string,
+        task: (playlistId: string) => Promise<void>
+    ): Promise<void> {
+        let request = this.loads.get(key);
+        if (!request) {
+            this.running.update((state) => new Map(state).set(key, busyKey));
+            request = (async () => {
+                await this.answers.ready();
+                await this.platforms.loadShelves();
+                const playlistId = this.platforms.source()?._id;
+                if (playlistId) {
+                    await task(playlistId);
+                }
+            })().finally(() => {
+                this.loads.delete(key);
+                this.running.update((state) => {
+                    const next = new Map(state);
+                    next.delete(key);
+                    return next;
+                });
+            });
+            this.loads.set(key, request);
         }
         return request;
     }
 
-    private async loadAll(kind: CatalogKind): Promise<void> {
-        await this.platforms.loadShelves();
-        const playlistId = this.platforms.source()?._id;
-        if (!playlistId) {
+    private async askAll(
+        playlistId: string,
+        items: readonly Queued[],
+        priority: CatalogPriority,
+        maxAge: number
+    ): Promise<void> {
+        const missed: Queued[] = [];
+        for (const item of items) {
+            if ((await this.ask(playlistId, item, priority, maxAge)) !== 'ok') {
+                missed.push(item);
+            }
+        }
+        if (missed.length === 0) {
             return;
         }
-        const wanted: Queued[] = [];
-        for (const shelf of this.platforms.shelves() ?? []) {
-            if (!this.platforms.titlesOf(shelf.platform.id)) {
-                for (const category of ofKind(shelf.categories, kind)) {
-                    wanted.push({ platform: shelf.platform, category });
-                }
-            }
-        }
-        const queue = takeTurns(wanted);
-        const failed: Queued[] = [];
-        for (const item of queue) {
-            if (!(await this.ask(playlistId, kind, item.category))) {
-                failed.push(item);
-            }
-        }
-        if (failed.length > 0) {
-            await delay(CATALOG_LISTS_RETRY_MS);
-            for (const item of failed) {
-                await this.ask(playlistId, kind, item.category);
+        await delay(CATALOG_LISTS_RETRY_MS);
+        for (const item of missed) {
+            if ((await this.ask(playlistId, item, priority, 0)) !== 'ok') {
+                this.retry.add(retryKey(playlistId, item.category), () =>
+                    this.ask(playlistId, item, 'background', 0)
+                );
             }
         }
     }
 
-    /** One category's list, unless a fresh one is held; false if it failed. */
-    private async ask(
+    /** One category's list, unless a fresh one is held; shared while asked. */
+    private ask(
         playlistId: string,
-        kind: CatalogKind,
-        category: PlatformCategory
-    ): Promise<boolean> {
-        const key = answerKey(kind, category);
-        const known = this.answers().get(key);
-        if (
-            known?.playlistId === playlistId &&
-            known.titles &&
-            Date.now() - known.at < FRESH_MS
-        ) {
-            return true;
+        item: Queued,
+        priority: CatalogPriority,
+        maxAge: number
+    ): Promise<CatalogRetryOutcome> {
+        if (this.answers.isFresh(playlistId, item.category, maxAge)) {
+            return Promise.resolve('ok');
         }
-        const answer = await this.requests
-            .run(async () =>
-                // The source changed meanwhile: its lists are not this one's.
-                this.platforms.source()?._id === playlistId
-                    ? await this.platforms.categoryTitles(category)
-                    : null
+        const key = answerKey(item.category);
+        let pending = this.inflight.get(key);
+        if (!pending) {
+            pending = this.fetch(playlistId, item.category, priority).finally(
+                () => {
+                    if (this.inflight.get(key) === pending) {
+                        this.inflight.delete(key);
+                    }
+                }
+            );
+            this.inflight.set(key, pending);
+        }
+        return pending;
+    }
+
+    private async fetch(
+        playlistId: string,
+        category: PlatformCategory,
+        priority: CatalogPriority
+    ): Promise<CatalogRetryOutcome> {
+        const generation = this.answers.generation();
+        const current = () =>
+            generation === this.answers.generation() &&
+            this.platforms.source()?._id === playlistId;
+        const titles = await this.requests
+            .run(
+                () =>
+                    current()
+                        ? this.log.track(
+                              category.kind === 'movie'
+                                  ? 'get_vod_streams'
+                                  : 'get_series',
+                              this.labelOf(category),
+                              () => this.platforms.categoryTitles(category)
+                          )
+                        : Promise.resolve(null),
+                priority
             )
             .catch(() => undefined);
-        if (answer === null) {
-            return true;
+        // The source changed, or the lists were cleared, meanwhile.
+        if (titles === null || !current()) {
+            return 'ok';
         }
-        if (answer === undefined && known?.playlistId === playlistId) {
-            // An older answer outlives a failed reload.
-            return !!known.titles;
+        const outcome = this.answers.record(playlistId, category, titles);
+        if (outcome === 'ok') {
+            this.retry.remove(retryKey(playlistId, category));
         }
-        this.answers.update((state) =>
-            new Map(state).set(key, {
-                playlistId,
-                titles: answer ?? null,
-                at: Date.now(),
-            })
-        );
-        return answer !== undefined;
+        return outcome;
     }
 }
 
-function ofKind(
-    categories: readonly PlatformCategory[],
-    kind: CatalogKind
-): PlatformCategory[] {
-    return categories.filter((category) => category.kind === kind);
-}
-
-function answerKey(kind: CatalogKind, category: PlatformCategory): string {
-    return `${kind}:${category.id}`;
+function retryKey(playlistId: string, category: PlatformCategory): string {
+    return `${playlistId}|${answerKey(category)}`;
 }

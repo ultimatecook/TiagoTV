@@ -18,18 +18,21 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
     type PlaybackDiagnostic,
     type PlaybackRecommendation,
-    type PlaybackRecommendationTarget,
 } from '@iptvnator/playback/util';
 import type {
     ResolvedPortalPlayback,
     VodSourceDescriptor,
 } from '@iptvnator/shared/interfaces';
-import { redactSensitiveData } from '@iptvnator/shared/logging';
 import { VodSourceRowComponent } from '@iptvnator/ui/components';
 import type {
     ExternalRecoveryStates,
     ExternalRecoveryTargetState,
 } from '../web-player-view/external-playback-recovery';
+import {
+    EMBEDDED_MPV_TARGET,
+    type DiagnosticPlayerTarget,
+} from '../web-player-view/web-player-recovery-policy';
+import { PlayerChoiceService } from './player-choice.service';
 import {
     getDiagnosticCodecHint,
     getDiagnosticDescriptionKey,
@@ -47,7 +50,6 @@ import {
     getRecommendationTestId,
     isExternalPlayerRecommendation,
     isExternalRecommendationLaunching,
-    isTemporaryBuiltInRecommendation,
 } from './playback-recommendation-view.util';
 
 /** How many recovery options the error screen shows before it stops helping. */
@@ -80,11 +82,14 @@ export class PlaybackDiagnosticPanelComponent {
     readonly pending = input(false);
 
     readonly retryRequested = output<void>();
-    readonly playerRequested = output<PlaybackRecommendationTarget>();
+    /** A player for this stream now; its button also saved it (see `choose`). */
+    readonly playerRequested = output<DiagnosticPlayerTarget>();
     readonly alternativeSourceRequested = output<string>();
     readonly sourceCheckRequested = output<string>();
 
     private readonly document = inject(DOCUMENT);
+    readonly choice = inject(PlayerChoiceService);
+    readonly embeddedMpv = EMBEDDED_MPV_TARGET;
     private readonly copyResult = signal<{
         issue: PlaybackDiagnostic;
         success: boolean;
@@ -103,14 +108,6 @@ export class PlaybackDiagnosticPanelComponent {
             ? 'PLAYBACK_DIAGNOSTICS.REPORT_COPIED'
             : 'PLAYBACK_DIAGNOSTICS.COPY_FAILED';
     });
-
-    /**
-     * The address Copy URL puts on the clipboard, as its hover title: the
-     * copy is the person's explicit ask, the title is on screen.
-     */
-    readonly streamUrlTitle = computed(() =>
-        String(redactSensitiveData(this.playback().streamUrl))
-    );
 
     onReportCopied(success: boolean): void {
         this.copyResult.set({ issue: this.diagnostic(), success });
@@ -146,8 +143,6 @@ export class PlaybackDiagnosticPanelComponent {
     readonly getRecommendationIcon = getRecommendationIcon;
     readonly getRecommendationParams = getRecommendationParams;
     readonly getRecommendationReasonKey = getRecommendationReasonKey;
-    readonly isTemporaryBuiltInRecommendation =
-        isTemporaryBuiltInRecommendation;
     readonly isExternalPlayerRecommendation = isExternalPlayerRecommendation;
 
     getDiagnosticDescriptionKey(issue: PlaybackDiagnostic): string {
@@ -167,11 +162,25 @@ export class PlaybackDiagnosticPanelComponent {
                 this.retryRequested.emit();
                 return;
             case 'player':
-                this.playerRequested.emit(recommendation.target);
+                this.choose(recommendation.target, true);
                 return;
             case 'alternative-source':
                 return;
         }
+    }
+
+    /**
+     * Plays this stream on `target` now (the failing engine stops first) and,
+     * unless "Only this time", saves it as the default player.
+     */
+    choose(target: DiagnosticPlayerTarget, remember: boolean): void {
+        if (this.pending()) {
+            return;
+        }
+        if (remember) {
+            void this.choice.remember(target);
+        }
+        this.playerRequested.emit(target);
     }
 
     getRecommendationLabelKey(recommendation: PlaybackRecommendation): string {

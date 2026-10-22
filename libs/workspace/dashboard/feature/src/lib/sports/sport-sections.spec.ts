@@ -3,6 +3,7 @@ import {
     competitionLogo,
     findSportSection,
     isFootball,
+    isSectionCategory,
     namesOtherSport,
     sectionForCompetition,
     SPORT_SECTIONS,
@@ -73,6 +74,20 @@ describe('sport sections', () => {
         expect(
             channelInSection(laliga, '|ES| M LA LIGA 2 ᵁᴴᴰ', '|ES| ✪ SPAIN')
         ).toBe(true);
+        // LALIGA+ carried the other competitions, never the top flight.
+        expect(
+            channelInSection(laliga, 'ES: LALIGA+ PPV 7', '|ES| ✪ LALIGA+ PPV')
+        ).toBe(false);
+        expect(
+            channelInSection(laliga, '|ES| ✪ LALIGA+ PPV', '|ES| ✪ LALIGA+ PPV')
+        ).toBe(false);
+        expect(
+            channelInSection(
+                laliga,
+                'M+ LaLigaTV 3 HD Orange',
+                '|ES| ✪ LALIGA ORANGE'
+            )
+        ).toBe(true);
         // The provider files the third division under Hypermotion.
         const thirdDivision = [
             '|ES| MOVISTAR PRIMERA FEDERACION FHD',
@@ -110,31 +125,85 @@ describe('sport sections', () => {
         expect(id('Liga Profesional de Fútbol')).toBe('liga-argentina');
         expect(id('Torneo Clausura - Argentina')).toBe('liga-argentina');
         expect(id('Copa Argentina')).toBe('liga-argentina');
+        expect(id('Copa de la Liga Profesional')).toBe('liga-argentina');
+        expect(id('Argentine Primera División')).toBe('liga-argentina');
+        expect(id('Supercopa Argentina')).toBe('liga-argentina');
         expect(id('Primera Nacional - Argentina')).toBe('rest-of-world');
+        expect(id('Torneo Proyección - Argentina')).toBe('rest-of-world');
         expect(id('Primera División - Chile')).toBe('rest-of-world');
+    });
 
-        const argentina = section('liga-argentina');
+    it("leaves other countries' Liga Profesional and other Argentine sports out", () => {
+        expect(id('Liga Profesional de Fútbol - Panamá')).toBe('rest-of-world');
+        expect(id('LPF - Panamá')).toBe('rest-of-world');
+        expect(id('Liga Profesional Saudí')).toBe('rest-of-world');
+        expect(id('Liga Nacional de Básquet - Argentina')).toBe('basketball');
+        for (const competition of [
+            'Liga Argentina de Vóley',
+            'Superliga Argentina de Voleibol',
+            'Liga Argentina de Futsal',
+            'Liga Argentina de Handball',
+            'Abierto Argentino de Polo',
+            'Copa Libertadores de Futsal',
+        ]) {
+            expect([competition, id(competition)]).toEqual([competition, null]);
+        }
+        // A basketball match its feed files under the football league.
         expect(
-            channelInSection(
-                argentina,
-                'US (P+) Argentina Liga Profesional De Futbol 3',
+            id('Liga Profesional Argentina', 'Quilmes Básquet - Obras')
+        ).toBeNull();
+    });
+
+    it("gives the Liga Profesional its own feeds and Argentina's broadcasters only", () => {
+        const argentina = section('liga-argentina');
+        const ARG = '|LAT|  ✪ ARGENTINA';
+        const takes = (name: string, category = ARG) =>
+            channelInSection(argentina, name, category);
+
+        expect(
+            takes(
+                'US (P+) Argentina Liga Profesional De Futbol 4',
                 '|LAT|  ✪ ARGENTINA LIGA PROFESIONAL FOT'
             )
         ).toBe(true);
+        // ESPN Premium (still listed by its old name) and TNT Sports.
+        expect(takes('|ARG| FOX SPORTS PREMIUM ᴴᴰ')).toBe(true);
+        expect(takes('|ARG| ESPN PREMIUM ᴴᴰ')).toBe(true);
+        expect(takes('|ARG| TNT SPORTS ᴴᴰ')).toBe(true);
+        // TyC Sports (the Copa Argentina), at home and abroad.
+        expect(takes('|ARG| TYC SPORTS ᴴᴰ')).toBe(true);
+        expect(takes('|US| TYC SPORTS ᴴᴰ', '|US| ✪ SPORTS')).toBe(true);
+        // Argentina's other channels carry no league match.
+        for (const name of [
+            '|ARG| ESPN 2',
+            '|ARG| FOX SPORTS 1 ᴴᴰ',
+            '|ARG| DIRECT TV SPORTS',
+            '|ARG| DEPORTV',
+            '|ARG| TELEFE ᴴᴰ',
+            '|ARG| STAR PREMIUM ᴴᴰ',
+        ]) {
+            expect([name, takes(name)]).toEqual([name, false]);
+        }
+        // Another country's TNT Sports never shows it.
+        expect(takes('|UK| TNT SPORTS 1 ᴴᴰ', '|UK| ✪ SPORTS')).toBe(false);
+        expect(takes('CHL TNT Sports Premium 2 HD CL', '|LAT|  ✪ CHILE')).toBe(
+            false
+        );
+        // Nor does a generic sports channel.
+        expect(takes('|UK| SKY SPORTS MAIN EVENT ᴴᴰ', '|UK| ✪ SPORTS')).toBe(
+            false
+        );
+        expect(takes('|ES| M. Deportes 2 ᴴᴰ', '|ES| ✪ DEPORTES')).toBe(false);
+    });
+
+    it("reads the competitions' own categories and their broadcasters' country", () => {
+        expect(isSectionCategory('|LAT|  ✪ ARGENTINA')).toBe(true);
         expect(
-            channelInSection(
-                argentina,
-                '|ARG| FOX SPORTS PREMIUM ᴴᴰ',
-                '|LAT|  ✪ ARGENTINA'
-            )
+            isSectionCategory('|LAT|  ✪ ARGENTINA LIGA PROFESIONAL FOT')
         ).toBe(true);
-        expect(
-            channelInSection(
-                argentina,
-                'CHL TNT Sports Premium 2 HD CL',
-                '|LAT|  ✪ CHILE'
-            )
-        ).toBe(false);
+        expect(isSectionCategory('|ES| ✪ DAZN LA LIGA')).toBe(true);
+        expect(isSectionCategory('|UK| ✪ SPORTS')).toBe(false);
+        expect(isSectionCategory('|ES| ✪ CINEMA')).toBe(false);
     });
 
     it('sends every other football match to "Resto del mundo"', () => {
@@ -200,6 +269,16 @@ describe('sport sections', () => {
         ).toBe(true);
         expect(
             channelInSection(rest, '|ES| DAZN 1 ᴴᴰ', '|ES| ✪ DEPORTES')
+        ).toBe(false);
+        expect(
+            channelInSection(rest, '|US|  GOL TV ᵁᴴᴰ', '|US| ✪ SPORTS')
+        ).toBe(true);
+        // Spain's GOL (summaries, films), and a channel closed years ago.
+        expect(
+            channelInSection(rest, '|ES| GOL TV ᴴᴰ', '|ES| ✪ DEPORTES')
+        ).toBe(false);
+        expect(
+            channelInSection(rest, '|US| Fox Soccer Plus ᴴᴰ', '|US| ✪ SPORTS')
         ).toBe(false);
     });
 });

@@ -21,9 +21,24 @@ describe('liveKeyAction', () => {
         expect(liveKeyAction(press('k'))).toBe('play');
         expect(liveKeyAction(press('M'))).toBe('mute');
         expect(liveKeyAction(press('f'))).toBe('fullscreen');
+        expect(liveKeyAction(press('l'))).toBe('favorite');
+        expect(liveKeyAction(press('L'))).toBe('favorite');
         expect(liveKeyAction(press('ArrowDown'))).toBe('cards');
         expect(liveKeyAction(press('Escape'))).toBe('collapse');
         expect(liveKeyAction(press('a'))).toBeNull();
+    });
+
+    it('turns the volume with + and − (the arrows walk the cards here)', () => {
+        expect(liveKeyAction(press('+'))).toBe('volumeUp');
+        expect(liveKeyAction(press('='))).toBe('volumeUp');
+        expect(liveKeyAction(press('-'))).toBe('volumeDown');
+        expect(liveKeyAction(press('_'))).toBe('volumeDown');
+        expect(
+            liveKeyAction(press('+', document.body, { metaKey: true }))
+        ).toBeNull();
+        expect(
+            liveKeyAction(press('-', document.createElement('input')))
+        ).toBeNull();
     });
 
     it('leaves a focused control its own keys, but not Esc', () => {
@@ -33,6 +48,7 @@ describe('liveKeyAction', () => {
         expect(liveKeyAction(press('Escape', button))).toBe('collapse');
         const field = document.createElement('input');
         expect(liveKeyAction(press('f', field))).toBeNull();
+        expect(liveKeyAction(press('l', field))).toBeNull();
         expect(liveKeyAction(press('m', field))).toBeNull();
         expect(liveKeyAction(press(' ', field))).toBeNull();
         const editable = document.createElement('div');

@@ -6,7 +6,7 @@ import { SettingsStore } from '@iptvnator/services';
 import {
     PlaybackPositionData,
     PlayerContentInfo,
-    playlistDisplayLabel,
+    visibleSourceName,
     reportsPlaybackFailures,
     type VodSourceCandidate,
     type VodSourceDescriptor,
@@ -203,7 +203,10 @@ export class VodDetailsMultiSourceUiService {
         // source active as soon as the page opens, so gating on that alone
         // makes the line a claim about a player that has not started, one the
         // user has since closed, or one that failed and is showing an error.
-        if (!active || !this.playbackLive()) {
+        // Where it plays from is the source's own name: a source named after
+        // the provider's address names nothing the page may show.
+        const name = active ? visibleSourceName(active.playlistName) : null;
+        if (!active || !name || !this.playbackLive()) {
             return null;
         }
 
@@ -222,10 +225,7 @@ export class VodDetailsMultiSourceUiService {
             // Never the raw playlist name: it is routinely the pasted URL,
             // credentials and all, and this line sits in the open on every
             // screenshot of the detail page.
-            source: [
-                playlistDisplayLabel(active.playlistName, active.playlistId),
-                ...facts,
-            ].join(' · '),
+            source: [name, ...facts].join(' · '),
             // The caption speaks of PLAYLISTS ("also found in 2 others"), so
             // three copies inside one portal must not read as three portals.
             alternativeCount: this.multiSource.alternativePlaylistCount(),

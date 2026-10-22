@@ -973,6 +973,36 @@ describe('WebPlayerViewComponent', () => {
         ).toBeNull();
     });
 
+    it('hands a failed stream to Embedded MPV from the error screen, the web engine first', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        markPlaybackStarted();
+        emitPlaybackIssue(createNetworkDiagnostic());
+        fixture.detectChanges();
+        expect(
+            fixture.debugElement.query(
+                By.css('[data-test-id="playback-diagnostic-banner"]')
+            )
+        ).not.toBeNull();
+
+        component.requestRecommendedPlayer('embedded-mpv');
+        fixture.detectChanges();
+
+        // One stream at a time: the failing Video.js engine is gone (its
+        // connection with it) and nothing web-based replaces it.
+        expect(component.selectedPlayer()).toBe(VideoPlayer.EmbeddedMpv);
+        expect(component.activeBinding()).toBeNull();
+        expect(
+            fixture.debugElement.query(By.directive(StubVjsPlayerComponent))
+        ).toBeNull();
+        expect(
+            fixture.debugElement.query(
+                By.css('[data-test-id="playback-diagnostic-banner"]')
+            )
+        ).toBeNull();
+    });
+
     describe('Electron scoped header override ownership', () => {
         const GATED_STREAM_URL = 'http://portal.example:8080/live/ch1.ts';
         const GATED_PLAYBACK = {

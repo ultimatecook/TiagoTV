@@ -165,7 +165,7 @@ test.describe('@xtream inline series fullscreen', () => {
         await card.click();
         await expect(
             page.locator('app-portal-inline-player .player-shell__episode-meta')
-        ).toContainText('S01E02', { timeout: 15_000 });
+        ).toContainText('S1:E2', { timeout: 15_000 });
         await expect(card).toHaveAttribute('aria-label', /S01E03/, {
             timeout: 15_000,
         });

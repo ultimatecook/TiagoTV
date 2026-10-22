@@ -946,7 +946,19 @@ the league stage, `CountryTvControls` in
 [Workspace Dashboard](./workspace-dashboard.md)) cannot keep them over this
 host: it sizes the player's host clear of them, hides the dock it does not
 use, and hands full screen to the player's own `fullscreenTarget`, where the
-dock is the controls again.
+dock is the controls again. Their volume slider reaches the session through
+`PlayerVolumeService` / `followPlayerVolumeRequests` and the existing
+`setEmbeddedMpvVolume` bridge (renderer only). The title page's player
+header cannot lie over this host either: with the native view it stands
+above the picture (`.embedded-mpv-player--controls-enabled`).
+
+Picture-in-picture: the frame-copy engine copies its canvas into a hidden
+`<video>` for the browser's PiP window (see the
+[player-controls contract](./player-controls-contract.md#standard-element-picture-in-picture)).
+The native view has no PiP: its dock shows the PiP button dimmed with the
+reason (turn on the frame-copy engine). A floating window for the native
+view would need the addon to render into a second, always-on-top window
+(main-process and native work, a new installer); it is not implemented.
 
 Control menus never influence bounds: all five (volume, audio, subtitle,
 speed, aspect) render horizontally inside the fixed-height controls strip

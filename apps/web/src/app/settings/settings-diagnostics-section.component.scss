@@ -1,0 +1,112 @@
+// Diagnóstico page: the build line, the catalog's summary chips and two
+// read-only tables. Rows, cards and chips come from settings.component.scss
+// (ViewEncapsulation.None).
+app-settings-diagnostics-section {
+    display: contents;
+}
+
+.diagnostics-build {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+
+    code {
+        color: var(--app-heading-color);
+        font-size: 12.5px;
+    }
+}
+
+.diagnostics-build__hash {
+    opacity: 0.7;
+}
+
+.diagnostics-kind + .diagnostics-kind {
+    border-top: 1px solid var(--settings-item-border);
+}
+
+.diagnostics-kind__title {
+    margin: 0 0 10px;
+    color: var(--app-heading-color);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.diagnostics-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 12px;
+}
+
+.diagnostics-label {
+    margin: 4px 0 6px;
+    color: var(--settings-muted);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.diagnostics-note {
+    margin: 0 0 0 6px;
+    color: var(--settings-muted);
+    font-size: 12px;
+}
+
+p.diagnostics-note {
+    margin: 0;
+}
+
+.diagnostics-table {
+    display: grid;
+    margin-top: 4px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.diagnostics-table__row {
+    display: grid;
+    align-items: center;
+    gap: 10px;
+    min-width: 560px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--settings-item-border);
+    color: var(--tv-text-2);
+
+    &:last-child {
+        border-bottom: 0;
+    }
+
+    .strong {
+        color: var(--app-heading-color);
+    }
+
+    .num {
+        text-align: right;
+    }
+
+    code {
+        font-size: 11.5px;
+    }
+}
+
+.diagnostics-table__row--head {
+    color: var(--settings-muted);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.diagnostics-table__row--catalog {
+    grid-template-columns:
+        minmax(150px, 2fr) minmax(90px, 1.2fr) repeat(3, minmax(56px, 0.7fr))
+        minmax(96px, 1fr) minmax(76px, 0.9fr);
+}
+
+.diagnostics-table__row--requests {
+    grid-template-columns:
+        72px minmax(130px, 1.2fr) minmax(150px, 2fr) 72px 56px
+        minmax(110px, 1.2fr);
+}

@@ -43,6 +43,44 @@
                 'PLAYBACK_DIAGNOSTICS.RECOMMENDATIONS_LABEL' | translate
             "
         >
+            @if (choice.embeddedMpvAvailable()) {
+                <!-- Embedded MPV plays what the browser engines cannot; it
+                     raises no diagnostics, so the policy never names it. -->
+                <div class="web-player-diagnostic__choice">
+                    <button
+                        type="button"
+                        class="web-player-diagnostic__player-card web-player-diagnostic__player-card--primary"
+                        data-test-id="playback-recommendation-embedded-mpv"
+                        [disabled]="pending()"
+                        (click)="choose(embeddedMpv, true)"
+                    >
+                        <mat-icon aria-hidden="true">play_circle</mat-icon>
+                        <span class="web-player-diagnostic__player-copy">
+                            <span class="web-player-diagnostic__player-label">
+                                {{
+                                    'PLAYBACK_DIAGNOSTICS.ACTION_TRY_EMBEDDED_MPV'
+                                        | translate
+                                }}
+                            </span>
+                            <span class="web-player-diagnostic__player-hint">
+                                {{
+                                    'PLAYBACK_DIAGNOSTICS.REASON_EMBEDDED_MPV'
+                                        | translate
+                                }}
+                            </span>
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        class="web-player-diagnostic__once"
+                        data-test-id="playback-once-embedded-mpv"
+                        [disabled]="pending()"
+                        (click)="choose(embeddedMpv, false)"
+                    >
+                        {{ 'PLAYBACK_DIAGNOSTICS.ONLY_THIS_TIME' | translate }}
+                    </button>
+                </div>
+            }
             @for (
                 recommendation of recommendations();
                 track getRecommendationKey(recommendation)
@@ -92,81 +130,97 @@
                         }
                     </fieldset>
                 } @else {
-                    <button
-                        type="button"
-                        class="web-player-diagnostic__player-card"
-                        [class.web-player-diagnostic__player-card--primary]="
-                            recommendation.priority === 'primary'
-                        "
-                        [attr.data-test-id]="
-                            getRecommendationTestId(recommendation)
-                        "
-                        [class.web-player-diagnostic__player-card--disabled]="
-                            pending()
-                        "
-                        [disabled]="
-                            pending() &&
-                            !isExternalPlayerRecommendation(recommendation)
-                        "
-                        [attr.aria-disabled]="pending() ? 'true' : null"
-                        [attr.aria-busy]="
-                            isExternalLaunching(recommendation) ? 'true' : null
-                        "
-                        (click)="activate(recommendation)"
-                    >
-                        @if (isExternalLaunching(recommendation)) {
-                            <mat-spinner
-                                aria-hidden="true"
-                                diameter="18"
-                                strokeWidth="2"
-                            />
-                        } @else {
-                            <mat-icon aria-hidden="true">{{
-                                getRecommendationIcon(recommendation)
-                            }}</mat-icon>
-                        }
-                        <span class="web-player-diagnostic__player-copy">
-                            <span class="web-player-diagnostic__player-label">
-                                {{
-                                    getRecommendationLabelKey(recommendation)
-                                        | translate
-                                            : getRecommendationParams(
-                                                  recommendation
-                                              )
-                                }}
-                            </span>
-                            <span class="web-player-diagnostic__player-hint">
-                                {{
-                                    getRecommendationReasonKey(
-                                        recommendation.reason
-                                    ) | translate
-                                }}
-                            </span>
-                            @if (
-                                getExternalStatusKey(recommendation);
-                                as statusKey
-                            ) {
-                                <span
-                                    class="web-player-diagnostic__player-status"
-                                    aria-live="polite"
-                                >
-                                    {{ statusKey | translate }}
-                                </span>
+                    <div class="web-player-diagnostic__choice">
+                        <button
+                            type="button"
+                            class="web-player-diagnostic__player-card"
+                            [class.web-player-diagnostic__player-card--primary]="
+                                recommendation.priority === 'primary'
+                            "
+                            [attr.data-test-id]="
+                                getRecommendationTestId(recommendation)
+                            "
+                            [class.web-player-diagnostic__player-card--disabled]="
+                                pending()
+                            "
+                            [disabled]="
+                                pending() &&
+                                !isExternalPlayerRecommendation(recommendation)
+                            "
+                            [attr.aria-disabled]="pending() ? 'true' : null"
+                            [attr.aria-busy]="
+                                isExternalLaunching(recommendation)
+                                    ? 'true'
+                                    : null
+                            "
+                            (click)="activate(recommendation)"
+                        >
+                            @if (isExternalLaunching(recommendation)) {
+                                <mat-spinner
+                                    aria-hidden="true"
+                                    diameter="18"
+                                    strokeWidth="2"
+                                />
+                            } @else {
+                                <mat-icon aria-hidden="true">{{
+                                    getRecommendationIcon(recommendation)
+                                }}</mat-icon>
                             }
-                            @if (
-                                isTemporaryBuiltInRecommendation(recommendation)
-                            ) {
+                            <span class="web-player-diagnostic__player-copy">
+                                <span
+                                    class="web-player-diagnostic__player-label"
+                                >
+                                    {{
+                                        getRecommendationLabelKey(
+                                            recommendation
+                                        )
+                                            | translate
+                                                : getRecommendationParams(
+                                                      recommendation
+                                                  )
+                                    }}
+                                </span>
                                 <span
                                     class="web-player-diagnostic__player-hint"
                                 >
                                     {{
-                                        'PLAYBACK_DIAGNOSTICS.ACTION_TRY_PLAYER_HINT'
-                                            | translate
+                                        getRecommendationReasonKey(
+                                            recommendation.reason
+                                        ) | translate
                                     }}
                                 </span>
-                            }
-                        </span>
-                    </button>
+                                @if (
+                                    getExternalStatusKey(recommendation);
+                                    as statusKey
+                                ) {
+                                    <span
+                                        class="web-player-diagnostic__player-status"
+                                        aria-live="polite"
+                                    >
+                                        {{ statusKey | translate }}
+                                    </span>
+                                }
+                            </span>
+                        </button>
+                        @if (recommendation.action === 'player') {
+                            <!-- The card saves the player; this plays it for
+                             this stream only. -->
+                            <button
+                                type="button"
+                                class="web-player-diagnostic__once"
+                                [attr.data-test-id]="
+                                    'playback-once-' + recommendation.target
+                                "
+                                [disabled]="pending()"
+                                (click)="choose(recommendation.target, false)"
+                            >
+                                {{
+                                    'PLAYBACK_DIAGNOSTICS.ONLY_THIS_TIME'
+                                        | translate
+                                }}
+                            </button>
+                        }
+                    </div>
                 }
             }
         </div>
@@ -193,7 +247,7 @@
                 class="web-player-diagnostic__utility-button"
                 type="button"
                 [cdkCopyToClipboard]="playback().streamUrl"
-                [matTooltip]="streamUrlTitle()"
+                [matTooltip]="'PLAYBACK_DIAGNOSTICS.COPY_URL_HINT' | translate"
                 data-test-id="playback-copy-url"
             >
                 <mat-icon aria-hidden="true">content_copy</mat-icon>

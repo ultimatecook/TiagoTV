@@ -52,7 +52,12 @@ Current workspace routes:
 3. `/workspace/dashboard`
 4. `/workspace/sources`
 5. `/workspace/playlists/:id/:view` (plus `favorites` and `recent` siblings)
-6. `/workspace/global-favorites`
+6. `/workspace/global-favorites` (TiagoTV's Mi lista: its live channels
+   are a row of cards first, `app-collection-channel-row` with the
+   collection page's `channelRow`, then the movies and series under their
+   type chips and Clear; a channel card plays on "En vivo", or in its own
+   source's favourites for M3U and Stalker, and its red heart removes it —
+   see [Workspace Dashboard](./workspace-dashboard.md#by-country-page-tiagotv))
 7. `/workspace/global-recent`
 8. `/workspace/search`
 9. `/workspace/downloads`
@@ -243,9 +248,21 @@ The shell is intentionally split into four persistent regions:
    (`data-platform-theme`) runs to the top under the bar instead, without
    its category panel. Only its artwork rests there
    (`apps/web/src/_platform-themes.scss`): the hero's text and the
-   trailer's sound toggle start below the bar, the watch state
-   (`shell-host--watch`) starts the player below it, and the player's own
-   header row is `no-drag` for when it scrolls up under the band.
+   trailer's sound toggle start below the bar. In the watch state the
+   picture takes the hero's place, edge to edge and up under the bar with
+   the window's top corners; the player's header (title, "…", close)
+   starts below the bar (`--inline-top-inset`) and its buttons are
+   `no-drag`. Native-view Embedded MPV cannot lie under the bar or under
+   a header: there the header stands above the picture, below the bar.
+   `data-platform-theme` is painted by `PlatformThemeService` (a platform's
+   page, a title opened in one of its categories) and by
+   `TitlePlatformThemeService` (`lib/title-platform/`) for a title opened
+   anywhere else: Buscar, Mi lista, "Continue watching", whose category is
+   often a genre's. The title page publishes what it shows
+   (`TitlePlatformStore`, `@iptvnator/services`); the dashboard resolves
+   its platform from the category, else from the platforms' own lists
+   (`CatalogMembership`), and re-checks the marks after every render so
+   the two services never undo each other.
 
 Every new page starts at the scroller's top; history Back and Forward
 return a page to where it was left, and a change of query parameters alone

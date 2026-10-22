@@ -102,7 +102,7 @@
                     {{ 'WORKSPACE.PLATFORMS.EMPTY' | translate }}
                 </p>
             }
-        } @else if (catalog.failed()) {
+        } @else if (failed()) {
             <p class="note">{{ 'WORKSPACE.PLATFORMS.FAILED' | translate }}</p>
         } @else {
             <p class="note">{{ 'WORKSPACE.PLATFORMS.LOADING' | translate }}</p>

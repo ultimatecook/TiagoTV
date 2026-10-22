@@ -17,9 +17,14 @@ import {
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
 import { WebPlayerViewComponent } from '@iptvnator/ui/playback';
-import { CountryTvControls } from '../../countries/country-tv-controls';
+import {
+    CountryTvControls,
+    VOLUME_STEP,
+} from '../../countries/country-tv-controls';
+import { StageVolumeComponent } from '../../countries/ui/stage-volume.component';
 import { OVERLAY_IDLE_MS } from '../../countries/country-tv-idle';
 import { liveKeyAction, onLivePage } from '../../countries/country-tv-keys';
+import { ChannelFavoritesService } from '../../my-list/channel-favorites.service';
 import { nextFeed, type MatchFeed } from '../match-feeds';
 import type { SignalCard } from '../signal-cards';
 import { SportFeedFallback } from '../sport-feed-fallback';
@@ -40,7 +45,8 @@ const IDLE_MS = OVERLAY_IDLE_MS;
  * the bottom, what plays, the controls, the programme's progress and the
  * row of signals, one of which plays. The controls (and Space/K, M, F
  * while the stage is in view) drive the player the way "En vivo" does
- * (`CountryTvControls`): the player's own bar stays hidden.
+ * (`CountryTvControls`): the player's own bar stays hidden. The heart (and
+ * L) puts the channel playing on Mi lista.
  *
  * With a match in focus, the row is that match's signals in every
  * language ("Señales de este partido", `feeds`), the competition's
@@ -52,6 +58,7 @@ const IDLE_MS = OVERLAY_IDLE_MS;
     imports: [
         MatIcon,
         SportSignalCardComponent,
+        StageVolumeComponent,
         TranslatePipe,
         WebPlayerViewComponent,
     ],
@@ -78,6 +85,12 @@ export class SportStageComponent {
     /** "Matches and table": the page below. */
     readonly more = output<void>();
 
+    private readonly favorites = inject(ChannelFavoritesService);
+    /** The channel on the stage is on Mi lista. */
+    readonly saved = computed(() => {
+        const streamId = this.tv.selection()?.streamId;
+        return streamId !== undefined && this.favorites.has(streamId);
+    });
     private readonly fallback = inject(SportFeedFallback);
     private readonly feedLanguage = injectFeedLanguage();
     /** The competition's channels instead of the match's signals. */
@@ -157,6 +170,7 @@ export class SportStageComponent {
 
     constructor() {
         const destroyRef = inject(DestroyRef);
+        void this.favorites.refresh();
         effect(() => {
             const stage = this.stage()?.nativeElement;
             if (stage) {
@@ -218,6 +232,14 @@ export class SportStageComponent {
             this.playChannel(selection, false);
         } else {
             this.controls.togglePlay();
+        }
+    }
+
+    /** The heart, or L: the channel playing on Mi lista, or off it. */
+    toggleFavorite(): void {
+        const streamId = this.tv.selection()?.streamId;
+        if (streamId !== undefined) {
+            void this.favorites.toggle(streamId);
         }
     }
 
@@ -305,7 +327,19 @@ export class SportStageComponent {
             }
             return;
         }
-        if (action === 'play' || action === 'mute' || action === 'fullscreen') {
+        if (action === 'favorite') {
+            event.preventDefault();
+            this.toggleFavorite();
+        } else if (action === 'volumeUp' || action === 'volumeDown') {
+            event.preventDefault();
+            this.controls.adjustVolume(
+                action === 'volumeUp' ? VOLUME_STEP : -VOLUME_STEP
+            );
+        } else if (
+            action === 'play' ||
+            action === 'mute' ||
+            action === 'fullscreen'
+        ) {
             event.preventDefault();
             if (action === 'play') {
                 this.playPause();

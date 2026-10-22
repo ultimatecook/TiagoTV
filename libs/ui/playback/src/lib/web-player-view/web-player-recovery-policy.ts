@@ -166,7 +166,10 @@ function rerankExternalRecommendations(
 
 function isExternalRecommendation(
     recommendation: PlaybackRecommendation
-): recommendation is Extract<PlaybackRecommendation, { readonly action: 'player' }> & {
+): recommendation is Extract<
+    PlaybackRecommendation,
+    { readonly action: 'player' }
+> & {
     readonly target: ExternalPlayerName;
 } {
     return (
@@ -181,8 +184,37 @@ export function isPlaybackExternallyTransferable(
     return playback.drm === undefined;
 }
 
-export function toVideoPlayer(target: InlinePlaybackPlayer): VideoPlayer {
+/**
+ * A player the error screen offers: the recommended ones, and Embedded MPV
+ * where this machine has it (it raises no diagnostics of its own, so the
+ * recommendation policy never names it).
+ */
+export const EMBEDDED_MPV_TARGET = 'embedded-mpv';
+export type DiagnosticPlayerTarget =
+    PlaybackRecommendationTarget | typeof EMBEDDED_MPV_TARGET;
+
+/** The saved-player setting a target of the error screen stands for. */
+export function diagnosticTargetPlayer(
+    target: DiagnosticPlayerTarget
+): VideoPlayer {
     switch (target) {
+        case EMBEDDED_MPV_TARGET:
+            return VideoPlayer.EmbeddedMpv;
+        case 'mpv':
+            return VideoPlayer.MPV;
+        case 'vlc':
+            return VideoPlayer.VLC;
+        default:
+            return toVideoPlayer(target);
+    }
+}
+
+export function toVideoPlayer(
+    target: InlinePlaybackPlayer | typeof EMBEDDED_MPV_TARGET
+): VideoPlayer {
+    switch (target) {
+        case EMBEDDED_MPV_TARGET:
+            return VideoPlayer.EmbeddedMpv;
         case InlinePlaybackPlayer.VideoJs:
             return VideoPlayer.VideoJs;
         case InlinePlaybackPlayer.Html5:

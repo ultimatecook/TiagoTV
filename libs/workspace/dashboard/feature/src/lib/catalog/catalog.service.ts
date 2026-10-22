@@ -7,29 +7,27 @@ import { xtreamSourceCredentials } from '../xtream-source';
 import { catalogExtras, type CatalogExtras } from './catalog-extras';
 import { CatalogImport } from './catalog-import';
 import { CatalogMembership } from './catalog-membership';
-import { CatalogPlatformLists } from './catalog-platform-lists';
+import { CatalogRequestLog } from './catalog-request-log';
+import { catalogTitles } from './catalog-list-views';
+import {
+    CatalogPlatformLists,
+    PLATFORM_LISTS_REFRESH_MS,
+} from './catalog-platform-lists';
 import { StoredVodCatalog } from './catalog-stored';
 import {
     storedPlatformLists,
-    withKnownGenres,
     type StoredVodCatalogData,
 } from './catalog-stored-rows';
-import {
-    aggregateCatalog,
-    type CatalogKind,
-    type CatalogTitle,
-    type PlatformTitleList,
+import type {
+    CatalogKind,
+    CatalogTitle,
+    PlatformTitleList,
 } from './catalog-titles';
 
 /** The stored copy changes with the app's imports, not by the minute. */
 const FRESH_MS = 10 * 60 * 1000;
 const OPTIONS = { suppressErrorLog: true };
-/**
- * From the platforms' own lists, the page shows nothing until this many
- * platforms answered (or all, where fewer carry the kind): never one
- * platform's titles as if they were the whole catalog.
- */
-export const MIN_ANSWERED_PLATFORMS = 3;
+export { MIN_ANSWERED_PLATFORMS } from './catalog-list-views';
 
 interface StoredCatalog {
     readonly playlistId: string;
@@ -42,16 +40,16 @@ export type CatalogStatus = 'no-source' | 'loading' | 'ready' | 'failed';
 
 /**
  * Series / Películas: the titles of every platform the source carries,
- * one catalog per kind. Read from the catalog the app already stored
- * (`StoredVodCatalog`), so opening the page asks the provider nothing.
- * Where nothing is stored yet, Electron imports the kind first, as the
- * Xtream views would (`CatalogImport`), and reads it then; the browser
- * build, or a failed import, takes the platforms' own lists
- * (`CatalogPlatformLists`, the platforms taking turns), shown once several
- * platforms answered. The stored rows sit in one category each, so the
- * platforms' lists, refreshed in the background (`CatalogMembership`),
- * say which platforms carry them. A title's page is asked once, for the
- * hero.
+ * one catalog per kind, from two sources. The catalog the app stored
+ * (`StoredVodCatalog`: SQLite in Electron), where each title sits in one
+ * category, often a genre's; and the platforms' own lists
+ * (`CatalogPlatformLists`), kept across launches and refreshed in the
+ * background once a session (`CatalogMembership`), which carry every
+ * platform's titles whatever the stored copy holds, and file the stored
+ * titles in their platforms. Where nothing is stored yet, Electron imports
+ * the kind first, as the Xtream views would (`CatalogImport`); the browser
+ * build, or a failed import, takes the platforms' lists alone, shown once
+ * several platforms answered. A title's page is asked once, for the hero.
  */
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
@@ -61,6 +59,7 @@ export class CatalogService {
     private readonly lists = inject(CatalogPlatformLists);
     private readonly membership = inject(CatalogMembership);
     private readonly api = inject(XtreamApiService);
+    private readonly log = inject(CatalogRequestLog);
 
     private readonly storedTitles = signal<
         ReadonlyMap<CatalogKind, StoredCatalog>
@@ -74,6 +73,8 @@ export class CatalogService {
     private readonly importing = signal<ReadonlySet<CatalogKind>>(new Set());
     private readonly requests = new Map<CatalogKind, Promise<void>>();
     private readonly storedReads = new Map<string, Promise<boolean>>();
+    /** When the platforms' lists were last refreshed, per source and kind. */
+    private readonly refreshed = new Map<string, number>();
     private readonly loadedExtras = signal<ReadonlyMap<string, CatalogExtras>>(
         new Map()
     );
@@ -114,7 +115,11 @@ export class CatalogService {
 
     load(kind: CatalogKind): Promise<void> {
         const source = this.source();
-        if (!source || this.isFresh(kind, source._id)) {
+        if (!source) {
+            return Promise.resolve();
+        }
+        this.refreshLists(kind, source._id);
+        if (this.isFresh(kind, source._id)) {
             return Promise.resolve();
         }
         let request = this.requests.get(kind);
@@ -137,10 +142,32 @@ export class CatalogService {
      */
     loadStored(kind: CatalogKind): Promise<void> {
         const source = this.source();
-        if (!source || this.isFresh(kind, source._id)) {
+        if (!source) {
+            return Promise.resolve();
+        }
+        this.refreshLists(kind, source._id);
+        if (this.isFresh(kind, source._id)) {
             return Promise.resolve();
         }
         return this.readStoredOnce(kind, source).then(() => undefined);
+    }
+
+    /** The stored copy of the kind as read, for Diagnóstico. */
+    storedData(kind: CatalogKind): StoredVodCatalogData | null {
+        const stored = this.storedTitles().get(kind);
+        return stored && stored.playlistId === this.source()?._id
+            ? stored.data
+            : null;
+    }
+
+    /**
+     * Forgets what was read and when the lists were refreshed (Diagnóstico's
+     * reload): the next `load` reads the stored copy and refreshes again.
+     */
+    reset(): void {
+        this.storedTitles.set(new Map());
+        this.fromPlatforms.set(new Set());
+        this.refreshed.clear();
     }
 
     /**
@@ -174,8 +201,12 @@ export class CatalogService {
         const credentials = xtreamSourceCredentials(source);
         const details =
             title.kind === 'movie'
-                ? this.api.getVodInfo(credentials, title.id, OPTIONS)
-                : this.api.getSeriesInfo(credentials, title.id, OPTIONS);
+                ? this.log.track('get_vod_info', null, () =>
+                      this.api.getVodInfo(credentials, title.id, OPTIONS)
+                  )
+                : this.log.track('get_series_info', null, () =>
+                      this.api.getSeriesInfo(credentials, title.id, OPTIONS)
+                  );
         void details
             .then((answer) =>
                 this.loadedExtras.update((state) =>
@@ -201,27 +232,16 @@ export class CatalogService {
             return null;
         }
         const stored = this.storedTitles().get(kind);
-        if (stored?.playlistId === source._id) {
-            return aggregateCatalog(this.storedLists(kind, stored.data), kind);
-        }
-        // While the import runs, lists the platform pages already loaded
-        // may show, on the same terms; nothing is asked for them.
-        if (!this.fromPlatforms().has(kind) && !this.importing().has(kind)) {
-            return null;
-        }
-        const view = this.lists.view(kind);
-        const busy = this.busy().has(kind);
-        if (
-            busy &&
-            view.answered < Math.min(MIN_ANSWERED_PLATFORMS, view.total)
-        ) {
-            return null;
-        }
-        const titles = aggregateCatalog(view.lists, kind);
-        // None yet: the platforms are still loading, failed, or carry none.
-        return titles.length > 0 || (!busy && !this.failed(kind))
-            ? titles
-            : null;
+        return catalogTitles(kind, this.lists.view(kind), {
+            stored:
+                stored?.playlistId === source._id
+                    ? this.storedLists(kind, stored.data)
+                    : null,
+            expected:
+                this.fromPlatforms().has(kind) || this.importing().has(kind),
+            busy: this.busy().has(kind) || this.lists.loading(kind),
+            failed: () => this.failed(kind),
+        });
     }
 
     private failed(kind: CatalogKind): boolean {
@@ -234,7 +254,6 @@ export class CatalogService {
     private async read(kind: CatalogKind, source: PlaylistMeta): Promise<void> {
         this.busy.update((kinds) => new Set(kinds).add(kind));
         if (await this.readStoredOnce(kind, source)) {
-            void this.membership.refresh(kind);
             return;
         }
         this.storedTitles.update((state) => {
@@ -251,7 +270,6 @@ export class CatalogService {
                     kind
                 );
                 if (imported && (await this.readStored(kind, source))) {
-                    void this.membership.refresh(kind);
                     return;
                 }
             } finally {
@@ -305,18 +323,40 @@ export class CatalogService {
         return true;
     }
 
-    /**
-     * The stored titles per platform: in the platforms their own lists
-     * file them in too, with the genres the platform pages already know.
-     */
+    /** The stored titles per platform: also in those whose lists carry them. */
     private storedLists(
         kind: CatalogKind,
         data: StoredVodCatalogData
     ): PlatformTitleList[] {
-        return withKnownGenres(
-            storedPlatformLists(data, kind, this.membership.members(kind)),
-            (list) => this.platforms.titlesOf(list.platform.id)
-        );
+        return storedPlatformLists(data, kind, this.membership.members(kind));
+    }
+
+    /**
+     * The platforms' lists, refreshed in the background once a session
+     * (and twice a day at most), whatever the stored copy holds: Series
+     * and Películas show every platform's titles even where the stored
+     * catalog lacks them. Behind the kind's read and first import.
+     */
+    private refreshLists(kind: CatalogKind, playlistId: string): void {
+        void this.lists.ready();
+        const key = `${playlistId}:${kind}`;
+        const last = this.refreshed.get(key);
+        if (
+            last !== undefined &&
+            Date.now() - last < PLATFORM_LISTS_REFRESH_MS
+        ) {
+            return;
+        }
+        this.refreshed.set(key, Date.now());
+        void (async () => {
+            // `load` registers its read right after this call.
+            await Promise.resolve();
+            await this.requests.get(kind)?.catch(() => undefined);
+            await this.storedReads.get(key)?.catch(() => undefined);
+            if (this.source()?._id === playlistId) {
+                await this.membership.refresh(kind);
+            }
+        })().catch(() => undefined);
     }
 
     private isFresh(kind: CatalogKind, playlistId: string): boolean {

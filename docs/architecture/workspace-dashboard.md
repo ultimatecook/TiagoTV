@@ -710,7 +710,8 @@ switches to it.
    [Redesigned pages](#redesigned-pages-shared-rules-tiagotv)): Back to the
    page returns to it.
 3. **Overlay.** The channel's name (32px) and what it shows now, the
-   controls (play/pause, sound, Open in Live TV, full screen), the
+   controls (play/pause, sound, Mi lista's heart, Open in Live TV, full
+   screen), the
    programme's 3px progress, the chips and the channels in glass cards
    (196px). A card shows the channel's logo (a failing logo tries the next,
    then the name in Bebas on a plate tinted per channel), its name, what it
@@ -749,9 +750,12 @@ switches to it.
    while the menu is open. A click on the picture sends them away or brings
    them back; Esc closes the menu, else leaves full screen (where the window
    lets the page see Esc there), else sends them away (focus moves to the
-   page). Space or K plays and pauses, M mutes, F goes full screen and back,
-   an arrow brings focus to the playing card (`country-tv-keys.ts`); keys a
-   focused control handles stay its own (the cards' arrows, Enter on a
+   page). Space or K plays and pauses, M mutes, + and − (also = and _)
+   turn the volume up and down 5 % (not the arrows: they walk the cards
+   here), F goes full screen and back,
+   L puts the channel on Mi lista or takes it off (on a focused card, that
+   card's), an arrow brings focus to the playing card (`country-tv-keys.ts`);
+   keys a focused control handles stay its own (the cards' arrows, Enter on a
    button; a letter or Space only in a field, so F on the full screen button
    just pressed still leaves and Space there pauses rather than pressing it
    again), and keys from a dialog or a field elsewhere are left alone.
@@ -779,7 +783,16 @@ switches to it.
    the page's keys drive it. Play/pause and mute go to the player's
    controller as its own K and M (the suspension lifted for that one key),
    else straight to its `<video>`, whose events give the overlay its state;
-   Embedded MPV has no `<video>` and counts as playing once mounted. Full
+   Embedded MPV has no `<video>` and counts as playing once mounted. The
+   volume (`StageVolumeComponent`, `countries/ui/`, shared with the league
+   stage) is the speaker (mute, in step with M) and, while the pointer or
+   the keyboard is on it, a glass slider beside it: click or drag sets the
+   level, the wheel and the slider's own arrows step it, and every change
+   shows "Volume 60 %" at the top of the picture for a moment. The level is
+   the app's one (`CountryTvControls.setVolume`): set on the `<video>`, or
+   asked of Embedded MPV through `PlayerVolumeService` (its existing volume
+   bridge), and saved under the players' `volume` key. Unmuting a level of
+   0 brings the sound back at half. Full
    screen takes the whole page, overlay included. The player's diagnostic
    (what failed, Retry, Copy URL, Details, the external players) sits
    between the country button and the overlay's controls: it is bounded by
@@ -813,6 +826,26 @@ switches to it.
    stayed playing for 0.9 s and at most every ten minutes per channel, and
    only where the app reads guides. The cards reuse the guides already
    loaded (`CountryTvGuide.nowOn`); the page asks for no other channel's.
+9. **Mi lista** (`CountryTvFavorites`, `my-list/channel-favorites.service.ts`).
+   The heart beside the controls, a card's heart (top right of its plate,
+   shown on hover or keyboard focus, always and red once saved; out of the
+   row's tab stop) and L save a live channel to the source's favourites:
+   the rows the Xtream live view's star writes and Mi lista reads (SQLite
+   through `XTREAM_DATA_SOURCE` in Electron, the browser build's user data
+   otherwise), resolved to the stored catalog's row as that star resolves
+   it (no new installer, no new store). A channel is one stream: the
+   controls' heart saves the copy playing, a card's the copy it starts on
+   (`startingCopy`, "Fluidez"); a tile shows saved when any copy is, and
+   taking it off removes every saved copy. The heart answers at once and
+   the list is read again after the write; a channel the app has not
+   stored yet (a first run before the import) puts the heart back with a
+   toast. The page reads the list again as it opens, so a change made in
+   Mi lista or the live view shows. Mi lista's channel cards come back here
+   to play (`LIVE_CHANNEL_PLAY_STATE_KEY`, `CountryTvRequest`): the page
+   opens on that stream's country and plays that copy, even over another
+   page's mini-player; a stream no country lists, or another source's,
+   goes on to the Xtream live view, replacing this history entry so Back
+   returns to Mi lista. The request leaves the entry once acted on.
 
 ## Series and Movies Catalog (TiagoTV)
 
@@ -964,7 +997,11 @@ else but the playing channel and its guide.
    tighter rows, and the competition's pill stays 8px clear of the
    controls. The resting logo and Play are centred above the overlay's
    controls. In full screen the overlay fades after 2 s; a
-   move or any key brings it back.
+   move or any key brings it back. Mi lista's heart sits with the controls
+   (also while the stage waits for Play) and each signal card has its own
+   (top right, its feed number moving aside), with L for the playing
+   channel or the focused card, as on "En vivo" (`ChannelFavoritesService`,
+   one stream per signal).
    The signal row (`signal-cards.ts`) lists the live
    matches' own feeds first, then every numbered feed of the section's
    channel families, broadcasters first and pay-per-view passes last. Below:

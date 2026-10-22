@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { isProviderOnlyDetailState } from '@iptvnator/portal/shared/util';
 import { XtreamStore } from '@iptvnator/portal/xtream/data-access';
+import { publishTitlePlatform } from '@iptvnator/services';
 import { SerialDetailsPlaybackService } from './serial-details-playback.service';
 
 /**
@@ -29,6 +30,22 @@ export class SerialDetailsRouteService {
         this.params();
         return isProviderOnlyDetailState(window.history.state);
     });
+
+    constructor() {
+        // The page wears the series' platform, wherever it was opened from.
+        publishTitlePlatform(() => {
+            const playlistId = this.xtreamStore.currentPlaylist()?.id;
+            const { categoryId, serialId } = this.params();
+            return playlistId && serialId
+                ? {
+                      playlistId,
+                      kind: 'series',
+                      itemId: serialId,
+                      categoryId: categoryId ?? null,
+                  }
+                : null;
+        });
+    }
 
     /**
      * Initializes on first render and RE-initializes when the route params

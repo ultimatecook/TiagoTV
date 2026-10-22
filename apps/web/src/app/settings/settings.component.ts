@@ -42,6 +42,7 @@ import {
     SETTINGS_RESTART_CONTROLS,
 } from './settings-change-tracking';
 import { SettingsDashboardSectionComponent } from './settings-dashboard-section.component';
+import { SettingsDiagnosticsSectionComponent } from './settings-diagnostics-section.component';
 import { SettingsEmbeddedMpvFacade } from './settings-embedded-mpv.facade';
 import { SettingsEpgFacade } from './settings-epg.facade';
 import { SettingsEpgSectionComponent } from './settings-epg-section.component';
@@ -108,6 +109,7 @@ export const SETTINGS_DEFAULT_SECTION = 'general';
         SettingsAboutSectionComponent,
         SettingsBackupSectionComponent,
         SettingsDashboardSectionComponent,
+        SettingsDiagnosticsSectionComponent,
         SettingsEpgSectionComponent,
         SettingsGeneralSectionComponent,
         SettingsParentalLockSectionComponent,

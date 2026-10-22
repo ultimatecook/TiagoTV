@@ -9,12 +9,15 @@
     container: playback-diagnostic / size;
 }
 
+/* Centred in the player both ways, on every page that shows it (the En
+ * vivo and league stages, the title page, full screen). */
 .web-player-diagnostic {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: flex-start;
-    padding: clamp(24px, 9cqb, 92px) clamp(20px, 18cqi, 216px);
+    justify-content: center;
+    padding: clamp(20px, 7cqb, 72px) clamp(20px, 6cqi, 72px);
     overflow: auto;
     background:
         radial-gradient(
@@ -36,12 +39,16 @@
 }
 
 .web-player-diagnostic__content {
-    width: min(100%, 720px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(100%, 640px);
     min-width: 0;
     /* Centres the content while it fits. Unlike align-items: center, the auto
      * margins never go negative, so content taller than the player starts at
      * the top and the rest stays reachable by scrolling. */
-    margin-block: auto;
+    margin: auto;
+    text-align: center;
 }
 
 .web-player-diagnostic__badge {
@@ -117,11 +124,54 @@
     overflow-wrap: anywhere;
 }
 
+/* Centred rows of up to two choices, a lone one in the middle. */
 .web-player-diagnostic__recommendations {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(168px, 240px));
-    gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px 12px;
+    width: 100%;
     margin-top: 28px;
+}
+
+/* A player button over its "Only this time" link. */
+.web-player-diagnostic__choice {
+    display: grid;
+    flex: 0 1 260px;
+    min-width: 168px;
+    align-content: start;
+    justify-items: stretch;
+    gap: 6px;
+}
+
+.web-player-diagnostic__once {
+    justify-self: center;
+    padding: 4px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: rgb(255 255 255 / 66%);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    app-region: no-drag;
+}
+
+.web-player-diagnostic__once:hover:not(:disabled) {
+    color: #fff;
+}
+
+.web-player-diagnostic__once:disabled {
+    cursor: wait;
+    opacity: 0.5;
+}
+
+.web-player-diagnostic__once:focus-visible {
+    outline: 2px solid var(--app-focus-ring);
+    outline-offset: 2px;
 }
 
 .web-player-diagnostic__recommendations:empty {
@@ -154,9 +204,9 @@
     --app-widget-bg: var(--playback-diagnostic-source-surface);
     --app-widget-border: var(--playback-diagnostic-source-border);
     --mat-sys-on-primary: var(--playback-diagnostic-source-on-accent);
-    width: min(420px, 100%);
+    flex: 1 1 100%;
+    max-width: 420px;
     min-width: 0;
-    grid-column: 1 / -1;
     margin: 0;
     padding: 0;
     border: 0;
@@ -323,6 +373,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
+    justify-content: center;
     gap: 8px 12px;
     margin-top: 22px;
     color: rgb(255 255 255 / 45%);
@@ -383,6 +434,7 @@
 
 .web-player-diagnostic__details dl {
     display: grid;
+    text-align: left;
     grid-template-columns: max-content minmax(0, 1fr);
     gap: 7px 14px;
     max-width: min(100%, 640px);
@@ -415,10 +467,6 @@
 @container playback-diagnostic (max-width: 760px) {
     .web-player-diagnostic {
         padding: 22px 16px;
-    }
-
-    .web-player-diagnostic__content {
-        margin-block: 0;
     }
 
     .web-player-diagnostic__badge,
@@ -538,13 +586,18 @@
     }
 
     .web-player-diagnostic__recommendations {
-        grid-template-columns: minmax(0, 1fr);
+        flex-direction: column;
+        align-items: stretch;
         gap: 8px;
         margin-top: 16px;
     }
 
+    .web-player-diagnostic__choice {
+        flex-basis: auto;
+    }
+
     .web-player-diagnostic__alternatives {
-        width: 100%;
+        max-width: none;
     }
 
     .web-player-diagnostic__player-card {
@@ -554,6 +607,7 @@
 
     .web-player-diagnostic__utilities {
         display: grid;
+        justify-items: center;
         gap: 7px;
         margin-top: 16px;
     }
