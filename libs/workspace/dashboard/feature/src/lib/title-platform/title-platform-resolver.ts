@@ -1,7 +1,4 @@
-import type {
-    TitlePlatformBrand,
-    TitlePlatformRef,
-} from '@iptvnator/services';
+import type { TitlePlatformBrand, TitlePlatformRef } from '@iptvnator/services';
 import { platformOfRoute } from '../platforms/platform-theme';
 import type {
     PlatformShelf,
@@ -53,7 +50,9 @@ export function titlePlatform(
         return byCategory;
     }
     const id = Number(ref.itemId);
-    return Number.isFinite(id) && id > 0 ? sources.memberOf(ref.kind, id) : null;
+    return Number.isFinite(id) && id > 0
+        ? sources.memberOf(ref.kind, id)
+        : null;
 }
 
 /** The look a title page and its player take from the platform. */

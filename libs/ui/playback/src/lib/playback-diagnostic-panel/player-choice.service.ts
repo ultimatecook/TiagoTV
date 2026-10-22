@@ -22,7 +22,8 @@ export class PlayerChoiceService {
     private readonly snackBar = inject(LazySnackBar);
     private readonly translate = inject(TranslateService);
     /** This machine can play in Embedded MPV (Electron with the runtime). */
-    readonly embeddedMpvAvailable = inject(VodEmbeddedMpvAvailability).available;
+    readonly embeddedMpvAvailable = inject(VodEmbeddedMpvAvailability)
+        .available;
 
     async remember(target: DiagnosticPlayerTarget): Promise<void> {
         const player = diagnosticTargetPlayer(target);

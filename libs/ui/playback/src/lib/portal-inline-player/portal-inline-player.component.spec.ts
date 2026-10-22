@@ -331,9 +331,9 @@ describe('PortalInlinePlayerComponent', () => {
             '[data-test-id="inline-player-brand"]'
         ) as HTMLImageElement;
         expect(logo.getAttribute('alt')).toBe('Netflix');
-        expect(host.querySelector('.player-shell__title')?.textContent?.trim()).toBe(
-            'Muertos S.L.'
-        );
+        expect(
+            host.querySelector('.player-shell__title')?.textContent?.trim()
+        ).toBe('Muertos S.L.');
 
         release();
         fixture.detectChanges();

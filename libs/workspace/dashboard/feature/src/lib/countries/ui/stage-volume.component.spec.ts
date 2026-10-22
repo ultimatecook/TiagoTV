@@ -26,8 +26,8 @@ describe('StageVolumeComponent', () => {
         volume.set(0.6);
         muted.set(false);
         volumeChange.set(0);
-        Object.values(controls).forEach(
-            (value) => typeof value === 'function' && 'mockClear' in value
+        Object.values(controls).forEach((value) =>
+            typeof value === 'function' && 'mockClear' in value
                 ? (value as jest.Mock).mockClear()
                 : undefined
         );

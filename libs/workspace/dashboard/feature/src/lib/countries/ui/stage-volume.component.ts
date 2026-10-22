@@ -77,7 +77,9 @@ export class StageVolumeComponent {
             return;
         }
         event.preventDefault();
-        this.controls.adjustVolume(event.deltaY < 0 ? VOLUME_STEP : -VOLUME_STEP);
+        this.controls.adjustVolume(
+            event.deltaY < 0 ? VOLUME_STEP : -VOLUME_STEP
+        );
     }
 
     private flash(): void {

@@ -86,9 +86,12 @@ export class TitlePlatformThemeService {
             },
             { injector: this.injector }
         );
-        afterEveryRender({ write: () => this.reconcile() }, {
-            injector: this.injector,
-        });
+        afterEveryRender(
+            { write: () => this.reconcile() },
+            {
+                injector: this.injector,
+            }
+        );
     }
 
     private sources(): TitlePlatformSources {

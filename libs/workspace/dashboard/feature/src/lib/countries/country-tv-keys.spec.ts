@@ -33,8 +33,12 @@ describe('liveKeyAction', () => {
         expect(liveKeyAction(press('='))).toBe('volumeUp');
         expect(liveKeyAction(press('-'))).toBe('volumeDown');
         expect(liveKeyAction(press('_'))).toBe('volumeDown');
-        expect(liveKeyAction(press('+', document.body, { metaKey: true }))).toBeNull();
-        expect(liveKeyAction(press('-', document.createElement('input')))).toBeNull();
+        expect(
+            liveKeyAction(press('+', document.body, { metaKey: true }))
+        ).toBeNull();
+        expect(
+            liveKeyAction(press('-', document.createElement('input')))
+        ).toBeNull();
     });
 
     it('leaves a focused control its own keys, but not Esc', () => {

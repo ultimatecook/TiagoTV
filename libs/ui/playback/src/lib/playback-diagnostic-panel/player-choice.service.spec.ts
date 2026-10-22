@@ -21,7 +21,10 @@ describe('PlayerChoiceService', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot()],
             providers: [
-                { provide: SettingsStore, useValue: { player, updateSettings } },
+                {
+                    provide: SettingsStore,
+                    useValue: { player, updateSettings },
+                },
                 { provide: LazySnackBar, useValue: { open } },
                 {
                     provide: VodEmbeddedMpvAvailability,

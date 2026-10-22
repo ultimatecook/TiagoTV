@@ -37,13 +37,23 @@ describe('titlePlatform', () => {
     it('reads the platform of the category the title was opened in', () => {
         expect(
             titlePlatform(
-                { playlistId: 'p1', kind: 'movie', itemId: 1, categoryId: '1610' },
+                {
+                    playlistId: 'p1',
+                    kind: 'movie',
+                    itemId: 1,
+                    categoryId: '1610',
+                },
                 sources
             )
         ).toBe(NETFLIX);
         expect(
             titlePlatform(
-                { playlistId: 'p1', kind: 'series', itemId: 1, categoryId: 1270 },
+                {
+                    playlistId: 'p1',
+                    kind: 'series',
+                    itemId: 1,
+                    categoryId: 1270,
+                },
                 sources
             )
         ).toBe(PRIME);
@@ -52,16 +62,29 @@ describe('titlePlatform', () => {
     it('reads it from the platforms’ own lists for a genre’s category (search, Mi lista, Continue watching)', () => {
         expect(
             titlePlatform(
-                { playlistId: 'p1', kind: 'movie', itemId: 77, categoryId: '5' },
+                {
+                    playlistId: 'p1',
+                    kind: 'movie',
+                    itemId: 77,
+                    categoryId: '5',
+                },
                 sources
             )
         ).toBe(PRIME);
         expect(
-            titlePlatform({ playlistId: 'p1', kind: 'movie', itemId: '77' }, sources)
+            titlePlatform(
+                { playlistId: 'p1', kind: 'movie', itemId: '77' },
+                sources
+            )
         ).toBe(PRIME);
         expect(
             titlePlatform(
-                { playlistId: 'p1', kind: 'movie', itemId: 78, categoryId: '5' },
+                {
+                    playlistId: 'p1',
+                    kind: 'movie',
+                    itemId: 78,
+                    categoryId: '5',
+                },
                 sources
             )
         ).toBeNull();
@@ -70,7 +93,12 @@ describe('titlePlatform', () => {
     it('knows nothing of another source’s titles', () => {
         expect(
             titlePlatform(
-                { playlistId: 'p2', kind: 'movie', itemId: 77, categoryId: '1610' },
+                {
+                    playlistId: 'p2',
+                    kind: 'movie',
+                    itemId: 77,
+                    categoryId: '1610',
+                },
                 sources
             )
         ).toBeNull();

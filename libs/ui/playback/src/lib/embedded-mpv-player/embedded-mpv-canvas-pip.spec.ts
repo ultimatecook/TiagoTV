@@ -31,23 +31,26 @@ describe('EmbeddedMpvCanvasPictureInPicture', () => {
         canvas = document.createElement('canvas');
         host.appendChild(canvas);
         document.body.appendChild(host);
-        (HTMLCanvasElement.prototype as CaptureCanvas).captureStream =
-            jest.fn(
-                () =>
-                    ({
-                        getTracks: () => [{ stop: stopTrack }],
-                    }) as unknown as MediaStream
-            );
+        (HTMLCanvasElement.prototype as CaptureCanvas).captureStream = jest.fn(
+            () =>
+                ({
+                    getTracks: () => [{ stop: stopTrack }],
+                }) as unknown as MediaStream
+        );
         HTMLMediaElement.prototype.play = jest.fn(() => Promise.resolve());
         request = jest.fn(async function (this: HTMLVideoElement) {
             pipElement = this;
             this.dispatchEvent(new Event('enterpictureinpicture'));
             return {} as PictureInPictureWindow;
         });
-        Object.defineProperty(HTMLVideoElement.prototype, 'requestPictureInPicture', {
-            configurable: true,
-            value: request,
-        });
+        Object.defineProperty(
+            HTMLVideoElement.prototype,
+            'requestPictureInPicture',
+            {
+                configurable: true,
+                value: request,
+            }
+        );
         exit = jest.fn(async () => {
             const element = pipElement;
             pipElement = null;
@@ -72,8 +75,9 @@ describe('EmbeddedMpvCanvasPictureInPicture', () => {
         (HTMLCanvasElement.prototype as CaptureCanvas).captureStream =
             originals.capture;
         HTMLMediaElement.prototype.play = originals.play;
-        delete (HTMLVideoElement.prototype as { requestPictureInPicture?: unknown })
-            .requestPictureInPicture;
+        delete (
+            HTMLVideoElement.prototype as { requestPictureInPicture?: unknown }
+        ).requestPictureInPicture;
         delete (document as { pictureInPictureEnabled?: unknown })
             .pictureInPictureEnabled;
         delete (document as { pictureInPictureElement?: unknown })
@@ -121,9 +125,9 @@ describe('EmbeddedMpvCanvasPictureInPicture', () => {
         const pip = create();
         const video = await enter(pip);
 
-        expect(
-            (canvas as CaptureCanvas).captureStream
-        ).toHaveBeenCalledWith(30);
+        expect((canvas as CaptureCanvas).captureStream).toHaveBeenCalledWith(
+            30
+        );
         expect(video.muted).toBe(true);
         expect(request).toHaveBeenCalledTimes(1);
         expect(pip.active()).toBe(true);

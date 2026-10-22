@@ -140,11 +140,7 @@
 :host([data-platform]) ::ng-deep app-player-controls {
     --pc-progress: var(--player-accent);
     --pc-accent-blue: var(--player-accent);
-    --pc-accent-blue-strong: color-mix(
-        in srgb,
-        var(--player-accent) 80%,
-        #000
-    );
+    --pc-accent-blue-strong: color-mix(in srgb, var(--player-accent) 80%, #000);
     --pc-accent-blue-hover: color-mix(in srgb, var(--player-accent) 66%, #000);
 }
 

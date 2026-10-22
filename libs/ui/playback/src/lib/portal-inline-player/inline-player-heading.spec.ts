@@ -36,7 +36,11 @@ describe('inlinePlayerHeading', () => {
             inlinePlayerHeading({
                 title: 'Fauda',
                 seriesTitle: '|ES| Fauda [2015]',
-                episode: { seasonNumber: 3, episodeNumber: 10, title: 'Fauda - 3x10 - Final' },
+                episode: {
+                    seasonNumber: 3,
+                    episodeNumber: 10,
+                    title: 'Fauda - 3x10 - Final',
+                },
                 code: spanish,
             })?.secondary
         ).toBe('T3:E10 · Final');
@@ -47,7 +51,11 @@ describe('inlinePlayerHeading', () => {
             inlinePlayerHeading({
                 title: 'Dark',
                 seriesTitle: 'Dark (2017)',
-                episode: { seasonNumber: 2, episodeNumber: 1, title: 'Episode 1' },
+                episode: {
+                    seasonNumber: 2,
+                    episodeNumber: 1,
+                    title: 'Episode 1',
+                },
                 code: english,
             })
         ).toEqual({ primary: 'Dark', secondary: 'S2:E1' });
@@ -60,7 +68,11 @@ describe('inlinePlayerHeading', () => {
 
 describe('episodeOwnName', () => {
     it.each([
-        ['Show (2022) ES - S01E02 - Chilean Patagonia', 'Show', 'Chilean Patagonia'],
+        [
+            'Show (2022) ES - S01E02 - Chilean Patagonia',
+            'Show',
+            'Chilean Patagonia',
+        ],
         ['S01 E05 The Return', 'Show', 'The Return'],
         ['Show - The Pilot', 'Show', 'The Pilot'],
         ['The Pilot', 'Show', 'The Pilot'],

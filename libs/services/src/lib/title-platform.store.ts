@@ -84,9 +84,7 @@ export class TitlePlatformStore {
  * A title page's side: while the page lives, the store knows the title it
  * shows (null: none yet). Call in an injection context.
  */
-export function publishTitlePlatform(
-    ref: () => TitlePlatformRef | null
-): void {
+export function publishTitlePlatform(ref: () => TitlePlatformRef | null): void {
     const store = inject(TitlePlatformStore);
     effect((onCleanup) => {
         const current = ref();

@@ -166,7 +166,10 @@ function rerankExternalRecommendations(
 
 function isExternalRecommendation(
     recommendation: PlaybackRecommendation
-): recommendation is Extract<PlaybackRecommendation, { readonly action: 'player' }> & {
+): recommendation is Extract<
+    PlaybackRecommendation,
+    { readonly action: 'player' }
+> & {
     readonly target: ExternalPlayerName;
 } {
     return (
@@ -188,8 +191,7 @@ export function isPlaybackExternallyTransferable(
  */
 export const EMBEDDED_MPV_TARGET = 'embedded-mpv';
 export type DiagnosticPlayerTarget =
-    | PlaybackRecommendationTarget
-    | typeof EMBEDDED_MPV_TARGET;
+    PlaybackRecommendationTarget | typeof EMBEDDED_MPV_TARGET;
 
 /** The saved-player setting a target of the error screen stands for. */
 export function diagnosticTargetPlayer(

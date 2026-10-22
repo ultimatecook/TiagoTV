@@ -184,7 +184,8 @@ describe('error-screen player targets', () => {
         expect(diagnosticTargetPlayer('html5')).toBe(VideoPlayer.Html5Player);
         expect(diagnosticTargetPlayer('videojs')).toBe(VideoPlayer.VideoJs);
         expect(diagnosticTargetPlayer('artplayer')).toBe(VideoPlayer.ArtPlayer);
-        expect(toVideoPlayer(EMBEDDED_MPV_TARGET)).toBe(VideoPlayer.EmbeddedMpv);
+        expect(toVideoPlayer(EMBEDDED_MPV_TARGET)).toBe(
+            VideoPlayer.EmbeddedMpv
+        );
     });
 });
-

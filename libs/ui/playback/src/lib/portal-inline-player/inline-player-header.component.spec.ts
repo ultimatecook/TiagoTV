@@ -55,7 +55,9 @@ describe('InlinePlayerHeaderComponent', () => {
     it('closes from the round close button', () => {
         const closed = jest.fn();
         fixture.componentInstance.closed.subscribe(closed);
-        query<HTMLButtonElement>('[data-test-id="inline-player-close"]')?.click();
+        query<HTMLButtonElement>(
+            '[data-test-id="inline-player-close"]'
+        )?.click();
         expect(closed).toHaveBeenCalledTimes(1);
     });
 
