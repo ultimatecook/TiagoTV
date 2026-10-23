@@ -1,8 +1,10 @@
 import {
     languageVersions,
     type CatalogTitle,
+    type PlatformLook,
     type PlatformTitle,
     type StreamingPlatform,
+    type TileDress,
 } from '@iptvnator/workspace/dashboard/feature/tv-logic';
 import { h, picture } from '../core/dom';
 import { durationLabel } from '../core/format';
@@ -13,6 +15,7 @@ import { t } from '../data/strings';
 import { genreLabel, posterMeta } from '../data/title-meta';
 import type { App } from '../app';
 import { CARD, posterCard } from '../ui/cards';
+import { platformTile } from '../ui/platform-cards';
 import { Row } from '../ui/row';
 
 /**
@@ -81,8 +84,11 @@ export function episodeRow(episode: Episode): HTMLElement {
     );
 }
 
-/** "Más títulos": the platform's newest of the same kind, not this one. */
-export function moreTitlesRow(app: App, title: PlatformTitle, platform: StreamingPlatform | null): Row<PlatformTitle> | null {
+/** The desktop's similar-titles cards: posters, in the look's corners. */
+const SIMILAR: TileDress = { tile: 'poster', large: false, caption: false, sub: false, info: false };
+
+/** "Más títulos": the platform's newest of the same kind, not this one, in the platform's tiles. */
+export function moreTitlesRow(app: App, title: PlatformTitle, platform: StreamingPlatform | null, look: PlatformLook): Row<PlatformTitle> | null {
     const pool: PlatformTitle[] = platform
         ? app.store.platformTitles(platform.id)
         : (app.store.titles(title.kind) as CatalogTitle[]);
@@ -92,10 +98,15 @@ export function moreTitlesRow(app: App, title: PlatformTitle, platform: Streamin
     }
     const row = new Row<PlatformTitle>({
         title: 'Más títulos',
-        variant: 'posters',
+        variant: look === 'default' ? 'posters' : 'tiles-poster',
         cardWidth: CARD.poster.width,
         gap: CARD.poster.gap,
-        render: (other) => posterCard({ title: other, platform: (other as CatalogTitle).platform ?? platform, meta: posterMeta(other) }),
+        render: (other) => {
+            const owner = (other as CatalogTitle).platform ?? platform;
+            return look === 'default'
+                ? posterCard({ title: other, platform: owner, meta: posterMeta(other) })
+                : platformTile({ title: other, platform: owner }, SIMILAR, look);
+        },
         activate: (other) => app.openTitle(other),
     });
     row.setItems(titles);

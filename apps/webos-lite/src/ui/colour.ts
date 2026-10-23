@@ -25,3 +25,8 @@ export function hueOf(text: string): number {
     }
     return sum % 360;
 }
+
+/** `hex` as rgba() with `value` for its alpha. */
+export function alpha(hex: string, value: number): string {
+    return tint(hex, hex, 0, value);
+}

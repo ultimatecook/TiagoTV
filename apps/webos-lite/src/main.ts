@@ -1,5 +1,6 @@
 import type { App } from './app';
 import { activity, setActivity } from './core/activity';
+import { installFit } from './core/fit';
 import { imageQueueSize } from './core/image-queue';
 import { actionOf, isDirection, KEY } from './core/keys';
 import { nav } from './core/nav';
@@ -28,8 +29,6 @@ import { loadSource, saveSource } from './xtream/source';
  * (player/native-bridge.ts).
  */
 
-const DESIGN_WIDTH = 1920;
-
 interface PalmWindow {
     PalmSystem?: { platformBack?: () => void };
 }
@@ -49,12 +48,6 @@ function exitApp(): void {
     }
 }
 
-/** The layout is drawn for 1920×1080; a 720p TV scales it down. */
-function fitToScreen(root: HTMLElement): void {
-    const scale = (window.innerWidth || DESIGN_WIDTH) / DESIGN_WIDTH;
-    root.style.transform = Math.abs(scale - 1) > 0.01 ? `scale(${scale})` : '';
-}
-
 function closestFocusable(target: EventTarget | null, scope: HTMLElement): HTMLElement | null {
     let node = target as HTMLElement | null;
     while (node && node !== scope.parentElement) {
@@ -68,8 +61,7 @@ function closestFocusable(target: EventTarget | null, scope: HTMLElement): HTMLE
 
 function boot(): void {
     const root = document.getElementById('app') as HTMLElement;
-    fitToScreen(root);
-    window.addEventListener('resize', () => fitToScreen(root));
+    installFit(root);
 
     let app: App | null = null;
     const stack: ScreenStack = new ScreenStack(root, () =>

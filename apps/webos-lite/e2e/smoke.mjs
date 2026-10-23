@@ -16,7 +16,8 @@
  * suites (smoke-resilience.mjs) then replay what a real provider and a
  * real TV do to the catalog (slow, aborted, silent and huge answers, the
  * player opened while it loads, a second launch) and Diagnóstico.
- * smoke-tracks.mjs checks subtitles and audio tracks on an episode row.
+ * smoke-tracks.mjs checks subtitles and audio tracks on an episode row;
+ * smoke-fit.mjs that the 1920×1080 canvas fits other screens, centred.
  */
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,6 +27,7 @@ import { openHarness } from './harness.mjs';
 import { catalogSuite, homeSuite, myListSuite, searchSuite, settingsSuite, sportsSuite } from './smoke-browse.mjs';
 import { liveSuite, normalSuite } from './smoke-playback.mjs';
 import { activitySuite, diagnosticsSuite, firstLoadSuite, secondLaunchSuite } from './smoke-resilience.mjs';
+import { fitSuite } from './smoke-fit.mjs';
 import { tracksSuite } from './smoke-tracks.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -87,7 +89,7 @@ async function main() {
     }
     const h = await openHarness({ shots, headed: process.argv.includes('--headed') });
     try {
-        for (const suite of [setupSuite, homeSuite, catalogSuite, sportsSuite, liveSuite, searchSuite, myListSuite, settingsSuite, normalSuite, tracksSuite, activitySuite, firstLoadSuite, diagnosticsSuite, secondLaunchSuite, exitSuite]) {
+        for (const suite of [setupSuite, homeSuite, catalogSuite, sportsSuite, liveSuite, searchSuite, myListSuite, settingsSuite, normalSuite, tracksSuite, activitySuite, firstLoadSuite, diagnosticsSuite, secondLaunchSuite, fitSuite, exitSuite]) {
             await suite(h);
         }
         h.check('no page errors', h.errors.length === 0, h.errors.slice(0, 3).join(' | '));

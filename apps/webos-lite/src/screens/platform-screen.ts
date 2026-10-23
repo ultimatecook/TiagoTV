@@ -1,10 +1,14 @@
 import {
+    buildBrandRows,
     buildPlatformRows,
     daySeed,
     findStreamingPlatform,
     languagesLabel,
+    languageVersions,
     pickRecommendations,
     platformDesign,
+    tileDress,
+    type PlatformBrandRow,
     type PlatformDesign,
     type PlatformRow,
     type PlatformTitle,
@@ -17,11 +21,12 @@ import type { Screen } from '../core/screens';
 import { Slot } from '../core/timers';
 import { tmdbSized } from '../data/images';
 import { t, tKey } from '../data/strings';
-import { genreLabel, kindLabel, posterMeta } from '../data/title-meta';
+import { genreLabel, kindLabel } from '../data/title-meta';
 import type { App } from '../app';
-import { CARD, landscapeCard, posterCard, top10Card } from '../ui/cards';
-import { hueOf, tint } from '../ui/colour';
+import { hueOf } from '../ui/colour';
 import { Hero, type HeroSlide } from '../ui/hero';
+import { brandMark, brandTile, platformTile, rankedTile, TILE, tileSize, tileVariant } from '../ui/platform-cards';
+import { lookClasses, lookOf, type TvLook } from '../ui/platform-looks';
 import { Row } from '../ui/row';
 import { screenBar } from '../ui/screen-bar';
 import { VPage } from '../ui/vpage';
@@ -29,37 +34,26 @@ import { playTitle } from './play-title';
 
 /**
  * A streaming platform's page, as the desktop draws it after the
- * platform's own app (platform-design.ts): its ground and colour, a
- * billboard of the day's recommendations, then its rows (Lo más nuevo,
+ * platform's own app (platform-design.ts; here platform-looks.ts and
+ * styles/platforms.css): its ground, a billboard of the day's
+ * recommendations (or Prime Video's, Disney+'s and mitele's rounded
+ * carousel), Disney+'s brand tiles, then its rows (Lo más nuevo,
  * Netflix's Top 10, Películas, Series, its genres; buildPlatformRows) in
- * 16:9 tiles or posters, as the platform does.
+ * the tiles the platform uses, badged and named as it names them.
  */
 const REFRESH_MS = 1200;
-
-const GROUNDS: Readonly<Record<string, string>> = {
-    netflix: '#141414',
-    prime: 'linear-gradient(180deg, #0f171e 0%, #0b1118 100%)',
-    hbo: 'linear-gradient(180deg, #0a0a24 0%, #04040c 100%)',
-    disney: 'linear-gradient(180deg, #13183a 0%, #080b1f 100%)',
-    apple: 'linear-gradient(180deg, #1c1c1e 0%, #0a0a0b 100%)',
-};
-
-function ground(platform: StreamingPlatform, design: PlatformDesign): string {
-    return (
-        GROUNDS[design.look] ??
-        `radial-gradient(120% 70% at 50% 0%, ${tint(platform.ambient, '#000000', 0.5, 0.55)} 0%, rgba(0,0,0,0) 60%), #0d0d10`
-    );
-}
 
 export class PlatformScreen implements Screen {
     readonly el: HTMLElement;
     private readonly page = new VPage('platform__page', 130);
-    private readonly hero = new Hero('hero--platform');
+    private readonly hero: Hero;
     private readonly status: Row<never>;
-    private rows: Row<PlatformTitle>[] = [];
+    private titleRows: Row<PlatformTitle>[] = [];
+    private brandsRow: Row<PlatformBrandRow> | null = null;
     private readonly refresh = new Slot('platform-refresh');
     private readonly platform: StreamingPlatform | null;
     private readonly design: PlatformDesign;
+    private readonly look: TvLook;
     private readonly stopListening: () => void;
     private visible = false;
 
@@ -69,6 +63,8 @@ export class PlatformScreen implements Screen {
     ) {
         this.platform = findStreamingPlatform(platformId);
         this.design = platformDesign(this.platform ? this.platform.id : 'netflix');
+        this.look = lookOf(this.design.look);
+        this.hero = new Hero(`hero--platform ${this.design.hero === 'carousel' ? 'hero--carousel' : 'hero--billboard'}`);
         this.status = new Row<never>({
             title: '',
             headless: true,
@@ -81,14 +77,10 @@ export class PlatformScreen implements Screen {
         this.status.setStatus(t('WORKSPACE.PLATFORMS.LOADING'));
         this.page.add(this.hero.el);
         this.page.add(this.status);
-        const stage = h('div', 'platform__ground');
-        if (this.platform) {
-            stage.style.background = ground(this.platform, this.design);
-        }
         this.el = h(
             'div',
-            `screen platform-page look--${this.design.look}`,
-            stage,
+            `screen platform-page ${lookClasses(this.design.look)}`,
+            h('div', 'platform__ground'),
             this.page.el,
             h('div', 'shell__veil'),
             screenBar('home', (id) => app.openTab(id))
@@ -134,20 +126,36 @@ export class PlatformScreen implements Screen {
     }
 
     private slide(title: PlatformTitle): HeroSlide {
-        const meta = title.genres.slice(0, 2).map(genreLabel).concat(languagesLabel(title)).join(' · ');
+        const platform = this.platform;
+        const carousel = this.design.hero === 'carousel';
+        const kind = kindLabel(title.kind);
+        const genres = title.genres.slice(0, 2).map(genreLabel);
         return {
             key: `${title.kind}:${title.id}`,
-            eyebrow: kindLabel(title.kind),
-            platform: this.platform,
+            // A billboard names the kind after the platform's mark; a
+            // carousel writes it with the genres, under the title.
+            eyebrow: carousel ? '' : kind,
+            brand: carousel ? null : brandMark(platform, this.design.look, 'hero__brand'),
+            platform,
             title: title.title,
-            meta,
+            meta: (carousel ? [kind] : []).concat(genres).join(' · '),
+            match: this.look.match && title.rating ? Math.round(title.rating * 10) : null,
+            badges: languageVersions(title).map((version) => version.language),
+            included: this.look.included ? t('WORKSPACE.PLATFORMS.INCLUDED', { platform: 'Prime' }) : null,
+            band: this.look.band ? languagesLabel(title) : null,
             plot: title.plot,
             backdrop: tmdbSized(this.app.store.backdropOf(title), 'w1280'),
             keyart: tmdbSized(title.poster, 'w500'),
             hue: hueOf(title.title),
+            stage: this.look.frame ?? (platform ? platform.background : null),
             actions: [
                 { label: tKey(this.design.playKey), icon: 'play', primary: true, run: () => playTitle(this.app, title) },
-                { label: t('WORKSPACE.PLATFORMS.MORE_INFO'), icon: 'info', run: () => this.app.openTitle(title) },
+                {
+                    label: t('WORKSPACE.PLATFORMS.MORE_INFO'),
+                    icon: 'info',
+                    round: !this.look.textInfo,
+                    run: () => this.app.openTitle(title),
+                },
             ],
         };
     }
@@ -168,7 +176,8 @@ export class PlatformScreen implements Screen {
             hero: picks,
             seed,
         });
-        this.renderRows(rows);
+        const brands = this.design.brands && platform ? buildBrandRows(titles, platform.name) : [];
+        this.renderRows(rows, brands);
         this.hero.start();
         const focused = nav.focused;
         if (focused && !document.body.contains(focused)) {
@@ -177,35 +186,51 @@ export class PlatformScreen implements Screen {
         this.page.updateNear();
     }
 
-    private tile(row: PlatformRow): 'landscape' | 'poster' {
-        const other = this.design.otherTileRows && this.design.otherTileRows.indexOf(row.id) >= 0;
-        const tile = this.design.tiles;
-        return other ? (tile === 'landscape' ? 'poster' : 'landscape') : tile;
+    /** The brand tiles, each brand's row, then the platform's rows. */
+    private renderRows(rows: readonly PlatformRow[], brands: readonly PlatformBrandRow[]): void {
+        this.page.removeRows(this.brandsRow ? [this.brandsRow, ...this.titleRows] : this.titleRows);
+        const brandRows = brands.map((data) => this.titleRow(data));
+        this.brandsRow = brandRows.length > 0 ? this.tilesOfBrands(brands, brandRows) : null;
+        this.titleRows = brandRows.concat(rows.map((data) => this.titleRow(data)));
+        if (this.brandsRow) {
+            this.page.add(this.brandsRow);
+        }
+        for (const row of this.titleRows) {
+            this.page.add(row);
+        }
     }
 
-    private renderRows(rows: readonly PlatformRow[]): void {
-        this.page.removeRows(this.rows);
-        this.rows = rows.map((data) => {
-            const ranked = !!data.ranked;
-            const tile = this.tile(data);
-            const size = ranked ? CARD.top10 : tile === 'landscape' ? CARD.landscape : CARD.poster;
-            const platform = this.platform;
-            const row = new Row<PlatformTitle>({
-                title: tKey(data.labelKey, data.labelParams ?? {}),
-                variant: ranked ? 'top10' : tile === 'landscape' ? 'landscape' : 'posters',
-                cardWidth: size.width,
-                gap: size.gap,
-                render: (title, index) =>
-                    ranked
-                        ? top10Card({ title, platform, meta: posterMeta(title) }, index + 1)
-                        : tile === 'landscape'
-                          ? landscapeCard({ title, platform })
-                          : posterCard({ title, platform, meta: posterMeta(title) }),
-                activate: (title) => this.app.openTitle(title),
-            });
-            row.setItems(data.titles);
-            this.page.add(row);
-            return row;
+    /** Disney+'s brand tiles: OK on one goes to its row ("Marvel en Disney+"). */
+    private tilesOfBrands(brands: readonly PlatformBrandRow[], rows: readonly Row<PlatformTitle>[]): Row<PlatformBrandRow> {
+        const row = new Row<PlatformBrandRow>({
+            title: t('WORKSPACE.PLATFORMS.BRANDS'),
+            headless: true,
+            variant: 'brands',
+            cardWidth: TILE.brand.width,
+            gap: TILE.brand.gap,
+            render: (brand) => brandTile(brand),
+            activate: (_, index) => nav.focus(rows[index].enter()),
         });
+        row.setItems(brands);
+        return row;
+    }
+
+    private titleRow(data: PlatformRow): Row<PlatformTitle> {
+        const platform = this.platform;
+        const look = this.design.look;
+        const ranked = !!data.ranked;
+        const dress = tileDress(this.design, data.id);
+        const size = ranked ? TILE.ranked : tileSize(dress);
+        const row = new Row<PlatformTitle>({
+            title: tKey(data.labelKey, data.labelParams ?? {}),
+            variant: ranked ? 'top10' : tileVariant(dress),
+            cardWidth: size.width,
+            gap: size.gap,
+            render: (title, index) =>
+                ranked ? rankedTile({ title, platform }, index + 1, look) : platformTile({ title, platform }, dress, look),
+            activate: (title) => this.app.openTitle(title),
+        });
+        row.setItems(data.titles);
+        return row;
     }
 }

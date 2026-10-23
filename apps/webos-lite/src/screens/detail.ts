@@ -1,5 +1,6 @@
 import {
     languageVersions,
+    platformDesign,
     type CatalogTitle,
     type PlatformTitle,
     type PlatformTitleVersion,
@@ -17,8 +18,9 @@ import { resume } from '../data/resume';
 import { t } from '../data/strings';
 import { kindLabel } from '../data/title-meta';
 import type { App, OpenTitleOptions } from '../app';
-import { platformMark } from '../ui/cards';
 import { icon } from '../ui/icons';
+import { brandMark } from '../ui/platform-cards';
+import { detailVeil, lookClasses, lookOf } from '../ui/platform-looks';
 import { screenBar } from '../ui/screen-bar';
 import { VPage } from '../ui/vpage';
 import { detailMeta, episodeRow, moreTitlesRow, seasonChip } from './detail-parts';
@@ -30,6 +32,9 @@ import { DetailPlayback } from './detail-playback';
  * rating, the synopsis, Reproducir (or Continuar where it was left) and
  * Mi lista; a series adds "Episodios" by season; "Más títulos" of its
  * platform close the page. A title in Spanish and English offers both.
+ * A platform's title takes that platform's look (platform-looks.ts,
+ * platforms.css), wherever it was opened from: its page, Series,
+ * Películas, Buscar, Mi lista or Seguir viendo.
  */
 const LANGUAGE: Readonly<Record<string, string>> = { ES: 'Español', EN: 'English' };
 
@@ -63,14 +68,10 @@ export class DetailScreen implements Screen {
         this.playback = new DetailPlayback(app, title, () => this.version, () => this.details);
         this.backdrop.onload = () => this.backdrop.classList.add('is-loaded');
         this.backdrop.onerror = () => this.backdrop.removeAttribute('src');
-        const eyebrow = h(
-            'div',
-            'detail__eyebrow',
-            platformMark(this.platform, 'detail__mark'),
-            h('span', {
-                text: [kindLabel(title.kind), this.platform ? this.platform.name : ''].filter(Boolean).join(' · '),
-            })
-        );
+        const look = this.platform ? platformDesign(this.platform.id).look : 'default';
+        const tone = lookOf(look);
+        // The platform's mark names it: the kind alone follows.
+        const eyebrow = h('div', 'detail__eyebrow', brandMark(this.platform, look, 'detail__mark'), h('span', { text: kindLabel(title.kind) }));
         this.page.add(
             h('div', { className: 'detail__header', attrs: { 'data-anchor': '' } }, eyebrow, h('h1', { className: 'detail__title display', text: title.title }), this.meta, this.plot, this.actions)
         );
@@ -83,19 +84,22 @@ export class DetailScreen implements Screen {
             this.page.add(this.episodesBlock);
             this.say(t('WORKSPACE.PLATFORMS.LOADING'));
         }
-        const more = moreTitlesRow(app, title, this.platform);
+        const more = moreTitlesRow(app, title, this.platform, look);
         if (more) {
             this.page.add(more);
         }
         const active = title.kind === 'movie' ? 'movies' : 'series';
+        const veil = h('div', 'detail__veil');
+        veil.style.background = detailVeil(tone.page);
         this.el = h(
             'div',
-            'screen detail',
-            h('div', 'detail__stage', this.backdrop, h('div', 'detail__veil')),
+            `screen detail ${lookClasses(look)}`,
+            h('div', 'detail__stage', this.backdrop, veil),
             this.page.el,
             h('div', 'shell__veil'),
             screenBar(active, (id) => app.openTab(id))
         );
+        this.el.style.background = tone.page;
         this.render();
         void this.load();
     }

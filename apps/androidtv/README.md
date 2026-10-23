@@ -23,6 +23,16 @@ One Activity (`MainActivity`) with two views on top of each other:
   backgrounds (`html.is-native-video`, `player.css`) and the native picture
   shows through; the page's OSD, menus and dialogs draw over it.
 
+### The page's size
+
+The page draws a fixed 1920×1080 canvas (its viewport meta, `width=1920`)
+and scales it to the screen itself, centred, letterboxed on another
+shape (`apps/webos-lite/src/core/fit.ts`). `PageViewport` sets the
+WebView to lay it out at that width whatever the screen
+(`useWideViewPort`, `loadWithOverviewMode`), keeps the system's font-size
+setting out of it (`textZoom = 100`) and disables zoom; `PageViewportTest`
+checks those settings without a WebView.
+
 ### The provider's requests (CORS)
 
 The page lives on an `https://appassets…` origin and the Xtream panels are

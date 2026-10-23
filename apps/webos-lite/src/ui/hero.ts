@@ -4,6 +4,7 @@ import { queueImage } from '../core/image-queue';
 import type { Direction } from '../core/keys';
 import { nav, onActivate, registerGroup } from '../core/nav';
 import { every, type Stop } from '../core/timers';
+import { t } from '../data/strings';
 import { platformMark } from './cards';
 import { icon, type IconName } from './icons';
 
@@ -11,14 +12,19 @@ import { icon, type IconName } from './icons';
  * A hero, as the desktop's: the backdrop under the bar with its veils
  * (or a poster standing on the right of a tinted stage), an eyebrow, the
  * platform's logo, the title in Bebas, a meta line (and how far the
- * viewer got) and the buttons. With several slides it rotates every
- * ROTATE_MS while it shows and nothing in it has focus; left on the first
- * button and right on the last move between slides.
+ * viewer got) and the buttons. A platform's page dresses it as that
+ * platform's billboard or carousel (platform-screen.ts, platforms.css):
+ * the mark before the eyebrow, Netflix's match and band, Prime Video's
+ * "Incluido", the languages' badges, a round ⓘ. With several slides it
+ * rotates every ROTATE_MS while it shows and nothing in it has focus;
+ * left on the first button and right on the last move between slides.
  */
 export interface HeroAction {
     readonly label: string;
     readonly icon?: IconName;
     readonly primary?: boolean;
+    /** A round button of the icon alone (HBO Max's and Apple TV's ⓘ). */
+    readonly round?: boolean;
     readonly run: () => void;
 }
 
@@ -29,14 +35,30 @@ export interface HeroSlide {
     readonly key: string;
     readonly eyebrow: string;
     readonly platform: StreamingPlatform | null;
+    /**
+     * A platform page's mark before the eyebrow (the logo, Netflix's N),
+     * or null for none (a carousel names its platform in its text); left
+     * out, the Home's heroes write the logo under the eyebrow.
+     */
+    readonly brand?: HTMLElement | null;
     readonly title: string;
     readonly meta: string;
+    /** Netflix's "78% de coincidencia" before the meta. */
+    readonly match?: number | null;
+    /** The languages after the meta, each in a badge: ES, EN. */
+    readonly badges?: readonly string[];
+    /** Prime Video's "Incluido con Prime" under the title. */
+    readonly included?: string | null;
+    /** Netflix's band at the billboard's right, carrying the languages. */
+    readonly band?: string | null;
     readonly plot?: string | null;
     /** 0–1 watched. */
     readonly progress?: number;
     readonly backdrop: string | null;
     readonly keyart: string | null;
     readonly hue: number;
+    /** The stage's own colour under the artwork (a platform's), instead of the hue's tint. */
+    readonly stage?: string | null;
     readonly actions: readonly HeroAction[];
 }
 
@@ -49,6 +71,7 @@ export class Hero {
     private readonly keyart = h('div', 'hero__keyart');
     private readonly content = h('div', 'hero__content');
     private readonly actionsEl = h('div', 'hero__actions');
+    private readonly band = h('span', 'hero__band');
     private readonly dots = h('div', 'hero__dots');
     private slides: readonly HeroSlide[] = [];
     private index = 0;
@@ -61,7 +84,8 @@ export class Hero {
         this.stage.appendChild(this.keyart);
         this.stage.appendChild(h('div', 'hero__veil hero__veil--left'));
         this.stage.appendChild(h('div', 'hero__veil hero__veil--top'));
-        this.el = h('section', `hero ${className}`, this.stage, this.content, this.dots);
+        this.band.style.display = 'none';
+        this.el = h('section', `hero ${className}`, this.stage, this.content, this.band, this.dots);
         registerGroup({ el: this.actionsEl, enter: () => this.firstAction(), move: (d, from) => this.move(d, from) });
     }
 
@@ -133,6 +157,7 @@ export class Hero {
 
     private renderStage(slide: HeroSlide): void {
         this.stage.style.background =
+            slide.stage ??
             `radial-gradient(90% 110% at 72% 30%, hsl(${slide.hue},30%,34%) 0%, hsl(${slide.hue},30%,14%) 45%, #0b0b0a 85%)`;
         const wanted = slide.backdrop ?? '';
         if (this.image.getAttribute('data-src') !== wanted) {
@@ -156,33 +181,47 @@ export class Hero {
         if (bar) {
             (bar.firstChild as HTMLElement).style.width = `${Math.round(progress * 100)}%`;
         }
-        if (slide.eyebrow) {
-            this.content.appendChild(h('p', { className: 'hero__eyebrow', text: slide.eyebrow }));
+        if (slide.brand || slide.eyebrow) {
+            this.content.appendChild(
+                h('p', 'hero__eyebrow', slide.brand ?? null, slide.eyebrow ? h('span', { text: slide.eyebrow }) : null)
+            );
         }
-        const mark = platformMark(slide.platform, 'hero__platform');
+        const mark = slide.brand !== undefined ? null : platformMark(slide.platform, 'hero__platform');
         if (mark) {
             this.content.appendChild(mark);
         }
         // A long name ("JO KOY: LIVE FROM THE LOS ANGELES FORUM") is set smaller.
         const long = slide.title.length > LONG_TITLE ? ' is-long' : '';
         this.content.appendChild(h('h2', { className: `hero__title display${long}`, text: slide.title }));
-        if (bar || slide.meta) {
-            this.content.appendChild(h('div', 'hero__meta', bar, slide.meta ? h('span', { text: slide.meta }) : null));
+        if (slide.included) {
+            this.content.appendChild(h('p', 'hero__included', h('i', 'hero__check'), slide.included));
+        }
+        const badges = (slide.badges ?? []).map((badge) => h('span', { className: 'hero__badge', text: badge }));
+        if (bar || slide.meta || slide.match || badges.length > 0) {
+            this.content.appendChild(
+                h(
+                    'div',
+                    'hero__meta',
+                    bar,
+                    slide.match ? h('span', { className: 'hero__match', text: t('WORKSPACE.DASHBOARD.MATCH', { value: slide.match }) }) : null,
+                    slide.meta ? h('span', { text: slide.meta }) : null,
+                    ...badges
+                )
+            );
         }
         if (slide.plot) {
             this.content.appendChild(h('p', { className: 'hero__plot', text: slide.plot }));
         }
         clear(this.actionsEl);
         for (const action of slide.actions) {
-            const button = h(
-                'div',
-                `button${action.primary ? ' button--primary' : ''}`,
-                action.icon ? icon(action.icon) : null,
-                action.label
-            );
+            const button = action.round
+                ? h('div', 'button button--round', action.icon ? icon(action.icon) : null)
+                : h('div', `button${action.primary ? ' button--primary' : ''}`, action.icon ? icon(action.icon) : null, action.label);
             this.actionsEl.appendChild(onActivate(button, action.run));
         }
         this.content.appendChild(this.actionsEl);
+        this.band.textContent = slide.band ?? '';
+        this.band.style.display = slide.band ? '' : 'none';
     }
 
     private renderDots(): void {

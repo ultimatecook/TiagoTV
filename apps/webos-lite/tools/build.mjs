@@ -33,6 +33,7 @@ export const STYLES = [
     'home.css',
     'catalog.css',
     'detail.css',
+    'platforms.css',
     'sports.css',
     'live.css',
     'search.css',

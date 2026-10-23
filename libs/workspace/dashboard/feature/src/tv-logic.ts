@@ -102,8 +102,20 @@ export {
 } from './lib/platforms/streaming-platforms';
 export {
     platformDesign,
+    RANKED_DRESS,
+    rowTile,
+    tileDress,
     type PlatformDesign,
+    type PlatformLook,
+    type PlatformTile,
+    type TileDress,
 } from './lib/platforms/platform-design';
+// Disney+'s brand tiles (Disney, Pixar, Marvel…), as the desktop fills them.
+export {
+    buildBrandRows,
+    type PlatformBrandId,
+    type PlatformBrandRow,
+} from './lib/platforms/platform-brands';
 export {
     pickSeriesForYou,
     rankTopMovies,

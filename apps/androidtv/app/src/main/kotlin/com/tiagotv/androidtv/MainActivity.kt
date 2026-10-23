@@ -65,13 +65,8 @@ class MainActivity : Activity() {
             mediaPlaybackRequiresUserGesture = false
             // The page is https (appassets), the providers are http.
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            // The page lays itself out at 1920x1080 (its viewport meta).
-            useWideViewPort = true
-            loadWithOverviewMode = true
-            textZoom = 100
-            setSupportZoom(false)
-            builtInZoomControls = false
-            displayZoomControls = false
+            // The page lays itself out at 1920x1080 and scales it to the screen (PageViewport).
+            PageViewport.apply(this)
             allowFileAccess = false
             allowContentAccess = false
             cacheMode = WebSettings.LOAD_DEFAULT
