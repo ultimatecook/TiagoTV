@@ -60,7 +60,10 @@ owns the one ExoPlayer and reports through
 `window.__tiagotvNativeEvent({type, …})`: `tracks`, `ready`, `playing`,
 `waiting`, `paused`, `ended`, `error` (with the HTTP status a refused
 stream failed with, so the page's busy/missing logic works), `timeupdate`
-(twice a second) and `seeked`. Events are built by `BridgeEvents` as
+(twice a second) and `seeked`. A stream the panel refuses before it
+starts (a 4xx) fails at once, without ExoPlayer's retries, so the page
+sees the status within its own attempt timeout; once a stream plays, the
+default retries ride over a transient segment error. Events are built by `BridgeEvents` as
 JavaScript literals, never carrying a URL.
 
 On the page, `src/player/native-media.ts` is a stand-in for the `<video>`

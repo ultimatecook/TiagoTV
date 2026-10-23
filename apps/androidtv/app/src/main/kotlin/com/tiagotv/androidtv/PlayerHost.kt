@@ -21,6 +21,8 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
+import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import androidx.media3.ui.PlayerView
 
 /**
@@ -47,8 +49,11 @@ class PlayerHost(
     private val handler = Handler(Looper.getMainLooper())
     private var player: ExoPlayer? = null
     private var profile = PROFILE_STABLE
-    private var readySent = false
+    /** Read on the player's loading threads too (loadErrorPolicy). */
+    @Volatile private var readySent = false
     private var ticking = false
+    /** After release (the Activity is gone) nothing plays again. */
+    private var released = false
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -106,11 +111,33 @@ class PlayerHost(
         }
     }
 
+    /**
+     * A stream the panel refuses before it starts (4xx: the account's
+     * connection in use, a channel gone) fails at once instead of going
+     * through ExoPlayer's retries (up to 15 s for a live stream): the page
+     * sees the status within its own attempt timeout and classifies it
+     * (busy, missing), as the `<video>` on LG does. Once the stream plays,
+     * the default retries ride over a transient segment error, and a
+     * failure reaches the page as a stream that broke.
+     */
+    private val loadErrorPolicy = object : DefaultLoadErrorHandlingPolicy() {
+        override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long =
+            retryDelayMs(readySent, httpStatusOf(loadErrorInfo.exception), super.getRetryDelayMsFor(loadErrorInfo))
+    }
+
     /** Opens `url` after closing whatever played: HLS, MPEG-TS or a file. */
     fun play(url: String, kind: String, startAtSeconds: Double) {
+        if (released) {
+            return
+        }
         stop()
         val player = ensurePlayer()
         readySent = false
+        // The previous stream's choices do not carry over: no subtitles until the page picks.
+        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+            .clearOverrides()
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
+            .build()
         val mime = when (kind) {
             "hls" -> MimeTypes.APPLICATION_M3U8
             "ts" -> MimeTypes.VIDEO_MP2T
@@ -153,7 +180,9 @@ class PlayerHost(
     }
 
     fun setVolume(level: Double) {
-        player?.volume = level.toFloat().coerceIn(0f, 1f)
+        if (!level.isNaN()) {
+            player?.volume = level.toFloat().coerceIn(0f, 1f)
+        }
     }
 
     /** The buffers are fixed when the player is built: a change rebuilds it (while stopped). */
@@ -193,6 +222,7 @@ class PlayerHost(
     }
 
     fun release() {
+        released = true
         stop()
         releasePlayer()
     }
@@ -201,7 +231,9 @@ class PlayerHost(
         player?.let { return it }
         val built = ExoPlayer.Builder(context)
             .setLoadControl(loadControlFor(profile))
-            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory()))
+            .setMediaSourceFactory(
+                DefaultMediaSourceFactory(dataSourceFactory()).setLoadErrorHandlingPolicy(loadErrorPolicy),
+            )
             .setAudioAttributes(AudioAttributes.DEFAULT, true)
             .build()
         built.addListener(listener)
@@ -292,6 +324,10 @@ class PlayerHost(
         private const val TICK_MS = 500L
         private const val BOTTOM_PADDING = 0.08f
         private const val RAISED_PADDING = 0.22f
+
+        /** No retry (C.TIME_UNSET) for an HTTP status before the stream started; otherwise `default`. */
+        fun retryDelayMs(started: Boolean, status: Int?, default: Long): Long =
+            if (!started && status != null) C.TIME_UNSET else default
 
         /** The HTTP status a refused stream failed with, from the error's causes. */
         fun httpStatusOf(error: Throwable?): Int? {

@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -169,6 +170,8 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         playerHost.release()
+        // A WebView is destroyed once it is out of the view tree.
+        (webView.parent as? ViewGroup)?.removeView(webView)
         webView.destroy()
         super.onDestroy()
     }
