@@ -8,8 +8,13 @@ import type { Fluidez } from './fluidez';
  *
  *   stable  HLS → TS → TS over MSE (segments buffered ahead: steadier);
  *   normal  TS → HLS → TS over MSE (starts sooner).
+ *
+ * The Android app plays everything in its native player (`android`,
+ * native-bridge.ts): HLS and TS in the same order, never MSE.
  */
-export type Engine = 'native' | 'mpegts';
+export type Engine = 'native' | 'mpegts' | 'android';
+
+export type StreamFormat = 'hls' | 'ts' | 'file';
 
 export interface Candidate {
     readonly url: string;
@@ -22,6 +27,8 @@ export interface Candidate {
     readonly type?: string;
     /** How long the attempt may take to show a picture. */
     readonly timeoutMs?: number;
+    /** What the native player is told it opens. */
+    readonly format?: StreamFormat;
 }
 
 export interface LiveSourceOptions {
@@ -29,6 +36,8 @@ export interface LiveSourceOptions {
     readonly mse: boolean;
     /** The HLS `<source type>` carrying LG's mediaOption, if any. */
     readonly hlsType?: string | null;
+    /** The Android app's native player takes every stream. */
+    readonly native?: boolean;
 }
 
 /** HLS needs its playlist and a segment or two before the first frame. */
@@ -40,24 +49,26 @@ export function liveCandidates(
     fluidez: Fluidez,
     options: LiveSourceOptions
 ): Candidate[] {
-    const ts: Candidate = { url: urlOf('ts'), engine: 'native', label: 'TS', timeoutMs: TS_TIMEOUT_MS };
+    const engine: Engine = options.native ? 'android' : 'native';
+    const ts: Candidate = { url: urlOf('ts'), engine, label: 'TS', timeoutMs: TS_TIMEOUT_MS, format: 'ts' };
     const hls: Candidate = {
         url: urlOf('m3u8'),
-        engine: 'native',
+        engine,
         label: 'HLS',
         timeoutMs: HLS_TIMEOUT_MS,
-        ...(options.hlsType ? { type: options.hlsType } : {}),
+        format: 'hls',
+        ...(options.hlsType && !options.native ? { type: options.hlsType } : {}),
     };
     const list = fluidez === 'stable' ? [hls, ts] : [ts, hls];
-    if (options.mse) {
+    if (options.mse && !options.native) {
         list.push({ url: urlOf('ts'), engine: 'mpegts', label: 'TS · MSE', timeoutMs: TS_TIMEOUT_MS });
     }
     return list;
 }
 
 /** Movies and episodes play as files (mp4, mkv) in `<video>`. */
-export function fileCandidates(url: string): Candidate[] {
-    return [{ url, engine: 'native', label: 'VOD' }];
+export function fileCandidates(url: string, native = false): Candidate[] {
+    return [{ url, engine: native ? 'android' : 'native', label: 'VOD', format: 'file' }];
 }
 
 export type StreamFailure = 'busy' | 'missing' | 'other';

@@ -5,6 +5,7 @@ import type { Action } from '../core/keys';
 import type { Screen } from '../core/screens';
 import type { App, PlayItem } from '../app';
 import { ZAP_DELAY_MS, type PlaybackController, type PlayState, type PlayView } from '../player/controller';
+import { nativeMediaOf } from '../player/native-media';
 import { MediaTracks } from '../player/tracks';
 import { CueOverlay } from '../ui/cue-overlay';
 import { Osd } from '../ui/osd';
@@ -76,7 +77,11 @@ export class PlayerScreen implements Screen, PlayView {
             this.cues.update();
         };
         this.tracks.onNotice = (text) => this.cues.say(text);
-        this.osd.onToggle = (visible) => this.cues.raise(visible);
+        this.osd.onToggle = (visible) => {
+            this.cues.raise(visible);
+            // The native player's own subtitles (Android) move up too.
+            nativeMediaOf(this.video)?.setSubtitlesRaised(visible);
+        };
         this.osd.setControls(this.menu.controls);
         this.el = h('div', 'screen player', this.video, this.cues.el, this.osd.el, this.menu.panel, this.message);
         this.message.style.display = 'none';

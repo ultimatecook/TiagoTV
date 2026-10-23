@@ -10,6 +10,8 @@ import { ScreenStack } from './core/screens';
 import { activeTimers } from './core/timers';
 import { PlayerEngine } from './player/engine';
 import { loadMpegts } from './player/mpegts';
+import { installNativeBackdrop, installNativeKeys, nativeBridge } from './player/native-bridge';
+import { NativeMedia } from './player/native-media';
 import { PlayerScreen } from './screens/player-screen';
 import { SetupScreen } from './screens/setup';
 import { confirmDialog } from './ui/dialog';
@@ -22,7 +24,8 @@ import { loadSource, saveSource } from './xtream/source';
 /**
  * TiagoTV liviano: the TV app's start. It wires the screens (wiring.ts),
  * the remote's keys (and the Magic Remote's pointer) and the single video
- * element.
+ * element, or the Android app's native player in its place
+ * (player/native-bridge.ts).
  */
 
 const DESIGN_WIDTH = 1920;
@@ -31,10 +34,15 @@ interface PalmWindow {
     PalmSystem?: { platformBack?: () => void };
 }
 
+/** The Android app's bridge, injected before the page runs; null on LG. */
+const bridge = nativeBridge();
+
 /** Back on the root screen: the TV's own way out of an app. */
 function exitApp(): void {
     const palm = (window as unknown as PalmWindow).PalmSystem;
-    if (palm && typeof palm.platformBack === 'function') {
+    if (bridge) {
+        bridge.exit();
+    } else if (palm && typeof palm.platformBack === 'function') {
         palm.platformBack();
     } else {
         window.close();
@@ -74,16 +82,26 @@ function boot(): void {
             })
         )
     );
-    // The app's only video element: every stream plays in it.
-    const video = document.createElement('video');
-    video.className = 'player__video';
+    // The app's only video element: every stream plays in it. On Android
+    // the native player plays instead, behind the page, and a stand-in
+    // takes the element's place.
+    const native = bridge ? new NativeMedia(bridge) : null;
+    const video = native ? native.el : document.createElement('video');
+    video.className = native ? video.className : 'player__video';
     const engine = new PlayerEngine(video, {
         loadMpegts,
         delay: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
         now: () => Date.now(),
         isBusy: () =>
             app ? app.client.account().then(isAccountBusy) : Promise.resolve(false),
+        ...(native ? { native } : {}),
     });
+    if (native) {
+        (window as unknown as { __tiagotvNativeEvent: NativeMedia['handle'] }).__tiagotvNativeEvent = (event) =>
+            native.handle(event);
+        installNativeKeys();
+        installNativeBackdrop();
+    }
 
     const setup = (initial: XtreamCredentials | null) =>
         new SetupScreen({ initial, save: saveSource, onSaved: start });

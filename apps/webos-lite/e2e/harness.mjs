@@ -55,7 +55,11 @@ function makeFixtures() {
     return { dir, clip, segment, dual };
 }
 
-export async function openHarness({ shots, headed = false }) {
+/**
+ * `initScripts`: more scripts to run before the app (the Android smoke adds
+ * its fake bridge, fake-native.js).
+ */
+export async function openHarness({ shots, headed = false, initScripts = [] }) {
     const fixtures = makeFixtures();
     const panel = await startFakeXtream({ media: fixtures.clip, segment: fixtures.segment, episodeMedia: fixtures.dual });
     const browser = await chromium.launch({
@@ -74,6 +78,9 @@ export async function openHarness({ shots, headed = false }) {
     });
     await page.addInitScript(SHIM);
     await page.addInitScript(INBAND);
+    for (const script of initScripts) {
+        await page.addInitScript(script);
+    }
     // Nothing leaves the machine: ESPN's standings and its team logos (the
     // crests) come from fixtures; every other outside request (TheSportsDB,
     // the player cut-outs) is refused, as an unreachable host would be.

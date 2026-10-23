@@ -128,16 +128,19 @@ export class PlaybackController {
 
     private candidates(item: PlayItem): Candidate[] {
         const client = this.app.client;
+        const native = this.engine.isNative;
         if (item.kind === 'live') {
             return liveCandidates((ext) => client.liveUrl(item.id, ext), loadFluidez(), {
                 mse: mseSupported(),
                 hlsType: hlsMediaOptionType(),
+                native,
             });
         }
         return fileCandidates(
             item.kind === 'movie'
                 ? client.movieUrl(item.id, item.extension ?? 'mp4')
-                : client.episodeUrl(item.id, item.extension ?? 'mp4')
+                : client.episodeUrl(item.id, item.extension ?? 'mp4'),
+            native
         );
     }
 
@@ -152,6 +155,7 @@ export class PlaybackController {
             busyRetries: item.kind === 'live' ? 1 : 0,
             live: item.kind === 'live',
             stashBytes: STASH_BYTES[loadFluidez()],
+            profile: loadFluidez(),
         });
         if (this.closed || outcome.kind === 'cancelled') {
             return;

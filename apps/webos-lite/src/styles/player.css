@@ -3,6 +3,19 @@
     background: #000;
 }
 
+/* Android: the native player draws behind the page (the WebView is
+   transparent). While it holds a stream, nothing opaque sits between it
+   and the chrome: not the room, not the stage, not the player. */
+html.is-native-video,
+html.is-native-video body,
+html.is-native-video .app,
+html.is-native-video .shell.room,
+html.is-native-video .stage,
+html.is-native-video .player,
+html.is-native-video .player__video {
+    background: transparent;
+}
+
 .player__video {
     position: absolute;
     left: 0;

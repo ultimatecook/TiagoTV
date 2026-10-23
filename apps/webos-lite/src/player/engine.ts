@@ -1,3 +1,4 @@
+import type { Fluidez } from './fluidez';
 import { classifyStatus, type Candidate } from './sources';
 import { StallWatch } from './stall';
 
@@ -11,6 +12,10 @@ import { StallWatch } from './stall';
  * `play` tries each candidate in turn; a newer `play` or `stop` cancels
  * an older one wherever it is. A live stream that stops moving for
  * STALL_MS (stall.ts) is reported through `onStall`.
+ *
+ * In the Android app the media is the native player's stand-in
+ * (native-media.ts): `android` candidates open through its session, whose
+ * events arrive as the same media events, and `release` stops it.
  */
 export interface MediaLike {
     src: string;
@@ -43,12 +48,22 @@ export interface MpegtsLike {
     readonly Events: { readonly ERROR: string };
 }
 
+/** The native player's session: the media's events report what it does. */
+export interface NativeSession {
+    start(candidate: Candidate, options: PlayOptions): void;
+    stop(): void;
+    /** The HTTP status of the last `error`, when the stream was refused. */
+    errorStatus(): number | null;
+}
+
 export interface EngineDeps {
     loadMpegts(): Promise<MpegtsLike | null>;
     delay(ms: number): Promise<void>;
     now(): number;
     /** Whether the account's connections are all in use (user_info). */
     isBusy(): Promise<boolean>;
+    /** The Android app's native player, when the media stands in for it. */
+    native?: NativeSession;
 }
 
 export type Outcome =
@@ -69,6 +84,8 @@ export interface PlayOptions {
     readonly live?: boolean;
     /** mpegts.js's first IO buffer, in bytes (Fluidez). */
     readonly stashBytes?: number;
+    /** Fluidez, for the native player's buffers. */
+    readonly profile?: Fluidez;
 }
 
 interface Attempt {
@@ -126,6 +143,10 @@ export class PlayerEngine {
     onAttemptFailed: ((candidate: Candidate) => void) | null = null;
     /** Streams opened since the engine was made (for tests and the OSD). */
     opened = 0;
+    /** Whether streams play in the Android app's native player. */
+    get isNative(): boolean {
+        return !!this.deps.native;
+    }
     /** The latest attempts, "HLS:failed", "TS:playing" (no URLs). */
     readonly attempts: string[] = [];
 
@@ -221,14 +242,18 @@ export class PlayerEngine {
         }
         if (this.attached) {
             this.attached = false;
-            quietly(() => this.media.pause());
-            if (this.sourceEl) {
-                const source = this.sourceEl;
-                this.sourceEl = null;
-                quietly(() => this.media.removeChild(source));
+            if (this.deps.native) {
+                quietly(() => this.deps.native?.stop());
+            } else {
+                quietly(() => this.media.pause());
+                if (this.sourceEl) {
+                    const source = this.sourceEl;
+                    this.sourceEl = null;
+                    quietly(() => this.media.removeChild(source));
+                }
+                this.media.removeAttribute('src');
+                quietly(() => this.media.load());
             }
-            this.media.removeAttribute('src');
-            quietly(() => this.media.load());
             this.readyAt = this.deps.now() + RELEASE_GAP_MS;
         }
         const wait = this.readyAt - this.deps.now();
@@ -264,7 +289,7 @@ export class PlayerEngine {
                 finish({ ok: false, status });
             };
             const onPlaying = () => finish({ ok: true, status: null });
-            const onError = () => fail(null);
+            const onError = () => fail(this.deps.native ? this.deps.native.errorStatus() : null);
             const onMetadata = () => {
                 if (options.startAt && options.startAt > 0) {
                     quietly(() => (media.currentTime = options.startAt as number));
@@ -289,6 +314,14 @@ export class PlayerEngine {
             }, candidate.timeoutMs ?? options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
             this.attached = true;
             this.opened++;
+            if (candidate.engine === 'android') {
+                if (this.deps.native) {
+                    this.deps.native.start(candidate, options);
+                } else {
+                    fail(null);
+                }
+                return;
+            }
             if (candidate.engine === 'native') {
                 this.attachNative(candidate, onError);
                 return;

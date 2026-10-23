@@ -100,3 +100,13 @@ vendor/embedded-mpv/*/runtime-manifest.json
 # MemPalace per-project files (issue #185)
 mempalace.yaml
 entities.json
+
+# Android TV app (apps/androidtv): Gradle output, the synced web bundle, the
+# local SDK path and any keystore. Signing keys never enter the repository.
+apps/androidtv/.gradle/
+apps/androidtv/.kotlin/
+apps/androidtv/**/build/
+apps/androidtv/local.properties
+apps/androidtv/app/src/main/assets/www/
+*.jks
+*.keystore

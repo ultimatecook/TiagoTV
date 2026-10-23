@@ -29,7 +29,7 @@ const buttons = (h) =>
     h.page.evaluate(() => [...document.querySelectorAll('.osd__track')].filter((el) => el.offsetWidth > 0).map((el) => el.textContent));
 
 /** From the bar: Buscar → "dar" → DARK's page → its first episode. */
-async function openDark(h) {
+export async function openDark(h) {
     const { page, press } = h;
     await toTab(h, 'home');
     if (await page.$('.dialog')) {
@@ -59,7 +59,7 @@ async function openDark(h) {
 }
 
 /** Down → the buttons; `steps` Right; OK → the list. */
-async function openList(h, steps = 0) {
+export async function openList(h, steps = 0) {
     await h.press('ArrowDown');
     await h.press('ArrowRight', steps);
     await h.press('Enter');
@@ -67,7 +67,7 @@ async function openList(h, steps = 0) {
 }
 
 /** Up/Down to the row reading `name`, then OK. */
-async function pick(h, name) {
+export async function pick(h, name) {
     for (let i = 0; i < 6; i++) {
         const label = await h.focused();
         if (label === name) {
@@ -80,6 +80,8 @@ async function pick(h, name) {
     }
     await h.press('Enter');
 }
+
+export { buttons as trackButtons, cueText, items as trackItems, waitCue };
 
 export async function tracksSuite(h) {
     const { page, press, check, shot } = h;
