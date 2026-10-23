@@ -9,14 +9,21 @@
  */
 import { statSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { PROJECT, runGradle } from './gradle.mjs';
 import { syncAssets } from './sync-assets.mjs';
 import { readVersion } from './version.mjs';
 
 /** Where Gradle leaves the APK of a variant. */
 export function apkPath(variant) {
-    return join(PROJECT, 'app', 'build', 'outputs', 'apk', variant, `app-${variant}.apk`);
+    return join(
+        PROJECT,
+        'app',
+        'build',
+        'outputs',
+        'apk',
+        variant,
+        `app-${variant}.apk`
+    );
 }
 
 async function main(args) {
@@ -25,14 +32,18 @@ async function main(args) {
         const synced = await syncAssets();
         console.log(`Web bundle v${synced.version} synced into the assets.`);
     }
-    const status = runGradle([variant === 'release' ? 'assembleRelease' : 'assembleDebug']);
+    const status = runGradle([
+        variant === 'release' ? 'assembleRelease' : 'assembleDebug',
+    ]);
     if (status !== 0) {
         process.exit(status);
     }
     const apk = apkPath(variant);
     const size = statSync(apk).size;
     const version = readVersion();
-    console.log(`Built ${relative(process.cwd(), apk)} (TiagoTV ${version.name}, ${(size / 1024 / 1024).toFixed(1)} MB)`);
+    console.log(
+        `Built ${relative(process.cwd(), apk)} (TiagoTV ${version.name}, ${(size / 1024 / 1024).toFixed(1)} MB)`
+    );
 }
 
 main(process.argv.slice(2)).catch((error) => {

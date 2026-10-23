@@ -17,7 +17,10 @@ import { fileURLToPath } from 'node:url';
 export const PROJECT = fileURLToPath(new URL('../', import.meta.url));
 
 export function gradleCommand(env = process.env) {
-    const wrapper = join(PROJECT, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew');
+    const wrapper = join(
+        PROJECT,
+        process.platform === 'win32' ? 'gradlew.bat' : 'gradlew'
+    );
     if (existsSync(wrapper)) {
         return wrapper;
     }
@@ -27,12 +30,18 @@ export function gradleCommand(env = process.env) {
 export function runGradle(tasks, env = process.env) {
     const sdk = env.ANDROID_HOME || env.ANDROID_SDK_ROOT;
     if (!sdk && !existsSync(join(PROJECT, 'local.properties'))) {
-        throw new Error('No Android SDK: set ANDROID_HOME (platform 34, build-tools 34.0.0) or write apps/androidtv/local.properties');
+        throw new Error(
+            'No Android SDK: set ANDROID_HOME (platform 34, build-tools 34.0.0) or write apps/androidtv/local.properties'
+        );
     }
-    const result = spawnSync(gradleCommand(env), ['-p', PROJECT, '--no-daemon', '--console=plain', ...tasks], {
-        stdio: 'inherit',
-        env,
-    });
+    const result = spawnSync(
+        gradleCommand(env),
+        ['-p', PROJECT, '--no-daemon', '--console=plain', ...tasks],
+        {
+            stdio: 'inherit',
+            env,
+        }
+    );
     if (result.error) {
         throw result.error;
     }

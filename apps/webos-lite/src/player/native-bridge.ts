@@ -64,7 +64,14 @@ interface NativeWindow {
     __tiagotvNativeKey?: (keyCode: number) => boolean;
 }
 
-const REQUIRED: readonly (keyof NativeBridge)[] = ['play', 'stop', 'pause', 'resume', 'seek', 'exit'];
+const REQUIRED: readonly (keyof NativeBridge)[] = [
+    'play',
+    'stop',
+    'pause',
+    'resume',
+    'seek',
+    'exit',
+];
 
 /** The bridge, when the page runs in the Android app. */
 export function nativeBridge(host: object = window): NativeBridge | null {
@@ -72,7 +79,9 @@ export function nativeBridge(host: object = window): NativeBridge | null {
     if (!bridge || typeof bridge !== 'object') {
         return null;
     }
-    return REQUIRED.every((name) => typeof bridge[name] === 'function') ? (bridge as NativeBridge) : null;
+    return REQUIRED.every((name) => typeof bridge[name] === 'function')
+        ? (bridge as NativeBridge)
+        : null;
 }
 
 /**
@@ -83,7 +92,10 @@ export function nativeBridge(host: object = window): NativeBridge | null {
  */
 export function installNativeKeys(host: object = window): void {
     (host as NativeWindow).__tiagotvNativeKey = (keyCode: number) => {
-        const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true });
+        const event = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+        });
         Object.defineProperty(event, 'keyCode', { get: () => keyCode });
         Object.defineProperty(event, 'which', { get: () => keyCode });
         document.dispatchEvent(event);
@@ -96,7 +108,9 @@ export function installNativeKeys(host: object = window): void {
  * while a stream is held, the room and the stage let it through
  * (player.css, `html.is-native-video`).
  */
-export function installNativeBackdrop(root: HTMLElement = document.documentElement): void {
+export function installNativeBackdrop(
+    root: HTMLElement = document.documentElement
+): void {
     onActivity((activity) => {
         root.classList.toggle('is-native-video', activity !== 'idle');
     });

@@ -27,7 +27,14 @@ export default [
     ...nx.configs['flat/typescript'],
     ...nx.configs['flat/javascript'],
     {
-        ignores: ['**/dist', '**/.astro'],
+        ignores: [
+            '**/dist',
+            '**/.astro',
+            // Android TV app (apps/androidtv): Gradle output and the synced web bundle.
+            'apps/androidtv/**/build',
+            'apps/androidtv/.gradle',
+            'apps/androidtv/app/src/main/assets/www',
+        ],
     },
     {
         files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],

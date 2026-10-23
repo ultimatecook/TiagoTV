@@ -1,5 +1,9 @@
 import type { NativeSession, PlayOptions } from './engine';
-import type { NativeBridge, NativeEvent, NativeTrackInfo } from './native-bridge';
+import type {
+    NativeBridge,
+    NativeEvent,
+    NativeTrackInfo,
+} from './native-bridge';
 import type { Candidate } from './sources';
 
 /**
@@ -60,7 +64,10 @@ function describe(info: NativeTrackInfo): { language: string; label: string } {
     const label = String(info.label ?? '');
     return {
         language: String(info.language ?? ''),
-        label: info.forced && !/forced|forzad/i.test(label) ? `${label} forced`.trim() : label,
+        label:
+            info.forced && !/forced|forzad/i.test(label)
+                ? `${label} forced`.trim()
+                : label,
     };
 }
 
@@ -166,7 +173,11 @@ export class NativeMedia implements NativeSession {
         this.paused = false;
         this.resetTracks();
         this.bridge.setProfile(options.profile ?? 'stable');
-        this.bridge.play(candidate.url, candidate.format ?? 'file', options.startAt ?? 0);
+        this.bridge.play(
+            candidate.url,
+            candidate.format ?? 'file',
+            options.startAt ?? 0
+        );
     }
 
     stop(): void {
@@ -239,13 +250,15 @@ export class NativeMedia implements NativeSession {
     /** The native player's lists: the same objects for the same ids. */
     private readTracks(event: NativeEvent): void {
         const texts = (event.text ?? []).map((info) => {
-            const track = this.texts.get(info.id) ?? new NativeTextTrack(info.id, this);
+            const track =
+                this.texts.get(info.id) ?? new NativeTextTrack(info.id, this);
             this.texts.set(info.id, track);
             Object.assign(track, describe(info));
             return track;
         });
         const audios = (event.audio ?? []).map((info) => {
-            const track = this.audios.get(info.id) ?? new NativeAudioTrack(info.id, this);
+            const track =
+                this.audios.get(info.id) ?? new NativeAudioTrack(info.id, this);
             this.audios.set(info.id, track);
             Object.assign(track, describe(info));
             return track;
@@ -273,7 +286,10 @@ export class NativeMedia implements NativeSession {
             this.currentTime = event.currentTime;
         }
         if (event.duration !== undefined) {
-            this.duration = typeof event.duration === 'number' && event.duration > 0 ? event.duration : Infinity;
+            this.duration =
+                typeof event.duration === 'number' && event.duration > 0
+                    ? event.duration
+                    : Infinity;
         }
         switch (event.type) {
             case 'ready':
@@ -293,7 +309,10 @@ export class NativeMedia implements NativeSession {
                 this.emit('ended');
                 return;
             case 'error':
-                this.status = typeof event.status === 'number' && event.status > 0 ? event.status : null;
+                this.status =
+                    typeof event.status === 'number' && event.status > 0
+                        ? event.status
+                        : null;
                 this.emit('error');
                 return;
             case 'tracks':

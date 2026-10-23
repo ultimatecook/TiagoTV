@@ -9,14 +9,24 @@
    window.__fakeNative records the calls (never a URL) for the checks. */
 (() => {
     const calls = [];
-    const state = { attached: false, time: 0, duration: null, paused: false, timer: null, failStatus: 0, stalled: false, tracks: { audio: [], text: [] } };
+    const state = {
+        attached: false,
+        time: 0,
+        duration: null,
+        paused: false,
+        timer: null,
+        failStatus: 0,
+        stalled: false,
+        tracks: { audio: [], text: [] },
+    };
 
     const emit = (event) => {
         if (typeof window.__tiagotvNativeEvent === 'function') {
             window.__tiagotvNativeEvent(event);
         }
     };
-    const record = (name, args = []) => calls.push([name].concat(args.map(String)).join(':'));
+    const record = (name, args = []) =>
+        calls.push([name].concat(args.map(String)).join(':'));
     const clearTimer = () => {
         if (state.timer !== null) {
             clearTimeout(state.timer);
@@ -28,19 +38,48 @@
         if (/\/series\//.test(url)) {
             return {
                 audio: [
-                    { id: 'a:0:0', language: 'en', label: 'English', selected: true },
-                    { id: 'a:0:1', language: 'es', label: 'Español', selected: false },
+                    {
+                        id: 'a:0:0',
+                        language: 'en',
+                        label: 'English',
+                        selected: true,
+                    },
+                    {
+                        id: 'a:0:1',
+                        language: 'es',
+                        label: 'Español',
+                        selected: false,
+                    },
                 ],
                 text: [
-                    { id: 't:1:0', language: 'en', label: 'English', selected: false },
-                    { id: 't:1:1', language: 'es', label: 'Español', selected: false },
+                    {
+                        id: 't:1:0',
+                        language: 'en',
+                        label: 'English',
+                        selected: false,
+                    },
+                    {
+                        id: 't:1:1',
+                        language: 'es',
+                        label: 'Español',
+                        selected: false,
+                    },
                 ],
             };
         }
-        return { audio: [{ id: 'a:0:0', language: '', label: '', selected: true }], text: [] };
+        return {
+            audio: [{ id: 'a:0:0', language: '', label: '', selected: true }],
+            text: [],
+        };
     };
-    const sendTracks = () => emit({ type: 'tracks', audio: state.tracks.audio, text: state.tracks.text });
-    const select = (list, id) => list.forEach((track) => (track.selected = track.id === id));
+    const sendTracks = () =>
+        emit({
+            type: 'tracks',
+            audio: state.tracks.audio,
+            text: state.tracks.text,
+        });
+    const select = (list, id) =>
+        list.forEach((track) => (track.selected = track.id === id));
 
     window.TiagoTVNative = {
         play(url, kind, startAt) {
@@ -57,7 +96,10 @@
                     return;
                 }
                 if (failWith) {
-                    emit({ type: 'error', status: failWith > 0 ? failWith : null });
+                    emit({
+                        type: 'error',
+                        status: failWith > 0 ? failWith : null,
+                    });
                     return;
                 }
                 sendTracks();
@@ -67,7 +109,11 @@
                     if (!state.paused && !state.stalled) {
                         state.time += 0.25;
                     }
-                    emit({ type: 'timeupdate', currentTime: state.time, duration: state.duration });
+                    emit({
+                        type: 'timeupdate',
+                        currentTime: state.time,
+                        duration: state.duration,
+                    });
                 }, 250);
             }, 120);
         },
@@ -84,7 +130,11 @@
         seek(seconds) {
             record('seek', [seconds]);
             state.time = seconds;
-            emit({ type: 'seeked', currentTime: seconds, duration: state.duration });
+            emit({
+                type: 'seeked',
+                currentTime: seconds,
+                duration: state.duration,
+            });
         },
         stop() {
             record('stop');
@@ -122,6 +172,10 @@
         fail: (status) => (state.failStatus = status),
         /** The picture freezes: time stops moving (the stall watch must notice). */
         stall: (on) => (state.stalled = on),
-        state: () => ({ attached: state.attached, time: state.time, paused: state.paused }),
+        state: () => ({
+            attached: state.attached,
+            time: state.time,
+            paused: state.paused,
+        }),
     };
 })();

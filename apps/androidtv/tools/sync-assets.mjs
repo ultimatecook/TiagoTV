@@ -15,7 +15,16 @@ import { build } from '../../webos-lite/tools/build.mjs';
 import { formatProblems } from '../../webos-lite/tools/gates.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-export const WWW = join(ROOT, 'apps', 'androidtv', 'app', 'src', 'main', 'assets', 'www');
+export const WWW = join(
+    ROOT,
+    'apps',
+    'androidtv',
+    'app',
+    'src',
+    'main',
+    'assets',
+    'www'
+);
 
 export async function syncAssets({ dev = false } = {}) {
     const result = await build({ dev });
@@ -33,7 +42,9 @@ export async function syncAssets({ dev = false } = {}) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
     syncAssets({ dev: process.argv.includes('--dev') }).then(
         (result) => {
-            console.log(`Synced TiagoTV liviano v${result.version} into ${result.www}`);
+            console.log(
+                `Synced TiagoTV liviano v${result.version} into ${result.www}`
+            );
         },
         (error) => {
             console.error(error.stack || error.message);

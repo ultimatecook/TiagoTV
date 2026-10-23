@@ -94,6 +94,16 @@ reemplazá la app en Aplicaciones (tus fuentes y favoritos se conservan) y
 repetí el paso 3. Solo hace falta cuando cambia el motor de la app; la
 interfaz se actualiza sola (abajo).
 
+## Instalar en Android TV (proyector Hisense)
+
+La app liviana de la tele LG también corre en Android TV, con el
+reproductor nativo de Android: en GitHub, **Actions → TiagoTV Android TV →
+Run workflow** deja un release con `TiagoTV-androidtv-<versión>.apk`.
+Cómo permitir apps desconocidas, instalarlo con Downloader o `adb`,
+configurar la cuenta y actualizar: [docs/tiagotv-androidtv-instalar.md](docs/tiagotv-androidtv-instalar.md).
+El código está en `apps/androidtv` (su README explica la arquitectura y
+la firma).
+
 ## Actualizaciones automáticas
 
 Cada push a `main` que toca la interfaz la publica en el repo público
