@@ -18,6 +18,7 @@ import {
     type TmdbEnrichedCastMember,
     type TmdbGenreFacet,
     type XtreamVodInfo,
+    titleWithSource,
     visibleSourceName,
 } from '@iptvnator/shared/interfaces';
 import {
@@ -238,7 +239,10 @@ export class VodDetailsHeroPresenter {
                 title: item.title,
                 posterUrl: item.posterUrl,
                 year: item.year,
-                tooltip: `${item.title} — ${item.match.playlistName}`,
+                tooltip: titleWithSource(
+                    item.title,
+                    item.match.playlistName
+                ),
             })
         );
         return [...local, ...crossPortal];

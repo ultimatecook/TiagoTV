@@ -3,6 +3,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import type { PlaylistMeta } from '@iptvnator/shared/interfaces';
+import { LIVE_CHANNEL_PLAY_STATE_KEY } from '@iptvnator/portal/shared/util';
 import { buildCountriesTv } from '../../countries/countries-catalog';
 import { CountriesCatalogService } from '../../countries/countries-catalog.service';
 import type { SportMatch } from '../../sports/sports-catalog';
@@ -95,7 +96,10 @@ describe('SearchPageComponent', () => {
                 { provide: SportsCatalogService, useValue: sports },
                 {
                     provide: CountriesCatalogService,
-                    useValue: { countries: signal(COUNTRIES) },
+                    useValue: {
+                        countries: signal(COUNTRIES),
+                        source: signal({ _id: 'source-1' }),
+                    },
                 },
             ],
         });
@@ -272,14 +276,23 @@ describe('SearchPageComponent', () => {
         ).toEqual(['tele']);
     });
 
-    it('plays a channel it finds', async () => {
+    it('plays a channel it finds on "En vivo"', async () => {
         const element = await render('/workspace/search?q=telemadrid');
+        const navigate = jest.spyOn(router, 'navigate').mockResolvedValue(true);
 
         (all(element, 'search-channel')[0] as HTMLButtonElement).click();
 
-        expect(sports.play).toHaveBeenCalledWith(
-            expect.objectContaining({ streamId: 10, title: 'Telemadrid' })
-        );
+        expect(navigate).toHaveBeenCalledWith(['/workspace', 'countries'], {
+            state: {
+                [LIVE_CHANNEL_PLAY_STATE_KEY]: expect.objectContaining({
+                    playlistId: 'source-1',
+                    streamId: 10,
+                    title: 'Telemadrid',
+                }),
+            },
+        });
+        // Not the framed Xtream live view.
+        expect(sports.play).not.toHaveBeenCalled();
     });
 
     it('walks the field and the result rows with the arrow keys', async () => {

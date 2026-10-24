@@ -58,3 +58,16 @@ export function sourceDisplayLabel(
 ): string {
     return visibleSourceName(name) ?? PORTAL_NAMES[portalType] ?? portalType;
 }
+
+/**
+ * A title with the source it is in ("Dune — Casa"), as a tooltip names
+ * another source's copy; the title alone when the source's name is an
+ * address.
+ */
+export function titleWithSource(
+    title: string,
+    sourceName: string | null | undefined
+): string {
+    const source = visibleSourceName(sourceName);
+    return source ? `${title} — ${source}` : title;
+}

@@ -16,7 +16,10 @@ import { MatIcon } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs';
-import { buildXtreamNavigationTarget } from '@iptvnator/portal/shared/util';
+import {
+    buildLiveChannelPlayTargetFor,
+    buildXtreamNavigationTarget,
+} from '@iptvnator/portal/shared/util';
 import { CountriesCatalogService } from '../../countries/countries-catalog.service';
 import { SPORT_SECTIONS } from '../../sports/sport-sections';
 import type { SportMatch } from '../../sports/sports-catalog';
@@ -296,14 +299,23 @@ export class SearchPageComponent {
         }
     }
 
+    /**
+     * A channel plays on "En vivo" (its stage, that stream), where the
+     * search found it, rather than in the framed Xtream live view.
+     */
     playChannel(channel: ChannelHit): void {
         this.remember();
-        this.sports.play({
+        const target = buildLiveChannelPlayTargetFor({
+            sourceType: 'xtream',
+            playlistId: this.countries.source()?._id ?? '',
             streamId: channel.streamId,
             categoryId: channel.categoryId,
             title: channel.title,
             icon: channel.icon,
         });
+        if (target) {
+            void this.router.navigate(target.link, { state: target.state });
+        }
     }
 
     openTitle(title: TitleHit): void {

@@ -62,7 +62,9 @@ function groupResultsByPlaylistId(
         // The group's title: never the provider's address.
         const playlistName = sourceDisplayLabel(
             item.playlist_name == null ? null : String(item.playlist_name),
-            'xtream'
+            'source_type' in item && item.source_type === 'm3u'
+                ? 'm3u'
+                : 'xtream'
         );
         const group = groups.get(playlistId) ?? {
             playlistId,

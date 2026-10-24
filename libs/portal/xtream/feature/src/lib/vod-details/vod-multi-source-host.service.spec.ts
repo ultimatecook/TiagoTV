@@ -244,7 +244,8 @@ describe('VodMultiSourceHostService', () => {
         const notice = service.lastSwitch();
         expect(notice?.playlistName).not.toContain('hunter2');
         expect(notice?.playlistName).not.toContain('alice');
-        expect(notice?.playlistName).toBe('portal.example.com:8080');
+        // Nor the provider's address: the source's kind instead.
+        expect(notice?.playlistName).toBe('Xtream');
     });
 
     it('announces every switch with the target playlist', async () => {
