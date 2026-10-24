@@ -58,6 +58,7 @@ import {
     createClearCollectionAction,
     setupClearCollectionViewCommand,
 } from './unified-collection-clear-action';
+import { createCollectionChannelRowState } from './unified-collection-channel-row';
 import { createCollectionContentTypeState } from './unified-collection-content-type';
 import {
     buildCollectionDetailNavigation,
@@ -112,8 +113,9 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
     /** A page-specific heading, e.g. "Mi lista" for the global favorites. */
     readonly titleKey = input<string>();
     /**
-     * TiagoTV's Mi lista: the live channels as a row of cards above the
-     * movies and series (`app-collection-channel-row`), not a Live tab.
+     * TiagoTV's Mi lista and Recently viewed: the live channels as a row of
+     * cards above the movies and series (`app-collection-channel-row`),
+     * playing on "En vivo", not a Live tab with a framed player.
      */
     readonly channelRow = input(false);
 
@@ -154,17 +156,25 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
         getOpenLiveCollectionItemState(window.history.state)
     );
 
-    readonly channelItems = computed(() =>
-        this.channelRow()
-            ? this.allItems().filter((item) => item.contentType === 'live')
-            : []
-    );
+    /** Reads the collection again as the page shows it now. */
+    private readonly reload = () =>
+        this.loadData({
+            mode: this.mode(),
+            portalType: this.portalType(),
+            playlistId: this.playlistId(),
+            scope: this.effectiveScope(),
+        });
+    protected readonly channelRowState = createCollectionChannelRowState({
+        enabled: this.channelRow,
+        mode: this.mode,
+        items: this.allItems,
+        isPlaylistScope: () => this.mutationRequest().scope === 'playlist',
+        data: this.data,
+        reload: this.reload,
+    });
+    readonly channelItems = this.channelRowState.channelItems;
     private readonly contentType = createCollectionContentTypeState(
-        computed(() =>
-            this.channelRow()
-                ? this.allItems().filter((item) => item.contentType !== 'live')
-                : this.allItems()
-        ),
+        this.channelRowState.contentItems,
         this.viewStateHistory.current()?.selectedContentType ?? 'live'
     );
     readonly selectedContentType = this.contentType.selected;
@@ -211,7 +221,7 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
     readonly emptyStateTitleKey = this.labels.emptyStateTitleKey;
     /** Mi lista says where its hearts are (En vivo's, the titles'). */
     readonly emptyStateBodyKey = computed(() =>
-        this.channelRow()
+        this.channelRow() && this.mode() === 'favorites'
             ? 'WORKSPACE.MY_LIST.EMPTY_BODY'
             : this.labels.emptyStateBodyKey()
     );
@@ -253,13 +263,7 @@ export class UnifiedCollectionPageComponent implements AfterContentInit {
         isPlaylistScope: () => this.mutationRequest().scope === 'playlist',
         data: this.data,
         dropCurrentType: () => this.dropCurrentContentType(),
-        reload: () =>
-            this.loadData({
-                mode: this.mode(),
-                portalType: this.portalType(),
-                playlistId: this.playlistId(),
-                scope: this.effectiveScope(),
-            }),
+        reload: this.reload,
     });
     private readonly detailState = createCollectionDetailState({
         items: this.allItems,

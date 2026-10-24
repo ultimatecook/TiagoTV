@@ -43,7 +43,11 @@ describe('CollectionChannelRowComponent', () => {
         navigate: jest.fn(async () => true),
     };
 
-    async function render(items: UnifiedCollectionItem[], searchTerm = '') {
+    async function render(
+        items: UnifiedCollectionItem[],
+        searchTerm = '',
+        mode: 'favorites' | 'recent' = 'favorites'
+    ) {
         TestBed.configureTestingModule({
             imports: [CollectionChannelRowComponent, TranslateModule.forRoot()],
             providers: [{ provide: Router, useValue: router }],
@@ -51,6 +55,7 @@ describe('CollectionChannelRowComponent', () => {
         fixture = TestBed.createComponent(CollectionChannelRowComponent);
         fixture.componentRef.setInput('items', items);
         fixture.componentRef.setInput('searchTerm', searchTerm);
+        fixture.componentRef.setInput('mode', mode);
         fixture.detectChanges();
         await fixture.whenStable();
     }
@@ -168,5 +173,95 @@ describe('CollectionChannelRowComponent', () => {
         expect(
             cards()[0].querySelector('.channel__meta')?.textContent
         ).toContain('WORKSPACE.GLOBAL_FAVORITES.CATALOG_MISSING');
+    });
+
+    it("never names a source by the provider's address", async () => {
+        await render([
+            channel({ playlistName: 'http://provider.test:8080' }),
+            M3U,
+        ]);
+
+        const meta = cards()[0].querySelector('.channel__meta')?.textContent;
+        expect(meta).toContain('Xtream');
+        expect(meta).not.toContain('provider.test');
+    });
+
+    it('has no bin on Mi lista', async () => {
+        await render([XTREAM]);
+
+        expect(
+            element().querySelector('[data-test-id="channels-clear"]')
+        ).toBeNull();
+    });
+
+    describe('on Recently viewed', () => {
+        it('plays an Xtream channel on "En vivo" too', async () => {
+            await render([XTREAM], '', 'recent');
+
+            cards()[0].click();
+
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['/workspace', 'countries'],
+                expect.objectContaining({
+                    state: {
+                        [LIVE_CHANNEL_PLAY_STATE_KEY]: expect.objectContaining(
+                            { playlistId: 'source-1', streamId: 14 }
+                        ),
+                    },
+                })
+            );
+        });
+
+        it('plays an M3U channel in its source’s recent items', async () => {
+            await render([M3U], '', 'recent');
+
+            cards()[0].click();
+
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['/workspace', 'playlists', 'list-1', 'recent'],
+                {
+                    state: {
+                        openLiveCollectionItem: expect.objectContaining({
+                            sourceType: 'm3u',
+                            itemId: 'http://stream.test/c5n',
+                        }),
+                    },
+                }
+            );
+        });
+
+        it('takes a channel out of the history from its ×', async () => {
+            await render([XTREAM], '', 'recent');
+            const removed: UnifiedCollectionItem[] = [];
+            fixture.componentInstance.removeItem.subscribe((item) =>
+                removed.push(item)
+            );
+
+            const remove = element().querySelector<HTMLButtonElement>(
+                '[data-test-id="my-list-channel-remove"]'
+            );
+            expect(remove?.getAttribute('aria-label')).toBe(
+                'WORKSPACE.GLOBAL_RECENT.REMOVE_NAMED'
+            );
+            expect(remove?.textContent?.trim()).toBe('close');
+            remove?.click();
+
+            expect(removed).toEqual([XTREAM]);
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+
+        it('asks to clear every channel from its bin', async () => {
+            await render([XTREAM, M3U], '', 'recent');
+            let cleared = 0;
+            fixture.componentInstance.clearAll.subscribe(() => cleared++);
+
+            element()
+                .querySelector<HTMLButtonElement>(
+                    '[data-test-id="channels-clear"]'
+                )
+                ?.click();
+
+            expect(cleared).toBe(1);
+        });
     });
 });

@@ -183,7 +183,7 @@ export class GlobalCollectionDetailHostComponent implements OnDestroy {
                 [playlistId]="activePlaylistId() ?? undefined"
                 [portalType]="activePortalType() ?? undefined"
                 [defaultScope]="effectiveDefaultScope()"
-                [channelRow]="mode() === 'favorites'"
+                [channelRow]="true"
             >
                 <ng-template
                     unifiedCollectionDetail
@@ -226,9 +226,10 @@ export class GlobalCollectionRouteComponent {
 
     readonly emptyState = computed(() => EMPTY_STATE_BY_MODE[this.mode()]);
     /**
-     * The global favorites are "Mi lista", as the top bar's tab names them:
-     * its channels a row of cards (played on "En vivo"), then the movies
-     * and series.
+     * The global favorites are "Mi lista", as the top bar's tab names them.
+     * Both pages (Mi lista, Recently viewed) show their channels as a row
+     * of cards (played on "En vivo"), then the movies and series; a
+     * source's own favourites and recent items keep their Live tab.
      */
     readonly titleKey = computed(() =>
         this.mode() === 'favorites'

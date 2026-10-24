@@ -296,8 +296,9 @@ app-unified-live-tab {
     }
 }
 
-// Mi lista's rows (`channelRow`): its channels, then the movies or series
-// under their own head (the type chips, Clear), in one scroller.
+// Mi lista's and Vistos recientemente's rows (`channelRow`): the channels,
+// then the movies or series under their own head (the type chips, Clear),
+// in one scroller.
 .collection-content--rows {
     display: block;
     overflow-x: hidden;

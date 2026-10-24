@@ -132,8 +132,14 @@ describe('UnifiedLiveTabComponent open in playlist', () => {
         window.electron = originalElectron;
     });
 
-    async function activate(sourceType: 'xtream' | 'stalker') {
-        const item = buildLiveItem(sourceType);
+    async function activate(
+        sourceType: 'xtream' | 'stalker',
+        playlistName?: string
+    ) {
+        const item = {
+            ...buildLiveItem(sourceType),
+            ...(playlistName ? { playlistName } : {}),
+        };
         streamResolver.resolveLiveDetail.mockResolvedValue({
             epgMode: 'portal',
             playback: {
@@ -190,6 +196,14 @@ describe('UnifiedLiveTabComponent open in playlist', () => {
                 },
             }
         );
+    });
+
+    it("never shows the provider's address on the chip", async () => {
+        await activate('xtream', 'http://provider.test:8080');
+
+        const projected = chip()
+            .componentInstance as OpenInPlaylistChipComponent;
+        expect(projected.playlistName()).toBe('Xtream');
     });
 
     it('offers the chip for a Stalker channel and lands on its ITV section', async () => {

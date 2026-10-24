@@ -307,9 +307,10 @@ describe('GlobalFavoritesListComponent', () => {
         expect(fixture.componentInstance.contextMenuCanOpenInPlaylist()).toBe(
             true
         );
-        // Credential-bearing stored names collapse to the host.
+        // A stored name that is the provider's address (credentials and
+        // all) never shows: the source's kind does.
         expect(fixture.componentInstance.contextMenuPlaylistName()).toBe(
-            'panel.example.com'
+            'M3U'
         );
 
         fixture.componentInstance.openContextMenuChannelInPlaylist();

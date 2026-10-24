@@ -48,6 +48,8 @@ export * from './lib/portal-activity-item.interface';
 export * from './lib/portal-debug.interface';
 export * from './lib/playlist-display-label.util';
 export * from './lib/playback-smoothness.util';
+export * from './lib/audio-language.util';
+export * from './lib/opensubtitles.interface';
 export * from './lib/portal-playback.interface';
 export * from './lib/provider-import-detection.util';
 export * from './lib/source-type-icons.util';

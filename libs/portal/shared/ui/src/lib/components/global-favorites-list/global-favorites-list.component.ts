@@ -30,7 +30,7 @@ import {
     buildXtreamEpgMappingKey,
     EpgProgram,
     epgProviderClockMs,
-    playlistDisplayLabel,
+    sourceDisplayLabel,
 } from '@iptvnator/shared/interfaces';
 import { resolveChannelEpgLookupKey } from '@iptvnator/m3u-state';
 import { EpgMappingDialogComponent } from '@iptvnator/ui/components';
@@ -113,9 +113,13 @@ export class GlobalFavoritesListComponent {
         const channel = this.contextMenuChannel();
         return !!channel && this.canOpenInPlaylist(channel);
     });
-    readonly contextMenuPlaylistName = computed(() =>
-        playlistDisplayLabel(this.contextMenuChannel()?.playlistName)
-    );
+    /** "Open in …": never the provider's address (see `sourceDisplayLabel`). */
+    readonly contextMenuPlaylistName = computed(() => {
+        const channel = this.contextMenuChannel();
+        return channel
+            ? sourceDisplayLabel(channel.playlistName, channel.sourceType)
+            : '';
+    });
 
     readonly isCustomSort = computed(() => this.sortMode() === 'custom');
     readonly canDragDrop = computed(

@@ -12,7 +12,7 @@ import {
     Channel,
     EpgItem,
     EpgProgram,
-    playlistDisplayLabel,
+    sourceDisplayLabel,
     ResolvedPortalPlayback,
     VideoPlayer,
 } from '@iptvnator/shared/interfaces';
@@ -150,9 +150,14 @@ export function createUnifiedLiveSelectionView(options: {
             const item = options.activeItem();
             return item ? getLiveCollectionPlaylistNavigation(item) : null;
         }),
-        openInPlaylistName: computed(() =>
-            playlistDisplayLabel(options.activeItem()?.playlistName)
-        ),
+        // The chip beside the guide: never the provider's address (the
+        // user's own name for the source, else its kind, "Xtream").
+        openInPlaylistName: computed(() => {
+            const item = options.activeItem();
+            return item
+                ? sourceDisplayLabel(item.playlistName, item.sourceType)
+                : '';
+        }),
         playbackSessionKey: computed(() =>
             createUnifiedLivePlaybackSessionKey(options.activeItem())
         ),
