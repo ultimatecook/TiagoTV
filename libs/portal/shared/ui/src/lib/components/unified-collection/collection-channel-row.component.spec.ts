@@ -204,9 +204,10 @@ describe('CollectionChannelRowComponent', () => {
                 ['/workspace', 'countries'],
                 expect.objectContaining({
                     state: {
-                        [LIVE_CHANNEL_PLAY_STATE_KEY]: expect.objectContaining(
-                            { playlistId: 'source-1', streamId: 14 }
-                        ),
+                        [LIVE_CHANNEL_PLAY_STATE_KEY]: expect.objectContaining({
+                            playlistId: 'source-1',
+                            streamId: 14,
+                        }),
                     },
                 })
             );

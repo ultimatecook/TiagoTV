@@ -80,9 +80,8 @@ export function getLiveChannelPlayNavigation(
 }
 
 export function getRecentItemLink(item: PortalRecentItem): string[] {
-    return (
-        getLiveChannelPlayNavigation(item) ?? getRecentItemNavigation(item)
-    ).link;
+    return (getLiveChannelPlayNavigation(item) ?? getRecentItemNavigation(item))
+        .link;
 }
 
 export function getRecentItemNavigationState(

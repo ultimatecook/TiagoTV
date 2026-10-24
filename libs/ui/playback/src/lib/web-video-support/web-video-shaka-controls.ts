@@ -75,6 +75,7 @@ export class WebVideoShakaControls {
                     track.language ||
                     `Audio ${index + 1}`,
                 selected: track.active,
+                ...(track.language ? { language: track.language } : {}),
             })
         );
     }
@@ -151,6 +152,7 @@ export class WebVideoShakaControls {
             id: index,
             label: formatTextTrackLabel(track, index),
             selected: track.active,
+            ...(track.language ? { language: track.language } : {}),
         }));
     }
 

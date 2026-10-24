@@ -56,6 +56,11 @@ export class OpenSubtitlesService {
     /** The last failure's kind; null after a success. */
     readonly lastError = signal<OpenSubtitlesErrorKind | null>(null);
 
+    /** False in the browser build and in installers without the bridge. */
+    hasBridge(): boolean {
+        return this.api.available;
+    }
+
     account(): OpenSubtitlesSettings {
         return normalizeOpenSubtitlesSettings(this.settings.openSubtitles?.());
     }

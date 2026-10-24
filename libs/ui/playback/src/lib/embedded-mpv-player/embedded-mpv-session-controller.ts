@@ -379,6 +379,10 @@ export class EmbeddedMpvSessionController {
         this.commands.setSubtitleTrack(trackId);
     readonly addExternalSubtitle = (): Promise<boolean> =>
         this.commands.addExternalSubtitle();
+    readonly canAddSubtitleText = (): boolean =>
+        this.commands.canAddSubtitleText();
+    readonly addSubtitleText = (name: string, content: string) =>
+        this.commands.addSubtitleText(name, content);
     readonly setSubtitleDelay = (seconds: number): Promise<void> =>
         this.commands.setSubtitleDelay(seconds);
     readonly setSubtitleStyle = (

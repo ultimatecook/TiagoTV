@@ -13,6 +13,8 @@ import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
+import { OpenSubtitlesService } from '@iptvnator/services';
+import { maskOpenSubtitlesUser } from '@iptvnator/shared/interfaces';
 import type {
     CatalogDiagnosticsService,
     CatalogRequestEntry,
@@ -22,7 +24,8 @@ import type {
 const UI_STAMP = 'tiagotv-ui.json';
 
 /**
- * Ajustes → Diagnóstico: the app and interface build, what Series,
+ * Ajustes → Diagnóstico: the app and interface build, the OpenSubtitles
+ * account (masked: never its key or password), what Series,
  * Películas and Buscar are built from (the stored catalog, each platform's
  * list, what shows), and the catalog's last provider requests — action,
  * category, time and outcome, never an address or the account. "Reload
@@ -46,6 +49,7 @@ const UI_STAMP = 'tiagotv-ui.json';
 export class SettingsDiagnosticsSectionComponent {
     private readonly document = inject(DOCUMENT);
     private readonly service = signal<CatalogDiagnosticsService | null>(null);
+    private readonly openSubtitles = inject(OpenSubtitlesService);
 
     readonly version = input('');
     readonly buildCommit = input('');
@@ -58,6 +62,20 @@ export class SettingsDiagnosticsSectionComponent {
     readonly requests = computed(() => this.service()?.requests() ?? []);
     readonly reloading = computed(() => !!this.service()?.reloading());
     readonly hasSource = computed(() => !!this.service()?.hasSource());
+    /** OpenSubtitles: key set, the account masked, the last answer. */
+    readonly subtitles = computed(() => {
+        const account = this.openSubtitles.account();
+        const error = this.openSubtitles.lastError();
+        return {
+            bridge: this.openSubtitles.hasBridge(),
+            key: !!account.apiKey,
+            user: maskOpenSubtitlesUser(account.username),
+            remaining: this.openSubtitles.remainingDownloads(),
+            errorKey: error
+                ? `SETTINGS.OPEN_SUBTITLES_TEST_${error.replace('-', '_').toUpperCase()}`
+                : null,
+        };
+    });
     readonly pendingRetries = computed(
         () => this.service()?.pendingRetries() ?? 0
     );

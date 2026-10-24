@@ -1,5 +1,6 @@
 import type { PlayerTrack } from '../player-controls/player-controls.model';
 import type { WebVideoControlsAdapter } from '../player-controls/web-video-controls.adapter';
+import type { ExternalSubtitleFile } from './external-subtitle-cues.util';
 import { pickExternalSubtitleFile } from './web-video-external-subtitles';
 import { WebVideoSourceStats } from './web-video-source-stats';
 import { WebVideoSubtitleStyle } from './web-video-subtitle-style';
@@ -48,6 +49,7 @@ export class WebVideoSourceControlsBridge {
             getSubtitleTracks: () => this.getSubtitleTracks(),
             setSubtitleTrack: (id) => this.setSubtitleTrack(id),
             addExternalSubtitleFile: () => this.pickExternalSubtitle(),
+            attachExternalSubtitle: (file) => this.attachSubtitle(file),
             getSubtitleDelay: () => this.tracks.getExternalSubtitleDelay(),
             setSubtitleDelay: (seconds) =>
                 this.tracks.setExternalSubtitleDelay(seconds),
@@ -104,6 +106,16 @@ export class WebVideoSourceControlsBridge {
             this.attached = false;
         }
         this.destroyed = true;
+    }
+
+    /** A downloaded subtitle: attached to the current source, at once. */
+    private attachSubtitle(file: ExternalSubtitleFile): boolean {
+        if (this.destroyed) {
+            return false;
+        }
+        const attached = this.tracks.addExternalSubtitleFile(file);
+        this.config.adapter.refresh();
+        return attached;
     }
 
     private pickExternalSubtitle(): void {

@@ -45,7 +45,9 @@ export function createCollectionChannelRowState(options: {
     const clearAction = createClearCollectionAction({
         mode: options.mode,
         items: channelItems,
-        typeLabelKey: computed(() => 'WORKSPACE.SHELL.COLLECTION_TYPE_NOUN.LIVE'),
+        typeLabelKey: computed(
+            () => 'WORKSPACE.SHELL.COLLECTION_TYPE_NOUN.LIVE'
+        ),
         isPlaylistScope: options.isPlaylistScope,
         data: options.data,
         dropCurrentType: () => options.data.dropContentType('live'),

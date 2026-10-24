@@ -27,6 +27,13 @@ export const DIAGNOSTICS_SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[]
             keywords: ['diagnostics', 'reload', 'refresh', 'catalog', 'cache'],
         },
         {
+            id: 'diagnostics-opensubtitles',
+            section: 'diagnostics',
+            labelKey: 'SETTINGS.DIAGNOSTICS.OPEN_SUBTITLES',
+            descriptionKey: 'SETTINGS.DIAGNOSTICS.OPEN_SUBTITLES_DESCRIPTION',
+            keywords: ['diagnostics', 'opensubtitles', 'subtitles', 'quota'],
+        },
+        {
             id: 'diagnostics-catalog',
             section: 'diagnostics',
             labelKey: 'SETTINGS.DIAGNOSTICS.CATALOG',

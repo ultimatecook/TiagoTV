@@ -190,6 +190,7 @@ export class VjsAudioTracks {
                 id,
                 label: track.label || track.language || `Audio ${id + 1}`,
                 selected: track.enabled === true,
+                ...(track.language ? { language: track.language } : {}),
             });
         }
         return result;

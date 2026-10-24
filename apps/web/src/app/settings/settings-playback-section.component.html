@@ -535,6 +535,279 @@
         </div>
     </section>
 
+    <section class="settings-section" data-test-id="audio-subtitles-settings">
+        <div class="settings-section__header">
+            <h3>{{ 'SETTINGS.CARD_AUDIO_SUBTITLES' | translate }}</h3>
+        </div>
+        <div class="settings-card">
+            <!-- The catalog's version and every player's tracks follow it. -->
+            <div
+                class="setting-item"
+                data-setting-id="audio-language"
+                data-test-id="audio-language-setting"
+            >
+                <div class="setting-item__meta">
+                    <h4 id="audio-language-label">
+                        {{ 'SETTINGS.AUDIO_LANGUAGE' | translate }}
+                    </h4>
+                    <p>
+                        {{ 'SETTINGS.AUDIO_LANGUAGE_DESCRIPTION' | translate }}
+                    </p>
+                </div>
+                <div class="setting-item__control">
+                    <mat-form-field
+                        class="settings-select"
+                        appearance="outline"
+                        subscriptSizing="dynamic"
+                    >
+                        <mat-select
+                            formControlName="audioLanguage"
+                            aria-labelledby="audio-language-label"
+                            data-test-id="select-audio-language"
+                        >
+                            @for (
+                                option of audioLanguageOptions;
+                                track option.value
+                            ) {
+                                <mat-option
+                                    [value]="option.value"
+                                    [attr.data-test-id]="
+                                        'audio-language-' + option.value
+                                    "
+                                    >{{ option.labelKey | translate }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-card" formGroupName="openSubtitles">
+            <div class="setting-item" data-setting-id="opensubtitles-api-key">
+                <div class="setting-item__meta">
+                    <h4 id="opensubtitles-api-key-label">
+                        {{ 'SETTINGS.OPEN_SUBTITLES_API_KEY' | translate }}
+                    </h4>
+                    <p>
+                        {{
+                            'SETTINGS.OPEN_SUBTITLES_API_KEY_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                    <p>
+                        <a
+                            href="https://www.opensubtitles.com/consumers"
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            data-test-id="opensubtitles-get-key-link"
+                        >
+                            {{ 'SETTINGS.OPEN_SUBTITLES_GET_KEY' | translate }}
+                        </a>
+                    </p>
+                    @if (!hasOpenSubtitlesBridge) {
+                        <p data-test-id="opensubtitles-unavailable">
+                            {{
+                                (isDesktop()
+                                    ? 'SETTINGS.OPEN_SUBTITLES_NEEDS_UPDATE'
+                                    : 'SETTINGS.OPEN_SUBTITLES_DESKTOP_ONLY'
+                                ) | translate
+                            }}
+                        </p>
+                    }
+                </div>
+                <div class="setting-item__control">
+                    <mat-form-field
+                        class="settings-text-field"
+                        appearance="outline"
+                        subscriptSizing="dynamic"
+                    >
+                        <input
+                            matInput
+                            type="password"
+                            autocomplete="off"
+                            spellcheck="false"
+                            formControlName="apiKey"
+                            aria-labelledby="opensubtitles-api-key-label"
+                            data-test-id="opensubtitles-api-key"
+                        />
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div class="setting-item" data-setting-id="opensubtitles-account">
+                <div class="setting-item__meta">
+                    <h4>{{ 'SETTINGS.OPEN_SUBTITLES_ACCOUNT' | translate }}</h4>
+                    <p>
+                        {{
+                            'SETTINGS.OPEN_SUBTITLES_ACCOUNT_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control setting-item__control--stack">
+                    <mat-form-field
+                        class="settings-text-field"
+                        appearance="outline"
+                        subscriptSizing="dynamic"
+                    >
+                        <mat-label>{{
+                            'SETTINGS.OPEN_SUBTITLES_USERNAME' | translate
+                        }}</mat-label>
+                        <input
+                            matInput
+                            type="text"
+                            autocomplete="off"
+                            spellcheck="false"
+                            formControlName="username"
+                            data-test-id="opensubtitles-username"
+                        />
+                    </mat-form-field>
+                    <mat-form-field
+                        class="settings-text-field"
+                        appearance="outline"
+                        subscriptSizing="dynamic"
+                    >
+                        <mat-label>{{
+                            'SETTINGS.OPEN_SUBTITLES_PASSWORD' | translate
+                        }}</mat-label>
+                        <input
+                            matInput
+                            type="password"
+                            autocomplete="off"
+                            formControlName="password"
+                            data-test-id="opensubtitles-password"
+                        />
+                    </mat-form-field>
+                    <div>
+                        <button
+                            mat-stroked-button
+                            type="button"
+                            data-test-id="opensubtitles-test"
+                            [disabled]="
+                                !hasOpenSubtitlesBridge ||
+                                accountTest().state === 'testing'
+                            "
+                            (click)="testOpenSubtitles()"
+                        >
+                            {{ 'SETTINGS.OPEN_SUBTITLES_TEST' | translate }}
+                        </button>
+                        @switch (accountTest().state) {
+                            @case ('testing') {
+                                <span>{{
+                                    'SETTINGS.OPEN_SUBTITLES_TESTING'
+                                        | translate
+                                }}</span>
+                            }
+                            @case ('ok') {
+                                <span data-test-id="opensubtitles-test-ok">{{
+                                    accountTestMessage()
+                                        | translate: accountTestParams()
+                                }}</span>
+                            }
+                            @case ('error') {
+                                <span
+                                    role="alert"
+                                    data-test-id="opensubtitles-test-error"
+                                    >{{
+                                        accountTestMessage() | translate
+                                    }}</span
+                                >
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-item" data-setting-id="opensubtitles-language">
+                <div class="setting-item__meta">
+                    <h4 id="opensubtitles-language-label">
+                        {{ 'SETTINGS.OPEN_SUBTITLES_LANGUAGE' | translate }}
+                    </h4>
+                    <p>
+                        {{
+                            'SETTINGS.OPEN_SUBTITLES_LANGUAGE_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control setting-item__control--stack">
+                    <mat-form-field
+                        class="settings-select"
+                        appearance="outline"
+                        subscriptSizing="dynamic"
+                    >
+                        <mat-select
+                            formControlName="language"
+                            aria-labelledby="opensubtitles-language-label"
+                            data-test-id="select-opensubtitles-language"
+                        >
+                            @for (
+                                option of subtitleLanguageOptions;
+                                track option.value
+                            ) {
+                                <mat-option [value]="option.value">{{
+                                    option.labelKey | translate
+                                }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-form-field
+                        class="settings-select"
+                        appearance="outline"
+                        subscriptSizing="dynamic"
+                    >
+                        <mat-label>{{
+                            'SETTINGS.OPEN_SUBTITLES_SECOND_LANGUAGE'
+                                | translate
+                        }}</mat-label>
+                        <mat-select
+                            formControlName="secondLanguage"
+                            data-test-id="select-opensubtitles-second-language"
+                        >
+                            <mat-option value="">{{
+                                'SETTINGS.OPEN_SUBTITLES_SECOND_LANGUAGE_NONE'
+                                    | translate
+                            }}</mat-option>
+                            @for (
+                                option of subtitleLanguageOptions;
+                                track option.value
+                            ) {
+                                <mat-option [value]="option.value">{{
+                                    option.labelKey | translate
+                                }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+
+            <div
+                class="setting-item"
+                data-setting-id="opensubtitles-auto-search"
+            >
+                <div class="setting-item__meta">
+                    <h4 id="opensubtitles-auto-search-label">
+                        {{ 'SETTINGS.OPEN_SUBTITLES_AUTO_SEARCH' | translate }}
+                    </h4>
+                    <p>
+                        {{
+                            'SETTINGS.OPEN_SUBTITLES_AUTO_SEARCH_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                <div class="setting-item__control setting-item__toggle">
+                    <mat-slide-toggle
+                        formControlName="autoSearch"
+                        aria-labelledby="opensubtitles-auto-search-label"
+                        data-test-id="opensubtitles-auto-search"
+                    ></mat-slide-toggle>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="settings-section">
         <div class="settings-section__header">
             <h3>{{ 'SETTINGS.CARD_WATCHING' | translate }}</h3>

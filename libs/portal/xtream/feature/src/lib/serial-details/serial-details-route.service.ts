@@ -31,8 +31,7 @@ export class SerialDetailsRouteService {
     /** The series' name, year and ids, for its episodes' subtitles. */
     private readonly lookupInfo = computed(() =>
         seriesLookupInfo(
-            (this.xtreamStore.selectedItem() as XtreamSerieDetails | null)
-                ?.info
+            (this.xtreamStore.selectedItem() as XtreamSerieDetails | null)?.info
         )
     );
     readonly providerOnly = computed(() => {

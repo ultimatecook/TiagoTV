@@ -36,9 +36,9 @@ describe('requestedChannel', () => {
         const asked = requestedChannel(COUNTRIES, request(), 'source-1');
 
         expect('selection' in asked && asked.selection.copy.streamId).toBe(11);
-        expect('selection' in asked && asked.selection.country.definition.id).toBe(
-            'es'
-        );
+        expect(
+            'selection' in asked && asked.selection.country.definition.id
+        ).toBe('es');
     });
 
     it('sends a channel no country lists to the Xtream live view', () => {

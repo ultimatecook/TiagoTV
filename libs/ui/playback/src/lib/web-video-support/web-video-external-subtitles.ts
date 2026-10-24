@@ -18,6 +18,7 @@ export const EXTERNAL_SUBTITLE_TRACK_ID_BASE = 100000;
 interface ExternalSubtitleEntry {
     id: number;
     label: string;
+    language?: string;
     cues: ParsedSubtitleCue[];
     track: TextTrack | null;
     /** Same order as `cues`; kept so delay changes can re-time exactly. */
@@ -81,6 +82,7 @@ export class WebVideoExternalSubtitles {
         const entry: ExternalSubtitleEntry = {
             id: this.nextId,
             label: file.name,
+            language: file.language,
             cues,
             track: null,
             trackCues: [],
@@ -100,6 +102,7 @@ export class WebVideoExternalSubtitles {
             id: entry.id,
             label: entry.label,
             selected: entry.track?.mode === 'showing',
+            ...(entry.language ? { language: entry.language } : {}),
         }));
     }
 
@@ -166,7 +169,9 @@ export class WebVideoExternalSubtitles {
         }
 
         try {
-            const track = video.addTextTrack('subtitles', entry.label);
+            const track = entry.language
+                ? video.addTextTrack('subtitles', entry.label, entry.language)
+                : video.addTextTrack('subtitles', entry.label);
             this.createdTracks.add(track);
             entry.track = track;
             // Push incrementally so the catch below can remove exactly the

@@ -29,7 +29,12 @@ import ElectronEvents from '../events/electron.events';
 import EmbeddedMpvEvents, {
     shutdownEmbeddedMpv,
 } from '../events/embedded-mpv.events';
+import {
+    registerEmbeddedMpvSubtitleTextHandler,
+    removeEmbeddedMpvSubtitleTexts,
+} from '../events/embedded-mpv-subtitle-text';
 import EpgEvents from '../events/epg.events';
+import { registerOpenSubtitlesHandlers } from '../events/opensubtitles.events';
 import AppUpdateEvents from '../events/app-update.events';
 import { shutdownMpvSession } from '../events/mpv-session.service';
 import PlayerEvents from '../events/player.events';
@@ -85,6 +90,8 @@ export function bootstrapDeferredEvents(
 
     ElectronEvents.bootstrapElectronEvents();
     EmbeddedMpvEvents.bootstrapEmbeddedMpvEvents();
+    registerEmbeddedMpvSubtitleTextHandler();
+    registerOpenSubtitlesHandlers();
     PlaylistEvents.bootstrapPlaylistEvents();
     SharedEvents.bootstrapSharedEvents();
     PlayerEvents.bootstrapPlayerEvents();
@@ -132,6 +139,7 @@ export async function finishStartupAfterFirstLoad(): Promise<void> {
 /** Tears down sessions and the DB worker; safe when nothing was started. */
 export function shutdownDeferredServices(): void {
     shutdownEmbeddedMpv();
+    removeEmbeddedMpvSubtitleTexts();
     shutdownMpvSession();
     shutdownVlcSession();
     void databaseWorkerClient.shutdown();

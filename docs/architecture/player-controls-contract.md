@@ -1670,12 +1670,98 @@ Per-engine implementations:
   plus round-trips the delay/style IPC. The native file dialog itself
   (`selectEmbeddedMpvSubtitleFile`) cannot be automated and is verified
   manually.
-- **Not wired (capabilities stay false):** Video.js shared mode (its emulated
-  text-track display needs a separate remote-track + CSS integration — a
-  follow-up), the vendor-chrome (preference-off) web players by design, the
+- **Not wired (capabilities stay false):** the Video.js shared-mode file
+  picker and delay/style (a downloaded subtitle does attach there, see
+  "Audio language and online subtitles"), the vendor-chrome (preference-off) web players by design, the
   Embedded MPV native-view legacy dock, the Linux out-of-process native path
   (which exports no subtitle commands), and external MPV/VLC, which own their
   own UI.
+
+## Audio language and online subtitles
+
+TiagoTV plays movies and series in their original language with Spanish
+subtitles unless Settings → Playback → Audio language (`audioLanguage`,
+`audio-language.util.ts`) is "Español"; a missing setting is "Original".
+The catalog side (which language version of a show opens) is documented in
+`workspace-dashboard.md`; this section covers the player side.
+
+Contract additions, all optional so older engines and tests need nothing:
+
+- `PlayerTrack.language`: the engine's language tag ("es", "eng",
+  "es-419"), reported by hls.js, Shaka, native and Video.js text/audio
+  tracks and Embedded MPV, only when the engine knows it;
+- `PlayerController.subtitleAttachment` (`PlayerSubtitleAttachment`):
+  `canAttach()` and `attach(file)` for a subtitle the app holds as text.
+  The web adapter forwards to the bridge's `attachExternalSubtitle`
+  (HTML5/ArtPlayer: the external-subtitle `TextTrack` path above; Video.js:
+  a remote WebVTT track from a blob address, `VjsExternalSubtitles`, which
+  Video.js removes on the next source). Embedded MPV answers `canAttach()`
+  only when the addon adds external files and the installer has
+  `addEmbeddedMpvSubtitleText` (see "Downloaded subtitles" in
+  `embedded-mpv-native.md`);
+- `PlayerController.selectsLanguageTracks`: true for Embedded MPV, whose
+  `alang`/`slang` session options already pick the tracks.
+
+`activePlayerController` (`online-subtitles/active-player.ts`) is the player
+on screen: the web adapter registers on `attach()` and leaves on
+`detach()`, the Embedded MPV adapter registers once configured (both
+engines) until its component is destroyed. Module state, because the web
+adapter is also built with `new` outside an injection context.
+
+`OnlineSubtitlesCoordinator` (root) follows the playback of the title page
+player (`PortalInlinePlayerComponent.follow`), and on every state change of
+the active controller:
+
+1. applies the audio language once per playback and player
+   (`PlayerTrackPreferences`, `track-preference.ts`): with more than one
+   audio track, Original selects English, else the first non-Spanish
+   track; Español the Spanish one. Then the subtitles: Original selects a
+   Spanish track (a full one before a forced one) unless the audio is
+   known to be Spanish; Español turns a full subtitle off on Spanish audio.
+   The user's own choices afterwards stand; live TV and Embedded MPV are
+   left alone. Chromium exposes `video.audioTracks` for progressive files
+   only with the `AudioVideoTracks` Blink feature, which the desktop window
+   does not enable, so for a dual-audio MKV/MP4 the web players play the
+   file's default track and Embedded MPV is the player that switches;
+2. searches OpenSubtitles once per playback and player, 3 s after it
+   plays (`AUTO_SEARCH_DELAY_MS`, so embedded tracks are listed), when
+   "Search automatically" is on, the file lists no subtitle in the user's
+   languages, the audio is not already in Spanish (selected track, or the
+   catalog version on screen) and the player can attach. The subtitle menu
+   offers "Search OpenSubtitles…" for a movie or episode on the desktop app
+   (`onlineSubtitleSearch`, read by the settings panel), which searches
+   whatever was tried before.
+
+The lookup (`subtitle-lookup.ts`) takes the title page's name, year and
+TMDB/IMDB ids (`TitlePlatformRef.lookup`, published by the VOD and series
+pages from the provider's info) when the page shows this very title, and
+the season and episode from the playback; an alternative source's movie
+uses its own name. `OpenSubtitlesService` (`libs/services/.../opensubtitles`)
+looks in its IndexedDB cache first (`SubtitleCache`, per title, episode and
+language, the newest 300), then searches by TMDB id, IMDB id, then cleaned
+name and year (keys sorted, values lowercased, as the API asks), in the
+first language and then the second (Spanish asks for `es`, `sp` and `ea`),
+picks a full human translation before a machine one, not for the hearing
+impaired, a trusted uploader's, then the most downloaded and best rated
+(`pickBestSubtitle`; results for another episode or year are left out),
+downloads it (one of the account's daily downloads), converts SRT to WebVTT
+and caches it. A file hash match would need extra range requests against
+the provider's one-connection stream, so it is not used.
+
+The REST calls go through the main process (`OPENSUBTITLES_REQUEST`,
+`opensubtitles.events.ts`): the API answers no CORS preflight for a page
+that sends its `Api-Key` header, and wants a User-Agent naming the app,
+which a page cannot set. Main fixes the hosts (`api.` / `vip-api.
+opensubtitles.com`) and paths (login, subtitles, download), fetches a file
+only over https from OpenSubtitles' own hosts and without the key, and
+logs nothing of a request. The login token lives in memory for the run.
+The account (API key, username, password) is stored in the renderer's
+settings like the TMDB key, typed in password fields, never mirrored to the
+main-process config, masked in Diagnostics, and its key names are covered
+by the shared redaction. Toasts: "OpenSubtitles subtitles (Spanish)" on
+success; the used-up quota with its reset time, a refused login or key,
+and an installer without the bridge always; nothing found or a network
+failure only for a search the user asked for.
 
 ## Embedded MPV rendering constraints
 

@@ -10,7 +10,7 @@ const TIMING =
 const ASS_TAG = /\{\\[^}]*\}/g;
 
 export function srtToVtt(srt: string): string {
-    const text = srt.replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+    const text = srt.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
     if (/^WEBVTT(?:[ \t].*)?(?:\n|$)/.test(text)) {
         return text;
     }
@@ -26,7 +26,5 @@ export function srtToVtt(srt: string): string {
 
 /** Whether a downloaded file holds at least one cue timing. */
 export function hasSubtitleCues(content: string): boolean {
-    return content
-        .split(/\r\n?|\n/)
-        .some((line) => TIMING.test(line));
+    return content.split(/\r\n?|\n/).some((line) => TIMING.test(line));
 }

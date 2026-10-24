@@ -93,7 +93,7 @@ describe('VjsAudioTracks', () => {
 
         expect(audioTracks.getAudioTracks()).toEqual([
             { id: 0, label: 'English', selected: true },
-            { id: 1, label: 'de', selected: false },
+            { id: 1, label: 'de', selected: false, language: 'de' },
             { id: 2, label: 'Audio 3', selected: false },
         ]);
 
@@ -101,7 +101,7 @@ describe('VjsAudioTracks', () => {
         list[1] = english;
 
         expect(audioTracks.getAudioTracks()).toEqual([
-            { id: 1, label: 'de', selected: false },
+            { id: 1, label: 'de', selected: false, language: 'de' },
             { id: 0, label: 'English', selected: true },
             { id: 2, label: 'Audio 3', selected: false },
         ]);

@@ -1,6 +1,11 @@
 import type { WebVideoControlsOptions } from '../player-controls/web-video-controls.adapter';
 import type { WebVideoControlsAdapter } from '../player-controls/web-video-controls.adapter';
+import type { PlayerSubtitleFile } from '../player-controls/player-controls.model';
 import { VjsAudioTracks } from './vjs-audio-tracks';
+import {
+    VjsExternalSubtitles,
+    type VjsRemoteTextTrackPlayer,
+} from './vjs-external-subtitles';
 import type { VideoJsPlayer } from './vjs-player.types';
 import { VjsQualityLevels } from './vjs-quality-levels';
 import { VjsTextTracks } from './vjs-text-tracks';
@@ -16,6 +21,7 @@ export class VjsPlayerControlsBridge {
     private readonly audioTracks: VjsAudioTracks;
     private readonly textTracks: VjsTextTracks;
     private readonly qualityLevels: VjsQualityLevels;
+    private readonly externalSubtitles: VjsExternalSubtitles;
     private video: HTMLVideoElement | null = null;
     private sourceActive = false;
     private destroyed = false;
@@ -27,6 +33,7 @@ export class VjsPlayerControlsBridge {
         setAudioTrack: (id) => this.audioTracks.setAudioTrack(id),
         getSubtitleTracks: () => this.textTracks.getSubtitleTracks(),
         setSubtitleTrack: (id) => this.textTracks.setSubtitleTrack(id),
+        attachExternalSubtitle: (file) => this.attachSubtitle(file),
         getQualityLevels: () => this.qualityLevels.getQualityLevels(),
         setQualityLevel: (id) => this.qualityLevels.setQualityLevel(id),
         isAutoQualityEnabled: () => this.qualityLevels.isAutoQualityEnabled(),
@@ -48,6 +55,9 @@ export class VjsPlayerControlsBridge {
             player: config.player,
             refresh,
         });
+        this.externalSubtitles = new VjsExternalSubtitles(
+            config.player as unknown as VjsRemoteTextTrackPlayer
+        );
     }
 
     attach(video: HTMLVideoElement): void {
@@ -99,6 +109,7 @@ export class VjsPlayerControlsBridge {
         this.audioTracks.clear();
         this.textTracks.clear();
         this.qualityLevels.clear();
+        this.externalSubtitles.clear();
         this.sourceActive = false;
         this.config.adapter.refresh();
     }
@@ -111,12 +122,24 @@ export class VjsPlayerControlsBridge {
         this.audioTracks.clear();
         this.textTracks.clear();
         this.qualityLevels.clear();
+        this.externalSubtitles.clear();
         if (this.video) {
             this.config.adapter.detach();
         }
         this.video = null;
         this.sourceActive = false;
         this.destroyed = true;
+    }
+
+    /** A downloaded subtitle: a remote track of the current source. */
+    private attachSubtitle(file: PlayerSubtitleFile): boolean {
+        if (this.destroyed || !this.sourceActive) {
+            return false;
+        }
+        const track = this.externalSubtitles.add(file);
+        const selected = !!track && this.textTracks.selectTrack(track);
+        this.config.adapter.refresh();
+        return selected;
     }
 
     private bindTrackLists(): void {

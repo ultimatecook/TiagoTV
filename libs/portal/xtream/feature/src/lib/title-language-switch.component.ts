@@ -20,9 +20,7 @@ import { MetaChipComponent } from '@iptvnator/ui/components';
             <app-meta-chip data-test-id="title-language-switch">
                 @for (version of versions(); track version.language) {
                     @if (!$first) {
-                        <span class="meta-chip__sep" aria-hidden="true"
-                            >·</span
-                        >
+                        <span class="meta-chip__sep" aria-hidden="true">·</span>
                     }
                     @if (version.current) {
                         <span

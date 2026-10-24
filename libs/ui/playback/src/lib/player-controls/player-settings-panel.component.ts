@@ -19,6 +19,7 @@ import type { ControlsSettings } from './controls-settings';
 import type { SettingsGroup } from './controls-settings-groups';
 import type { ControlsSubtitleSettings } from './controls-subtitle-settings';
 import type { PlayerController } from './player-controls.model';
+import { onlineSubtitleSearch } from '../online-subtitles/active-player';
 import {
     SettingsRadioDirective,
     SettingsRadioGroupDirective,
@@ -164,6 +165,16 @@ export class PlayerSettingsPanelComponent implements OnDestroy {
     /** The id of a heading that names the dialog or one of its groups. */
     headingId(name: string): string {
         return `${this.idPrefix}-${name}`;
+    }
+
+    /** "Search OpenSubtitles…": a movie or episode on the desktop app. */
+    readonly onlineSearch = computed(() => {
+        const search = onlineSubtitleSearch();
+        return search?.canSearch() ? search : null;
+    });
+
+    searchOnlineSubtitles(): void {
+        this.onlineSearch()?.search();
     }
 
     loadExternalSubtitle(): void {

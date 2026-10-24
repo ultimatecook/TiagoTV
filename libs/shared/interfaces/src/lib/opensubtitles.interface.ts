@@ -57,9 +57,11 @@ function text(value: unknown): string {
  * The password keeps its spaces: only a missing value becomes ''.
  */
 export function normalizeOpenSubtitlesSettings(
-    value: Partial<OpenSubtitlesSettings> | null | undefined
+    value:
+        Partial<Record<keyof OpenSubtitlesSettings, unknown>> | null | undefined
 ): OpenSubtitlesSettings {
-    const stored = value && typeof value === 'object' ? value : {};
+    const stored: Partial<Record<keyof OpenSubtitlesSettings, unknown>> =
+        value && typeof value === 'object' ? value : {};
     const language = isOfferedLanguage(stored.language)
         ? stored.language
         : DEFAULT_OPEN_SUBTITLES_SETTINGS.language;
@@ -69,8 +71,7 @@ export function normalizeOpenSubtitlesSettings(
     return {
         apiKey: text(stored.apiKey),
         username: text(stored.username),
-        password:
-            typeof stored.password === 'string' ? stored.password : '',
+        password: typeof stored.password === 'string' ? stored.password : '',
         language,
         secondLanguage: second === language ? '' : second,
         autoSearch: stored.autoSearch !== false,
@@ -90,9 +91,7 @@ export function maskOpenSubtitlesUser(username: string): string {
     if (!name) {
         return '';
     }
-    return name.length <= 2
-        ? '•••'
-        : `${name[0]}•••${name[name.length - 1]}`;
+    return name.length <= 2 ? '•••' : `${name[0]}•••${name[name.length - 1]}`;
 }
 
 /**
@@ -102,10 +101,7 @@ export function maskOpenSubtitlesUser(username: string): string {
  * general fetch bridge.
  */
 export type OpenSubtitlesBridgeOperation =
-    | 'login'
-    | 'search'
-    | 'download'
-    | 'file';
+    'login' | 'search' | 'download' | 'file';
 
 export interface OpenSubtitlesBridgeRequest {
     readonly operation: OpenSubtitlesBridgeOperation;

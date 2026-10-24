@@ -127,9 +127,10 @@ export class OpenSubtitlesApi {
         const answer = await this.send({
             operation: 'search',
             apiKey: account.apiKey,
-            host: this.session?.account === accountId(account)
-                ? this.session.host
-                : null,
+            host:
+                this.session?.account === accountId(account)
+                    ? this.session.host
+                    : null,
             query,
         });
         if (answer.status !== 200) {

@@ -1,5 +1,8 @@
 import { signal } from '@angular/core';
-import type { PlayerSubtitleStyle } from '../player-controls/player-controls.model';
+import type {
+    PlayerSubtitleAttachment,
+    PlayerSubtitleStyle,
+} from '../player-controls/player-controls.model';
 import {
     clampSubtitleDelay,
     isDefaultSubtitleStyle,
@@ -53,4 +56,20 @@ export class EmbeddedMpvSubtitleSettings {
     addExternalSubtitle(): void {
         void this.controller.addExternalSubtitle();
     }
+
+    /**
+     * Downloaded subtitles (OpenSubtitles): the session must load external
+     * files and the installer must have the text bridge; until then the
+     * player says so instead of spending a download it cannot show.
+     */
+    readonly attachment: PlayerSubtitleAttachment = {
+        canAttach: () =>
+            this.controller.support()?.capabilities?.externalSubtitles ===
+                true && this.controller.canAddSubtitleText(),
+        attach: (file) =>
+            this.controller.addSubtitleText(
+                `${file.name.replace(/[^\p{L}\p{N} ._()-]+/gu, ' ').trim() || 'subtitles'}.${file.format}`,
+                file.content
+            ),
+    };
 }

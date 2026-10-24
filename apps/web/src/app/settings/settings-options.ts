@@ -1,6 +1,8 @@
 import {
+    AUDIO_LANGUAGE_VALUES,
     CoverSize,
     EpgViewMode,
+    OPEN_SUBTITLES_LANGUAGES,
     StartupBehavior,
     Theme,
     VideoPlayer,
@@ -10,8 +12,10 @@ import {
     SETTINGS_SECTION_DEFINITIONS,
 } from '@iptvnator/workspace/shell/util/settings-search';
 import {
+    AudioLanguageOption,
     CoverSizeOption,
     EpgViewModeOption,
+    OpenSubtitlesLanguageOption,
     PlaybackSmoothnessOption,
     SettingsPlayerOption,
     SettingsSection,
@@ -118,6 +122,20 @@ export const SETTINGS_PLAYBACK_SMOOTHNESS_OPTIONS: PlaybackSmoothnessOption[] =
             labelKey: 'SETTINGS.PLAYBACK_SMOOTHNESS_NORMAL',
         },
     ];
+
+/** "Audio language": Original (default) or the Spanish dub. */
+export const SETTINGS_AUDIO_LANGUAGE_OPTIONS: AudioLanguageOption[] =
+    AUDIO_LANGUAGE_VALUES.map((value) => ({
+        value,
+        labelKey: `SETTINGS.AUDIO_LANGUAGE_${value.toUpperCase()}`,
+    }));
+
+/** The subtitle languages searched on OpenSubtitles. */
+export const SETTINGS_OPEN_SUBTITLES_LANGUAGE_OPTIONS: OpenSubtitlesLanguageOption[] =
+    OPEN_SUBTITLES_LANGUAGES.map((value) => ({
+        value,
+        labelKey: `OPEN_SUBTITLES.LANGUAGES.${value}`,
+    }));
 
 export const SETTINGS_OS_PLAYER_OPTIONS: SettingsPlayerOption[] = [
     {

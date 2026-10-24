@@ -1,8 +1,11 @@
 import { CommonModule } from '@angular/common';
 import {
     Component,
+    computed,
+    inject,
     input,
     output,
+    signal,
     ViewEncapsulation,
     ChangeDetectionStrategy,
 } from '@angular/core';
@@ -16,12 +19,27 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+    isOpenSubtitlesError,
+    OpenSubtitlesService,
+    type OpenSubtitlesQuota,
+} from '@iptvnator/services';
+import {
     StreamFormat,
     VideoPlayer,
+    normalizeOpenSubtitlesSettings,
     reportsPlaybackFailures,
 } from '@iptvnator/shared/interfaces';
 import { SettingsPlayerOption } from './settings.models';
-import { SETTINGS_PLAYBACK_SMOOTHNESS_OPTIONS } from './settings-options';
+import {
+    SETTINGS_AUDIO_LANGUAGE_OPTIONS,
+    SETTINGS_OPEN_SUBTITLES_LANGUAGE_OPTIONS,
+    SETTINGS_PLAYBACK_SMOOTHNESS_OPTIONS,
+} from './settings-options';
+
+type AccountTest =
+    | { state: 'idle' | 'testing' }
+    | { state: 'ok'; quota: OpenSubtitlesQuota }
+    | { state: 'error'; messageKey: string };
 import { markSectionForCheckOnFormEvents } from './settings-section-form-render';
 import { provideFormFieldDefaults } from '@iptvnator/ui/components/form-field-defaults';
 
@@ -59,6 +77,32 @@ export class SettingsPlaybackSectionComponent {
 
     /** "Fluidez": Más estable (default) or Normal. */
     readonly smoothnessOptions = SETTINGS_PLAYBACK_SMOOTHNESS_OPTIONS;
+    /** "Audio language": Original (default) or Español. */
+    readonly audioLanguageOptions = SETTINGS_AUDIO_LANGUAGE_OPTIONS;
+    readonly subtitleLanguageOptions = SETTINGS_OPEN_SUBTITLES_LANGUAGE_OPTIONS;
+
+    private readonly openSubtitles = inject(OpenSubtitlesService);
+    /** The desktop installer has the OpenSubtitles bridge. */
+    readonly hasOpenSubtitlesBridge = this.openSubtitles.hasBridge();
+    readonly accountTest = signal<AccountTest>({ state: 'idle' });
+    readonly accountTestMessage = computed(() => {
+        const test = this.accountTest();
+        if (test.state === 'error') {
+            return test.messageKey;
+        }
+        return test.state === 'ok' && test.quota.remaining !== null
+            ? 'SETTINGS.OPEN_SUBTITLES_TEST_OK_QUOTA'
+            : 'SETTINGS.OPEN_SUBTITLES_TEST_OK';
+    });
+    readonly accountTestParams = computed(() => {
+        const test = this.accountTest();
+        return test.state === 'ok'
+            ? {
+                  remaining: test.quota.remaining ?? '',
+                  allowed: test.quota.allowed ?? '',
+              }
+            : {};
+    });
 
     readonly form = input.required<FormGroup>();
 
@@ -83,6 +127,28 @@ export class SettingsPlaybackSectionComponent {
      */
     readonly supportsVodMultiSource = input(false);
     readonly selectRecordingFolder = output<void>();
+
+    /** Signs in with the account as typed (Save not needed). */
+    async testOpenSubtitles(): Promise<void> {
+        if (this.accountTest().state === 'testing') {
+            return;
+        }
+        this.accountTest.set({ state: 'testing' });
+        try {
+            const quota = await this.openSubtitles.testAccount(
+                normalizeOpenSubtitlesSettings(this.form().value.openSubtitles)
+            );
+            this.accountTest.set({ state: 'ok', quota });
+        } catch (error) {
+            const kind = isOpenSubtitlesError(error) ? error.kind : 'network';
+            this.accountTest.set({
+                state: 'error',
+                messageKey: `SETTINGS.OPEN_SUBTITLES_TEST_${kind
+                    .replace('-', '_')
+                    .toUpperCase()}`,
+            });
+        }
+    }
 
     isWebPlayerSelected(): boolean {
         return reportsPlaybackFailures(this.form().value.player);

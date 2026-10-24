@@ -470,7 +470,10 @@ test('@xtream @collections a cold Recent heart cannot remove a different saved f
             })
         );
     }, playlistId);
-    await page.goto('/workspace/global-recent');
+    // The source's own recent items keep the Live tab and its heart;
+    // Recently viewed lists channels as cards that play on "En vivo".
+    const sourceRecent = `/workspace/xtreams/${encodeURIComponent(playlistId)}/recent`;
+    await page.goto(sourceRecent);
     await page.reload();
     const recent = page
         .locator('app-channel-list-item')
@@ -504,7 +507,7 @@ test('@xtream @collections a cold Recent heart cannot remove a different saved f
     await expect(original).toBeVisible();
     await original.locator('[data-test-id="my-list-channel-remove"]').click();
     await expect(original).toHaveCount(0);
-    await page.goto('/workspace/global-recent');
+    await page.goto(sourceRecent);
     await page.reload();
     await expect(recent).toBeVisible();
     await recent.hover();

@@ -109,7 +109,7 @@ describe('WebVideoShakaControls', () => {
         await flush();
 
         expect(controls.getSubtitleTracks()).toEqual([
-            { id: 0, label: 'English', selected: true },
+            { id: 0, label: 'English', selected: true, language: 'en' },
         ]);
         expect(environment.instances[0].textTracks[0].active).toBe(true);
     });

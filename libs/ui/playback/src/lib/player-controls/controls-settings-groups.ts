@@ -24,16 +24,18 @@ export type SettingsGroupAvailability = Readonly<
  */
 export function getSettingsGroupAvailability(
     capabilities: PlayerControlsCapabilities,
-    state: PlayerControlsState
+    state: PlayerControlsState,
+    onlineSubtitles = false
 ): SettingsGroupAvailability {
     return {
         audio: capabilities.audioTracks && state.audioTracks.length > 1,
-        // External subtitle loading keeps the group reachable with an empty
-        // track list — the "Load subtitle file…" action is how the first
-        // track appears.
+        // External subtitle loading (a file, or "Search OpenSubtitles…")
+        // keeps the group reachable with an empty track list — the action
+        // is how the first track appears.
         subtitles:
             (capabilities.subtitles && state.subtitleTracks.length > 0) ||
-            capabilities.externalSubtitles,
+            capabilities.externalSubtitles ||
+            onlineSubtitles,
         quality: capabilities.qualityLevels && state.qualityLevels.length > 1,
         speed: capabilities.playbackSpeed,
         aspect: capabilities.aspectRatio,

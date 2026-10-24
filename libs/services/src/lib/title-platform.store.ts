@@ -101,14 +101,14 @@ export class TitlePlatformStore {
     });
 
     /**
-     * The title's language versions, one per language, when the catalog
-     * files it in more than one; empty otherwise.
+     * The title's language versions as the catalog files it, one per
+     * language, the page's own marked current: a page offers a switch when
+     * there are two. Empty when the catalog does not hold the title.
      */
     readonly versions = computed<readonly TitleLanguageVersion[]>(() => {
         const title = this.title();
         const resolve = this.versionsResolver();
-        const versions = title && resolve ? resolve(title) : [];
-        return versions.length > 1 ? versions : [];
+        return title && resolve ? resolve(title) : [];
     });
 
     /** A page shows `ref` until the returned function is called. */

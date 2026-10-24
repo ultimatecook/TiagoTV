@@ -21,6 +21,8 @@ export interface ExternalSubtitleFile {
     name: string;
     format: ExternalSubtitleFormat;
     content: string;
+    /** Its language tag, when known (a downloaded subtitle's). */
+    language?: string;
 }
 
 /** Extensions the web engines accept in their file picker. */

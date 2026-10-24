@@ -128,6 +128,23 @@
                     <mat-icon>upload_file</mat-icon>
                 </button>
             }
+            @if (onlineSearch(); as search) {
+                <button
+                    type="button"
+                    class="player-settings__option player-settings__option--action"
+                    data-test-id="player-controls-search-subtitles"
+                    [disabled]="search.searching()"
+                    (click)="searchOnlineSubtitles()"
+                >
+                    <span>{{
+                        (search.searching()
+                            ? 'OPEN_SUBTITLES.SEARCHING'
+                            : 'OPEN_SUBTITLES.SEARCH'
+                        ) | translate
+                    }}</span>
+                    <mat-icon>travel_explore</mat-icon>
+                </button>
+            }
 
             @if (capabilities().subtitleDelay) {
                 <div

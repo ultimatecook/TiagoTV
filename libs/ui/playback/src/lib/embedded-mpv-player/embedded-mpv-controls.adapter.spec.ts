@@ -337,7 +337,7 @@ describe('EmbeddedMpvControlsAdapter', () => {
             { id: 2, label: 'Audio 2', selected: false },
         ]);
         expect(adapter.state().subtitleTracks).toEqual([
-            { id: 3, label: 'de', selected: true },
+            { id: 3, label: 'de', selected: true, language: 'de' },
             { id: 4, label: 'Subtitle 2', selected: false },
         ]);
     });

@@ -382,6 +382,27 @@ describe('EmbeddedMpvCommandRunner', () => {
         );
     });
 
+    it('loads a downloaded subtitle as text through the newer bridge', async () => {
+        expect(runner.canAddSubtitleText()).toBe(false);
+        await expect(
+            runner.addSubtitleText('Español.vtt', 'WEBVTT')
+        ).resolves.toBe(false);
+
+        electron.addEmbeddedMpvSubtitleText = jest
+            .fn()
+            .mockResolvedValue(createSession());
+
+        expect(runner.canAddSubtitleText()).toBe(true);
+        await expect(
+            runner.addSubtitleText('Español.vtt', 'WEBVTT')
+        ).resolves.toBe(true);
+        expect(electron.addEmbeddedMpvSubtitleText).toHaveBeenCalledWith(
+            'mpv-1',
+            'Español.vtt',
+            'WEBVTT'
+        );
+    });
+
     it('addExternalSubtitle is a no-op on dialog cancel', async () => {
         electron.selectEmbeddedMpvSubtitleFile = jest
             .fn()

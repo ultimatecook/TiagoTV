@@ -82,7 +82,10 @@ export function buildSearchQueries(
 ): Record<string, string>[] {
     const episode = lookup.kind === 'episode';
     const base: Record<string, string> = {
-        languages: [...languages].map((code) => code.toLowerCase()).sort().join(','),
+        languages: [...languages]
+            .map((code) => code.toLowerCase())
+            .sort()
+            .join(','),
         type: episode ? 'episode' : 'movie',
     };
     if (episode) {
@@ -98,10 +101,16 @@ export function buildSearchQueries(
     const tmdb = positive(lookup.tmdbId);
     const imdb = imdbDigits(lookup.imdbId);
     if (tmdb !== null) {
-        queries.push({ ...base, [episode ? 'parent_tmdb_id' : 'tmdb_id']: String(tmdb) });
+        queries.push({
+            ...base,
+            [episode ? 'parent_tmdb_id' : 'tmdb_id']: String(tmdb),
+        });
     }
     if (imdb !== null) {
-        queries.push({ ...base, [episode ? 'parent_imdb_id' : 'imdb_id']: imdb });
+        queries.push({
+            ...base,
+            [episode ? 'parent_imdb_id' : 'imdb_id']: imdb,
+        });
     }
     const name = displayTitle(lookup.title).trim().toLowerCase();
     if (name) {
@@ -174,7 +183,9 @@ export function pickBestSubtitle(
             -(a.ratings ?? 0),
         ];
     };
-    const best = [...candidates].sort((x, y) => compareRanks(rank(x), rank(y)))[0];
+    const best = [...candidates].sort((x, y) =>
+        compareRanks(rank(x), rank(y))
+    )[0];
     const file = best?.attributes?.files?.[0];
     return best && file?.file_id
         ? {

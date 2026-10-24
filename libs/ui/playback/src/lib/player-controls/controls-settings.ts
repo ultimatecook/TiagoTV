@@ -1,3 +1,4 @@
+import { onlineSubtitleSearch } from '../online-subtitles/active-player';
 import { Signal, computed } from '@angular/core';
 import { speedLabel } from './controls-format.utils';
 import type { ControlsMenuState } from './controls-menu-state';
@@ -40,7 +41,8 @@ export class ControlsSettings {
     readonly groups = computed(() =>
         getSettingsGroupAvailability(
             this.deps.capabilities(),
-            this.deps.state()
+            this.deps.state(),
+            onlineSubtitleSearch()?.canSearch() === true
         )
     );
 
