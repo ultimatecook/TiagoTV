@@ -25,6 +25,8 @@ import {
 import {
     DASHBOARD_HERO_LIVE_ANSWER_WAIT_MS,
     DashboardHeroSlidesPresenter,
+    HERO_IMAGE_RETRY_MS,
+    HERO_TMDB_RETRY_MS,
 } from './dashboard-hero-slides.presenter';
 import type { DashboardHeroLiveCandidate } from './dashboard-hero-slides.utils';
 import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
@@ -706,6 +708,103 @@ describe('DashboardHeroSlidesPresenter', () => {
                 state: { resume: false },
             },
             secondaryAction: null,
+        });
+    });
+
+    describe('a resume slide keeps its backdrop', () => {
+        const tmdbWide: DashboardHeroTmdbExtras = {
+            backdropUrl: 'https://tmdb/pharma-wide.jpg',
+            rating: null,
+            genres: [],
+            overview: null,
+            year: null,
+        };
+        const flush = async () => {
+            for (let round = 0; round < 4; round++) {
+                TestBed.tick();
+                await Promise.resolve();
+            }
+        };
+
+        it("gives a failed provider backdrop way to TMDB's before its poster", async () => {
+            recentItems.set([
+                { ...series, backdrop_url: 'https://img/pharma-wide.jpg' },
+            ]);
+            tmdbEnabled.set(true);
+            getExtras.mockImplementation((item: PortalActivityItem) =>
+                Promise.resolve(item.title === 'Big Pharma' ? tmdbWide : null)
+            );
+            const presenter = create();
+            await flush();
+            expect(presenter.slides()[0].backdropUrl).toBe(
+                'https://img/pharma-wide.jpg'
+            );
+
+            presenter.markImageFailed('https://img/pharma-wide.jpg');
+
+            expect(presenter.slides()[0]).toMatchObject({
+                kind: 'continue',
+                backdropUrl: 'https://tmdb/pharma-wide.jpg',
+                backdropSource: 'backdrop',
+            });
+        });
+
+        it('asks TMDB again when a lookup found nothing', async () => {
+            jest.useFakeTimers();
+            tmdbEnabled.set(true);
+            let answer: DashboardHeroTmdbExtras | null = null;
+            getExtras.mockImplementation((item: PortalActivityItem) =>
+                Promise.resolve(item.title === 'Big Pharma' ? answer : null)
+            );
+            const presenter = create();
+            await flush();
+            expect(presenter.slides()[0].backdropSource).toBe('poster');
+
+            // The first lookup failed for a moment; the next one answers.
+            answer = tmdbWide;
+            jest.advanceTimersByTime(HERO_TMDB_RETRY_MS[0]);
+            await flush();
+
+            expect(presenter.slides()[0]).toMatchObject({
+                backdropUrl: 'https://tmdb/pharma-wide.jpg',
+                backdropSource: 'backdrop',
+            });
+        });
+
+        it('stops asking TMDB after its last retry', async () => {
+            jest.useFakeTimers();
+            tmdbEnabled.set(true);
+            create();
+            await flush();
+            const first = getExtras.mock.calls.length;
+
+            for (const wait of HERO_TMDB_RETRY_MS) {
+                jest.advanceTimersByTime(wait);
+                await flush();
+            }
+            const retried = getExtras.mock.calls.length;
+            jest.advanceTimersByTime(60_000);
+            await flush();
+
+            expect(retried).toBe(first * (HERO_TMDB_RETRY_MS.length + 1));
+            expect(getExtras).toHaveBeenCalledTimes(retried);
+        });
+
+        it('tries a backdrop that failed to load once more', () => {
+            jest.useFakeTimers();
+            recentItems.set([
+                { ...series, backdrop_url: 'https://img/pharma-wide.jpg' },
+            ]);
+            const presenter = create();
+            presenter.markImageFailed('https://img/pharma-wide.jpg');
+            expect(presenter.slides()[0].backdropSource).toBe('poster');
+
+            jest.advanceTimersByTime(HERO_IMAGE_RETRY_MS);
+            expect(presenter.slides()[0].backdropSource).toBe('backdrop');
+
+            presenter.markImageFailed('https://img/pharma-wide.jpg');
+            jest.advanceTimersByTime(HERO_IMAGE_RETRY_MS);
+            expect(presenter.slides()[0].backdropSource).toBe('poster');
         });
     });
 

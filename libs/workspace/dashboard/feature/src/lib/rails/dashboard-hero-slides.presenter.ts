@@ -63,6 +63,15 @@ export const DASHBOARD_HERO_LIVE_ANSWER_WAIT_MS = 2000;
 /** Favourites without a backdrop of their own looked up on TMDB, at most. */
 const HERO_FAVORITE_LOOKUPS = 4;
 
+/**
+ * A TMDB lookup that found nothing is asked again after these waits: it
+ * may have failed for a moment (offline after a sleep, a rate limit), and
+ * the resume slide then stood on its small poster for the whole visit.
+ */
+export const HERO_TMDB_RETRY_MS: readonly number[] = [5_000, 20_000];
+/** A backdrop that failed to load is tried once more after this wait. */
+export const HERO_IMAGE_RETRY_MS = 15_000;
+
 const PROVIDER_LABEL_KEYS = {
     xtream: 'WORKSPACE.DASHBOARD.XTREAM',
     stalker: 'WORKSPACE.DASHBOARD.STALKER',
@@ -93,6 +102,8 @@ export class DashboardHeroSlidesPresenter {
         ReadonlyMap<string, DashboardHeroTmdbExtras | null>
     >(new Map());
     private readonly requestedTmdbKeys = new Set<string>();
+    private readonly retriedImages = new Set<string>();
+    private readonly timers = new Set<ReturnType<typeof setTimeout>>();
 
     private readonly liveAnswerWaitOver = signal(false);
     /** Series / Películas' titles with a backdrop, for discovery slides. */
@@ -199,7 +210,11 @@ export class DashboardHeroSlidesPresenter {
             () => this.liveAnswerWaitOver.set(true),
             DASHBOARD_HERO_LIVE_ANSWER_WAIT_MS
         );
-        inject(DestroyRef).onDestroy(() => clearTimeout(liveAnswerWait));
+        inject(DestroyRef).onDestroy(() => {
+            clearTimeout(liveAnswerWait);
+            this.timers.forEach((timer) => clearTimeout(timer));
+            this.timers.clear();
+        });
 
         effect(() => {
             if (!this.heroTmdb.isEnabled()) {
@@ -229,6 +244,17 @@ export class DashboardHeroSlidesPresenter {
         this.failedImages.update((state) =>
             state[url] ? state : { ...state, [url]: true }
         );
+        // Once more a moment later: a failure may be the network waking.
+        if (!this.retriedImages.has(url)) {
+            this.retriedImages.add(url);
+            this.later(HERO_IMAGE_RETRY_MS, () =>
+                this.failedImages.update((state) => {
+                    const next = { ...state };
+                    delete next[url];
+                    return next;
+                })
+            );
+        }
     }
 
     /** The item's own backdrop, else TMDB's (with the opt-in). */
@@ -242,14 +268,36 @@ export class DashboardHeroSlidesPresenter {
             : null;
     }
 
-    private loadTmdbExtras(item: PortalActivityItem, key: string): void {
-        if (this.requestedTmdbKeys.has(key)) {
+    private loadTmdbExtras(
+        item: PortalActivityItem,
+        key: string,
+        attempt = 0
+    ): void {
+        if (attempt === 0 && this.requestedTmdbKeys.has(key)) {
             return;
         }
         this.requestedTmdbKeys.add(key);
         void this.heroTmdb.getExtras(item).then((extras) => {
-            this.tmdbExtras.update((state) => new Map(state).set(key, extras));
+            if (extras || !this.tmdbExtras().get(key)) {
+                this.tmdbExtras.update((state) =>
+                    new Map(state).set(key, extras)
+                );
+            }
+            const wait = HERO_TMDB_RETRY_MS[attempt];
+            if (!extras && wait !== undefined) {
+                this.later(wait, () =>
+                    this.loadTmdbExtras(item, key, attempt + 1)
+                );
+            }
         });
+    }
+
+    private later(wait: number, run: () => void): void {
+        const timer = setTimeout(() => {
+            this.timers.delete(timer);
+            run();
+        }, wait);
+        this.timers.add(timer);
     }
 
     private toSlide(
@@ -276,15 +324,22 @@ export class DashboardHeroSlidesPresenter {
         // synopsis for many titles; the slide falls back to those.
         const catalog = source.kind === 'added' ? source.item : null;
         // At the hero's size: a provider's small TMDB copy looked blurry.
-        const backdrop = item.backdrop_url || extras?.backdropUrl || null;
+        // The provider's backdrop first, else TMDB's: one that failed to
+        // load gives way to the next before the slide falls to a poster.
+        const failed = this.failedImages();
+        const backdrop =
+            [item.backdrop_url, extras?.backdropUrl]
+                .filter((url): url is string => !!url)
+                .map((url) => heroBackdropUrl(url))
+                .find((url) => !failed[url]) ?? null;
         const artwork = resolveDashboardHeroArtwork(
             {
-                backdropUrl: backdrop ? heroBackdropUrl(backdrop) : null,
+                backdropUrl: backdrop,
                 posterUrl: item.poster_url
                     ? heroPosterUrl(item.poster_url)
                     : null,
             },
-            this.failedImages()
+            failed
         );
 
         // Watch kind: a Stalker embedded-VOD show routes as a movie
