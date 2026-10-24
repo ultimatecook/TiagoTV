@@ -119,7 +119,10 @@ Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
 7. "Últimos canales vistos" — `rails/home-recent-channels.*`:
    `globalRecentLiveItems()`, the programme and its progress from the
    page's `DashboardLiveEpgPresenter` (asked for the cards in view once the
-   row comes near). Gated by `dashboardRails().recentlyWatchedLive`.
+   row comes near). Gated by `dashboardRails().recentlyWatchedLive`. A card
+   (and a live hero slide) plays an Xtream channel on "En vivo"
+   (`getLiveChannelPlayNavigation` in `dashboard-navigation.util.ts`); an
+   M3U or Stalker channel opens its source's recent items.
 
 The sideways rows (platforms, sports, Top 10, last channels) scroll on x
 only: `overflow-x: auto` alone computes `overflow-y` to `auto` too, and the
@@ -840,12 +843,17 @@ switches to it.
    the list is read again after the write; a channel the app has not
    stored yet (a first run before the import) puts the heart back with a
    toast. The page reads the list again as it opens, so a change made in
-   Mi lista or the live view shows. Mi lista's channel cards come back here
-   to play (`LIVE_CHANNEL_PLAY_STATE_KEY`, `CountryTvRequest`): the page
-   opens on that stream's country and plays that copy, even over another
-   page's mini-player; a stream no country lists, or another source's,
-   goes on to the Xtream live view, replacing this history entry so Back
-   returns to Mi lista. The request leaves the entry once acted on.
+   Mi lista or the live view shows. The redesign's ways in to a channel
+   come back here to play (`LIVE_CHANNEL_PLAY_STATE_KEY`,
+   `buildLiveChannelPlayTargetFor`, `CountryTvRequest`): Mi lista's and
+   Recently viewed's channel cards, the Home's last channels and live hero
+   slide, and Buscar's channels. The page opens on that stream's country
+   and plays that copy, even over another page's mini-player; a stream no
+   country lists, or another source's, goes on to the Xtream live view,
+   replacing this history entry so Back returns to the page the channel
+   was picked on. The request leaves the entry once acted on. Only "Open in
+   Live TV" on the page itself, a source's own favourites and recent items,
+   and the Xtream portal's own search still open the framed live view.
 
 ## Series and Movies Catalog (TiagoTV)
 

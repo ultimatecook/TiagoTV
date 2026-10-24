@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { PlatformsCatalogService } from '../platforms/platforms-catalog.service';
 import type { PlatformTitle } from '../platforms/platform-titles';
+import { PREFERRED_VERSION_LANGUAGE } from '../platforms/version-language';
 import type {
     PlatformCategory,
     StreamingPlatform,
@@ -72,6 +73,7 @@ export class CatalogPlatformLists {
     private readonly answers = inject(CatalogListAnswers);
     private readonly retry = inject(CatalogListRetry);
     private readonly log = inject(CatalogRequestLog);
+    private readonly language = inject(PREFERRED_VERSION_LANGUAGE);
 
     /** The loads running now: their key → the kind or platform loading. */
     private readonly running = signal<ReadonlyMap<string, string>>(new Map());
@@ -109,7 +111,11 @@ export class CatalogPlatformLists {
         let view = this.platformViews.get(id);
         if (!view) {
             view = computed(() =>
-                platformTitlesOf(this.shelfOf(id), this.answers.lookup())
+                platformTitlesOf(
+                    this.shelfOf(id),
+                    this.answers.lookup(),
+                    this.language()
+                )
             );
             this.platformViews.set(id, view);
         }
@@ -200,7 +206,8 @@ export class CatalogPlatformLists {
         return listsView(
             this.platforms.shelves() ?? [],
             kind,
-            this.answers.lookup()
+            this.answers.lookup(),
+            this.language()
         );
     }
 

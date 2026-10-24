@@ -3,6 +3,7 @@ import type { DetailPlayMode } from '@iptvnator/portal/shared/util';
 import { XtreamApiService } from '@iptvnator/portal/xtream/data-access';
 import type { PlaylistMeta } from '@iptvnator/shared/interfaces';
 import { PlatformsCatalogService } from '../platforms/platforms-catalog.service';
+import { PREFERRED_VERSION_LANGUAGE } from '../platforms/version-language';
 import { xtreamSourceCredentials } from '../xtream-source';
 import { catalogExtras, type CatalogExtras } from './catalog-extras';
 import { CatalogImport } from './catalog-import';
@@ -60,6 +61,7 @@ export class CatalogService {
     private readonly membership = inject(CatalogMembership);
     private readonly api = inject(XtreamApiService);
     private readonly log = inject(CatalogRequestLog);
+    private readonly language = inject(PREFERRED_VERSION_LANGUAGE);
 
     private readonly storedTitles = signal<
         ReadonlyMap<CatalogKind, StoredCatalog>
@@ -241,6 +243,7 @@ export class CatalogService {
                 this.fromPlatforms().has(kind) || this.importing().has(kind),
             busy: this.busy().has(kind) || this.lists.loading(kind),
             failed: () => this.failed(kind),
+            preferred: this.language(),
         });
     }
 
