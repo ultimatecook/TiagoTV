@@ -221,6 +221,23 @@ describe('DashboardHeroTmdbService', () => {
         expect(enrichTv).toHaveBeenCalledTimes(1);
     });
 
+    it('asks again after a lookup that found nothing', async () => {
+        const service = createService();
+        enrichTv.mockResolvedValueOnce(null);
+
+        expect(
+            await service.getExtras({ title: 'The Boys', type: 'series' })
+        ).toBeNull();
+        await Promise.resolve();
+        const extras = await service.getExtras({
+            title: 'The Boys',
+            type: 'series',
+        });
+
+        expect(enrichTv).toHaveBeenCalledTimes(2);
+        expect(extras).not.toBeNull();
+    });
+
     describe('stalker items', () => {
         it('queries with the year, original title and id the detail view used', async () => {
             // Without these the search runs on the title alone, and the

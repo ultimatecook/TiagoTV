@@ -31,9 +31,9 @@ const MAX_HERO_GENRES = 2;
  * Best-effort TMDB extras for the hero slides (backdrop, rating, genres,
  * overview, year).
  * Goes through the enrichment facade, so items already opened in a detail
- * view resolve from the SQLite cache without network. Results are memoized
+ * view resolve from the SQLite cache without network. Answers are memoized
  * per lookup identity for the session — dashboard revisits skip the IPC
- * round-trip.
+ * round-trip; a lookup that found nothing is asked again next time.
  *
  * The lookup attempts and their identity key are shared with the
  * recommendations rail (`dashboard-tmdb-lookup.util.ts`), so the two can
@@ -79,6 +79,15 @@ export class DashboardHeroTmdbService {
 
         const pending = this.loadExtras(attempts);
         this.memo.set(key, pending);
+        // Only an answer is kept: a lookup that found nothing may have
+        // failed for a moment (offline after a sleep, a rate limit), and
+        // keeping that left the hero without its backdrop until a restart.
+        // TMDB's own cache keeps a real miss cheap to ask again.
+        void pending.then((extras) => {
+            if (!extras && this.memo.get(key) === pending) {
+                this.memo.delete(key);
+            }
+        });
         return pending;
     }
 
