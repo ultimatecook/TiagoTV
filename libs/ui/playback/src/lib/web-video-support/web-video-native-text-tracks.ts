@@ -86,6 +86,7 @@ export class WebVideoNativeTextTracks {
         return this.readSubtitleTracks().map(({ id, track }) => ({
             id,
             label: track.label || track.language || `Subtitle ${id + 1}`,
+            ...(track.language ? { language: track.language } : {}),
             selected: track.mode === 'showing',
         }));
     }

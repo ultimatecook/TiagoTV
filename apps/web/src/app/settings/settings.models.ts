@@ -1,5 +1,6 @@
 import {
     AppUpdateChannel,
+    AudioLanguagePreference,
     CoverSize,
     EpgViewMode,
     PlaybackSmoothness,
@@ -41,6 +42,17 @@ export interface UpdateChannelOption {
 
 export interface PlaybackSmoothnessOption {
     value: PlaybackSmoothness;
+    labelKey: string;
+}
+
+export interface AudioLanguageOption {
+    value: AudioLanguagePreference;
+    labelKey: string;
+}
+
+/** An OpenSubtitles language code and the key of its name. */
+export interface OpenSubtitlesLanguageOption {
+    value: string;
     labelKey: string;
 }
 

@@ -10,16 +10,25 @@ import {
  * (`PlatformThemeService` in the dashboard feature). The feature is
  * lazy-loaded, so the service follows the router once its chunk arrives,
  * off the startup path. `TitlePlatformThemeService` dresses a title the
- * same way when it was opened from Buscar, Mi lista or the Home.
+ * same way when it was opened from Buscar, Mi lista or the Home, and
+ * `TitleVersionsService` offers a title's other language version on its
+ * page.
  */
 export function providePlatformTheme() {
     return provideAppInitializer(() => {
         const injector = inject(EnvironmentInjector);
         void import('@iptvnator/workspace/dashboard/feature')
-            .then(({ PlatformThemeService, TitlePlatformThemeService }) => {
-                injector.get(PlatformThemeService).start();
-                injector.get(TitlePlatformThemeService).start();
-            })
+            .then(
+                ({
+                    PlatformThemeService,
+                    TitlePlatformThemeService,
+                    TitleVersionsService,
+                }) => {
+                    injector.get(PlatformThemeService).start();
+                    injector.get(TitlePlatformThemeService).start();
+                    injector.get(TitleVersionsService).start();
+                }
+            )
             .catch(() => undefined);
     });
 }

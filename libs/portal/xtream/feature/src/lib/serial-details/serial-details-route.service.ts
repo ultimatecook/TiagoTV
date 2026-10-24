@@ -4,6 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { isProviderOnlyDetailState } from '@iptvnator/portal/shared/util';
 import { XtreamStore } from '@iptvnator/portal/xtream/data-access';
 import { publishTitlePlatform } from '@iptvnator/services';
+import type { XtreamSerieDetails } from '@iptvnator/shared/interfaces';
+import { seriesLookupInfo } from '../title-lookup-info';
 import { SerialDetailsPlaybackService } from './serial-details-playback.service';
 
 /**
@@ -26,6 +28,12 @@ export class SerialDetailsRouteService {
     readonly params = toSignal(this.route.params, {
         initialValue: this.route.snapshot.params,
     });
+    /** The series' name, year and ids, for its episodes' subtitles. */
+    private readonly lookupInfo = computed(() =>
+        seriesLookupInfo(
+            (this.xtreamStore.selectedItem() as XtreamSerieDetails | null)?.info
+        )
+    );
     readonly providerOnly = computed(() => {
         this.params();
         return isProviderOnlyDetailState(window.history.state);
@@ -42,6 +50,7 @@ export class SerialDetailsRouteService {
                       kind: 'series',
                       itemId: serialId,
                       categoryId: categoryId ?? null,
+                      lookup: this.lookupInfo(),
                   }
                 : null;
         });

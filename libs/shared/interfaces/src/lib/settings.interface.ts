@@ -1,5 +1,7 @@
 import type { AppUpdateChannel } from './app-update-channel.util';
+import type { AudioLanguagePreference } from './audio-language.util';
 import { Language } from './language.enum';
+import type { OpenSubtitlesSettings } from './opensubtitles.interface';
 import type { PlaybackSmoothness } from './playback-smoothness.util';
 import { StreamFormat } from './stream-format.enum';
 import { Theme } from './theme.enum';
@@ -294,6 +296,21 @@ export interface Settings {
      * `resolveEmbeddedMpvSessionExtraOptions`).
      */
     playbackSmoothness?: PlaybackSmoothness;
+    /**
+     * "Audio language": `original` (default; a missing value means it)
+     * opens a show's English version where the catalog files one and picks
+     * a file's non-Spanish audio track with Spanish subtitles; `es` keeps
+     * the Spanish dub. Embedded MPV gets it through the mirrored extra
+     * options (`resolveEmbeddedMpvSessionExtraOptions`), so it applies to
+     * the next session.
+     */
+    audioLanguage?: AudioLanguagePreference;
+    /**
+     * The user's OpenSubtitles account and subtitle languages (see
+     * `OpenSubtitlesSettings`). Renderer-only: never sent to the main
+     * process config.
+     */
+    openSubtitles?: OpenSubtitlesSettings;
     /** Desktop Xtream/Stalker request cooldown. Default on; applies on Save. */
     portalConnectivityGuard?: boolean;
     /** Cover/poster sizing preset applied across grids and rails */

@@ -12,6 +12,7 @@ import {
 } from '@iptvnator/services';
 import type { CrossPortalSimilarItem } from '@iptvnator/services';
 import {
+    titleWithSource,
     visibleSourceName,
     youtubeEmbedUrl,
 } from '@iptvnator/shared/interfaces';
@@ -112,7 +113,7 @@ export class SerialDetailsHeroPresenter {
             title: item.title,
             posterUrl: item.posterUrl,
             year: item.year,
-            tooltip: `${item.title} — ${item.match.playlistName}`,
+            tooltip: titleWithSource(item.title, item.match.playlistName),
         })),
     ]);
 

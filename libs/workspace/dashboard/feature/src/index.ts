@@ -2,6 +2,7 @@ export * from './lib/rails/workspace-dashboard-rails.component';
 export { PlatformPageComponent } from './lib/platforms/ui/platform-page.component';
 export { PlatformThemeService } from './lib/platforms/platform-theme.service';
 export { TitlePlatformThemeService } from './lib/title-platform/title-platform-theme.service';
+export { TitleVersionsService } from './lib/title-platform/title-versions.service';
 export { SportSectionPageComponent } from './lib/sports/ui/sport-section-page.component';
 export { SportsHubPageComponent } from './lib/sports/ui/sports-hub-page.component';
 export { CountriesPageComponent } from './lib/countries/ui/countries-page.component';

@@ -2,6 +2,7 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
+    DestroyRef,
     effect,
     ElementRef,
     inject,
@@ -55,6 +56,7 @@ import {
     upNextRailAvailableWidth,
 } from './portal-inline-player-stage.util';
 import { UpNextRailComponent } from './up-next-rail.component';
+import { OnlineSubtitlesCoordinator } from '../online-subtitles/online-subtitles.coordinator';
 import type { UpNextRailItem } from './up-next-rail.util';
 
 @Component({
@@ -311,6 +313,10 @@ export class PortalInlinePlayerComponent {
     readonly episodePanelSeasonSelected = output<string>();
 
     constructor() {
+        // The audio language and OpenSubtitles follow what this player plays.
+        inject(DestroyRef).onDestroy(
+            inject(OnlineSubtitlesCoordinator).follow(this.playback)
+        );
         effect((onCleanup) => {
             const element = this.stageViewport()?.nativeElement;
             if (!element || typeof ResizeObserver === 'undefined') {

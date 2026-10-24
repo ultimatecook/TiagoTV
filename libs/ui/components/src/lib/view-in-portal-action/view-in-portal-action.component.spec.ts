@@ -112,4 +112,17 @@ describe('ViewInPortalActionComponent', () => {
         const tooltip = button.injector.get(MatTooltip);
         expect(tooltip.message).toBe('Open in My Portal');
     });
+
+    it("names no source by the provider's address", async () => {
+        const fixture = await createFixture(
+            createHandoff({
+                available: true,
+                playlistName: 'http://provider.test:8080',
+            })
+        );
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.query(By.css(BUTTON_SELECTOR));
+        expect(button.injector.get(MatTooltip).message).toBe('');
+    });
 });

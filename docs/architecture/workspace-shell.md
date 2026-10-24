@@ -58,7 +58,13 @@ Current workspace routes:
    type chips and Clear; a channel card plays on "En vivo", or in its own
    source's favourites for M3U and Stalker, and its red heart removes it —
    see [Workspace Dashboard](./workspace-dashboard.md#by-country-page-tiagotv))
-7. `/workspace/global-recent`
+7. `/workspace/global-recent` (Recently viewed, ⌘R: the same layout, its
+   "Canales" row most recent first, with no Live tab and no framed player;
+   a card plays on "En vivo" or in its own source's recent items for M3U
+   and Stalker, its × takes it out of the history and the bin beside the
+   row's title clears every channel; "This source / All sources" scopes
+   both rows. A source's own favourites and recent items keep their Live
+   tab.)
 8. `/workspace/search`
 9. `/workspace/downloads`
 10. `/workspace/settings/:section` (`/workspace/settings` redirects to

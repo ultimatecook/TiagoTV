@@ -14,6 +14,8 @@ export const SETTINGS_CONTROL_SECTIONS: Readonly<Record<string, string>> = {
     player: 'playback',
     streamFormat: 'playback',
     playbackSmoothness: 'playback',
+    audioLanguage: 'playback',
+    openSubtitles: 'playback',
     showCaptions: 'playback',
     webPlayerSharedControls: 'playback',
     playerAmbientMode: 'playback',

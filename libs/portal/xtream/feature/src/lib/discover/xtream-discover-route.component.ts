@@ -16,7 +16,10 @@ import {
     groupTitleMatchesByKey,
     pickTitleMatch,
 } from '@iptvnator/services';
-import { CatalogTitleMatch } from '@iptvnator/shared/interfaces';
+import {
+    CatalogTitleMatch,
+    visibleSourceName,
+} from '@iptvnator/shared/interfaces';
 import { WorkspaceBackNavigationService } from '@iptvnator/portal/shared/data-access';
 import {
     createLatestRequestGuard,
@@ -131,7 +134,14 @@ export class XtreamDiscoverRouteComponent {
                 return {
                     ...title,
                     available: match !== null,
-                    ...(match ? { availableIn: match.playlistName } : {}),
+                    // Never the provider's address as the source.
+                    ...(match
+                        ? {
+                              availableIn:
+                                  visibleSourceName(match.playlistName) ??
+                                  undefined,
+                          }
+                        : {}),
                 };
             });
         }

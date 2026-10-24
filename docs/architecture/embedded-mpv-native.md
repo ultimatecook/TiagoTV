@@ -169,6 +169,8 @@ The renderer never gets direct native-module access. It can only call the preloa
 - seek (absolute target) and seek by (relative step)
 - set volume
 - set audio track
+- add a subtitle file the user picked, or a subtitle the renderer holds as
+  text (`EMBEDDED_MPV_ADD_SUBTITLE_TEXT`, see "Downloaded subtitles")
 - start/stop live stream recording
 - resolve/select the live recording folder
 - dispose session
@@ -526,6 +528,21 @@ The renderer learns which features the loaded addon binary supports through the 
 
 Linux audio-track discovery works differently from macOS/Windows because the hand-rolled JSON IPC reply parser only understands scalar `data` values: the poll loop reads `track-list/count` every tick and walks the scalar `track-list/N/{type,id,title,lang,default,forced}` sub-properties only when the count changes. The selected track is reconciled from the scalar `aid` property on every tick (`aid` reads back non-numeric when audio is disabled, which maps to "no selection"). Track switching still goes through `set_property aid` over the same socket.
 
+### Downloaded subtitles
+
+A subtitle the renderer downloaded (OpenSubtitles, see "Online subtitles"
+in the [player controls contract](player-controls-contract.md)) reaches
+mpv through `addEmbeddedMpvSubtitleText(sessionId, name, text)`
+(`EMBEDDED_MPV_ADD_SUBTITLE_TEXT`, `embedded-mpv-subtitle-text.ts`): main
+writes the text to a 0600 file in a 0700 folder of this run under the OS
+temp folder (removed at shutdown), named from the label's letters and
+digits only, and adds it through `addSubtitle` like a picked file, so the
+reconnect path re-adds it. Text over 4 MiB is refused, and nothing of the
+text or its name is logged. The bridge arrived with the installer that
+brought OpenSubtitles: `EmbeddedMpvControlsAdapter.subtitleAttachment`
+reports `canAttach() === false` without it (or when the addon cannot add
+external files), and the renderer then spends no download.
+
 ## Stream Stats Properties
 
 The shared controls' stream-info popover (top-right `info` button, contract in
@@ -685,6 +702,21 @@ merged text once settings load (`mirrorEmbeddedMpvSessionOptions`) and on
 Save, while its own store keeps only the user's lines, so the setting
 reaches the next session without any main-process change. "Normal" mirrors
 the user's lines alone.
+
+`Settings > Playback > Audio language` (`audioLanguage`, "Original" by
+default, also for settings saved before it existed) is mirrored the same
+way, after the stability options and again only for the keys the user's
+lines do not set (`embeddedMpvAudioLanguageOptions` in
+`audio-language.util.ts`): Original adds `alang=` English first, then the
+languages originals usually come in and never Spanish (mpv takes the first
+listed language the file carries and otherwise its own default track),
+`slang=es,spa,es-419,…`, `sid=auto` and `subs-with-matching-audio=forced`,
+so a file with a Spanish dub and an original track plays the original with
+Spanish subtitles, and a subtitle in the audio's own language shows only
+when forced. "Español" puts the Spanish tags in `alang`. An mpv older than
+0.38 refuses the `forced` value by key and keeps its default. Like the
+stability options this needs no main-process change: the next session
+applies it.
 
 At session creation the IPC handler reads the mirror through
 `readEmbeddedMpvSessionOptions()` and passes

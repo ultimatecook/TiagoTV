@@ -210,7 +210,8 @@ export class PlatformsCatalogService {
 
     /**
      * Opens the title's page, as the catalog's own grid does: its first
-     * version's (Spanish where there is one), or the version asked for.
+     * version's (the preferred language's where there is one, see
+     * `PREFERRED_VERSION_LANGUAGE`), or the version asked for.
      */
     open(
         title: PlatformTitle,

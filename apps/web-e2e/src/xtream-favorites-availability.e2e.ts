@@ -495,16 +495,17 @@ test('@xtream @collections cold shared live playback records the selected favori
             )
         )
         .toBe(200);
+    // Recently viewed lists its channels as cards (they play on "En vivo").
     await page.goto('/workspace/global-recent');
     await page.reload();
     await expect(
         page
-            .locator('app-channel-list-item')
+            .locator('[data-test-id="my-list-channel"]')
             .filter({ hasText: 'Played favorite B' })
     ).toBeVisible();
     await expect(
         page
-            .locator('app-channel-list-item')
+            .locator('[data-test-id="my-list-channel"]')
             .filter({ hasText: 'Earlier watched A' })
     ).toHaveCount(0);
     expect(

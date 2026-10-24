@@ -55,7 +55,7 @@ import {
     EpgProgram,
     epgProviderClockMs,
     filterRecordingProgramsOverlap,
-    playlistDisplayLabel,
+    visibleSourceName,
     RecordingStartMetadata,
     RecordingStoppedEvent,
     ResolvedPortalPlayback,
@@ -470,7 +470,8 @@ export class StalkerLiveStreamLayoutComponent
                 'Live TV',
             channelLogoUrl: this.activePlaybackArtwork() || undefined,
             playlistId: playlist?._id,
-            playlistName: playlistDisplayLabel(playlist?.title) || undefined,
+            // Downloads names the source by it: never the provider's address.
+            playlistName: visibleSourceName(playlist?.title) ?? undefined,
             sourceType: 'stalker',
             epgChannelId: playlist?._id
                 ? buildStalkerEpgMappingKey(

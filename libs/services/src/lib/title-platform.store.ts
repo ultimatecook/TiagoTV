@@ -15,7 +15,37 @@ export interface TitlePlatformRef {
     readonly itemId: string | number;
     /** The category it was opened in, when the page knows it. */
     readonly categoryId?: string | number | null;
+    /**
+     * What the page knows of the title for lookups beyond its platform
+     * (OpenSubtitles), once its info has loaded.
+     */
+    readonly lookup?: TitleLookupInfo | null;
 }
+
+/** The title's name, year and ids, as its page has them. */
+export interface TitleLookupInfo {
+    readonly name: string;
+    readonly year?: number | null;
+    readonly tmdbId?: number | null;
+    readonly imdbId?: string | null;
+}
+
+/**
+ * One language version of the title on screen, as the platforms' catalog
+ * files it ("MUERTOS S.L." in Spanish, "DEATH INC." in English).
+ */
+export interface TitleLanguageVersion {
+    readonly language: 'ES' | 'EN';
+    /** The version the page shows. */
+    readonly current: boolean;
+    /** Opens the version's page. */
+    readonly open: () => void;
+}
+
+/** Reads the title's language versions; may read signals, like the brand. */
+export type TitleVersionsResolver = (
+    ref: TitlePlatformRef
+) => readonly TitleLanguageVersion[];
 
 /** The streaming platform a title belongs to, as its pages dress it. */
 export interface TitlePlatformBrand {
@@ -53,6 +83,9 @@ interface ShownTitle {
 export class TitlePlatformStore {
     private readonly shown = signal<readonly ShownTitle[]>([]);
     private readonly resolver = signal<TitlePlatformResolver | null>(null);
+    private readonly versionsResolver = signal<TitleVersionsResolver | null>(
+        null
+    );
 
     /** The title on screen: the latest page that says so. */
     readonly title = computed<TitlePlatformRef | null>(() => {
@@ -67,6 +100,17 @@ export class TitlePlatformStore {
         return title && resolve ? resolve(title) : null;
     });
 
+    /**
+     * The title's language versions as the catalog files it, one per
+     * language, the page's own marked current: a page offers a switch when
+     * there are two. Empty when the catalog does not hold the title.
+     */
+    readonly versions = computed<readonly TitleLanguageVersion[]>(() => {
+        const title = this.title();
+        const resolve = this.versionsResolver();
+        return title && resolve ? resolve(title) : [];
+    });
+
     /** A page shows `ref` until the returned function is called. */
     show(ref: TitlePlatformRef): () => void {
         const entry: ShownTitle = { ref };
@@ -77,6 +121,10 @@ export class TitlePlatformStore {
 
     useResolver(resolver: TitlePlatformResolver | null): void {
         this.resolver.set(resolver);
+    }
+
+    useVersionsResolver(resolver: TitleVersionsResolver | null): void {
+        this.versionsResolver.set(resolver);
     }
 }
 

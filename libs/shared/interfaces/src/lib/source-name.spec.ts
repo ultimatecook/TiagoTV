@@ -1,6 +1,7 @@
 import {
     isHostLikeName,
     sourceDisplayLabel,
+    titleWithSource,
     visibleSourceName,
 } from './source-name';
 
@@ -54,5 +55,15 @@ describe('source names on the title pages', () => {
             sourceDisplayLabel('http://portal.test:8080/c/', 'stalker')
         ).toBe('Stalker');
         expect(sourceDisplayLabel('Casa', 'xtream')).toBe('Casa');
+    });
+});
+
+describe('titleWithSource', () => {
+    it("adds the source's own name, never its address", () => {
+        expect(titleWithSource('Dune', 'Casa')).toBe('Dune — Casa');
+        expect(titleWithSource('Dune', 'http://provider.test:8080')).toBe(
+            'Dune'
+        );
+        expect(titleWithSource('Dune', null)).toBe('Dune');
     });
 });

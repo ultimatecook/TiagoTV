@@ -3,9 +3,13 @@ import { StorageMap } from '@ngx-pwa/local-storage';
 import { of } from 'rxjs';
 import {
     EMBEDDED_MPV_STABLE_OPTIONS,
+    embeddedMpvAudioLanguageOptions,
     Settings,
     STORE_KEY,
 } from '@iptvnator/shared/interfaces';
+
+/** What the default audio language (original) adds after the user lines. */
+const ORIGINAL_AUDIO = embeddedMpvAudioLanguageOptions('original');
 import { mirrorEmbeddedMpvSessionOptions } from './embedded-mpv-session-options-mirror';
 import { EpgSourceSettingsService } from './epg-source-settings.service';
 import { SettingsStore } from './settings-store.service';
@@ -105,10 +109,11 @@ describe('SettingsStore playback smoothness ("Fluidez")', () => {
             ...EMBEDDED_MPV_STABLE_OPTIONS.filter(
                 (line) => !line.startsWith('hwdec=')
             ),
+            ...ORIGINAL_AUDIO,
         ]);
     });
 
-    it('mirrors only the user lines in "normal", and on a fresh profile too', async () => {
+    it('mirrors no stability option in "normal", and all on a fresh profile', async () => {
         const updateSettings = jest.fn().mockResolvedValue(undefined);
         testWindow.electron = { platform: 'darwin', updateSettings };
         storedSettings = {
@@ -117,13 +122,18 @@ describe('SettingsStore playback smoothness ("Fluidez")', () => {
         };
         await load();
         expect(updateSettings).toHaveBeenLastCalledWith({
-            embeddedMpvExtraOptions: 'volume-max=150',
+            embeddedMpvExtraOptions: ['volume-max=150', ...ORIGINAL_AUDIO].join(
+                '\n'
+            ),
         });
 
         storedSettings = null;
         await createInjector().get(SettingsStore).loadSettings();
         expect(updateSettings).toHaveBeenLastCalledWith({
-            embeddedMpvExtraOptions: EMBEDDED_MPV_STABLE_OPTIONS.join('\n'),
+            embeddedMpvExtraOptions: [
+                ...EMBEDDED_MPV_STABLE_OPTIONS,
+                ...ORIGINAL_AUDIO,
+            ].join('\n'),
         });
     });
 

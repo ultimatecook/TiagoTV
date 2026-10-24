@@ -20,7 +20,7 @@ describe('HtmlVideoPlayerControlsBridge HLS tracks', () => {
 
         expect(adapter.state().audioTracks).toEqual([
             { id: 0, label: 'English', selected: false },
-            { id: 1, label: 'de', selected: true },
+            { id: 1, label: 'de', selected: true, language: 'de' },
             { id: 2, label: 'Audio 3', selected: false },
         ]);
         bridge.destroy();
@@ -39,7 +39,7 @@ describe('HtmlVideoPlayerControlsBridge HLS tracks', () => {
 
         expect(adapter.state().subtitleTracks).toEqual([
             { id: 0, label: 'English CC', selected: false },
-            { id: 1, label: 'fr', selected: false },
+            { id: 1, label: 'fr', selected: false, language: 'fr' },
             { id: 2, label: 'Subtitle 3', selected: false },
         ]);
 

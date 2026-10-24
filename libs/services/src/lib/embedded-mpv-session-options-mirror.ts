@@ -1,4 +1,5 @@
 import {
+    normalizeAudioLanguage,
     normalizePlaybackSmoothness,
     resolveEmbeddedMpvSessionExtraOptions,
     Settings,
@@ -6,13 +7,15 @@ import {
 
 type EmbeddedMpvOptionsSettings = Pick<
     Settings,
-    'embeddedMpvExtraOptions' | 'playbackSmoothness'
+    'embeddedMpvExtraOptions' | 'playbackSmoothness' | 'audioLanguage'
 >;
 
 /**
  * The extra options text the main process should hold for these settings:
  * the user's lines plus, in "Más estable", the stability options they did
- * not set. Main applies its mirror to every embedded MPV session it
+ * not set, and the audio language's track choice (original audio with
+ * Spanish subtitles by default; see `embeddedMpvAudioLanguageOptions`) for
+ * the keys they did not set either. Main applies its mirror to every embedded MPV session it
  * creates, so writing the merged text from the renderer brings the
  * setting to installed apps without a new main process.
  */
@@ -22,7 +25,8 @@ export function embeddedMpvSessionOptionsFor(
     return resolveEmbeddedMpvSessionExtraOptions(
         settings.embeddedMpvExtraOptions,
         normalizePlaybackSmoothness(settings.playbackSmoothness),
-        typeof window === 'undefined' ? undefined : window.electron?.platform
+        typeof window === 'undefined' ? undefined : window.electron?.platform,
+        normalizeAudioLanguage(settings.audioLanguage)
     );
 }
 

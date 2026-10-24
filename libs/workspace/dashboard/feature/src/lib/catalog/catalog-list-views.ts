@@ -2,6 +2,7 @@ import type { PlatformTitle } from '../platforms/platform-titles';
 import { mergePlatformTitles } from '../platforms/platform-versions';
 import type {
     PlatformCategory,
+    PlatformLanguage,
     PlatformShelf,
 } from '../platforms/streaming-platforms';
 import {
@@ -56,7 +57,8 @@ export function categoriesOfKind(
 export function listsView(
     shelves: readonly PlatformShelf[],
     kind: CatalogKind,
-    lookup: CategoryLookup
+    lookup: CategoryLookup,
+    preferred: PlatformLanguage = 'ES'
 ): PlatformListsView {
     const lists: PlatformTitleList[] = [];
     let total = 0;
@@ -74,7 +76,7 @@ export function listsView(
         if (loaded.length > 0) {
             lists.push({
                 platform: shelf.platform,
-                titles: mergePlatformTitles(loaded),
+                titles: mergePlatformTitles(loaded, preferred),
             });
         }
         if (loaded.length > 0 || categories.some(lookup.failed)) {
@@ -90,12 +92,13 @@ export function listsView(
 /** A platform's titles, both kinds, or null until one of its lists answered. */
 export function platformTitlesOf(
     shelf: PlatformShelf | undefined,
-    lookup: CategoryLookup
+    lookup: CategoryLookup,
+    preferred: PlatformLanguage = 'ES'
 ): PlatformTitle[] | null {
     const loaded = (shelf?.categories ?? [])
         .map((category) => lookup.titlesOf(category))
         .filter((titles) => !!titles) as (readonly PlatformTitle[])[];
-    return loaded.length > 0 ? mergePlatformTitles(loaded) : null;
+    return loaded.length > 0 ? mergePlatformTitles(loaded, preferred) : null;
 }
 
 export function progressOf(
@@ -175,12 +178,15 @@ export function catalogTitles(
         readonly expected: boolean;
         readonly busy: boolean;
         readonly failed: () => boolean;
+        /** The version language shown; Spanish when not said. */
+        readonly preferred?: PlatformLanguage;
     }
 ): CatalogTitle[] | null {
     if (state.stored) {
         return aggregateCatalog(
             unionPlatformLists(view.lists, state.stored),
-            kind
+            kind,
+            state.preferred
         );
     }
     // Lists already known (kept from the last launch, or loaded by a
@@ -194,7 +200,7 @@ export function catalogTitles(
     ) {
         return null;
     }
-    const titles = aggregateCatalog(view.lists, kind);
+    const titles = aggregateCatalog(view.lists, kind, state.preferred);
     // None yet: the platforms are still loading, failed, or carry none.
     return titles.length > 0 || (!state.busy && !state.failed())
         ? titles

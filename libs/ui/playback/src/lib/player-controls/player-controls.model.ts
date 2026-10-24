@@ -37,6 +37,34 @@ export interface PlayerTrack {
     id: number;
     label: string; // adapter pre-computes the display label
     selected: boolean;
+    /**
+     * The track's language tag as the engine reports it ("es", "eng",
+     * "es-419"), when it does; the audio-language preference reads it, and
+     * the label when it is missing.
+     */
+    language?: string;
+}
+
+/** A subtitle the app holds as text (a downloaded one), to attach. */
+export interface PlayerSubtitleFile {
+    /** The track's label, and the file name mpv shows. */
+    name: string;
+    format: 'srt' | 'vtt';
+    content: string;
+    /** Its language tag, when known ("es"). */
+    language?: string;
+}
+
+/**
+ * Attaching a subtitle the app holds as text to the playing file
+ * (OpenSubtitles). Web engines add a text track; Embedded MPV needs the
+ * main-process bridge that writes a temp file, so it can say no up front:
+ * nothing is downloaded that could not be shown.
+ */
+export interface PlayerSubtitleAttachment {
+    canAttach(): boolean;
+    /** Attaches and selects it; false when it could not be shown. */
+    attach(file: PlayerSubtitleFile): Promise<boolean>;
 }
 
 /**
@@ -168,4 +196,12 @@ export interface PlayerController {
      * engine reports nothing and the info button is not rendered.
      */
     readonly streamStats?: PlayerStreamStatsSource;
+    /** Optional; see "Online subtitles" in the controls contract. */
+    readonly subtitleAttachment?: PlayerSubtitleAttachment;
+    /**
+     * True when the engine picks the audio and subtitle tracks for the
+     * audio-language setting itself (Embedded MPV's `alang`/`slang`), so the
+     * app's own track preference leaves it alone.
+     */
+    readonly selectsLanguageTracks?: boolean;
 }

@@ -47,6 +47,8 @@ import type {
     EmbeddedMpvSession,
     EmbeddedMpvSupport,
     ElectronBridgeApi,
+    OpenSubtitlesBridgeRequest,
+    OpenSubtitlesBridgeResponse,
     ElectronBridgeAppUpdateReleaseNotesRequest,
     ElectronBridgeBackGestureSource,
     ElectronBridgeForwardGestureSource,
@@ -683,6 +685,21 @@ const electronApi: ElectronBridgeApi = {
         ipcRenderer.invoke('EMBEDDED_MPV_SET_SUBTITLE_STYLE', sessionId, style),
     selectEmbeddedMpvSubtitleFile: (): Promise<string | null> =>
         ipcRenderer.invoke('EMBEDDED_MPV_SELECT_SUBTITLE_FILE'),
+    addEmbeddedMpvSubtitleText: (
+        sessionId: string,
+        fileName: string,
+        content: string
+    ): Promise<EmbeddedMpvSession | null> =>
+        ipcRenderer.invoke(
+            'EMBEDDED_MPV_ADD_SUBTITLE_TEXT',
+            sessionId,
+            fileName,
+            content
+        ),
+    openSubtitlesRequest: (
+        request: OpenSubtitlesBridgeRequest
+    ): Promise<OpenSubtitlesBridgeResponse> =>
+        ipcRenderer.invoke('OPENSUBTITLES_REQUEST', request),
     setEmbeddedMpvSpeed: (
         sessionId: string,
         speed: number

@@ -34,24 +34,43 @@ describe('VjsTextTracks', () => {
 
         expect(helper.getSubtitleTracks()).toEqual([
             { id: 0, label: 'English CC', selected: true },
-            { id: 1, label: 'de', selected: false },
+            { id: 1, label: 'de', selected: false, language: 'de' },
             { id: 2, label: 'Subtitle 3', selected: false },
         ]);
 
         tracks.remove(english);
 
         expect(helper.getSubtitleTracks()).toEqual([
-            { id: 1, label: 'de', selected: false },
+            { id: 1, label: 'de', selected: false, language: 'de' },
             { id: 2, label: 'Subtitle 3', selected: false },
         ]);
 
         tracks.add(english);
 
         expect(helper.getSubtitleTracks()).toEqual([
-            { id: 1, label: 'de', selected: false },
+            { id: 1, label: 'de', selected: false, language: 'de' },
             { id: 2, label: 'Subtitle 3', selected: false },
             { id: 0, label: 'English CC', selected: true },
         ]);
+    });
+
+    it('selects a downloaded track once Video.js lists it, even with captions off', () => {
+        const embedded = createTextTrack({
+            kind: 'subtitles',
+            mode: 'showing',
+        });
+        const { helper, tracks } = createBoundHelper([embedded], false);
+        const downloaded = createTextTrack({
+            kind: 'subtitles',
+            language: 'es',
+        });
+
+        expect(helper.selectTrack(downloaded)).toBe(false);
+        tracks.add(downloaded);
+
+        expect(helper.selectTrack(downloaded)).toBe(true);
+        expect(downloaded.mode).toBe('showing');
+        expect(embedded.mode).toBe('disabled');
     });
 
     it('selects one valid track and disables every other VHS text track', () => {

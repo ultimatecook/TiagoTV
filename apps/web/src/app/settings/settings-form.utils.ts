@@ -8,7 +8,10 @@ import {
 } from '@angular/forms';
 import {
     AppUpdateChannel,
+    AudioLanguagePreference,
     CoverSize,
+    DEFAULT_AUDIO_LANGUAGE,
+    DEFAULT_OPEN_SUBTITLES_SETTINGS,
     DEFAULT_APP_UPDATE_CHANNEL,
     DEFAULT_DASHBOARD_RAILS_SETTINGS,
     DEFAULT_PLAYBACK_SMOOTHNESS,
@@ -16,6 +19,8 @@ import {
     EpgViewMode,
     Language,
     normalizeAppUpdateChannel,
+    normalizeAudioLanguage,
+    normalizeOpenSubtitlesSettings,
     normalizeDashboardRailsSettings,
     normalizeEmbeddedMpvExtraOptions,
     normalizeExternalPlayerArguments,
@@ -130,6 +135,15 @@ export function createSettingsForm(
         embeddedMpvExtraOptions: ['', [embeddedMpvExtraOptionsValidator]],
         embeddedMpvAutoReconnect: true,
         playbackSmoothness: DEFAULT_PLAYBACK_SMOOTHNESS as PlaybackSmoothness,
+        audioLanguage: DEFAULT_AUDIO_LANGUAGE as AudioLanguagePreference,
+        openSubtitles: formBuilder.group({
+            apiKey: DEFAULT_OPEN_SUBTITLES_SETTINGS.apiKey,
+            username: DEFAULT_OPEN_SUBTITLES_SETTINGS.username,
+            password: DEFAULT_OPEN_SUBTITLES_SETTINGS.password,
+            language: DEFAULT_OPEN_SUBTITLES_SETTINGS.language,
+            secondLanguage: DEFAULT_OPEN_SUBTITLES_SETTINGS.secondLanguage,
+            autoSearch: DEFAULT_OPEN_SUBTITLES_SETTINGS.autoSearch,
+        }),
         portalConnectivityGuard: true,
         coverSize: 'medium' as CoverSize,
         showCoverTitles: true,
@@ -227,6 +241,8 @@ export function createSettingsFromFormValue(
         playbackSmoothness: normalizePlaybackSmoothness(
             value.playbackSmoothness
         ),
+        audioLanguage: normalizeAudioLanguage(value.audioLanguage),
+        openSubtitles: normalizeOpenSubtitlesSettings(value.openSubtitles),
         portalConnectivityGuard: value.portalConnectivityGuard !== false,
         coverSize: value.coverSize ?? 'medium',
         showCoverTitles: value.showCoverTitles !== false,

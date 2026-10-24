@@ -67,6 +67,7 @@ export class WebVideoHlsControls {
             id: index,
             label: track.name || track.lang || `Audio ${index + 1}`,
             selected: index === hls.audioTrack,
+            ...(track.lang ? { language: track.lang } : {}),
         }));
     }
 
@@ -132,6 +133,7 @@ export class WebVideoHlsControls {
             label: track.name || track.lang || `Subtitle ${index + 1}`,
             selected:
                 hls.subtitleDisplay === true && index === hls.subtitleTrack,
+            ...(track.lang ? { language: track.lang } : {}),
         }));
     }
 

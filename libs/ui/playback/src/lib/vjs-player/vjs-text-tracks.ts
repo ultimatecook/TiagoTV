@@ -83,7 +83,22 @@ export class VjsTextTracks {
             id,
             label: track.label || track.language || `Subtitle ${id + 1}`,
             selected: track.mode === 'showing',
+            ...(track.language ? { language: track.language } : {}),
         }));
+    }
+
+    /** Selects a track Video.js just added (a downloaded subtitle). */
+    selectTrack(track: VideoJsTextTrack): boolean {
+        if (this.trackList === null) {
+            this.bind();
+        }
+        const entry = this.readSubtitleTracks().find(
+            (candidate) => candidate.track === track
+        );
+        if (entry) {
+            this.setSubtitleTrack(entry.id);
+        }
+        return !!entry;
     }
 
     setSubtitleTrack(id: number): void {

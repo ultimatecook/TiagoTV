@@ -380,7 +380,13 @@
                 "CANCELLED": "cancelado",
                 "NETWORK": "red",
                 "ERROR": "error"
-            }
+            },
+            "OPEN_SUBTITLES": "OpenSubtitles",
+            "OPEN_SUBTITLES_DESCRIPTION": "La cuenta tal como se escribió en Reproducción (nunca se muestran su clave ni su contraseña) y la última respuesta de OpenSubtitles.",
+            "OPEN_SUBTITLES_KEY_SET": "Clave API puesta",
+            "OPEN_SUBTITLES_KEY_MISSING": "Sin clave API",
+            "OPEN_SUBTITLES_REMAINING": "Quedan {{count}} descargas hoy",
+            "OPEN_SUBTITLES_NO_BRIDGE": "Requiere el último instalador"
         },
         "NAV_SERVER": "Servidor",
         "SERVER_DESCRIPTION": "Las fuentes, los favoritos y el progreso de visualización se guardan en este servidor y los comparten todos los dispositivos que lo abren.",
@@ -762,7 +768,39 @@
             "DISABLED_TOAST": "Control parental desactivado",
             "PIN_CHANGED_TOAST": "PIN cambiado",
             "LOCKED_TOAST": "Bloqueado"
-        }
+        },
+        "CARD_AUDIO_SUBTITLES": "Audio y subtítulos",
+        "AUDIO_LANGUAGE": "Idioma del audio",
+        "AUDIO_LANGUAGE_DESCRIPTION": "Original reproduce películas y series en su idioma original con subtítulos en español: el catálogo abre la versión original (en inglés) cuando la hay y el reproductor elige la pista de audio original. Español mantiene el doblaje.",
+        "AUDIO_LANGUAGE_ORIGINAL": "Original + subtítulos",
+        "AUDIO_LANGUAGE_ES": "Español (doblado)",
+        "OPEN_SUBTITLES_API_KEY": "Clave API de OpenSubtitles",
+        "OPEN_SUBTITLES_API_KEY_DESCRIPTION": "Cuando una película o un episodio no trae subtítulos en tu idioma, TiagoTV los busca en OpenSubtitles. Crea una cuenta gratuita y un «API consumer» en opensubtitles.com y pega aquí su clave.",
+        "OPEN_SUBTITLES_GET_KEY": "Crear un API consumer en opensubtitles.com",
+        "OPEN_SUBTITLES_NEEDS_UPDATE": "Esta versión de la app aún no puede conectar con OpenSubtitles: instala el último TiagoTV para Mac.",
+        "OPEN_SUBTITLES_DESKTOP_ONLY": "OpenSubtitles funciona en la app de escritorio.",
+        "OPEN_SUBTITLES_ACCOUNT": "Cuenta de OpenSubtitles",
+        "OPEN_SUBTITLES_ACCOUNT_DESCRIPTION": "Tu usuario y contraseña de opensubtitles.com. Las descargas cuentan en esta cuenta (20 al día en una gratuita); un subtítulo ya descargado se guarda, así que volver a verlo no gasta descargas.",
+        "OPEN_SUBTITLES_USERNAME": "Usuario",
+        "OPEN_SUBTITLES_PASSWORD": "Contraseña",
+        "OPEN_SUBTITLES_TEST": "Comprobar cuenta",
+        "OPEN_SUBTITLES_TESTING": "Comprobando…",
+        "OPEN_SUBTITLES_TEST_OK": "La clave API funciona.",
+        "OPEN_SUBTITLES_TEST_OK_QUOTA": "Sesión iniciada: quedan {{remaining}} de {{allowed}} descargas hoy.",
+        "OPEN_SUBTITLES_TEST_UNAVAILABLE": "Esta versión de la app no puede conectar con OpenSubtitles.",
+        "OPEN_SUBTITLES_TEST_NO_KEY": "Escribe primero la clave API.",
+        "OPEN_SUBTITLES_TEST_INVALID_KEY": "OpenSubtitles no aceptó la clave API.",
+        "OPEN_SUBTITLES_TEST_LOGIN_FAILED": "Usuario o contraseña incorrectos.",
+        "OPEN_SUBTITLES_TEST_QUOTA": "Se agotaron las descargas de hoy.",
+        "OPEN_SUBTITLES_TEST_RATE_LIMITED": "OpenSubtitles está ocupado; prueba dentro de un minuto.",
+        "OPEN_SUBTITLES_TEST_NOT_FOUND": "No se encontraron subtítulos.",
+        "OPEN_SUBTITLES_TEST_NETWORK": "No se pudo conectar con OpenSubtitles.",
+        "OPEN_SUBTITLES_LANGUAGE": "Idioma de los subtítulos",
+        "OPEN_SUBTITLES_LANGUAGE_DESCRIPTION": "Se busca primero en OpenSubtitles; el segundo idioma se prueba cuando el primero no tiene.",
+        "OPEN_SUBTITLES_SECOND_LANGUAGE": "Segundo idioma",
+        "OPEN_SUBTITLES_SECOND_LANGUAGE_NONE": "Ninguno",
+        "OPEN_SUBTITLES_AUTO_SEARCH": "Buscar automáticamente",
+        "OPEN_SUBTITLES_AUTO_SEARCH_DESCRIPTION": "Cuando una película o un episodio empieza sin subtítulos en tu idioma, descargarlos de OpenSubtitles. Desactivado: solo al elegir «Buscar en OpenSubtitles…» en el menú de subtítulos del reproductor."
     },
     "SERVER_STORAGE": {
         "WRITE_FAILED": "No se pudo guardar en el servidor. Comprueba la conexión e inténtalo de nuevo.",
@@ -2315,7 +2353,8 @@
             "NO_PLAYLISTS_TITLE": "Aún no has visto nada",
             "NO_PLAYLISTS_BODY": "Añade una fuente y tu historial de visualización aparecerá aquí.",
             "NO_ITEMS_TITLE": "Aún no has visto nada",
-            "NO_ITEMS_BODY": "Empieza a ver cualquier contenido de tu biblioteca y aparecerá aquí."
+            "NO_ITEMS_BODY": "Empieza a ver cualquier contenido de tu biblioteca y aparecerá aquí.",
+            "REMOVE_NAMED": "Quitar {{name}} de Vistos recientemente"
         },
         "SWITCHER": {
             "SEARCH": "Buscar una fuente…",
@@ -2736,5 +2775,33 @@
         "FAILED": "No se puede continuar aquí: ábrelo para reproducirlo",
         "EXPAND": "Abrir reproductor completo",
         "MINIMIZE": "Minimizar reproductor"
+    },
+    "OPEN_SUBTITLES": {
+        "SEARCH": "Buscar en OpenSubtitles…",
+        "SEARCHING": "Buscando en OpenSubtitles…",
+        "ATTACHED": "Subtítulos de OpenSubtitles ({{language}})",
+        "ATTACH_FAILED": "Los subtítulos se descargaron, pero este reproductor no pudo mostrarlos.",
+        "TRACK_LABEL": "{{language}} · OpenSubtitles",
+        "NOT_FOUND": "OpenSubtitles no tiene subtítulos en {{language}} para este título.",
+        "QUOTA": "Se agotaron las descargas de OpenSubtitles de hoy. Vuelven a las {{time}}.",
+        "QUOTA_NO_TIME": "Se agotaron las descargas de OpenSubtitles de hoy. Prueba mañana.",
+        "LOGIN_FAILED": "OpenSubtitles no aceptó el usuario o la contraseña. Revísalos en Ajustes → Reproducción.",
+        "INVALID_KEY": "OpenSubtitles no aceptó la clave API. Revísala en Ajustes → Reproducción.",
+        "NO_KEY": "Añade tu clave API de OpenSubtitles en Ajustes → Reproducción para buscar subtítulos.",
+        "RATE_LIMITED": "OpenSubtitles está ocupado. Prueba dentro de un minuto.",
+        "NETWORK": "No se pudo conectar con OpenSubtitles.",
+        "NEEDS_UPDATE": "OpenSubtitles necesita el último instalador de TiagoTV.",
+        "LANGUAGES": {
+            "es": "Español",
+            "sp": "Español (España)",
+            "ea": "Español (Latinoamérica)",
+            "en": "Inglés",
+            "pt-PT": "Portugués",
+            "pt-BR": "Portugués (Brasil)",
+            "fr": "Francés",
+            "it": "Italiano",
+            "de": "Alemán",
+            "ca": "Catalán"
+        }
     }
 }

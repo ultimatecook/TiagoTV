@@ -4,6 +4,10 @@ import type { PortalRequestFailureEnvelope } from './portal-request-failure.util
 import type { XtreamConnectionFailure } from './xtream-connection-test';
 import type { ZoomLevelAction } from './zoom-level.util';
 import type {
+    OpenSubtitlesBridgeRequest,
+    OpenSubtitlesBridgeResponse,
+} from './opensubtitles.interface';
+import type {
     CatchupDownloadMetadata,
     DownloadRecoveryResult,
     DownloadContentType,
@@ -1407,6 +1411,20 @@ export interface ElectronBridgeApi {
     ) => Promise<EmbeddedMpvSession | null>;
     /** Opens the main-process subtitle file dialog; null when cancelled. */
     selectEmbeddedMpvSubtitleFile?: () => Promise<string | null>;
+    /**
+     * Loads a subtitle the renderer holds as text (a downloaded one): main
+     * writes it to a private temp file and adds it like a picked file.
+     * Absent before the installer that brought it.
+     */
+    addEmbeddedMpvSubtitleText?: (
+        sessionId: string,
+        fileName: string,
+        content: string
+    ) => Promise<EmbeddedMpvSession | null>;
+    /** OpenSubtitles REST calls (main sets the User-Agent; no CORS there). */
+    openSubtitlesRequest?: (
+        request: OpenSubtitlesBridgeRequest
+    ) => Promise<OpenSubtitlesBridgeResponse>;
     setEmbeddedMpvSpeed?: (
         sessionId: string,
         speed: number

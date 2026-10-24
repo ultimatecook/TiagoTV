@@ -17,6 +17,7 @@ import {
     CoverSize,
     EpgViewMode,
     Language,
+    Settings,
     Theme,
 } from '@iptvnator/shared/interfaces';
 import { SettingsSnackbarService } from './settings-snackbar.service';
@@ -219,10 +220,14 @@ export class SettingsFormFacade {
         if (window.electron) {
             // Main applies its extra options mirror to every embedded MPV
             // session: the user's lines plus what "Fluidez" adds.
-            window.electron.updateSettings({
+            // The OpenSubtitles account stays in the renderer: main has
+            // no use for it, and its config file is plain text.
+            const mirrored: Partial<Settings> = {
                 ...settings,
                 embeddedMpvExtraOptions: embeddedMpvSessionOptionsFor(settings),
-            });
+            };
+            delete mirrored.openSubtitles;
+            window.electron.updateSettings(mirrored);
 
             if (this.runtime.supportsExternalPlayerPathSettings) {
                 window.electron.setMpvPlayerPath(settings.mpvPlayerPath);

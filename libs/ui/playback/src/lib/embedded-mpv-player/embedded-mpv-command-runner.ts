@@ -130,6 +130,27 @@ export class EmbeddedMpvCommandRunner {
         return updated !== null;
     }
 
+    /** Whether a subtitle held as text can be loaded (newer installers). */
+    canAddSubtitleText(): boolean {
+        return typeof this.bridge()?.addEmbeddedMpvSubtitleText === 'function';
+    }
+
+    /**
+     * Loads a subtitle the renderer holds as text (OpenSubtitles): main
+     * writes it to a private temp file and adds it. True when it loaded.
+     */
+    async addSubtitleText(fileName: string, content: string): Promise<boolean> {
+        const id = this.ctx.sessionId();
+        const addText = this.bridge()?.addEmbeddedMpvSubtitleText;
+        if (!id || !addText) {
+            return false;
+        }
+        const updated = await this.run(id, () =>
+            addText(id, fileName, content)
+        );
+        return updated !== null;
+    }
+
     async setSubtitleDelay(seconds: number): Promise<void> {
         const id = this.ctx.sessionId();
         const electron = this.bridge();

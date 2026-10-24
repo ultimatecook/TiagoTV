@@ -91,7 +91,7 @@ import {
     EpgProgram,
     epgProviderClockMs,
     filterRecordingProgramsOverlap,
-    playlistDisplayLabel,
+    visibleSourceName,
     RecordingStartMetadata,
     RecordingStoppedEvent,
     ResolvedPortalPlayback,
@@ -281,8 +281,9 @@ export class LiveStreamLayoutComponent
                 item.stream_icon?.trim() ||
                 undefined,
             playlistId: playlist?.id,
+            // Downloads names the source by it: never the provider's address.
             playlistName:
-                playlistDisplayLabel(playlist?.name ?? playlist?.title) ||
+                visibleSourceName(playlist?.name ?? playlist?.title) ??
                 undefined,
             sourceType: 'xtream',
             epgChannelId: playlist

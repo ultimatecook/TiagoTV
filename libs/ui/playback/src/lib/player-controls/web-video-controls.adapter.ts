@@ -10,9 +10,12 @@ import type {
     PlayerControlsCapabilities,
     PlayerControlsCommands,
     PlayerControlsState,
+    PlayerSubtitleAttachment,
+    PlayerSubtitleFile,
     PlayerSubtitleStyle,
     PlayerTrack,
 } from './player-controls.model';
+import { registerActivePlayer } from '../online-subtitles/active-player';
 import { DEFAULT_SUBTITLE_STYLE } from './subtitle-style';
 import type { SeriesPlaybackNavigation } from '../portal-inline-player/series-playback-navigation';
 import {
@@ -48,6 +51,8 @@ export interface WebVideoControlsOptions extends WebVideoMetadataOptions {
     setSubtitleTrack?: (id: number) => void | Promise<void>;
     /** Opens the engine's subtitle file picker; loads + selects the pick. */
     addExternalSubtitleFile?: () => void;
+    /** Loads + selects a subtitle the app holds as text (OpenSubtitles). */
+    attachExternalSubtitle?: (file: PlayerSubtitleFile) => boolean;
     getSubtitleDelay?: () => number;
     setSubtitleDelay?: (seconds: number) => void | Promise<void>;
     /** Runtime gate for the delay UI (e.g. only once a file is loaded). */
@@ -78,6 +83,7 @@ export class WebVideoControlsAdapter implements PlayerController {
     private video: HTMLVideoElement | null = null;
     private opts: WebVideoControlsOptions = {};
     private detachFn: (() => void) | null = null;
+    private releasePlayer: (() => void) | null = null;
     private bindingGeneration = 0;
 
     /** Bumped whenever DOM or engine-specific state must be re-read. */
@@ -249,6 +255,15 @@ export class WebVideoControlsAdapter implements PlayerController {
         togglePictureInPicture: () => this.pictureInPicture.toggle(),
     };
 
+    readonly subtitleAttachment: PlayerSubtitleAttachment = {
+        canAttach: () => typeof this.opts.attachExternalSubtitle === 'function',
+        attach: async (file) => {
+            const attached = this.opts.attachExternalSubtitle?.(file) ?? false;
+            this.refresh();
+            return attached;
+        },
+    };
+
     /** Binds to a `<video>` element and starts maintaining the state signal. */
     attach(video: HTMLVideoElement, opts: WebVideoControlsOptions = {}): void {
         this.detach();
@@ -270,6 +285,7 @@ export class WebVideoControlsAdapter implements PlayerController {
                 video.removeEventListener(eventName, onEvent);
             }
         };
+        this.releasePlayer = registerActivePlayer(this);
         // Prime the initial snapshot.
         onEvent();
     }
@@ -289,6 +305,8 @@ export class WebVideoControlsAdapter implements PlayerController {
         this.bindingGeneration += 1;
         this.detachFn?.();
         this.detachFn = null;
+        this.releasePlayer?.();
+        this.releasePlayer = null;
         this.video = null;
         this.opts = {};
         this.streamStats.reset();

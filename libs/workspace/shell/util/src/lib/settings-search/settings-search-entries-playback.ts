@@ -3,7 +3,10 @@ import { SettingsSearchEntry } from './settings-search.types';
 const MPV = ['mpv', 'external player'];
 const VLC = ['vlc', 'external player'];
 
-/** Playback section rows, in page order: Player, Watching, Xtream, Desktop. */
+/**
+ * Playback section rows, in page order: Player, Audio and subtitles,
+ * Watching, Xtream, Desktop.
+ */
 export const PLAYBACK_SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] =
     [
         {
@@ -143,6 +146,51 @@ export const PLAYBACK_SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] =
             keywords: [...VLC, 'single window', 'instance'],
             requires: ['external-player-paths'],
             fallbackId: 'video-player',
+        },
+        {
+            id: 'audio-language',
+            section: 'playback',
+            labelKey: 'SETTINGS.AUDIO_LANGUAGE',
+            descriptionKey: 'SETTINGS.AUDIO_LANGUAGE_DESCRIPTION',
+            keywords: [
+                'audio',
+                'idioma',
+                'language',
+                'original',
+                'dub',
+                'doblaje',
+                'español',
+                'english',
+                'vose',
+            ],
+        },
+        {
+            id: 'opensubtitles-api-key',
+            section: 'playback',
+            labelKey: 'SETTINGS.OPEN_SUBTITLES_API_KEY',
+            descriptionKey: 'SETTINGS.OPEN_SUBTITLES_API_KEY_DESCRIPTION',
+            keywords: ['opensubtitles', 'subtitles', 'subtítulos', 'api key'],
+        },
+        {
+            id: 'opensubtitles-account',
+            section: 'playback',
+            labelKey: 'SETTINGS.OPEN_SUBTITLES_ACCOUNT',
+            descriptionKey: 'SETTINGS.OPEN_SUBTITLES_ACCOUNT_DESCRIPTION',
+            keywords: ['opensubtitles', 'login', 'usuario', 'password'],
+        },
+        {
+            id: 'opensubtitles-language',
+            section: 'playback',
+            labelKey: 'SETTINGS.OPEN_SUBTITLES_LANGUAGE',
+            descriptionKey: 'SETTINGS.OPEN_SUBTITLES_LANGUAGE_DESCRIPTION',
+            keywords: ['opensubtitles', 'subtitles', 'subtítulos', 'idioma'],
+        },
+        {
+            id: 'opensubtitles-auto-search',
+            section: 'playback',
+            labelKey: 'SETTINGS.OPEN_SUBTITLES_AUTO_SEARCH',
+            descriptionKey: 'SETTINGS.OPEN_SUBTITLES_AUTO_SEARCH_DESCRIPTION',
+            keywords: ['opensubtitles', 'subtitles', 'automatic', 'download'],
         },
         {
             id: 'show-captions',

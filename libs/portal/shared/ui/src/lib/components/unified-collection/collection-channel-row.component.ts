@@ -7,7 +7,9 @@ import {
     output,
     signal,
 } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
@@ -19,29 +21,37 @@ import {
 import {
     foldSearchText,
     isCatalogUnavailable,
+    sourceDisplayLabel,
 } from '@iptvnator/shared/interfaces';
 
 /**
- * TiagoTV's Mi lista: its live channels as a row of cards, before the
- * movies and series. A card shows the channel's logo on a dark plate (its
- * name in Bebas without one) and its country's flag, as the Home's last
- * channels do (`channelFace`). A click plays it on "En vivo" (an Xtream
- * channel, `buildLiveChannelPlayTarget`; one no country lists goes on to
- * the live view) or, from an M3U or Stalker source, in that source's own
- * favourites, which open on it playing. The red heart takes it off.
+ * TiagoTV's Mi lista and Recently viewed: their live channels as a row of
+ * cards, before the movies and series. A card shows the channel's logo on
+ * a dark plate (its name in Bebas without one) and its country's flag, as
+ * the Home's last channels do (`channelFace`). A click plays it on "En
+ * vivo" (an Xtream channel, `buildLiveChannelPlayTarget`; one no country
+ * lists, or another source's, goes on to the live view) or, from an M3U or
+ * Stalker source, in that source's own favourites or recent items, which
+ * open on it playing. On Mi lista the red heart takes it off; on Recently
+ * viewed a card's × takes it out of the history and the bin beside the
+ * title clears every channel.
  */
 @Component({
     selector: 'app-collection-channel-row',
-    imports: [MatIcon, TranslatePipe],
+    imports: [MatIcon, MatIconButton, MatTooltip, TranslatePipe],
     templateUrl: './collection-channel-row.component.html',
     styleUrl: './collection-channel-row.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CollectionChannelRowComponent {
     readonly items = input.required<readonly UnifiedCollectionItem[]>();
+    /** Mi lista's favourites, or the recently viewed channels. */
+    readonly mode = input<'favorites' | 'recent'>('favorites');
     /** The shell's search, as the grids below filter by it. */
     readonly searchTerm = input('');
     readonly removeItem = output<UnifiedCollectionItem>();
+    /** Recently viewed's bin: clear every channel (the page confirms). */
+    readonly clearAll = output<void>();
 
     private readonly router = inject(Router);
     private readonly failedLogos = signal<ReadonlySet<string>>(new Set());
@@ -66,6 +76,12 @@ export class CollectionChannelRowComponent {
                     // The brand's logo, else the provider's, else the name.
                     logo: usable(face.logo) ?? usable(item.logo),
                     unavailable: isCatalogUnavailable(item),
+                    // Never the provider's address: the user's own name
+                    // for the source, else its kind ("Xtream").
+                    source: sourceDisplayLabel(
+                        item.playlistName,
+                        item.sourceType
+                    ),
                 };
             });
     });
@@ -77,7 +93,7 @@ export class CollectionChannelRowComponent {
         const target =
             buildLiveChannelPlayTarget(item) ??
             buildLiveCollectionNavigationTarget({
-                mode: 'favorites',
+                mode: this.mode(),
                 sourceType: item.sourceType,
                 playlistId: item.playlistId,
                 itemId:

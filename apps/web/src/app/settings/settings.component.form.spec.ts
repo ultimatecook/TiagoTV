@@ -682,9 +682,17 @@ describe('SettingsComponent form', () => {
                 { retryEpgCleanup: false }
             );
             // Main gets the extra options it applies to embedded MPV
-            // sessions: the user's lines plus "Más estable"'s.
-            expect(updateSettings).toHaveBeenCalledWith({
+            // sessions: the user's lines plus "Más estable"'s and the audio
+            // language's track choice. The OpenSubtitles account stays here.
+            const mirroredForm: Record<string, unknown> = {
                 ...component.settingsForm.value,
+            };
+            delete mirroredForm['openSubtitles'];
+            expect(updateSettings.mock.calls[0][0]).not.toHaveProperty(
+                'openSubtitles'
+            );
+            expect(updateSettings).toHaveBeenCalledWith({
+                ...mirroredForm,
                 trustedPrivateNetworkEpgUrls: [],
                 trustedInsecureTlsHosts: [],
                 parentalLockEnabled: false,

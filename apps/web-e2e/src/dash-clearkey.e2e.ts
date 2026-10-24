@@ -231,14 +231,17 @@ test('@web @m3u @dash ClearKey reopens from recent and favorites collections', a
             // playlists" can show, or a lost click surfaces as a missing row.
             await expect(allPlaylists).toBeChecked();
         }
-        if (route === '/workspace/global-favorites') {
-            // Mi lista lists its channels as cards: one plays in its
-            // source's own favourites (an M3U channel has no "En vivo").
+        if (route.startsWith('/workspace/global-')) {
+            // Mi lista and Recently viewed list their channels as cards:
+            // one plays in its source's own favourites or recent items (an
+            // M3U channel has no "En vivo").
             await page
                 .locator('[data-test-id="my-list-channel"]')
                 .filter({ hasText: /ClearKey DASH/ })
                 .click();
-            await expect(page).toHaveURL(/\/favorites$/);
+            await expect(page).toHaveURL(
+                route.endsWith('favorites') ? /\/favorites$/ : /\/recent$/
+            );
             await expectVideoPlaying(page);
             continue;
         }

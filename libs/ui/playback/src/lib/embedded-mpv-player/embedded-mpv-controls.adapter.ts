@@ -43,6 +43,7 @@ import { EmbeddedMpvCanvasPictureInPicture } from './embedded-mpv-canvas-pip';
 import { EmbeddedMpvSessionController } from './embedded-mpv-session-controller';
 import { EmbeddedMpvSubtitleSettings } from './embedded-mpv-subtitle-settings';
 import { toPlayerStreamStats } from './embedded-mpv-stream-stats';
+import { registerActivePlayer } from '../online-subtitles/active-player';
 
 export interface EmbeddedMpvControlsContext {
     readonly playback: Signal<ResolvedPortalPlayback>;
@@ -119,6 +120,9 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
     readonly streamStats: PlayerStreamStatsSource = {
         sample: () => toPlayerStreamStats(this.controller.session()),
     };
+    readonly subtitleAttachment = this.subtitleSettings.attachment;
+    /** mpv picks the tracks itself (`alang`/`slang`, see the options mirror). */
+    readonly selectsLanguageTracks = true;
 
     readonly capabilities = computed<PlayerControlsCapabilities>(() => {
         const context = this.configuredContext();
@@ -187,6 +191,7 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
                     ),
                 }),
                 selected: track.selected,
+                ...(track.language ? { language: track.language } : {}),
             })),
             subtitleTracks: (session?.subtitleTracks ?? []).map(
                 (track, index) => ({
@@ -201,6 +206,7 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
                         ),
                     }),
                     selected: track.selected,
+                    ...(track.language ? { language: track.language } : {}),
                 })
             ),
             subtitlesEnabled: (session?.selectedSubtitleTrackId ?? -1) >= 0,
@@ -295,6 +301,7 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
 
     configure(context: EmbeddedMpvControlsContext): void {
         this.configuredContext.set(context);
+        this.destroyRef.onDestroy(registerActivePlayer(this));
     }
 
     private isLivePlayback(playback: ResolvedPortalPlayback): boolean {

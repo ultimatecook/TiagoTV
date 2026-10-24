@@ -74,6 +74,10 @@ export const EMBEDDED_MPV_SET_AUDIO_TRACK = 'EMBEDDED_MPV_SET_AUDIO_TRACK';
 export const EMBEDDED_MPV_SET_SUBTITLE_TRACK =
     'EMBEDDED_MPV_SET_SUBTITLE_TRACK';
 export const EMBEDDED_MPV_ADD_SUBTITLE = 'EMBEDDED_MPV_ADD_SUBTITLE';
+/** Writes a downloaded subtitle to a private temp file, then `sub-add`. */
+export const EMBEDDED_MPV_ADD_SUBTITLE_TEXT = 'EMBEDDED_MPV_ADD_SUBTITLE_TEXT';
+/** OpenSubtitles REST calls, made by main (allowlisted hosts and paths). */
+export const OPENSUBTITLES_REQUEST = 'OPENSUBTITLES_REQUEST';
 export const EMBEDDED_MPV_SET_SUBTITLE_DELAY =
     'EMBEDDED_MPV_SET_SUBTITLE_DELAY';
 export const EMBEDDED_MPV_SET_SUBTITLE_STYLE =

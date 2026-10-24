@@ -34,6 +34,7 @@ import {
 import {
     GlobalSearchResult,
     isM3uGlobalSearchResult,
+    sourceDisplayLabel,
 } from '@iptvnator/shared/interfaces';
 
 interface GlobalSearchResultGroup {
@@ -58,7 +59,13 @@ function groupResultsByPlaylistId(
 
     for (const item of items) {
         const playlistId = String(item.playlist_id ?? 'unknown');
-        const playlistName = String(item.playlist_name ?? playlistId);
+        // The group's title: never the provider's address.
+        const playlistName = sourceDisplayLabel(
+            item.playlist_name == null ? null : String(item.playlist_name),
+            'source_type' in item && item.source_type === 'm3u'
+                ? 'm3u'
+                : 'xtream'
+        );
         const group = groups.get(playlistId) ?? {
             playlistId,
             playlistName,

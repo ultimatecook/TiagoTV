@@ -46,10 +46,11 @@ export function requestedChannel(
 }
 
 /**
- * The channel the way in asked "En vivo" to play (Mi lista's "Canales",
- * `LIVE_CHANNEL_PLAY_STATE_KEY`): the navigation's state, or the history
- * entry's once it ended, read as the page is created and played once the
- * countries are in. Component-provided, with the page's player.
+ * The channel the way in asked "En vivo" to play (Mi lista's and Recently
+ * viewed's "Canales", the Home's last channels and live hero, Buscar's
+ * channels: `LIVE_CHANNEL_PLAY_STATE_KEY`): the navigation's state, or the
+ * history entry's once it ended, read as the page is created and played
+ * once the countries are in. Component-provided, with the page's player.
  */
 @Injectable()
 export class CountryTvRequest {
@@ -64,7 +65,8 @@ export class CountryTvRequest {
     /**
      * Plays the asked channel, once: on the stage (its country, for the
      * page to show), or in the live view, which then takes this history
-     * entry (Back returns to Mi lista). Null when nothing was asked.
+     * entry (Back returns to the page the channel was picked on). Null
+     * when nothing was asked.
      */
     play(countries: readonly TvCountry[]): TvCountry | 'elsewhere' | null {
         const request = this.request;

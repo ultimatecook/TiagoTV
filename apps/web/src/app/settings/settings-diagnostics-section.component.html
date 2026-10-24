@@ -68,6 +68,58 @@
                     </button>
                 </div>
             </div>
+            <!-- The account as typed, never its key or password. -->
+            <div
+                class="setting-item"
+                data-setting-id="diagnostics-opensubtitles"
+            >
+                <div class="setting-item__meta">
+                    <h4>
+                        {{ 'SETTINGS.DIAGNOSTICS.OPEN_SUBTITLES' | translate }}
+                    </h4>
+                    <p>
+                        {{
+                            'SETTINGS.DIAGNOSTICS.OPEN_SUBTITLES_DESCRIPTION'
+                                | translate
+                        }}
+                    </p>
+                </div>
+                @let subs = subtitles();
+                <div class="setting-item__control diagnostics-build">
+                    <span
+                        class="settings-chip"
+                        data-test-id="diagnostics-opensubtitles-key"
+                        >{{
+                            (subs.key
+                                ? 'SETTINGS.DIAGNOSTICS.OPEN_SUBTITLES_KEY_SET'
+                                : 'SETTINGS.DIAGNOSTICS.OPEN_SUBTITLES_KEY_MISSING'
+                            ) | translate
+                        }}</span
+                    >
+                    @if (subs.user) {
+                        <code data-test-id="diagnostics-opensubtitles-user">{{
+                            subs.user
+                        }}</code>
+                    }
+                    @if (subs.remaining !== null) {
+                        <span class="settings-chip">{{
+                            'SETTINGS.DIAGNOSTICS.OPEN_SUBTITLES_REMAINING'
+                                | translate: { count: subs.remaining }
+                        }}</span>
+                    }
+                    @if (subs.errorKey) {
+                        <span class="settings-chip">{{
+                            subs.errorKey | translate
+                        }}</span>
+                    }
+                    @if (!subs.bridge) {
+                        <span class="settings-chip">{{
+                            'SETTINGS.DIAGNOSTICS.OPEN_SUBTITLES_NO_BRIDGE'
+                                | translate
+                        }}</span>
+                    }
+                </div>
+            </div>
         </div>
     </section>
 

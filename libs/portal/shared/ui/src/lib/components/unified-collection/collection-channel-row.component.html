@@ -4,10 +4,33 @@
         aria-labelledby="my-list-channels-title"
         data-test-id="my-list-channels"
     >
-        <h2 class="channels__title" id="my-list-channels-title">
-            {{ 'WORKSPACE.MY_LIST.CHANNELS' | translate }}
-            <span class="channels__count">{{ channels().length }}</span>
-        </h2>
+        <div class="channels__head">
+            <h2 class="channels__title" id="my-list-channels-title">
+                {{ 'WORKSPACE.MY_LIST.CHANNELS' | translate }}
+                <span class="channels__count">{{ channels().length }}</span>
+            </h2>
+            @if (mode() === 'recent') {
+                @let clearLabel =
+                    'WORKSPACE.SHELL.CLEAR_RECENTLY_VIEWED_TYPE'
+                        | translate
+                            : {
+                                  type:
+                                      'WORKSPACE.SHELL.COLLECTION_TYPE_NOUN.LIVE'
+                                      | translate,
+                              };
+                <button
+                    type="button"
+                    mat-icon-button
+                    class="collection-clear"
+                    data-test-id="channels-clear"
+                    [matTooltip]="clearLabel"
+                    [attr.aria-label]="clearLabel"
+                    (click)="clearAll.emit()"
+                >
+                    <mat-icon>delete_sweep</mat-icon>
+                </button>
+            }
+        </div>
         <ul class="channels__row">
             @for (channel of channels(); track channel.item.uid) {
                 <li class="channels__item">
@@ -66,7 +89,7 @@
                                         ) | translate
                                     }}
                                 } @else if (showSource()) {
-                                    {{ channel.item.playlistName }}
+                                    {{ channel.source }}
                                 } @else {
                                     {{ 'WORKSPACE.MY_LIST.LIVE' | translate }}
                                 }
@@ -76,14 +99,19 @@
                     <button
                         type="button"
                         class="channel__remove"
+                        [class.channel__remove--recent]="mode() === 'recent'"
                         data-test-id="my-list-channel-remove"
                         [attr.aria-label]="
-                            'WORKSPACE.MY_LIST.REMOVE_NAMED'
-                                | translate: { name: channel.name }
+                            (mode() === 'recent'
+                                ? 'WORKSPACE.GLOBAL_RECENT.REMOVE_NAMED'
+                                : 'WORKSPACE.MY_LIST.REMOVE_NAMED'
+                            ) | translate: { name: channel.name }
                         "
                         (click)="removeItem.emit(channel.item)"
                     >
-                        <mat-icon aria-hidden="true">favorite</mat-icon>
+                        <mat-icon aria-hidden="true">{{
+                            mode() === 'recent' ? 'close' : 'favorite'
+                        }}</mat-icon>
                     </button>
                 </li>
             }

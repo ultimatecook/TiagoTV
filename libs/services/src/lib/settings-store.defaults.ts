@@ -1,5 +1,7 @@
 import {
+    DEFAULT_AUDIO_LANGUAGE,
     DEFAULT_DASHBOARD_RAILS_SETTINGS,
+    DEFAULT_OPEN_SUBTITLES_SETTINGS,
     DEFAULT_PARENTAL_LOCK_RELOCK_MINUTES,
     DEFAULT_PLAYBACK_SMOOTHNESS,
     DEFAULT_TMDB_SETTINGS,
@@ -52,6 +54,8 @@ export const DEFAULT_SETTINGS: Settings = {
     embeddedMpvExtraOptions: '',
     embeddedMpvAutoReconnect: true,
     playbackSmoothness: DEFAULT_PLAYBACK_SMOOTHNESS,
+    audioLanguage: DEFAULT_AUDIO_LANGUAGE,
+    openSubtitles: DEFAULT_OPEN_SUBTITLES_SETTINGS,
     portalConnectivityGuard: true,
     coverSize: 'medium',
     showCoverTitles: true,

@@ -150,8 +150,10 @@
         @if (channelRow()) {
             <app-collection-channel-row
                 [items]="channelItems()"
+                [mode]="mode()"
                 [searchTerm]="workspaceSearchTerm()"
                 (removeItem)="onRemoveItem($event)"
+                (clearAll)="channelRowState.clear()"
             />
             @if (hasMovies() || hasSeries()) {
                 <div class="collection-section-head">

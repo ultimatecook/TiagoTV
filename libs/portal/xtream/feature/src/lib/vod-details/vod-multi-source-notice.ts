@@ -1,6 +1,6 @@
 import { audioDiffersFactually } from '@iptvnator/portal/shared/data-access';
 import {
-    playlistDisplayLabel,
+    sourceDisplayLabel,
     type VodSourceCandidate,
 } from '@iptvnator/shared/interfaces';
 
@@ -30,11 +30,9 @@ export function buildSwitchNotice(
     return {
         // Safe by construction, not by call site: users routinely name a
         // playlist after the URL they pasted, credentials and all, and this
-        // string goes into a toast that sits over the video.
-        playlistName: playlistDisplayLabel(
-            candidate.playlistName,
-            candidate.playlistId
-        ),
+        // string goes into a toast that sits over the video. TiagoTV never
+        // shows the provider's address: such a name reads "Xtream".
+        playlistName: sourceDisplayLabel(candidate.playlistName, 'xtream'),
         resumeSeconds,
         audioMayDiffer: audioDiffersFactually(previous, resolved),
         quality: resolved.quality?.value,

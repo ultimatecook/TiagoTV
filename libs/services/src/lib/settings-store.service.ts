@@ -38,6 +38,10 @@ import {
     DEFAULT_PARENTAL_LOCK_RELOCK_MINUTES,
 } from '@iptvnator/shared/interfaces';
 import { mirrorEmbeddedMpvSessionOptions } from './embedded-mpv-session-options-mirror';
+import {
+    coerceProvidedLanguageSettings,
+    resolveLanguageSettings,
+} from './settings-language.util';
 
 import {
     DEFAULT_SETTINGS,
@@ -101,6 +105,7 @@ export const SettingsStore = signalStore(
                             playbackSmoothness: normalizePlaybackSmoothness(
                                 storedSettings.playbackSmoothness
                             ),
+                            ...resolveLanguageSettings(storedSettings),
                         });
                         void this.sanitizeEmbeddedMpvSelection().catch(
                             (error) => {
@@ -141,6 +146,7 @@ export const SettingsStore = signalStore(
                 patchState(store, {
                     ...settings,
                     ...coerceProvidedDefaultOnSettings(settings),
+                    ...coerceProvidedLanguageSettings(settings),
                     ...(settings.dashboardRails !== undefined
                         ? {
                               dashboardRails: normalizeDashboardRailsSettings(
@@ -276,6 +282,10 @@ export const SettingsStore = signalStore(
                     playbackSmoothness: normalizePlaybackSmoothness(
                         store.playbackSmoothness?.()
                     ),
+                    ...resolveLanguageSettings({
+                        audioLanguage: store.audioLanguage?.(),
+                        openSubtitles: store.openSubtitles?.(),
+                    }),
                     coverSize:
                         store.coverSize?.() ?? DEFAULT_SETTINGS.coverSize,
                     showCoverTitles: store.showCoverTitles?.() !== false,

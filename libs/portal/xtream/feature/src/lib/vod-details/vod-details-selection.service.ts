@@ -18,6 +18,7 @@ import {
     buildXtreamVodFallbackViewModel,
     hasUsableXtreamVodMetadata,
 } from './vod-details-fallback.util';
+import { vodLookupInfo } from '../title-lookup-info';
 import { resolveVodMultiSourceMovie } from './vod-multi-source-identity';
 
 type XtreamVodIdentityItem = XtreamVodDetails & {
@@ -76,10 +77,18 @@ export class VodDetailsSelectionService {
                       kind: 'movie',
                       itemId: vodId,
                       categoryId: this.routeCategoryId(),
+                      lookup: this.lookupInfo(),
                   }
                 : null;
         });
     }
+    /** The movie's name, year and ids, for its subtitles. */
+    private readonly lookupInfo = computed(() => {
+        const item = this.selectedItem();
+        return item
+            ? vodLookupInfo(getXtreamVodInfo(item), item.movie_data?.name)
+            : null;
+    });
     readonly selectedVodId = computed(() =>
         Number(this.routeParams()['vodId'])
     );

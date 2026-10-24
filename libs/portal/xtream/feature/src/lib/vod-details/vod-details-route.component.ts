@@ -60,6 +60,7 @@ import { VodDetailsSimilarService } from './vod-details-similar.service';
 import { VodMultiSourceHostService } from './vod-multi-source-host.service';
 import { RatingPipe } from '@iptvnator/pipes';
 import { injectXtreamDetailsErrorText } from '../xtream-detail-error';
+import { TitleLanguageSwitchComponent } from '../title-language-switch.component';
 
 @Component({
     templateUrl: './vod-details-route.component.html',
@@ -96,6 +97,7 @@ import { injectXtreamDetailsErrorText } from '../xtream-detail-error';
         DetailCreditsComponent,
         DetailIconButtonComponent,
         MetaChipComponent,
+        TitleLanguageSwitchComponent,
         SimilarRailComponent,
         VodMoreMenuComponent,
     ],

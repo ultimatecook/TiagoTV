@@ -1,6 +1,7 @@
 import {
     PlaylistMeta,
     PlaybackPositionData,
+    PortalActivityItem,
     PortalActivityType,
     PortalAddedItem,
     PortalFavoriteItem,
@@ -8,6 +9,7 @@ import {
     resolvePortalActivityWatchKind,
 } from '@iptvnator/shared/interfaces';
 import {
+    buildLiveChannelPlayTargetFor,
     buildStalkerDetailNavigationTarget,
     buildStalkerStateItem,
     buildXtreamNavigationTarget,
@@ -57,17 +59,41 @@ export function getPlaylistLink(playlist: PlaylistMeta): string[] {
     return ['/workspace', 'playlists', playlist._id];
 }
 
+/**
+ * TiagoTV: an Xtream live channel (the Home's last channels, a live hero
+ * slide) plays on "En vivo", which hands one it cannot show to the Xtream
+ * live view; another source's channel keeps its collection's way in.
+ */
+export function getLiveChannelPlayNavigation(
+    item: PortalActivityItem
+): WorkspaceNavigationTarget | null {
+    return item.type === 'live'
+        ? buildLiveChannelPlayTargetFor({
+              sourceType: item.source,
+              playlistId: item.playlist_id,
+              streamId: item.xtream_id,
+              categoryId: item.category_id,
+              title: item.title,
+              icon: item.poster_url,
+          })
+        : null;
+}
+
 export function getRecentItemLink(item: PortalRecentItem): string[] {
-    return getRecentItemNavigation(item).link;
+    return (getLiveChannelPlayNavigation(item) ?? getRecentItemNavigation(item))
+        .link;
 }
 
 export function getRecentItemNavigationState(
     item: PortalRecentItem,
     playbackPosition?: PlaybackPositionData | null
 ): WorkspaceNavigationTarget['state'] {
-    return getRecentItemNavigation(
-        item,
-        buildRecentSeriesResumeTarget(item, playbackPosition)
+    return (
+        getLiveChannelPlayNavigation(item) ??
+        getRecentItemNavigation(
+            item,
+            buildRecentSeriesResumeTarget(item, playbackPosition)
+        )
     ).state;
 }
 
@@ -169,13 +195,17 @@ function buildRecentSeriesIdentityTarget(
 }
 
 export function getGlobalFavoriteLink(item: PortalFavoriteItem): string[] {
-    return getGlobalFavoriteNavigation(item).link;
+    return (
+        getLiveChannelPlayNavigation(item) ?? getGlobalFavoriteNavigation(item)
+    ).link;
 }
 
 export function getGlobalFavoriteNavigationState(
     item: PortalFavoriteItem
 ): WorkspaceNavigationTarget['state'] {
-    return getGlobalFavoriteNavigation(item).state;
+    return (
+        getLiveChannelPlayNavigation(item) ?? getGlobalFavoriteNavigation(item)
+    ).state;
 }
 
 export function getRecentlyAddedLink(item: PortalAddedItem): string[] {

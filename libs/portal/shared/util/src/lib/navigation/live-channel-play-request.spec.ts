@@ -1,6 +1,7 @@
 import type { UnifiedCollectionItem } from '../collection/unified-collection-item.interface';
 import {
     buildLiveChannelPlayTarget,
+    buildLiveChannelPlayTargetFor,
     clearLiveChannelPlayRequest,
     LIVE_CHANNEL_PLAY_STATE_KEY,
     readLiveChannelPlayRequest,
@@ -43,6 +44,50 @@ describe('live channel play request', () => {
         ).toBeNull();
         expect(
             buildLiveChannelPlayTarget({ ...CHANNEL, xtreamId: undefined })
+        ).toBeNull();
+    });
+
+    it('sends a stored Xtream row (a recent, a favourite, a hit) the same way', () => {
+        const target = buildLiveChannelPlayTargetFor({
+            sourceType: 'xtream',
+            playlistId: 'source-1',
+            streamId: '14',
+            categoryId: '',
+            title: '|ES| 24h',
+            icon: '',
+        });
+
+        expect(target?.link).toEqual(['/workspace', 'countries']);
+        expect(readLiveChannelPlayRequest(target?.state)).toEqual({
+            playlistId: 'source-1',
+            streamId: 14,
+            categoryId: null,
+            title: '|ES| 24h',
+            icon: null,
+        });
+    });
+
+    it('asks nothing for a channel En vivo cannot show', () => {
+        const channel = {
+            sourceType: 'xtream',
+            playlistId: 'source-1',
+            streamId: 14,
+            title: 'x',
+        };
+        expect(
+            buildLiveChannelPlayTargetFor({ ...channel, sourceType: 'stalker' })
+        ).toBeNull();
+        expect(
+            buildLiveChannelPlayTargetFor({ ...channel, sourceType: undefined })
+        ).toBeNull();
+        expect(
+            buildLiveChannelPlayTargetFor({ ...channel, playlistId: '' })
+        ).toBeNull();
+        expect(
+            buildLiveChannelPlayTargetFor({ ...channel, streamId: '' })
+        ).toBeNull();
+        expect(
+            buildLiveChannelPlayTargetFor({ ...channel, streamId: 'abc' })
         ).toBeNull();
     });
 

@@ -66,6 +66,7 @@ import { SerialDetailsMenuService } from './serial-details-menu.service';
 import { SerialDetailsDownloadAdapterService } from './serial-details-download-adapter.service';
 import { RatingPipe } from '@iptvnator/pipes';
 import { injectXtreamDetailsErrorText } from '../xtream-detail-error';
+import { TitleLanguageSwitchComponent } from '../title-language-switch.component';
 
 @Component({
     selector: 'app-serial-details',
@@ -106,6 +107,7 @@ import { injectXtreamDetailsErrorText } from '../xtream-detail-error';
         DetailTagsTemplateDirective,
         EpisodeSkeletonComponent,
         MetaChipComponent,
+        TitleLanguageSwitchComponent,
         PortalDetailShellComponent,
         PortalInlinePlayerComponent,
         SeasonContainerComponent,

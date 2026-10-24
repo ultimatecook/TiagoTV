@@ -119,7 +119,10 @@ Sections and data (all under `libs/workspace/dashboard/feature/src/lib`):
 7. "Últimos canales vistos" — `rails/home-recent-channels.*`:
    `globalRecentLiveItems()`, the programme and its progress from the
    page's `DashboardLiveEpgPresenter` (asked for the cards in view once the
-   row comes near). Gated by `dashboardRails().recentlyWatchedLive`.
+   row comes near). Gated by `dashboardRails().recentlyWatchedLive`. A card
+   (and a live hero slide) plays an Xtream channel on "En vivo"
+   (`getLiveChannelPlayNavigation` in `dashboard-navigation.util.ts`); an
+   M3U or Stalker channel opens its source's recent items.
 
 The sideways rows (platforms, sports, Top 10, last channels) scroll on x
 only: `overflow-x: auto` alone computes `overflow-y` to `auto` too, and the
@@ -217,8 +220,9 @@ once):
 3. remaining places round-robin over the favourite movies/series with a
    backdrop (their own, or TMDB's: the first four without one are looked
    up) and Series / Películas' newest titles (`catalogHeroCandidates` over
-   `CatalogService`: one title per show, in Spanish where it has a Spanish
-   version, the platforms taking turns as in the catalog's "Novedades",
+   `CatalogService`: one title per show, in the preferred version language
+   (see "One card per show" below), the platforms taking turns as in the
+   catalog's "Novedades",
    movies and series in turn). The stored rows carry posters only (series
    lists sometimes a backdrop), so `HomeHeroBackdropsService` features a
    candidate only once its 16:9 backdrop is known and has loaded once,
@@ -609,13 +613,21 @@ categories (`PlatformsCatalogService`):
    apart is tolerated), else the same poster (a TMDB image by its file name,
    whatever its size). A poster shared by more than six entries is a
    placeholder and joins nothing; entries whose TMDB ids or years disagree are
-   never joined, not even through a third one. The card shows the Spanish
-   version (its id, name and category; the other versions fill in a missing
-   poster, rating, synopsis or backdrop), carries every version in
-   `versions`, the union of their genres and the newest `added`, and labels
-   its languages ("ES · EN"). A card and the hero's Play open the Spanish
-   version's page; on the hero each language is a button of its own that
-   opens that version's page.
+   never joined, not even through a third one. The card shows the preferred
+   language's version (`PREFERRED_VERSION_LANGUAGE`, `version-language.ts`:
+   English, the original, unless Settings → Playback → Audio language is
+   "Español"; a missing setting is the original; a show filed in one
+   language shows in that one) with its id, name and category; the other
+   versions fill in a missing poster, rating, synopsis or backdrop. It
+   carries every version in `versions` (that one first), the union of their
+   genres and the newest `added`, and labels its languages ("ES · EN"). A
+   card and the hero's Play open `versions[0]`'s page; on the hero each
+   language is a button of its own that opens that version's page, and the
+   title page offers the other language as a second choice ("EN · ES" in
+   its tags: `TitleVersionsService` answers `TitlePlatformStore.versions`
+   from the catalog, asking the provider nothing). A Spanish production the
+   provider also files in English opens in English too; its page switches
+   back.
 2. The hero recommends six well-rated recent titles with artwork, movies and
    series in turn (`pickRecommendations`), drawn by the local day's seed
    (`daySeed`): different picks from one day to the next, the same all day.
@@ -840,12 +852,17 @@ switches to it.
    the list is read again after the write; a channel the app has not
    stored yet (a first run before the import) puts the heart back with a
    toast. The page reads the list again as it opens, so a change made in
-   Mi lista or the live view shows. Mi lista's channel cards come back here
-   to play (`LIVE_CHANNEL_PLAY_STATE_KEY`, `CountryTvRequest`): the page
-   opens on that stream's country and plays that copy, even over another
-   page's mini-player; a stream no country lists, or another source's,
-   goes on to the Xtream live view, replacing this history entry so Back
-   returns to Mi lista. The request leaves the entry once acted on.
+   Mi lista or the live view shows. The redesign's ways in to a channel
+   come back here to play (`LIVE_CHANNEL_PLAY_STATE_KEY`,
+   `buildLiveChannelPlayTargetFor`, `CountryTvRequest`): Mi lista's and
+   Recently viewed's channel cards, the Home's last channels and live hero
+   slide, and Buscar's channels. The page opens on that stream's country
+   and plays that copy, even over another page's mini-player; a stream no
+   country lists, or another source's, goes on to the Xtream live view,
+   replacing this history entry so Back returns to the page the channel
+   was picked on. The request leaves the entry once acted on. Only "Open in
+   Live TV" on the page itself, a source's own favourites and recent items,
+   and the Xtream portal's own search still open the framed live view.
 
 ## Series and Movies Catalog (TiagoTV)
 
@@ -900,7 +917,8 @@ titles of that kind in one catalog, with no filters and no search of its own.
      once, and a second kind's import waits for the first.
 2. **One title per show** (`aggregateCatalog`). `mergePlatformTitles` joins
    a show's language versions and its copies on other platforms. The card
-   shows the Spanish version and that version's platform logo; `platforms`
+   shows the preferred language's version (English by default, see above)
+   and that version's platform logo; `platforms`
    lists every platform that has a version. Newest first.
 3. **Genres.** A title takes the genres its list names (`genre`, genre
    categories in `category_ids`). SQLite rows store no genres, so a stored

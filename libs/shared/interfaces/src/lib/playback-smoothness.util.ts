@@ -1,4 +1,8 @@
 import {
+    type AudioLanguagePreference,
+    embeddedMpvAudioLanguageOptions,
+} from './audio-language.util';
+import {
     normalizeEmbeddedMpvExtraOptions,
     parseEmbeddedMpvExtraOptions,
 } from './embedded-mpv-extra-options.util';
@@ -57,26 +61,36 @@ export const EMBEDDED_MPV_STABLE_OPTIONS: readonly string[] = [
 /**
  * The extra options the main process applies to the next embedded MPV
  * session: the user's own lines (canonical text), then, in `stable`, every
- * stability option whose key the user did not set, so a user line always
- * wins. `normal` adds nothing. On Linux `hwdec` is left to the engine: its
- * native-view embed renders through `vo=x11` and turns hardware decoding
- * off on purpose.
+ * stability option whose key the user did not set, then the audio
+ * language's track choice (`embeddedMpvAudioLanguageOptions`) for the keys
+ * the user did not set either, so a user line always wins. `normal` adds no
+ * stability option. On Linux `hwdec` is left to the engine: its native-view
+ * embed renders through `vo=x11` and turns hardware decoding off on purpose.
+ * Without `audioLanguage` (callers from before the setting) no track choice
+ * is added.
  */
 export function resolveEmbeddedMpvSessionExtraOptions(
     userOptions: string | null | undefined,
     smoothness: PlaybackSmoothness,
-    platform?: string
+    platform?: string,
+    audioLanguage?: AudioLanguagePreference
 ): string {
     const own = normalizeEmbeddedMpvExtraOptions(userOptions);
-    if (smoothness !== 'stable') {
-        return own;
-    }
     const ownKeys = new Set(
         parseEmbeddedMpvExtraOptions(userOptions).map((option) => option.key)
     );
-    const added = EMBEDDED_MPV_STABLE_OPTIONS.filter((line) => {
-        const key = line.slice(0, line.indexOf('='));
-        return !ownKeys.has(key) && !(key === 'hwdec' && platform === 'linux');
-    });
+    const keyOf = (line: string) => line.slice(0, line.indexOf('='));
+    const stability =
+        smoothness === 'stable'
+            ? EMBEDDED_MPV_STABLE_OPTIONS.filter(
+                  (line) => !(keyOf(line) === 'hwdec' && platform === 'linux')
+              )
+            : [];
+    const language = audioLanguage
+        ? embeddedMpvAudioLanguageOptions(audioLanguage)
+        : [];
+    const added = [...stability, ...language].filter(
+        (line) => !ownKeys.has(keyOf(line))
+    );
     return [own, ...added].filter(Boolean).join('\n');
 }

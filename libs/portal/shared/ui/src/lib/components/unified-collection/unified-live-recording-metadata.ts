@@ -7,7 +7,7 @@ import {
     EpgProgram,
     epgProviderClockMs,
     filterRecordingProgramsOverlap,
-    playlistDisplayLabel,
+    visibleSourceName,
     RecordingStartMetadata,
     RecordingStoppedEvent,
     toRecordingProgramSnapshot,
@@ -64,7 +64,8 @@ export function createUnifiedLiveRecording(options: {
             channelLogoUrl:
                 options.timelineChannelLogo() || item.logo || undefined,
             playlistId: item.playlistId,
-            playlistName: playlistDisplayLabel(item.playlistName) || undefined,
+            // Downloads names the source by it: never the provider's address.
+            playlistName: visibleSourceName(item.playlistName) ?? undefined,
             sourceType: item.sourceType,
             epgChannelId: resolveRecordingEpgChannelId(item),
             // The EPG key is not unique for M3U items (shared tvgId, or the

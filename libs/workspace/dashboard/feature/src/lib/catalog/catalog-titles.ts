@@ -6,6 +6,7 @@ import {
 } from '../platforms/platform-titles';
 import { mergePlatformTitles } from '../platforms/platform-versions';
 import type {
+    PlatformLanguage,
     PlatformTitleKind,
     StreamingPlatform,
     StreamingPlatformId,
@@ -16,7 +17,9 @@ import { creditPlatform, takeTurns } from './catalog-fairness';
  * Series / Películas: every platform's titles of one kind in one catalog.
  * A show the provider files on two platforms, or once per language
  * ("MUERTOS S.L." on |ES| Netflix, "DEATH INC." on |EN| Netflix), is one
- * title, shown in Spanish where it has a Spanish version. A show several
+ * title, shown in the preferred language where it has a version in it
+ * (`PREFERRED_VERSION_LANGUAGE`: English, its original, unless the user
+ * chose the Spanish dub). A show several
  * platforms carry counts for the one with fewer titles (`creditPlatform`).
  */
 export type CatalogKind = PlatformTitleKind;
@@ -83,7 +86,8 @@ export const GENRE_COVERAGE = 0.5;
  */
 export function aggregateCatalog(
     lists: readonly PlatformTitleList[],
-    kind: CatalogKind
+    kind: CatalogKind,
+    preferred: PlatformLanguage = 'ES'
 ): CatalogTitle[] {
     const platformOf = new Map<string, StreamingPlatform>();
     /** A stream the provider files on two platforms is listed once. */
@@ -113,7 +117,7 @@ export function aggregateCatalog(
         return own ? [own, ...others.filter((item) => item !== own)] : others;
     };
     const titles: CatalogTitle[] = [];
-    for (const title of mergePlatformTitles(ofKind)) {
+    for (const title of mergePlatformTitles(ofKind, preferred)) {
         const platforms: StreamingPlatform[] = [];
         for (const version of title.versions.length > 0
             ? title.versions

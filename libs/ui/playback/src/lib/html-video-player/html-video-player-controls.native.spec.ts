@@ -29,13 +29,13 @@ describe('HtmlVideoPlayerControlsBridge native text tracks', () => {
 
         expect(adapter.state().subtitleTracks).toEqual([
             { id: 0, label: 'English CC', selected: true },
-            { id: 1, label: 'de', selected: false },
+            { id: 1, label: 'de', selected: false, language: 'de' },
             { id: 2, label: 'Subtitle 3', selected: false },
         ]);
 
         textTracks.remove(first);
         expect(adapter.state().subtitleTracks).toEqual([
-            { id: 1, label: 'de', selected: false },
+            { id: 1, label: 'de', selected: false, language: 'de' },
             { id: 2, label: 'Subtitle 3', selected: false },
         ]);
         bridge.destroy();

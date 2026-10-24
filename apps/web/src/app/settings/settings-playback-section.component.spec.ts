@@ -507,5 +507,14 @@ function createForm(player = VideoPlayer.VideoJs): FormGroup {
         recordingFolder: new FormControl(''),
         vodAutoFailover: new FormControl(false),
         playbackSmoothness: new FormControl('stable'),
+        audioLanguage: new FormControl('original'),
+        openSubtitles: new FormGroup({
+            apiKey: new FormControl(''),
+            username: new FormControl(''),
+            password: new FormControl(''),
+            language: new FormControl('es'),
+            secondLanguage: new FormControl(''),
+            autoSearch: new FormControl(true),
+        }),
     });
 }

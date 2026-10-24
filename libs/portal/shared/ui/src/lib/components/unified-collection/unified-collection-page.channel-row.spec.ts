@@ -75,13 +75,22 @@ const SERIES: UnifiedCollectionItem = {
     xtreamId: 8,
 };
 
-/** TiagoTV's Mi lista (`channelRow`): its channels a row of cards. */
+/**
+ * TiagoTV's Mi lista and Recently viewed (`channelRow`): their channels a
+ * row of cards.
+ */
 describe('UnifiedCollectionPageComponent channel row', () => {
     let fixture: ComponentFixture<UnifiedCollectionPageComponent>;
     const favoritesData = {
         getFavorites: jest.fn(),
         removeFavorite: jest.fn().mockResolvedValue(undefined),
     };
+    const recentData = {
+        getRecentItems: jest.fn(),
+        removeRecentItem: jest.fn().mockResolvedValue(undefined),
+        removeRecentItemsBatch: jest.fn().mockResolvedValue(undefined),
+    };
+    const dialog = { openConfirmDialog: jest.fn() };
 
     beforeEach(async () => {
         jest.clearAllMocks();
@@ -128,11 +137,8 @@ describe('UnifiedCollectionPageComponent channel row', () => {
                     provide: UnifiedFavoritesDataService,
                     useValue: favoritesData,
                 },
-                { provide: UnifiedRecentDataService, useValue: {} },
-                {
-                    provide: DialogService,
-                    useValue: { openConfirmDialog: jest.fn() },
-                },
+                { provide: UnifiedRecentDataService, useValue: recentData },
+                { provide: DialogService, useValue: dialog },
                 {
                     provide: WorkspaceViewCommandService,
                     useValue: { registerCommand: () => jest.fn() },
@@ -242,5 +248,87 @@ describe('UnifiedCollectionPageComponent channel row', () => {
             element().querySelector('[data-test-id="my-list-channels"]')
         ).not.toBeNull();
         expect(element().querySelector('.collection-section-head')).toBeNull();
+    });
+
+    describe('on Recently viewed', () => {
+        const OLDER_LIVE: UnifiedCollectionItem = {
+            ...LIVE,
+            uid: 'xtream::source-1::live::15',
+            name: '|AR| TN',
+            xtreamId: 15,
+        };
+        const loadRecent = async (items: UnifiedCollectionItem[]) => {
+            fixture.componentRef.setInput('mode', 'recent');
+            recentData.getRecentItems.mockResolvedValueOnce(items);
+            fixture.detectChanges();
+            await settle();
+        };
+        const cardNames = () =>
+            Array.from(
+                element().querySelectorAll('[data-test-id="my-list-channel"]')
+            ).map((card) => card.querySelector('.channel__name')?.textContent);
+
+        it('shows the channels as cards, last watched first, then the titles', async () => {
+            await loadRecent([LIVE, SERIES, OLDER_LIVE, MOVIE]);
+
+            const content = element().querySelector('.collection-content');
+            expect(content?.firstElementChild?.tagName.toLowerCase()).toBe(
+                'app-collection-channel-row'
+            );
+            expect(cardNames()).toEqual(['24h', 'TN']);
+            // No Live tab, no framed player: a card plays on "En vivo".
+            expect(
+                fixture.debugElement.query(By.directive(StubLiveTabComponent))
+            ).toBeNull();
+            expect(
+                element().querySelector('.content-toggle')?.textContent
+            ).not.toContain('PORTALS.LIVE_TV');
+            expect(grid()?.items()).toEqual([MOVIE]);
+        });
+
+        it("clears the channels from the row's bin, keeping the titles", async () => {
+            await loadRecent([LIVE, OLDER_LIVE, SERIES]);
+
+            (
+                element().querySelector(
+                    '[data-test-id="channels-clear"]'
+                ) as HTMLButtonElement
+            ).click();
+            const [config] = dialog.openConfirmDialog.mock.calls[0];
+            await config.onConfirm();
+            await settle();
+
+            expect(recentData.removeRecentItemsBatch).toHaveBeenCalledWith([
+                LIVE,
+                OLDER_LIVE,
+            ]);
+            expect(
+                element().querySelector('[data-test-id="my-list-channels"]')
+            ).toBeNull();
+            expect(grid()?.items()).toEqual([SERIES]);
+        });
+
+        it('takes one channel out of the history from its ×', async () => {
+            await loadRecent([LIVE, OLDER_LIVE]);
+
+            (
+                element().querySelector(
+                    '[data-test-id="my-list-channel-remove"]'
+                ) as HTMLButtonElement
+            ).click();
+            await settle();
+
+            expect(recentData.removeRecentItem).toHaveBeenCalledWith(LIVE);
+            expect(favoritesData.removeFavorite).not.toHaveBeenCalled();
+            expect(cardNames()).toEqual(['TN']);
+        });
+
+        it('keeps its own empty state', async () => {
+            await loadRecent([]);
+
+            expect(
+                element().querySelector('app-empty-state')?.textContent
+            ).toContain('WORKSPACE.GLOBAL_RECENT.NO_ITEMS_BODY');
+        });
     });
 });

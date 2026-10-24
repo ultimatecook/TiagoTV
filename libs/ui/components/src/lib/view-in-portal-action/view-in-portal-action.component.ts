@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule } from '@ngx-translate/core';
+import { visibleSourceName } from '@iptvnator/shared/interfaces';
 import { VIEW_IN_PORTAL_HANDOFF } from './view-in-portal-handoff.token';
 
 /**
@@ -65,8 +66,9 @@ export class ViewInPortalActionComponent {
         () => this.handoff?.viewInPortalAvailable() ?? false
     );
 
-    protected readonly playlistName = computed(
-        () => this.handoff?.viewInPortalPlaylistName() ?? null
+    /** The source's own name; none (no tooltip) for the provider's address. */
+    protected readonly playlistName = computed(() =>
+        visibleSourceName(this.handoff?.viewInPortalPlaylistName())
     );
 
     protected readonly tooltipParams = computed(() => ({
