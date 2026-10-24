@@ -1,8 +1,9 @@
 @use '../../../../../../../ui/styles/focus-ring';
 @use '../../../../../../../ui/styles/tv-kit' as kit;
 
-// Mi lista's "Canales": the Home's channel cards ("Últimos canales
-// vistos"), four and a half across, the row running to the window's edges.
+// Mi lista's and Vistos recientemente's "Canales": the Home's channel cards
+// ("Últimos canales vistos"), four and a half across, the row running to
+// the window's edges.
 :host {
     display: block;
     min-width: 0;
@@ -15,11 +16,24 @@
     padding: 6px var(--tv-page-x) 0;
 }
 
+.channels__head {
+    display: flex;
+    align-items: center;
+    gap: 12px 16px;
+    min-width: 0;
+}
+
 .channels__title {
     @include kit.section-title;
     display: flex;
     align-items: baseline;
     gap: 10px;
+}
+
+// Vistos recientemente's bin, at the head's end as over the grid below;
+// the negative margins keep the head the title's height.
+.channels__head .collection-clear {
+    margin: -8px 0 -8px auto;
 }
 
 .channels__count {
@@ -212,6 +226,23 @@
     }
 }
 
+// Vistos recientemente: a quiet × instead of the heart, shown on hover or
+// keyboard focus; a click takes the channel out of the history.
+.channel__remove--recent {
+    color: var(--tv-text);
+    opacity: 0;
+    transition:
+        opacity 160ms ease,
+        background-color 160ms ease,
+        transform kit.$card-ease;
+
+    .channels__item:hover &,
+    .channels__item:focus-within &,
+    &:focus-visible {
+        opacity: 1;
+    }
+}
+
 @media (max-width: 900px) {
     .channels__row {
         grid-auto-columns: calc((100% - 16px) / 2.2);
@@ -220,7 +251,8 @@
 
 @media (prefers-reduced-motion: reduce) {
     .channel,
-    .channel__remove {
+    .channel__remove,
+    .channel__remove--recent {
         transition: none;
     }
 

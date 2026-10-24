@@ -1,9 +1,14 @@
 import type {
     PlaybackPositionData,
+    PortalFavoriteItem,
     PortalRecentItem,
 } from '@iptvnator/shared/interfaces';
+import { readLiveChannelPlayRequest } from '@iptvnator/portal/shared/util';
 import {
+    getGlobalFavoriteLink,
+    getGlobalFavoriteNavigationState,
     getRecentItemDetailNavigationState,
+    getRecentItemLink,
     getRecentItemNavigationState,
     getRecentItemResumeNavigation,
 } from './dashboard-navigation.util';
@@ -189,5 +194,76 @@ describe('getRecentItemResumeNavigation', () => {
                 episodePosition({ seriesXtreamId: 17572 })
             )
         ).toBeNull();
+    });
+});
+
+/** TiagoTV: the Home's channels play on "En vivo", not in a framed list. */
+describe('live channel navigation', () => {
+    const recentChannel: PortalRecentItem = {
+        id: 14,
+        title: '|ES| 24h',
+        type: 'live',
+        source: 'xtream',
+        playlist_id: 'xtream-C',
+        category_id: 4,
+        xtream_id: 14,
+        poster_url: 'http://logo.test/24h.png',
+        viewed_at: '2026-05-01T09:00:00.000Z',
+    };
+
+    it('sends an Xtream recent channel to "En vivo", playing that stream', () => {
+        expect(getRecentItemLink(recentChannel)).toEqual([
+            '/workspace',
+            'countries',
+        ]);
+        expect(
+            readLiveChannelPlayRequest(
+                getRecentItemNavigationState(recentChannel)
+            )
+        ).toEqual({
+            playlistId: 'xtream-C',
+            streamId: 14,
+            categoryId: '4',
+            title: '|ES| 24h',
+            icon: 'http://logo.test/24h.png',
+        });
+    });
+
+    it('sends an Xtream favourite channel (a live hero slide) the same way', () => {
+        const favorite: PortalFavoriteItem = {
+            ...recentChannel,
+            added_at: '2026-05-01T09:00:00.000Z',
+        };
+
+        expect(getGlobalFavoriteLink(favorite)).toEqual([
+            '/workspace',
+            'countries',
+        ]);
+        expect(
+            readLiveChannelPlayRequest(
+                getGlobalFavoriteNavigationState(favorite)
+            )?.streamId
+        ).toBe(14);
+    });
+
+    it("keeps an M3U or Stalker channel in its source's recent list", () => {
+        const m3u: PortalRecentItem = {
+            ...recentChannel,
+            source: 'm3u',
+            xtream_id: 'http://stream.test/1.m3u8',
+        };
+
+        expect(getRecentItemLink(m3u)).toEqual([
+            '/workspace',
+            'playlists',
+            'xtream-C',
+            'recent',
+        ]);
+        expect(
+            readLiveChannelPlayRequest(getRecentItemNavigationState(m3u))
+        ).toBeNull();
+        expect(
+            getRecentItemLink({ ...recentChannel, source: 'stalker' })
+        ).toEqual(['/workspace', 'stalker', 'xtream-C', 'recent']);
     });
 });

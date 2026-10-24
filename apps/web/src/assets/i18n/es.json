@@ -2315,7 +2315,8 @@
             "NO_PLAYLISTS_TITLE": "Aún no has visto nada",
             "NO_PLAYLISTS_BODY": "Añade una fuente y tu historial de visualización aparecerá aquí.",
             "NO_ITEMS_TITLE": "Aún no has visto nada",
-            "NO_ITEMS_BODY": "Empieza a ver cualquier contenido de tu biblioteca y aparecerá aquí."
+            "NO_ITEMS_BODY": "Empieza a ver cualquier contenido de tu biblioteca y aparecerá aquí.",
+            "REMOVE_NAMED": "Quitar {{name}} de Vistos recientemente"
         },
         "SWITCHER": {
             "SEARCH": "Buscar una fuente…",
