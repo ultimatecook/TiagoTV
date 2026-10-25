@@ -219,6 +219,7 @@ export async function diagnosticsSuite(h) {
     }));
     check('Diagnóstico: the latest requests', shown.rows >= 10 && /series ·/.test(shown.text) && /cortada|timeout/.test(shown.text), `${shown.rows} rows`);
     check('Diagnóstico: queue, catalog, sports and storage', /Cola de cargas/.test(shown.text) && /títulos/.test(shown.text) && /en vivo ahora/.test(shown.text) && /Datos guardados/.test(shown.text));
+    check('Diagnóstico: the live cuts row', /Reproducción/.test(shown.text) && /Cortes: \d+ · reconexiones: \d+/.test(shown.text), (shown.text.match(/Cortes:[^\n]*/) || [''])[0]);
     const leaks = [ACCOUNT.username, ACCOUNT.password, 'player_api', 'password=', 'username='].filter((secret) => shown.text.indexOf(secret) >= 0);
     check('Diagnóstico: no user, password or URL on screen', leaks.length === 0, leaks.join(', '));
     await shot('30-ajustes-diagnostico');
