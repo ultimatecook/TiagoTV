@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { NowPlayingDockService } from './now-playing-dock.service';
+import { storedPlayerVolume } from './player-volume.service';
 import {
     navigationReturnState,
     resolveNowPlayingHandoff,
@@ -144,6 +145,11 @@ export class NowPlayingPageHandoff {
         this.streams.release(this.holder);
         const handoff = resolveNowPlayingHandoff({
             ...snapshot,
+            // An engine that reset its element (Video.js disposes first)
+            // leaves no level to read: the saved one is the viewer's, not
+            // the page's input default of 1 (the bar went on at full
+            // volume and saved it).
+            fallbackVolume: storedPlayerVolume(),
             dockable: this.dockable(),
             navigatingAway: this.isNavigatingAway(),
             progress: this.progress,

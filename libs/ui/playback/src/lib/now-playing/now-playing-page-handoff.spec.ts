@@ -70,6 +70,24 @@ describe('NowPlayingPageHandoff', () => {
         });
     });
 
+    it("hands the viewer's saved level over when the engine reset its element", () => {
+        localStorage.setItem('volume', '0.26');
+        try {
+            const page = create();
+            page.record({ currentTime: 42, duration: 3600, playing: true });
+
+            router.currentNavigation.set({ id: 2 });
+            // Video.js already disposed: no element, the input's default 1.
+            page.release({ ...SNAPSHOT, video: null, fallbackVolume: 1 });
+
+            expect(
+                TestBed.inject(NowPlayingDockService).session()
+            ).toMatchObject({ volume: 0.26, muted: false });
+        } finally {
+            localStorage.removeItem('volume');
+        }
+    });
+
     it('hands the picture-in-picture state over with the stream', () => {
         const page = create();
         page.record({ currentTime: 42, duration: 3600, playing: true });

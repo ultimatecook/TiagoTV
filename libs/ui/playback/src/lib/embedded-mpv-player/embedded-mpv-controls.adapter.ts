@@ -34,7 +34,6 @@ import type { PlayerStreamStatsSource } from '../player-controls/player-stream-s
 import { SeriesPlaybackNavigation } from '../portal-inline-player/series-playback-navigation';
 import {
     audioTrackLabel,
-    readStoredVolume,
     subtitleTrackLabel,
 } from './embedded-mpv-format.utils';
 import { resolveRecordingFeedback } from './embedded-mpv-controls-recording-feedback';
@@ -42,6 +41,7 @@ import { EmbeddedMpvControlsRecording } from './embedded-mpv-controls-recording'
 import { EmbeddedMpvCanvasPictureInPicture } from './embedded-mpv-canvas-pip';
 import { EmbeddedMpvSessionController } from './embedded-mpv-session-controller';
 import { EmbeddedMpvSubtitleSettings } from './embedded-mpv-subtitle-settings';
+import { EmbeddedMpvVolumeRequest } from './embedded-mpv-volume-request';
 import { toPlayerStreamStats } from './embedded-mpv-stream-stats';
 import { registerActivePlayer } from '../online-subtitles/active-player';
 
@@ -90,6 +90,8 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
     private readonly activeSessionId = computed(
         () => this.controller.session()?.id ?? null
     );
+    /** The level last asked for, shown until mpv reports it (it lags). */
+    private readonly volume = new EmbeddedMpvVolumeRequest(this.controller);
     private readonly subtitleSettings = new EmbeddedMpvSubtitleSettings(
         this.controller
     );
@@ -178,7 +180,7 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
             durationSeconds,
             isLive,
             canSeek: !isLive && (durationSeconds ?? 0) > 0,
-            volume: session?.volume ?? readStoredVolume(),
+            volume: this.volume.level(session),
             audioTracks: (session?.audioTracks ?? []).map((track, index) => ({
                 id: track.id,
                 label: audioTrackLabel(track, index, {
@@ -243,7 +245,7 @@ export class EmbeddedMpvControlsAdapter implements PlayerController {
         togglePlay: () => void this.controller.togglePaused(),
         seekTo: (seconds) => void this.controller.seekTo(seconds),
         seekBy: (deltaSeconds) => void this.controller.seekBy(deltaSeconds),
-        setVolume: (value) => void this.controller.applyVolume(value),
+        setVolume: (value) => this.volume.apply(value),
         setAudioTrack: (id) => void this.controller.setAudioTrack(id),
         setSubtitleTrack: (id) => void this.controller.setSubtitleTrack(id),
         addExternalSubtitleFile: () =>

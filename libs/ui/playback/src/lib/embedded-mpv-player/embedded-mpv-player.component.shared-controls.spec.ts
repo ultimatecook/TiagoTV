@@ -194,6 +194,44 @@ describe('EmbeddedMpvPlayerComponent shared controls host', () => {
         ).toBe(true);
     });
 
+    it('keeps the mute button in step with mpv when its report comes late', () => {
+        const { fixture, controller } = render();
+        const applyVolume = jest
+            .spyOn(controller, 'applyVolume')
+            .mockResolvedValue(undefined);
+        const muteButton = () =>
+            fixture.debugElement.query(
+                By.css('.player-controls__volume button')
+            ).nativeElement as HTMLButtonElement;
+        const flush = () => {
+            TestBed.tick();
+            fixture.detectChanges();
+        };
+
+        muteButton().click();
+        flush();
+        // The mute's reply still carries the old level...
+        controller.session.set({
+            ...READY_SESSION,
+            updatedAt: '2026-07-16T10:00:01Z',
+        });
+        flush();
+        muteButton().click();
+        flush();
+        // ...and mpv's report of the mute lands after the unmute: frame-copy
+        // reports its level at most every 250 ms, the main process polls it
+        // every 500 ms.
+        controller.session.set({
+            ...READY_SESSION,
+            volume: 0,
+            updatedAt: '2026-07-16T10:00:02Z',
+        });
+        flush();
+
+        expect(applyVolume.mock.calls).toEqual([[0], [1]]);
+        expect(muteButton().textContent?.trim()).toBe('volume_up');
+    });
+
     it('preserves the host previous and next episode guards', () => {
         const { fixture, component } = render();
         const controls = sharedControls(fixture);
