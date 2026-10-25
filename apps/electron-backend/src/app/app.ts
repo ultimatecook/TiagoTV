@@ -287,10 +287,15 @@ export default class App {
         return !app.isPackaged;
     }
 
+    /**
+     * TiagoTV quits with its window on every platform, macOS included: a
+     * window-less process kept Embedded MPV playing (and reconnecting after
+     * a sleep) for hours, holding the account's single connection, so the
+     * TV was refused or cut off "while the Mac was closed". Quitting runs
+     * `shutdownDeferredServices` ('will-quit'), which stops every player.
+     */
     private static onWindowAllClosed() {
-        if (process.platform !== 'darwin') {
-            App.application.quit();
-        }
+        App.application.quit();
     }
 
     private static onClose() {
@@ -352,10 +357,10 @@ export default class App {
      * Brings the app back to a windowed state, re-creating the main window if
      * it is gone.
      *
-     * On macOS closing the last window deliberately keeps the process alive
-     * (`onWindowAllClosed`), so this is the recovery path for both the dock
-     * `activate` event and a second launch that the single-instance guard
-     * hands over to this process.
+     * The recovery path for both the dock `activate` event and a second
+     * launch that the single-instance guard hands over to this process
+     * (closing the last window quits, `onWindowAllClosed`, but a window can
+     * still be missing while the process lives, e.g. mid-update).
      */
     static ensureMainWindow() {
         if (App.mainWindow === null) {
