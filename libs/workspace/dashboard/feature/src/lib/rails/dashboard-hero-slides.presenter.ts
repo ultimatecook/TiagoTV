@@ -39,6 +39,7 @@ import {
 import { dashboardHeroActions } from './dashboard-hero-actions';
 import { DashboardLiveEpgPresenter } from './dashboard-live-epg.presenter';
 import { injectDashboardHeroDiscovery } from './dashboard-hero-discovery';
+import { injectHeroPageBackdrops } from './dashboard-hero-page-backdrops';
 import { heroBackdropUrl, heroPosterUrl } from './home-hero-images';
 import { splitCatalogGenres } from './dashboard-match.utils';
 import type { DashboardLiveEpgDetails } from './dashboard-live-epg.utils';
@@ -108,6 +109,8 @@ export class DashboardHeroSlidesPresenter {
     private readonly liveAnswerWaitOver = signal(false);
     /** Series / Películas' titles with a backdrop, for discovery slides. */
     private readonly discovery = injectDashboardHeroDiscovery();
+    /** The provider's backdrop for titles without one (TMDB off or silent). */
+    private readonly pageBackdrops = injectHeroPageBackdrops();
 
     /**
      * Nothing to feature yet and a source that can feature a title is still
@@ -210,6 +213,15 @@ export class DashboardHeroSlidesPresenter {
             () => this.liveAnswerWaitOver.set(true),
             DASHBOARD_HERO_LIVE_ANSWER_WAIT_MS
         );
+        // The featured titles without a backdrop of their own ask for
+        // their page: the provider's backdrop when TMDB has none.
+        effect(() => {
+            const bare = this.sources()
+                .map((source) => source.item)
+                .filter((item) => !item.backdrop_url);
+            untracked(() => this.pageBackdrops.request(bare));
+        });
+
         inject(DestroyRef).onDestroy(() => {
             clearTimeout(liveAnswerWait);
             this.timers.forEach((timer) => clearTimeout(timer));
@@ -324,11 +336,16 @@ export class DashboardHeroSlidesPresenter {
         // synopsis for many titles; the slide falls back to those.
         const catalog = source.kind === 'added' ? source.item : null;
         // At the hero's size: a provider's small TMDB copy looked blurry.
-        // The provider's backdrop first, else TMDB's: one that failed to
-        // load gives way to the next before the slide falls to a poster.
+        // The provider's recorded backdrop first, then TMDB's, then the
+        // title page's: one that failed to load gives way to the next
+        // before the slide falls to a poster.
         const failed = this.failedImages();
         const backdrop =
-            [item.backdrop_url, extras?.backdropUrl]
+            [
+                item.backdrop_url,
+                extras?.backdropUrl,
+                this.pageBackdrops.backdropOf(item),
+            ]
                 .filter((url): url is string => !!url)
                 .map((url) => heroBackdropUrl(url))
                 .find((url) => !failed[url]) ?? null;

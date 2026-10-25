@@ -808,6 +808,63 @@ describe('DashboardHeroSlidesPresenter', () => {
         });
     });
 
+    describe("a resume slide without a backdrop of its own", () => {
+        const xtreamSeries: PortalRecentItem = {
+            ...series,
+            type: 'series',
+            source: 'xtream',
+            playlist_id: 'p2',
+        };
+
+        it("stands on its title page's backdrop", async () => {
+            recentItems.set([xtreamSeries]);
+            catalogSource.set({ _id: 'p2' });
+            catalogPages.set(
+                new Map([
+                    [
+                        11,
+                        {
+                            plot: null,
+                            backdrop: 'https://img/pharma-page.jpg',
+                            genres: [],
+                            year: null,
+                            minutes: null,
+                            seasons: null,
+                        },
+                    ],
+                ])
+            );
+            const presenter = create();
+            await settle();
+
+            expect(presenter.slides()[0]).toMatchObject({
+                kind: 'continue',
+                backdropUrl: 'https://img/pharma-page.jpg',
+                backdropSource: 'backdrop',
+            });
+        });
+
+        it('asks for its title page', async () => {
+            recentItems.set([xtreamSeries]);
+            catalogSource.set({ _id: 'p2' });
+            create();
+            await settle();
+
+            expect(loadExtras).toHaveBeenCalledWith({ kind: 'series', id: 11 });
+        });
+
+        it("never asks another source's page", async () => {
+            recentItems.set([xtreamSeries]);
+            catalogSource.set({ _id: 'p9' });
+            create();
+            await settle();
+
+            expect(loadExtras).not.toHaveBeenCalledWith(
+                expect.objectContaining({ id: 11 })
+            );
+        });
+    });
+
     it('falls back to the generated stage when an image fails to load', () => {
         const presenter = create();
         presenter.markImageFailed('https://img/pharma-poster.jpg');

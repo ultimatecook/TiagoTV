@@ -7,7 +7,7 @@ import {
     type EffectRef,
 } from '@angular/core';
 import type { CatalogExtras } from '../catalog/catalog-extras';
-import type { CatalogTitle } from '../catalog/catalog-titles';
+import type { CatalogTitleRef } from '../catalog/catalog-titles';
 import { CatalogService } from '../catalog/catalog.service';
 
 /** How long a title page may take before the next one is asked. */
@@ -27,7 +27,7 @@ export class HomeTitlePagesService {
     private queue: Promise<unknown> = Promise.resolve();
 
     /** The title's page: now when known, else after the ones asked first. */
-    fetch(title: CatalogTitle): Promise<CatalogExtras | null> {
+    fetch(title: CatalogTitleRef): Promise<CatalogExtras | null> {
         const known = this.catalog.extrasOf(title);
         if (known) {
             return Promise.resolve(known);
@@ -37,7 +37,7 @@ export class HomeTitlePagesService {
         return answer;
     }
 
-    private ask(title: CatalogTitle): Promise<CatalogExtras | null> {
+    private ask(title: CatalogTitleRef): Promise<CatalogExtras | null> {
         // Asked meanwhile by another section, or by an earlier turn.
         const known = this.catalog.extrasOf(title);
         if (known) {
