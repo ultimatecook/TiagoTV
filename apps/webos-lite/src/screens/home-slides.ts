@@ -3,20 +3,20 @@ import {
     type CatalogTitle,
     type PlatformTitle,
 } from '@iptvnator/workspace/dashboard/feature/tv-logic';
-import { tmdbSized } from '../data/images';
 import { resume, type ResumeEntry } from '../data/resume';
 import { t } from '../data/strings';
 import { heroMeta, resumeMeta } from '../data/title-meta';
 import type { App } from '../app';
 import { hueOf } from '../ui/colour';
-import type { HeroSlide } from '../ui/hero';
+import { heroBackdrop, type HeroSlide } from '../ui/hero';
 
 /**
  * The Home hero's slides, as the desktop picks them: what the viewer left
  * half-watched first ("SEGUIR VIENDO", Continuar), then what the
  * platforms added lately ("AÑADIDO RECIENTEMENTE"), one per show, the
- * platforms taking turns (pickNewReleases), movies and series in turn,
- * those with a backdrop first.
+ * platforms taking turns (pickNewReleases), movies and series in turn.
+ * Only titles with a backdrop (their list's, or their page's once asked):
+ * a title without one is no slide, never a poster on the stage.
  */
 const CONTINUE_SLIDES = 2;
 const DISCOVERY = 6;
@@ -52,18 +52,21 @@ function continueSlides(app: App): HeroSlide[] {
         .slice(0, CONTINUE_SLIDES);
     // Their backdrops come from the titles' pages, as the desktop's.
     void app.store.probeBackdrops(entries.map(titleOfResume));
-    return entries.map((entry) => {
+    const slides: HeroSlide[] = [];
+    for (const entry of entries) {
         const title = titleOfResume(entry);
-        const backdrop = app.store.backdropOf(title);
-        return {
+        const backdrop = heroBackdrop(app.store, title);
+        if (!backdrop) {
+            continue;
+        }
+        slides.push({
             key: `continue:${entry.kind}:${entry.id}`,
             eyebrow: t('WORKSPACE.DASHBOARD.KEEP_WATCHING'),
             platform: null,
             title: title.title,
             meta: resumeMeta(entry),
             progress: entry.duration > 0 ? entry.position / entry.duration : 0,
-            backdrop: tmdbSized(backdrop, 'w1280'),
-            keyart: tmdbSized(entry.poster, 'w500'),
+            backdrop,
             hue: hueOf(title.title),
             actions: [
                 {
@@ -74,8 +77,9 @@ function continueSlides(app: App): HeroSlide[] {
                 },
                 { label: t('WORKSPACE.DASHBOARD.HERO_DETAILS'), icon: 'info', run: () => app.openTitle(title) },
             ],
-        };
-    });
+        });
+    }
+    return slides;
 }
 
 export function resumeEntry(app: App, entry: ResumeEntry): void {
@@ -113,26 +117,24 @@ function interleave<T>(a: readonly T[], b: readonly T[]): T[] {
     return out;
 }
 
+/** What the platforms added lately that has a backdrop: the others are left out. */
 export function discoveryTitles(app: App, lead: number): CatalogTitle[] {
     const picks = interleave(
         pickNewReleases(app.store.titles('movie'), DISCOVERY, lead),
         pickNewReleases(app.store.titles('series'), DISCOVERY, lead)
     );
     void app.store.probeBackdrops(picks);
-    const store = app.store;
-    return picks.filter((title) => !!store.backdropOf(title)).concat(picks.filter((title) => !store.backdropOf(title)));
+    return picks.filter((title) => !!heroBackdrop(app.store, title));
 }
 
 export function discoverySlide(app: App, title: CatalogTitle): HeroSlide {
-    const backdrop = app.store.backdropOf(title);
     return {
         key: `new:${title.kind}:${title.id}`,
         eyebrow: t('WORKSPACE.DASHBOARD.HERO_RECENTLY_ADDED'),
         platform: title.platform,
         title: title.title,
         meta: heroMeta(title),
-        backdrop: tmdbSized(backdrop, 'w1280'),
-        keyart: tmdbSized(title.poster, 'w500'),
+        backdrop: heroBackdrop(app.store, title),
         hue: hueOf(title.title),
         actions: [
             { label: t('WORKSPACE.DASHBOARD.HERO_DETAILS'), icon: 'info', primary: true, run: () => app.openTitle(title) },

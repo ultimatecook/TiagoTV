@@ -37,7 +37,7 @@ export class Backdrops {
                     this.onFound();
                 }
             } catch {
-                // No page: the hero shows the poster.
+                // No page: the title is no hero slide (never its poster).
             }
         }
     }

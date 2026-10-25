@@ -34,22 +34,6 @@
     opacity: 1;
 }
 
-.hero__keyart {
-    position: absolute;
-    left: 1240px;
-    top: 140px;
-}
-
-.hero__poster {
-    width: 360px;
-    height: 540px;
-    border-radius: 24px;
-}
-
-.hero__poster .pic__img {
-    object-fit: cover;
-}
-
 .hero__veil {
     position: absolute;
     left: 0;

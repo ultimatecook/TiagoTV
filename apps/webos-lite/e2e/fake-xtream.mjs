@@ -24,7 +24,7 @@
  */
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { ACCOUNT, LIVE_CATEGORIES, liveStreams, SERIES_CATEGORIES, VOD_CATEGORIES, vodCatalog } from './fake-catalog.mjs';
+import { ACCOUNT, LIVE_CATEGORIES, liveStreams, NO_BACKDROP, SERIES_CATEGORIES, titleName, VOD_CATEGORIES, vodCatalog } from './fake-catalog.mjs';
 
 const LIVE_HOLD_MS = 60000;
 /** What a stalled live stream sends before it stops: about 3 s of the clip. */
@@ -118,6 +118,7 @@ export function startFakeXtream({ port = 0, media = null, segment = null, episod
         (built ??= vodCatalog({
             poster: (name) => `${base}/poster/${encodeURIComponent(name)}.svg`,
             backdrop: (name) => `${base}/backdrop/${encodeURIComponent(name)}.svg`,
+            broken: (name) => `${base}/missing/${encodeURIComponent(name)}.svg`,
         }));
 
     const send = (res, status, body, type = 'application/json') => {
@@ -176,7 +177,7 @@ export function startFakeXtream({ port = 0, media = null, segment = null, episod
                         genre: 'Acción, Drama',
                         rating: item?.rating ?? '7',
                         cover_big: item?.stream_icon,
-                        backdrop_path: [item?.stream_icon?.replace('/poster/', '/backdrop/')],
+                        backdrop_path: NO_BACKDROP.includes(titleName(item?.name)) ? [] : [item?.stream_icon?.replace('/poster/', '/backdrop/')],
                     },
                     movie_data: { stream_id: id, container_extension: 'mkv' },
                 };

@@ -194,6 +194,18 @@ const APPLE_SERIES = [
     [null, 'SLOW HORSES', 2022, 8.2, 'Thriller, Crimen'],
 ];
 
+/* What a real panel also does: titles with no backdrop anywhere (neither
+   their list nor their page names one), and one whose backdrop is a broken
+   link. A hero (Inicio, Series, Películas, a platform's billboard) must
+   leave them out rather than show their poster in its place. */
+export const NO_BACKDROP = ['LA VIEJA GUARDIA', 'AIR', 'SEVERANCE'];
+export const BROKEN_BACKDROP = ['THE BOYS'];
+
+/** A list entry's name without its year and language ("AIR (2023)_ENG"). */
+export function titleName(label) {
+    return String(label ?? '').replace(/ \(\d{4}\)(?: ES|_ENG)$/, '');
+}
+
 export const VOD_CATEGORIES = [
     { category_id: '1610', category_name: '|ES| ✪ ORIGINAL NETFLIX', parent_id: 0 },
     { category_id: '1125', category_name: '|EN| ✪ Netflix MULTI SUB', parent_id: 0 },
@@ -256,7 +268,7 @@ function entries(rows, kind, base, categories, art) {
                           plot: language === 'ES' ? `La historia de ${name.toLowerCase()}.` : `The story of ${name.toLowerCase()}.`,
                           releaseDate: `${year}-01-01`,
                           last_modified: added,
-                          backdrop_path: [art.backdrop(key)],
+                          backdrop_path: NO_BACKDROP.includes(key) ? [] : [BROKEN_BACKDROP.includes(key) ? art.broken(key) : art.backdrop(key)],
                       };
             (out[categories[language]] ??= []).push(item);
         });
@@ -264,7 +276,7 @@ function entries(rows, kind, base, categories, art) {
     return out;
 }
 
-/** `art.poster(name)` and `art.backdrop(name)`: the panel's image URLs. */
+/** `art.poster(name)`, `art.backdrop(name)` and `art.broken(name)` (a 404): the panel's image URLs. */
 export function vodCatalog(art) {
     return {
         vod: {

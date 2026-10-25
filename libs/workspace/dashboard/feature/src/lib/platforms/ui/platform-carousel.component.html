@@ -16,21 +16,14 @@
                 [class.carousel__art--active]="$index === hero.activeIndex()"
                 aria-hidden="true"
             >
-                @if (slide.backdrop; as backdrop) {
-                    <img
-                        class="carousel__image"
-                        [src]="backdrop | sharpImage: 'backdrop' : 1920"
-                        alt=""
-                        referrerpolicy="no-referrer"
-                    />
-                } @else if (slide.title.poster; as poster) {
-                    <img
-                        class="carousel__keyart"
-                        [src]="poster | sharpImage: 'poster' : 360"
-                        alt=""
-                        referrerpolicy="no-referrer"
-                    />
-                }
+                <img
+                    class="carousel__image"
+                    [src]="slide.backdrop | sharpImage: 'backdrop' : 1920"
+                    alt=""
+                    referrerpolicy="no-referrer"
+                    (error)="hero.artFailed(slide.backdrop)"
+                    (load)="hero.artLoaded(slide.backdrop, $event)"
+                />
             </div>
         }
         <span class="carousel__scrim" aria-hidden="true"></span>

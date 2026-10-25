@@ -59,19 +59,6 @@
     object-position: center 22%;
 }
 
-// Only a poster: navy, and the poster standing on the right.
-.carousel__keyart {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: min(46%, 560px);
-    height: 100%;
-    object-fit: cover;
-    object-position: center 22%;
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 40%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 40%);
-}
-
 .carousel__scrim {
     position: absolute;
     inset: 0;
@@ -410,8 +397,7 @@ button.carousel__language {
         min-height: 400px;
     }
 
-    .carousel__image,
-    .carousel__keyart {
+    .carousel__image {
         width: 100%;
     }
 

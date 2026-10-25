@@ -64,24 +64,6 @@
     object-position: center 20%;
 }
 
-// A poster washes the stage blurred and stands sharp on the right.
-.billboard__image--wash {
-    filter: blur(40px) saturate(1.3) brightness(0.6);
-    transform: scale(1.15);
-}
-
-.billboard__keyart {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: min(58%, 780px);
-    height: 100%;
-    object-fit: cover;
-    object-position: center 20%;
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
-}
-
 .billboard__scrim {
     position: absolute;
     inset: 0;
@@ -505,12 +487,6 @@ button.billboard__language {
     :host([data-look='netflix']) {
         --bb-content: calc(100% - 2 * var(--page-gutter));
         --bb-lift: 0.2;
-    }
-
-    .billboard__keyart {
-        width: 100%;
-        -webkit-mask-image: linear-gradient(180deg, #000 35%, transparent 85%);
-        mask-image: linear-gradient(180deg, #000 35%, transparent 85%);
     }
 
     .billboard__band,

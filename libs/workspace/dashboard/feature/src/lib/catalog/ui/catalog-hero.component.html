@@ -8,17 +8,14 @@
         @if (art(); as art) {
             <img
                 class="hero__art"
-                [class.hero__art--poster]="art.poster"
-                [src]="
-                    art.poster
-                        ? (art.url | sharpImage: 'poster' : 360)
-                        : (art.url | sharpImage: 'backdrop' : 1920)
-                "
+                data-test-id="catalog-hero-art"
+                [src]="art | sharpImage: 'backdrop' : 1920"
                 alt=""
                 decoding="async"
                 referrerpolicy="no-referrer"
                 draggable="false"
-                (error)="artFailed(art.url)"
+                (error)="backdropFailed(art)"
+                (load)="backdropLoaded(art, $event)"
             />
         }
         <span class="hero__veil hero__veil--side"></span>

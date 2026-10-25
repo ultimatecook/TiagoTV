@@ -14,27 +14,14 @@
                 class="billboard__art"
                 [class.billboard__art--active]="$index === hero.activeIndex()"
             >
-                @if (slide.backdrop; as backdrop) {
-                    <img
-                        class="billboard__image"
-                        [src]="backdrop | sharpImage: 'backdrop' : 1920"
-                        alt=""
-                        referrerpolicy="no-referrer"
-                    />
-                } @else if (slide.title.poster; as poster) {
-                    <img
-                        class="billboard__image billboard__image--wash"
-                        [src]="poster"
-                        alt=""
-                        referrerpolicy="no-referrer"
-                    />
-                    <img
-                        class="billboard__keyart"
-                        [src]="poster | sharpImage: 'poster' : 360"
-                        alt=""
-                        referrerpolicy="no-referrer"
-                    />
-                }
+                <img
+                    class="billboard__image"
+                    [src]="slide.backdrop | sharpImage: 'backdrop' : 1920"
+                    alt=""
+                    referrerpolicy="no-referrer"
+                    (error)="hero.artFailed(slide.backdrop)"
+                    (load)="hero.artLoaded(slide.backdrop, $event)"
+                />
             </div>
         }
         <span class="billboard__scrim"></span>

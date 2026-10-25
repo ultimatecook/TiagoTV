@@ -222,12 +222,14 @@ export function buildCatalogRows(
  * The hero's title: the one picked (`key`), wherever it now sits in the
  * catalog — also once it shows another of its versions (its Spanish one
  * arrived, or another platform now credits it) — else the first of the
- * releases.
+ * releases. Only a title the hero can feature (`featurable`: one with a
+ * backdrop) is: none of them, no title.
  */
 export function featuredTitle(
     releases: readonly CatalogTitle[],
     titles: readonly CatalogTitle[],
-    key: string | null
+    key: string | null,
+    featurable: (title: CatalogTitle) => boolean = () => true
 ): CatalogTitle | null {
     const picked = key
         ? (titles.find((title) => titleKey(title) === key) ??
@@ -237,5 +239,7 @@ export function featuredTitle(
               )
           ))
         : undefined;
-    return picked ?? releases[0] ?? null;
+    return picked && featurable(picked)
+        ? picked
+        : (releases.find(featurable) ?? null);
 }

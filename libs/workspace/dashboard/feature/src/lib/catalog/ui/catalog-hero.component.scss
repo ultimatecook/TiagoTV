@@ -62,15 +62,6 @@
     -webkit-user-drag: none;
 }
 
-// A poster (no backdrop known): standing at the right, faded in from the left.
-.hero__art--poster {
-    inset: 0 0 0 auto;
-    width: auto;
-    aspect-ratio: 2 / 3;
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
-}
-
 .hero__veil {
     position: absolute;
     pointer-events: none;
