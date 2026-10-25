@@ -9,13 +9,12 @@ import { h } from '../core/dom';
 import { requestErrorText } from '../core/http';
 import { nav } from '../core/nav';
 import { Slot } from '../core/timers';
-import { tmdbSized } from '../data/images';
 import { t } from '../data/strings';
 import { genreLabel, heroMeta, posterMeta } from '../data/title-meta';
 import type { App } from '../app';
 import { CARD, landscapeCard, posterCard } from '../ui/cards';
 import { hueOf } from '../ui/colour';
-import { Hero, type HeroSlide } from '../ui/hero';
+import { Hero, heroBackdrop, type HeroSlide } from '../ui/hero';
 import { Row } from '../ui/row';
 import { VPage } from '../ui/vpage';
 import { playTitle } from './play-title';
@@ -26,13 +25,16 @@ import type { Page } from './shell';
  * kind in one catalog (one per show across languages and platforms, the
  * platforms taking turns). A cinematic hero with the featured title, the
  * "Novedades" over it (focusing one features it), then a row per genre.
+ * The hero features a title only over its backdrop, never its poster: the
+ * first of "Novedades" with one, and focusing one without leaves the hero
+ * as it is; with none yet, the section's name shows alone.
  */
 const REFRESH_MS = 1500;
 const FEATURE_MS = 450;
 
 export class CatalogPage implements Page {
     private readonly page: VPage;
-    private readonly hero = new Hero('hero--catalog');
+    private readonly hero = new Hero('hero--catalog', undefined, () => this.featureFirst());
     private readonly news: Row<CatalogTitle>;
     private rows: Row<CatalogTitle>[] = [];
     private readonly refresh = new Slot('catalog-refresh');
@@ -132,8 +134,7 @@ export class CatalogPage implements Page {
             platform: title.platform,
             title: title.title,
             meta: heroMeta(title) + (title.genres[1] ? `, ${genreLabel(title.genres[1])}` : ''),
-            backdrop: tmdbSized(this.app.store.backdropOf(title), 'w1280'),
-            keyart: tmdbSized(title.poster, 'w500'),
+            backdrop: heroBackdrop(this.app.store, title),
             hue: hueOf(title.title),
             actions: [
                 { label: t('WORKSPACE.CATALOG.PLAY'), icon: 'play', primary: true, run: () => playTitle(this.app, title) },
@@ -142,9 +143,25 @@ export class CatalogPage implements Page {
         };
     }
 
+    /** Features the title, when it has a backdrop; else the hero stays. */
     private setFeatured(title: CatalogTitle): void {
+        if (!heroBackdrop(this.app.store, title)) {
+            return;
+        }
         this.featured = title;
         this.hero.setSlides([this.slide(title)]);
+    }
+
+    /** The first of "Novedades" with a backdrop, or no title at all. */
+    private featureFirst(): void {
+        const releases = this.news.itemList;
+        const first = releases.filter((title) => !!heroBackdrop(this.app.store, title))[0];
+        this.featured = null;
+        if (first) {
+            this.setFeatured(first);
+        } else {
+            this.hero.setSlides([]);
+        }
     }
 
     private render(): void {
@@ -158,8 +175,14 @@ export class CatalogPage implements Page {
         const releases = pickNewReleases(titles, 12, this.lead);
         void this.app.store.probeBackdrops(releases);
         this.news.setItems(releases, true);
-        if (!this.featured || releases.indexOf(this.featured) < 0) {
-            this.setFeatured(releases[0]);
+        const featured = this.featured;
+        const same = featured ? releases.filter((title) => title.kind === featured.kind && title.id === featured.id)[0] : undefined;
+        if (same && heroBackdrop(this.app.store, same)) {
+            if (same !== featured) {
+                this.setFeatured(same);
+            }
+        } else {
+            this.featureFirst();
         }
         this.renderRows(buildCatalogRows(titles));
         this.page.updateNear();

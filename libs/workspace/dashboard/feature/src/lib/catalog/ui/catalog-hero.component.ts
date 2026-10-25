@@ -9,9 +9,11 @@ import {
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { TranslatePipe } from '@ngx-translate/core';
+import { loadedLandscape } from '../../hero-backdrop';
 import { titleKey } from '../../platforms/platform-titles';
 import { PlatformLogoComponent } from '../../platforms/ui/platform-logo.component';
 import { SharpImagePipe } from '../../sharp-image.pipe';
+import { CatalogHeroBackdropsService } from '../catalog-hero-backdrops.service';
 import { heroMeta } from '../catalog-meta';
 import type { CatalogKind, CatalogTitle } from '../catalog-titles';
 import { CatalogService } from '../catalog.service';
@@ -24,8 +26,10 @@ let nextId = 0;
  * name, the featured title (its platform, name, kind · year · genres ·
  * length, Reproducir — its page, playing — and Más info) and, on the
  * hero's lower edge, "Novedades": picking one of them features it, the
- * page stays put. The artwork is the title's backdrop, else its poster at
- * the right, over the platform's colour.
+ * page stays put. The artwork is the title's backdrop over the platform's
+ * colour, never its poster: the page features titles with one alone
+ * (`CatalogHeroBackdropsService`), and one that fails to load, or loads as
+ * a portrait, leaves the hero.
  */
 @Component({
     selector: 'lib-catalog-hero',
@@ -42,6 +46,7 @@ let nextId = 0;
 })
 export class CatalogHeroComponent {
     private readonly catalog = inject(CatalogService);
+    private readonly backdrops = inject(CatalogHeroBackdropsService);
 
     readonly kind = input.required<CatalogKind>();
     readonly releases = input.required<readonly CatalogTitle[]>();
@@ -68,21 +73,12 @@ export class CatalogHeroComponent {
         return title ? heroMeta(title, this.extras()) : [];
     });
 
+    /** The cards' artwork that failed to load. */
     private readonly failed = signal<ReadonlySet<string>>(new Set());
-    /** The backdrop across the hero, else the poster at its right. */
+    /** The backdrop across the hero; no poster ever stands in for it. */
     readonly art = computed(() => {
         const title = this.featured();
-        if (!title) {
-            return null;
-        }
-        const failed = this.failed();
-        const backdrop = title.backdrop ?? this.extras()?.backdrop ?? null;
-        if (backdrop && !failed.has(backdrop)) {
-            return { url: backdrop, poster: false };
-        }
-        return title.poster && !failed.has(title.poster)
-            ? { url: title.poster, poster: true }
-            : null;
+        return title ? this.backdrops.backdropOf(title) : null;
     });
 
     readonly key = titleKey;
@@ -99,6 +95,18 @@ export class CatalogHeroComponent {
 
     artFailed(url: string): void {
         this.failed.update((failed) => new Set(failed).add(url));
+    }
+
+    /** The hero's backdrop failed: the title leaves the hero. */
+    backdropFailed(url: string): void {
+        this.backdrops.fail(url);
+    }
+
+    /** A portrait "backdrop" is a poster: the title leaves the hero. */
+    backdropLoaded(url: string, event: Event): void {
+        if (!loadedLandscape(event)) {
+            this.backdrops.fail(url);
+        }
     }
 
     /** "Más info": the title's page. */

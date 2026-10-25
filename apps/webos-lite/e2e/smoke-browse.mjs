@@ -2,8 +2,11 @@
  * The smoke run's browsing suites: Inicio, a platform's page, Series and
  * Películas, a title's page, Deportes and a league's page, Buscar, Mi
  * lista and Ajustes. Each one walks its screen with the remote: the
- * D-pad moves, OK opens, Back returns with the focus where it was.
+ * D-pad moves, OK opens, Back returns with the focus where it was. Every
+ * hero on the way is walked: no slide without a backdrop (smoke-heroes.mjs).
  */
+import { checkSlides, detailBanner, focusedCard, LEFT_OUT, walkHero, walkNovedades } from './smoke-heroes.mjs';
+
 const HERO_TITLE = '.hero__title';
 
 export async function toTab(h, id) {
@@ -40,6 +43,7 @@ export async function homeSuite(h) {
 
     await press('ArrowDown');
     check('down: the hero\'s button', /Más info|Continuar/.test(await h.focused()), await h.focused());
+    checkSlides(h, 'Inicio\'s hero', await walkHero(h, '.page--home'));
     await press('ArrowDown');
     check('down: Netflix\'s card', /card--platform/.test(await h.focusedClass()));
     await shot('02-inicio-plataformas');
@@ -53,6 +57,8 @@ export async function homeSuite(h) {
     }));
     check('OK opens Prime Video\'s page', /look--prime/.test(platform.look) && platform.rows.indexOf('Lo más nuevo') >= 0, platform.rows.join(' | '));
     await shot('03-plataforma-prime');
+    // Its picks include AIR (no backdrop) and THE BOYS (a broken one).
+    checkSlides(h, 'Prime Video\'s carousel', await walkHero(h, '.platform-page'));
     check('platform page: Up reaches the bar', await h.pressUntil('ArrowUp', /\btab\b/, 8), `${await h.focusedClass()} | ${await h.focused()}`);
     await press('Backspace');
     check('Back returns to Prime\'s card', /card--platform/.test(await h.focusedClass()) && (await page.evaluate(() => document.querySelector('.focused img').alt)) === 'Prime Video');
@@ -107,12 +113,18 @@ export async function catalogSuite(h) {
     await page.waitForTimeout(1000);
     await shot('10-series');
     await press('ArrowDown', 2);
-    await press('ArrowRight');
-    await page.waitForTimeout(900);
-    const featured = await page.evaluate(() => ({
-        hero: document.querySelector('.page--series .hero__title').textContent,
-        card: document.querySelector('.focused .art__title').textContent,
-    }));
+    const featuredNow = () =>
+        page.evaluate(() => ({
+            hero: document.querySelector('.page--series .hero__title').textContent,
+            card: document.querySelector('.focused .art__title').textContent,
+        }));
+    let featured = null;
+    // A novelty without a backdrop is not featured: the next one is.
+    for (let i = 0; i < 4 && (!featured || LEFT_OUT.indexOf(featured.card) >= 0); i++) {
+        await press('ArrowRight');
+        await page.waitForTimeout(900);
+        featured = await featuredNow();
+    }
     check('Novedades: the focused title shows in the hero', featured.hero === featured.card, `${featured.hero} / ${featured.card}`);
     await press('ArrowDown');
     const rows = await page.evaluate(() => [...document.querySelectorAll('.page--series .row--posters .heading__title')].map((el) => el.textContent));
@@ -159,6 +171,31 @@ export async function catalogSuite(h) {
     await page.waitForSelector('.page--movie .card--landscape', { timeout: 20000 });
     await page.waitForTimeout(900);
     await shot('14-peliculas');
+    // Every novelty focused in turn: one without a backdrop leaves the
+    // hero as it was, and its page shows no banner (never its poster).
+    check('Películas: down to "Novedades"', await h.pressUntil('ArrowDown', /card--landscape/, 3), await h.focusedClass());
+    const walked = await walkNovedades(h, '.page--movie');
+    const heroes = walked.seen.filter((entry) => !!entry.hero);
+    check(
+        'Películas: the hero always over a backdrop, no poster',
+        heroes.length > 0 && heroes.every((entry) => !!entry.hero.backdrop && entry.hero.posters === 0),
+        heroes.map((entry) => entry.hero.title).join(' | ')
+    );
+    check(
+        'Películas: a novelty without a backdrop is never featured',
+        !!walked.missing && walked.seen.every((entry) => !entry.hero || LEFT_OUT.indexOf(entry.hero.title) < 0),
+        walked.seen.map((entry) => `${entry.card} → ${entry.hero ? entry.hero.title : '-'}`).join(' | ')
+    );
+    check('Películas: back on the novelty without a backdrop', (await focusedCard(h)) === walked.missing, await h.focused());
+    await press('Enter');
+    await page.waitForSelector('.detail .detail__title', { timeout: 10000 });
+    await page.waitForTimeout(1200);
+    const banner = await detailBanner(h);
+    check('its page: no banner image rather than its poster', banner.src === '' && !banner.shown, JSON.stringify(banner));
+    await shot('15b-titulo-sin-fondo');
+    await press('Backspace');
+    check('Back: the novelty again', (await focusedCard(h)) === walked.missing, await h.focused());
+    check('Películas: up to the bar', await h.pressUntil('ArrowUp', /\btab\b/, 6), await h.focusedClass());
     await press('ArrowDown');
     await press('ArrowRight');
     await press('Enter');

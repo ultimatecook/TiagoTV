@@ -54,34 +54,6 @@
     object-position: center 22%;
 }
 
-// A poster washes the card blurred and stands sharp on the right.
-.hero__image--wash {
-    filter: blur(34px) saturate(1.35) brightness(0.7);
-    transform: scale(1.12);
-}
-
-.hero__keyart {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: min(62%, 720px);
-    height: 100%;
-    object-fit: cover;
-    object-position: center 22%;
-    -webkit-mask-image: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(0, 0, 0, 0.6) 22%,
-        #000 48%
-    );
-    mask-image: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(0, 0, 0, 0.6) 22%,
-        #000 48%
-    );
-}
-
 .hero__scrim {
     position: absolute;
     inset: 0;
@@ -290,12 +262,6 @@ button.hero__language {
 
     .hero__content {
         max-width: calc(100% - 2 * var(--hero-inset));
-    }
-
-    .hero__keyart {
-        width: 100%;
-        -webkit-mask-image: linear-gradient(180deg, #000 35%, transparent 80%);
-        mask-image: linear-gradient(180deg, #000 35%, transparent 80%);
     }
 
     .hero__scrim {

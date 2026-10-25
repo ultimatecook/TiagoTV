@@ -182,12 +182,12 @@ Render rules:
    becomes a hero slide.
 4. Each section is emitted via `@if` on its own data. Empty sections are
    hidden — there is no "empty widget" placeholder.
-5. Hero slides prefer a stored `backdrop_url`, then the TMDB backdrop, at
-   the window's width (`heroBackdropUrl`). Only a resume slide may go
-   without one, its poster standing on the right of the title-tinted
-   gradient (a live slide: its channel logo); a discovery or fallback slide
-   without a backdrop, or whose backdrop fails to load, is left out — a
-   poster on the tinted stage looked broken.
+5. Hero slides prefer a stored `backdrop_url`, then the TMDB backdrop, then
+   the title page's (`dashboard-hero-page-backdrops.ts`), at the window's
+   width (`heroBackdropUrl`). Every slide needs one, resume and live slides
+   included (the owner's rule: no banner, no slide): a slide without a
+   backdrop, or whose backdrop fails to load, is left out — a poster or a
+   channel logo on the tinted stage looked broken.
 
 ## Cinematic Hero
 
@@ -197,10 +197,9 @@ window's edges (`margin: calc(-1 * (--tv-topbar-h + --tv-page-top))
 calc(-1 * --tv-page-x) -16px`), the banner is
 `clamp(460px, calc(100vh - 560px), 620px)` tall at least, and its whole
 background carries `mask-image` so it fades into the page instead of ending
-on an edge. Each slide's background is its backdrop, else (resume and live
-slides only) a poster or a channel logo standing on the right of the
-gradient in the title's hue (`--hero-hue`), crossfading in 700ms under a
-left and a top veil.
+on an edge. Each slide's background is its backdrop over the gradient in
+the title's hue (`--hero-hue`), crossfading in 700ms under a left and a top
+veil; a title without a backdrop is never a slide.
 
 Height: that clamp is a floor, not a fixed height. Every slide's content is
 laid out in the same grid cell at the bottom of the banner, so it is as tall
@@ -632,6 +631,11 @@ categories (`PlatformsCatalogService`):
    series in turn (`pickRecommendations`), drawn by the local day's seed
    (`daySeed`): different picks from one day to the next, the same all day.
    The page takes the seed once, so nothing reshuffles while it is open.
+   Every look's hero (`PlatformHeroSlides`) shows a pick only over its
+   backdrop (its list's, or its page's once fetched), never its poster: a
+   pick without one, or whose backdrop fails to load or loads as a portrait,
+   is no slide, and with none the hero shows no art and no title. The
+   slide showing stays (by key) while the others' pages answer.
 3. Rows (`buildPlatformRows`): what is new (by date, the newest 30), Netflix's
    Top 10 (the best rated with a poster among the newest 150), movies, series,
    then up to ten genres, the largest first. The hero's titles are left out of
@@ -940,8 +944,15 @@ titles of that kind in one catalog, with no filters and no search of its own.
    "Novedades" reshuffles while the platforms' lists arrive. The featured
    title's own page (`get_vod_info` / `get_series_info`) is fetched once
    per title, after it has stayed
-   featured 0.4 s, for its backdrop and length. Without a backdrop the hero
-   shows the poster at its right over the platform's colour. It is
+   featured 0.4 s, for its backdrop and length. Only a title with a backdrop
+   is featured, never over its poster (`CatalogHeroBackdropsService`): the
+   first release whose list or fetched page names one; with none known, the
+   releases' pages are asked one at a time through `HomeTitlePagesService`
+   until one has, at most `CATALOG_HERO_PROBES` (3) per kind a session, and
+   meanwhile the hero shows the section's name over the tint alone. A
+   backdrop that fails to load or loads as a portrait leaves the hero for
+   the session (the next release with one is featured). A release picked
+   without a backdrop has its page asked; still none, its page opens. It is
    `clamp(420px, 100vh - 340px, clamp(780px, 32vw, 1000px))` tall at
    least: on a short window (`max-height: 700px`) its spacer, gaps and
    title (sized from the height too, two lines) tighten so "Novedades"

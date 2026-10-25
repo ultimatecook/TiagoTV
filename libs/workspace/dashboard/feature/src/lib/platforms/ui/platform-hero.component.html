@@ -13,27 +13,14 @@
                 class="hero__backdrop"
                 [class.hero__backdrop--active]="$index === hero.activeIndex()"
             >
-                @if (slide.backdrop; as backdrop) {
-                    <img
-                        class="hero__image"
-                        [src]="backdrop | sharpImage: 'backdrop' : 1920"
-                        alt=""
-                        referrerpolicy="no-referrer"
-                    />
-                } @else if (slide.title.poster; as poster) {
-                    <img
-                        class="hero__image hero__image--wash"
-                        [src]="poster"
-                        alt=""
-                        referrerpolicy="no-referrer"
-                    />
-                    <img
-                        class="hero__keyart"
-                        [src]="poster | sharpImage: 'poster' : 360"
-                        alt=""
-                        referrerpolicy="no-referrer"
-                    />
-                }
+                <img
+                    class="hero__image"
+                    [src]="slide.backdrop | sharpImage: 'backdrop' : 1920"
+                    alt=""
+                    referrerpolicy="no-referrer"
+                    (error)="hero.artFailed(slide.backdrop)"
+                    (load)="hero.artLoaded(slide.backdrop, $event)"
+                />
             </div>
         }
         <span class="hero__scrim"></span>

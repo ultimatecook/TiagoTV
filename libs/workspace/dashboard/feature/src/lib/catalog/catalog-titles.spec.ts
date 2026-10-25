@@ -320,4 +320,27 @@ describe('featuredTitle', () => {
         expect(featuredTitle(releases, titles, null)?.id).toBe(1);
         expect(featuredTitle([], [], null)).toBeNull();
     });
+
+    it('features only a title the hero can show: one with a backdrop', () => {
+        const titles = [
+            titled(1, NETFLIX, 3),
+            titled(2, HBO, 2, { backdrop: 'http://img/b2.jpg' }),
+            titled(3, PRIME, 1, { backdrop: 'http://img/b3.jpg' }),
+        ];
+        const withBackdrop = (title: CatalogTitle) => !!title.backdrop;
+
+        // The first release has none: the next one with a backdrop.
+        expect(featuredTitle(titles, titles, null, withBackdrop)?.id).toBe(2);
+        expect(featuredTitle(titles, titles, 'movie:3', withBackdrop)?.id).toBe(
+            3
+        );
+        // A pick without one is not featured either.
+        expect(featuredTitle(titles, titles, 'movie:1', withBackdrop)?.id).toBe(
+            2
+        );
+        // None has one: no title, rather than a poster.
+        expect(
+            featuredTitle(titles.slice(0, 1), titles, null, withBackdrop)
+        ).toBeNull();
+    });
 });

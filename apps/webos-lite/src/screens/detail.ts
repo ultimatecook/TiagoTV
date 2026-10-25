@@ -18,6 +18,7 @@ import { resume } from '../data/resume';
 import { t } from '../data/strings';
 import { kindLabel } from '../data/title-meta';
 import type { App, OpenTitleOptions } from '../app';
+import { isPoster } from '../ui/hero';
 import { icon } from '../ui/icons';
 import { brandMark } from '../ui/platform-cards';
 import { detailVeil, lookClasses, lookOf } from '../ui/platform-looks';
@@ -28,7 +29,8 @@ import { DetailPlayback } from './detail-playback';
 
 /**
  * A movie's or a series' page, as the desktop's: the backdrop under the
- * bar, the platform and kind, the title in Bebas, year, genres and
+ * bar (never the poster in its place: without one, the look's colour
+ * alone), the platform and kind, the title in Bebas, year, genres and
  * rating, the synopsis, Reproducir (or Continuar where it was left) and
  * Mi lista; a series adds "Episodios" by season; "Más títulos" of its
  * platform close the page. A title in Spanish and English offers both.
@@ -66,7 +68,14 @@ export class DetailScreen implements Screen {
         this.version = title.versions[0] ?? title;
         this.platform = (title as CatalogTitle).platform ?? app.store.platformOf(title);
         this.playback = new DetailPlayback(app, title, () => this.version, () => this.details);
-        this.backdrop.onload = () => this.backdrop.classList.add('is-loaded');
+        // A portrait "backdrop" is a poster: no banner rather than that.
+        this.backdrop.onload = () => {
+            if (isPoster(this.backdrop)) {
+                this.backdrop.removeAttribute('src');
+            } else {
+                this.backdrop.classList.add('is-loaded');
+            }
+        };
         this.backdrop.onerror = () => this.backdrop.removeAttribute('src');
         const look = this.platform ? platformDesign(this.platform.id).look : 'default';
         const tone = lookOf(look);
@@ -169,10 +178,10 @@ export class DetailScreen implements Screen {
         this.meta.textContent = '';
         detailMeta(this.title, details).forEach((part) => this.meta.appendChild(part));
         this.plot.textContent = details?.plot ?? this.title.plot ?? '';
-        const image = tmdbSized(details?.backdrop ?? this.title.backdrop ?? this.title.poster, 'w1280');
+        const image = tmdbSized(details?.backdrop ?? this.title.backdrop, 'w1280');
         if (image && this.backdrop.getAttribute('data-src') !== image) {
             this.backdrop.setAttribute('data-src', image);
-            this.backdrop.classList.toggle('is-poster', !(details?.backdrop ?? this.title.backdrop));
+            this.backdrop.classList.remove('is-loaded');
             queueImage(this.backdrop, image);
         }
         this.renderActions();

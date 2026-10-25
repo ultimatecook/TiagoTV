@@ -19,12 +19,11 @@ import { requestErrorText } from '../core/http';
 import { nav } from '../core/nav';
 import type { Screen } from '../core/screens';
 import { Slot } from '../core/timers';
-import { tmdbSized } from '../data/images';
 import { t, tKey } from '../data/strings';
 import { genreLabel, kindLabel } from '../data/title-meta';
 import type { App } from '../app';
 import { hueOf } from '../ui/colour';
-import { Hero, type HeroSlide } from '../ui/hero';
+import { Hero, heroBackdrop, type HeroSlide } from '../ui/hero';
 import { brandMark, brandTile, platformTile, rankedTile, TILE, tileSize, tileVariant } from '../ui/platform-cards';
 import { lookClasses, lookOf, type TvLook } from '../ui/platform-looks';
 import { Row } from '../ui/row';
@@ -39,7 +38,9 @@ import { playTitle } from './play-title';
  * recommendations (or Prime Video's, Disney+'s and mitele's rounded
  * carousel), Disney+'s brand tiles, then its rows (Lo más nuevo,
  * Netflix's Top 10, Películas, Series, its genres; buildPlatformRows) in
- * the tiles the platform uses, badged and named as it names them.
+ * the tiles the platform uses, badged and named as it names them. The
+ * billboard shows a recommendation only over its backdrop (its list's, or
+ * its page's once asked), never its poster: one without is no slide.
  */
 const REFRESH_MS = 1200;
 
@@ -144,8 +145,7 @@ export class PlatformScreen implements Screen {
             included: this.look.included ? t('WORKSPACE.PLATFORMS.INCLUDED', { platform: 'Prime' }) : null,
             band: this.look.band ? languagesLabel(title) : null,
             plot: title.plot,
-            backdrop: tmdbSized(this.app.store.backdropOf(title), 'w1280'),
-            keyart: tmdbSized(title.poster, 'w500'),
+            backdrop: heroBackdrop(this.app.store, title),
             hue: hueOf(title.title),
             stage: this.look.frame ?? (platform ? platform.background : null),
             actions: [
@@ -169,7 +169,7 @@ export class PlatformScreen implements Screen {
         const seed = daySeed();
         const picks = pickRecommendations(titles, 6, seed);
         void this.app.store.probeBackdrops(picks);
-        this.hero.setSlides(picks.map((title) => this.slide(title)));
+        this.hero.setSlides(picks.filter((title) => !!heroBackdrop(this.app.store, title)).map((title) => this.slide(title)));
         this.status.el.style.display = 'none';
         const rows = buildPlatformRows(titles, {
             top10Of: this.design.top10 && platform ? platform.name : undefined,
