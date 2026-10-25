@@ -191,21 +191,18 @@ export class DashboardHeroSlidesPresenter {
     );
 
     /**
-     * Every slide but a resume or a live one stands on a real backdrop: a
-     * discovery title's poster on the tinted stage looked broken. One whose
-     * backdrop failed to load leaves the rotation.
+     * Every slide stands on a real backdrop, resume and live ones too: a
+     * poster or a channel logo on the tinted stage looked broken, so a
+     * title without a banner is not featured at all (the owner's rule). One
+     * whose backdrop failed to load leaves the rotation; a resume title
+     * joins it once its page's backdrop arrives.
      */
     readonly slides = computed<DashboardHeroSlide[]>(() => {
         this.languageTick();
         const liveDetails = this.liveSlide()?.details ?? null;
         return this.sources()
             .map((source) => this.toSlide(source, liveDetails))
-            .filter(
-                (slide) =>
-                    slide.hasBackdrop ||
-                    slide.kind === 'continue' ||
-                    slide.contentType === 'live'
-            );
+            .filter((slide) => slide.hasBackdrop);
     });
 
     constructor() {

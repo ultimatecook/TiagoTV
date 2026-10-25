@@ -25,32 +25,19 @@
                     [class.hero__backdrop--active]="$index === activeIndex()"
                     [style.--hero-hue]="slide.accentHue"
                 >
+                    <!-- Only slides with a banner reach the hero (no poster
+                         or logo on the tinted stage). -->
                     @if (slide.backdropUrl; as backdropUrl) {
-                        @if (slide.backdropSource === 'backdrop') {
-                            <img
-                                class="hero__image"
-                                [src]="backdropUrl"
-                                alt=""
-                                decoding="async"
-                                [attr.loading]="
-                                    $index === activeIndex() ? 'eager' : 'lazy'
-                                "
-                                (error)="presenter.markImageFailed(backdropUrl)"
-                            />
-                        } @else {
-                            <!-- A poster or channel logo is not a backdrop:
-                                 it stands on the right of the tinted stage. -->
-                            <img
-                                class="hero__keyart"
-                                [class.hero__keyart--logo]="
-                                    slide.contentType === 'live'
-                                "
-                                [src]="backdropUrl"
-                                alt=""
-                                decoding="async"
-                                (error)="presenter.markImageFailed(backdropUrl)"
-                            />
-                        }
+                        <img
+                            class="hero__image"
+                            [src]="backdropUrl"
+                            alt=""
+                            decoding="async"
+                            [attr.loading]="
+                                $index === activeIndex() ? 'eager' : 'lazy'
+                            "
+                            (error)="presenter.markImageFailed(backdropUrl)"
+                        />
                     }
                 </div>
             }

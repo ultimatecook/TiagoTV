@@ -44,6 +44,8 @@ const series: PortalRecentItem = {
     category_id: '1',
     xtream_id: 11,
     poster_url: 'https://img/pharma-poster.jpg',
+    // Only titles with a banner are featured (the owner's rule).
+    backdrop_url: 'https://img/pharma-wide.jpg',
     viewed_at: '2026-09-02',
 };
 const watchedMovie: PortalRecentItem = {
@@ -63,6 +65,7 @@ const channel: PortalFavoriteItem = {
     category_id: '5',
     xtream_id: 33,
     poster_url: 'https://img/match-logo.png',
+    backdrop_url: 'https://img/match-wide.jpg',
     added_at: '2026-08-01',
 };
 const favoriteFilm: PortalFavoriteItem = {
@@ -398,8 +401,7 @@ describe('DashboardHeroSlidesPresenter', () => {
                 'WORKSPACE.DASHBOARD.SEASON_EPISODE_BADGE {"season":1,"episode":3}',
             source: 'rucolor',
             progress: 33,
-            // No 16:9 backdrop: the poster becomes the blurred stage.
-            backdropSource: 'poster',
+            backdropSource: 'backdrop',
             primaryAction: {
                 labelKey: 'WORKSPACE.DASHBOARD.HERO_CONTINUE',
                 link: ['/recent', '1'],
@@ -425,6 +427,7 @@ describe('DashboardHeroSlidesPresenter', () => {
             playlist_id: 'p3',
             category_id: '2',
             xtream_id: 66,
+            backdrop_url: 'https://img/tyler-wide.jpg',
             viewed_at: '2026-09-04',
         };
         positions.set(6, {
@@ -618,14 +621,15 @@ describe('DashboardHeroSlidesPresenter', () => {
         expect(presenter.slides().map((slide) => slide.kind)).not.toContain(
             'added'
         );
-        // A resume slide keeps its poster look.
+        // The resume slide keeps its own banner.
         expect(presenter.slides()[0]).toMatchObject({
             kind: 'continue',
-            backdropSource: 'poster',
+            backdropSource: 'backdrop',
         });
     });
 
     it('patches TMDB extras in, and drops them when TMDB is switched off', async () => {
+        recentItems.set([{ ...series, backdrop_url: undefined }, watchedMovie]);
         tmdbEnabled.set(true);
         const extras: DashboardHeroTmdbExtras = {
             backdropUrl: 'https://tmdb/pharma-wide.jpg',
@@ -651,12 +655,11 @@ describe('DashboardHeroSlidesPresenter', () => {
             year: 2024,
         });
 
+        // Without TMDB it has no banner left: it leaves the hero.
         tmdbEnabled.set(false);
-        expect(presenter.slides()[0]).toMatchObject({
-            backdropSource: 'poster',
-            rating: null,
-            description: null,
-        });
+        expect(presenter.slides().map((slide) => slide.title)).not.toContain(
+            'Big Pharma'
+        );
     });
 
     it('loads the extras again when the TMDB language changes', async () => {
@@ -756,9 +759,13 @@ describe('DashboardHeroSlidesPresenter', () => {
             getExtras.mockImplementation((item: PortalActivityItem) =>
                 Promise.resolve(item.title === 'Big Pharma' ? answer : null)
             );
+            recentItems.set([{ ...series, backdrop_url: undefined }]);
             const presenter = create();
             await flush();
-            expect(presenter.slides()[0].backdropSource).toBe('poster');
+            // No banner yet: no resume slide.
+            expect(presenter.slides().map((slide) => slide.kind)).not.toContain(
+                'continue'
+            );
 
             // The first lookup failed for a moment; the next one answers.
             answer = tmdbWide;
@@ -796,15 +803,17 @@ describe('DashboardHeroSlidesPresenter', () => {
                 { ...series, backdrop_url: 'https://img/pharma-wide.jpg' },
             ]);
             const presenter = create();
+            const resumes = () =>
+                presenter.slides().filter((slide) => slide.kind === 'continue');
             presenter.markImageFailed('https://img/pharma-wide.jpg');
-            expect(presenter.slides()[0].backdropSource).toBe('poster');
+            expect(resumes()).toEqual([]);
 
             jest.advanceTimersByTime(HERO_IMAGE_RETRY_MS);
-            expect(presenter.slides()[0].backdropSource).toBe('backdrop');
+            expect(resumes()[0].backdropSource).toBe('backdrop');
 
             presenter.markImageFailed('https://img/pharma-wide.jpg');
             jest.advanceTimersByTime(HERO_IMAGE_RETRY_MS);
-            expect(presenter.slides()[0].backdropSource).toBe('poster');
+            expect(resumes()).toEqual([]);
         });
     });
 
@@ -814,6 +823,7 @@ describe('DashboardHeroSlidesPresenter', () => {
             type: 'series',
             source: 'xtream',
             playlist_id: 'p2',
+            backdrop_url: undefined,
         };
 
         it("stands on its title page's backdrop", async () => {
@@ -865,14 +875,24 @@ describe('DashboardHeroSlidesPresenter', () => {
         });
     });
 
-    it('falls back to the generated stage when an image fails to load', () => {
-        const presenter = create();
-        presenter.markImageFailed('https://img/pharma-poster.jpg');
+    it('never features a title on its poster or a logo: no banner, no slide', () => {
+        recentItems.set([{ ...series, backdrop_url: undefined }]);
+        favorites.set([{ ...channel, backdrop_url: undefined }]);
+        addedItems.set([]);
+        candidates.set([
+            { origin: 'favorite', item: { ...channel, backdrop_url: undefined } },
+        ]);
 
-        expect(presenter.slides()[0]).toMatchObject({
-            backdropUrl: undefined,
-            backdropSource: 'fallback',
-        });
+        expect(create().slides()).toEqual([]);
+    });
+
+    it('leaves a resume slide whose banner fails to load out of the hero', () => {
+        const presenter = create();
+        presenter.markImageFailed('https://img/pharma-wide.jpg');
+
+        expect(presenter.slides().map((slide) => slide.kind)).not.toContain(
+            'continue'
+        );
     });
 
     it('keeps the skeleton until every source that can feature a title has loaded', () => {
