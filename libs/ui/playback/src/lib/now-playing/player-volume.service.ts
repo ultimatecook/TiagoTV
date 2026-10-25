@@ -26,13 +26,7 @@ export class PlayerVolumeService {
 
     /** The saved level, 0–1 (1 when none was saved). */
     stored(): number {
-        try {
-            const raw = localStorage.getItem(VOLUME_KEY);
-            const value = raw === null ? 1 : Number(raw);
-            return Number.isFinite(value) ? clampVolume(value) : 1;
-        } catch {
-            return 1;
-        }
+        return storedPlayerVolume();
     }
 
     /** Saves the level and asks the playing Embedded MPV for it. */
@@ -48,6 +42,17 @@ export class PlayerVolumeService {
         } catch {
             // Storage blocked: the level holds for this session only.
         }
+    }
+}
+
+/** The level the players last saved, 0–1 (1 when none was saved). */
+export function storedPlayerVolume(): number {
+    try {
+        const raw = localStorage.getItem(VOLUME_KEY);
+        const value = raw === null ? 1 : Number(raw);
+        return Number.isFinite(value) ? clampVolume(value) : 1;
+    } catch {
+        return 1;
     }
 }
 

@@ -1815,6 +1815,19 @@ a same-session broadcast that arrived while IPC was pending wins over an older
 or same-timestamp reply, so a latched recording acknowledgement cannot be rolled
 back to the command's stale baseline.
 
+The volume is confirmed late too: the helper reports its state at most every
+250 ms, the main process polls it every 500 ms, and a volume command's reply
+carries the level from before the command. `EmbeddedMpvVolumeRequest`
+(`embedded-mpv-volume-request.ts`) therefore makes the adapter report the
+level the controls last asked for, on that session, until the session reports
+it (within 0.005), or for at most 1.5 s when it never does (a refused command:
+the session's level wins). Reported as is, those late levels reached
+`ControlsVolume` as controller changes: the slider snapped back while dragged
+and after release, and after a mute and an unmute the button showed the player
+muted while mpv played, so the next click "unmuted" it and the button seemed
+unable to mute. Levels set from elsewhere (the stages' `PlayerVolumeService`
+requests) still show as the session reports them.
+
 ### Native-view engine
 
 The native MPV surface paints outside Chromium's DOM stacking model. It keeps
@@ -1923,6 +1936,7 @@ libs/ui/playback/src/lib/embedded-mpv-player/
 ├── embedded-mpv-controls-recording.ts
 ├── embedded-mpv-controls-recording-feedback.ts
 ├── embedded-mpv-stream-stats.ts
+├── embedded-mpv-volume-request.ts      # the level asked for, until mpv reports it
 ├── embedded-mpv-player.component.ts
 ├── embedded-mpv-player.component.html
 └── embedded-mpv-session-controller.ts
