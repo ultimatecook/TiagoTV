@@ -31,6 +31,9 @@ export interface CatalogTitle extends PlatformTitle {
     readonly platforms: readonly StreamingPlatform[];
 }
 
+/** What names a title's page: its kind and its stream or series id. */
+export type CatalogTitleRef = Pick<CatalogTitle, 'kind' | 'id'>;
+
 /** One platform's titles, as its categories list them. */
 export interface PlatformTitleList {
     readonly platform: StreamingPlatform;

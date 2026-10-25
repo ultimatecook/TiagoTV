@@ -22,6 +22,7 @@ import {
 import type {
     CatalogKind,
     CatalogTitle,
+    CatalogTitleRef,
     PlatformTitleList,
 } from './catalog-titles';
 
@@ -182,7 +183,7 @@ export class CatalogService {
     }
 
     /** The hero title's page, once fetched. */
-    extrasOf(title: CatalogTitle): CatalogExtras | null {
+    extrasOf(title: CatalogTitleRef): CatalogExtras | null {
         const source = this.source();
         return source
             ? (this.loadedExtras().get(extrasKey(source._id, title)) ?? null)
@@ -190,7 +191,7 @@ export class CatalogService {
     }
 
     /** Fetches a hero title's page (backdrop, length), once per title. */
-    loadExtras(title: CatalogTitle): void {
+    loadExtras(title: CatalogTitleRef): void {
         const source = this.source();
         if (!source) {
             return;
@@ -372,7 +373,7 @@ export class CatalogService {
     }
 }
 
-function extrasKey(playlistId: string, title: CatalogTitle): string {
+function extrasKey(playlistId: string, title: CatalogTitleRef): string {
     return `${playlistId}:${title.kind}:${title.id}`;
 }
 
