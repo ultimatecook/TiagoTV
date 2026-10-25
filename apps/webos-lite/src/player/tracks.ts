@@ -134,9 +134,14 @@ export class MediaTracks {
         this.subtitles = named(embedded.concat(files), (index) => t('EMBEDDED_MPV.PLAYER.SUBTITLE_TRACK_FALLBACK', { index }));
         this.audio.read();
         if (this.armed) {
-            this.audio.applyWanted();
+            // Live channels keep the tracks they start with: switching one
+            // mid-stream can stall webOS's pipeline. The menu still works.
+            const live = this.item?.kind === 'live';
+            if (!live) {
+                this.audio.applyWanted();
+            }
             if (this.picked === null) {
-                this.chosen = this.pickSubtitles();
+                this.chosen = live ? OFF : this.pickSubtitles();
             } else if (!this.entry(this.chosen)) {
                 // A reconnected stream has new tracks: the same language.
                 const again = this.picked ? this.subtitles.find((entry) => entry.language === this.picked) : undefined;

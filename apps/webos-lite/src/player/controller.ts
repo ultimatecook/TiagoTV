@@ -30,7 +30,17 @@ export interface PlayView {
 export const ZAP_DELAY_MS = 450;
 const SAVE_EVERY_S = 10;
 const MAX_RECONNECTS = 3;
-const MAX_STALL_RECONNECTS = 1;
+/** A frozen live picture reconnects up to this many times in a row. */
+export const MAX_STALL_RECONNECTS = 3;
+/**
+ * Playing this long without a cut starts the count over: one stall used to
+ * spend the channel's only reconnect, so the next one, even an hour later,
+ * ended on the error panel.
+ */
+export const HEALTHY_MS = 60000;
+/** A live stream that played and then could not reopen is tried again on its own. */
+export const LIVE_AUTO_RETRY_MS = 10000;
+export const LIVE_AUTO_RETRIES = 3;
 const BUSY_GIVEN_UP = 'Si la Mac u otro equipo está reproduciendo, cerralo y apretá OK para reintentar.';
 const RECONNECT_DELAY_MS = 2000;
 /**
@@ -56,6 +66,16 @@ const MESSAGES: Readonly<Record<'busy' | 'missing' | 'failed', [string, string]>
 /** mpegts.js's first buffer: more margin when "Más estable". */
 const STASH_BYTES = { stable: 2 * 1024 * 1024, normal: 1024 * 1024 } as const;
 
+/** Ajustes → Diagnóstico's "Reproducción": what the live streams went through. */
+const played = { cuts: 0, reconnects: 0, attempts: '' };
+
+export function playbackSummary(): string {
+    if (!played.attempts) {
+        return 'Todavía no se reprodujo nada';
+    }
+    return `Cortes: ${played.cuts} · reconexiones: ${played.reconnects} · último: ${played.attempts}`;
+}
+
 export class PlaybackController {
     index: number;
     state: PlayState = 'starting';
@@ -63,6 +83,10 @@ export class PlaybackController {
     private reconnects = 0;
     private stalls = 0;
     private busyRetries = 0;
+    private liveRetries = 0;
+    /** The stream played and was cut: reconnects open TS first (one connection, no playlist). */
+    private cut = false;
+    private playingSince = 0;
     private lastSaved = 0;
     private readonly zap = new Slot('zap');
     private view: PlayView | null = null;
@@ -123,6 +147,9 @@ export class PlaybackController {
 
     private setState(state: PlayState): void {
         this.state = state;
+        if (state === 'playing') {
+            this.playingSince = Date.now();
+        }
         if (state === 'playing' && this.isLive) {
             // "Últimos canales vistos" on the Home.
             const item = this.item;
@@ -141,7 +168,7 @@ export class PlaybackController {
         const client = this.app.client;
         const native = this.engine.isNative;
         if (item.kind === 'live') {
-            return liveCandidates((ext) => client.liveUrl(item.id, ext), loadFluidez(), {
+            return liveCandidates((ext) => client.liveUrl(item.id, ext), this.cut ? 'normal' : loadFluidez(), {
                 mse: mseSupported(),
                 hlsType: hlsMediaOptionType(),
                 native,
@@ -171,9 +198,22 @@ export class PlaybackController {
         if (this.closed || outcome.kind === 'cancelled') {
             return;
         }
+        played.attempts = this.engine.attempts.slice(-3).join(' · ');
         if (outcome.kind === 'playing') {
             this.reconnects = 0;
             this.busyRetries = 0;
+            this.liveRetries = 0;
+        }
+        if (outcome.kind === 'failed' && this.isLive && this.cut && this.liveRetries < LIVE_AUTO_RETRIES) {
+            // It played a moment ago: the signal is coming back, keep trying.
+            this.liveRetries++;
+            this.setState('reconnecting');
+            this.zap.later(LIVE_AUTO_RETRY_MS, () => {
+                if (!this.closed && this.state === 'reconnecting') {
+                    void this.start(0, true);
+                }
+            });
+            return;
         }
         this.setState(outcome.kind);
         if (outcome.kind === 'busy' && this.busyRetries < BUSY_AUTO_RETRIES) {
@@ -191,6 +231,7 @@ export class PlaybackController {
         this.reconnects = 0;
         this.stalls = 0;
         this.busyRetries = 0;
+        this.liveRetries = 0;
         void this.start(0);
     }
 
@@ -198,7 +239,18 @@ export class PlaybackController {
         return this.state === 'busy' || this.state === 'missing' || this.state === 'failed';
     }
 
+    /** A cut after a healthy stretch is a new one, not the same trouble. */
+    private forgive(): void {
+        if (Date.now() - this.playingSince >= HEALTHY_MS) {
+            this.stalls = 0;
+            this.reconnects = 0;
+        }
+    }
+
     private reconnect(): void {
+        this.cut = true;
+        played.cuts++;
+        played.reconnects++;
         this.setState('reconnecting');
         void this.engine.stop();
         this.zap.later(RECONNECT_DELAY_MS, () => void this.start(0, true));
@@ -208,6 +260,7 @@ export class PlaybackController {
         if (this.closed || this.state !== 'playing') {
             return;
         }
+        this.forgive();
         if (!this.isLive || this.reconnects >= MAX_RECONNECTS) {
             this.setState('failed');
             return;
@@ -220,6 +273,7 @@ export class PlaybackController {
         if (this.closed || this.state !== 'playing') {
             return;
         }
+        this.forgive();
         if (this.stalls >= MAX_STALL_RECONNECTS) {
             void this.engine.stop();
             this.setState('failed');
@@ -237,6 +291,8 @@ export class PlaybackController {
         this.stalls = 0;
         this.reconnects = 0;
         this.busyRetries = 0;
+        this.liveRetries = 0;
+        this.cut = false;
         this.view?.showItem(this.item, this.index, count);
         // Stop at once (one connection), start once the keys settle.
         void this.engine.stop();

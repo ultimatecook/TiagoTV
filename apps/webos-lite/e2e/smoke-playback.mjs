@@ -109,9 +109,12 @@ export async function liveSuite(h) {
     await h.waitPlaying();
     await page.waitForFunction(() => /Reconectando/.test(document.body.innerText), null, { timeout: 30000 });
     check('stall: reconnects', true);
-    await page.waitForFunction(() => /No se pudo reproducir/.test(document.body.innerText), null, { timeout: 45000 });
+    await page.waitForFunction(() => /No se pudo reproducir/.test(document.body.innerText), null, { timeout: 100000 });
     const stalled = (await h.streamsSince(mark)).filter((entry) => entry.endsWith('.ts'));
-    check('stall: one reconnect, then the error panel', stalled.length === 2, stalled.join(', '));
+    // The first stream and three reconnects in a row (TS first after a cut), then the panel.
+    check('stall: three reconnects in a row, then the error panel', stalled.length === 4, stalled.join(', '));
+    const afterCut = await h.streamsSince(mark);
+    check('stall: reconnects open TS first', afterCut.slice(-3).every((entry) => entry.endsWith('.ts')), afterCut.join(', '));
     s = await h.stats();
     check('stall: stream closed after giving up', s.open === 0, `open ${s.open}`);
     await fetch(`${panel.url}/__stall?on=0`);
