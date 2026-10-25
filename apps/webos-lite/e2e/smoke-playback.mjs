@@ -72,15 +72,36 @@ export async function liveSuite(h) {
     let s = await h.stats();
     check('one connection at a time', s.maxOpen <= 1 && s.refused === 0, `max open ${s.maxOpen}, refused ${s.refused}`);
 
+    const busyShown = () => page.waitForFunction(() => /figura en uso/.test(document.body.innerText), null, { timeout: 25000 });
+    const playingWithin = (ms) =>
+        page.waitForFunction(
+            () => {
+                const video = document.querySelector('video');
+                return !!video && video.currentTime > 0.4 && !video.paused;
+            },
+            null,
+            { timeout: ms }
+        );
     await fetch(`${panel.url}/__busy?on=1`);
     await press('PageUp');
-    await page.waitForFunction(() => /en uso en otro dispositivo/.test(document.body.innerText), null, { timeout: 25000 });
+    await busyShown();
     check('busy account message', true);
+    const busyText = await page.evaluate(() => document.body.innerText);
+    check('busy: says it retries on its own, does not blame the Mac', /Se reintenta solo/.test(busyText) && !/Cerrá TiagoTV en la Mac/.test(busyText));
     await shot('26-reproductor-ocupado');
+    // The provider lets go of the connection: it plays again without OK.
     await fetch(`${panel.url}/__busy?on=0`);
+    await playingWithin(35000);
+    check('busy: plays on its own once the account frees', true);
+    // OK forces a try at once.
+    await fetch(`${panel.url}/__busy?on=1`);
+    await press('PageDown');
+    await busyShown();
+    await fetch(`${panel.url}/__busy?on=0`);
+    const forcedAt = Date.now();
     await press('Enter');
     await h.waitPlaying();
-    check('OK retries after busy', true);
+    check('OK forces a retry at once', Date.now() - forcedAt < 12000, `${Date.now() - forcedAt} ms`);
 
     await fetch(`${panel.url}/__stall?on=1`);
     mark = (await h.stats()).streams.length;

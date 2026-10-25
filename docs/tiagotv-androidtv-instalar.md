@@ -80,6 +80,8 @@ volvé a cargar la cuenta.
   cambiar el modo de dibujo de la app (`texture_view`).
 - **Sin audio en una película (MKV)**: el proyector no decodifica ese
   formato de audio (AC-3/DTS); probá con otra versión del título.
-- **"Tu cuenta está en uso en otro dispositivo"**: la cuenta admite una
-  sola conexión; cerrá TiagoTV en la Mac o la LG y apretá OK.
+- **"La cuenta figura en uso"**: la cuenta admite una sola conexión y el
+  proveedor todavía cuenta una abierta (otro equipo reproduciendo, o una
+  que quedó colgada). La app reintenta sola cada 15 segundos; OK fuerza
+  el reintento. Si sigue, cerrá TiagoTV en la Mac o la LG.
 - Más detalle para quien mantiene la app: `apps/androidtv/README.md`.

@@ -95,6 +95,18 @@ interface Attempt {
 
 export const RELEASE_GAP_MS = 300;
 export const BUSY_RETRY_MS = 3000;
+/** How often the account is asked whether a connection freed up. */
+export const FREE_POLL_MS = 2000;
+/**
+ * After a failed attempt, how long the next one waits for the provider to
+ * let go of it: the provider counts a closed stream for a few seconds, and
+ * the next attempt was refused as if another device held the account.
+ */
+export const FREE_BETWEEN_MS = 6000;
+/** Before the account is called busy, how long its connection may take to free up. */
+export const FREE_FINAL_MS = 10000;
+
+type Freed = 'free' | 'freed' | 'busy' | 'cancelled';
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_STASH = 1024 * 1024;
 
@@ -171,14 +183,40 @@ export class PlayerEngine {
     }
 
     async play(candidates: readonly Candidate[], options: PlayOptions = {}): Promise<Outcome> {
-        const generation = ++this.generation;
+        return this.run(candidates, options, ++this.generation, true);
+    }
+
+    /**
+     * One round through the candidates. When they all fail while the
+     * account's connection is still counted (this TV's own, closing at the
+     * provider), the round runs `again` once it frees up.
+     */
+    private async run(
+        candidates: readonly Candidate[],
+        options: PlayOptions,
+        generation: number,
+        again: boolean
+    ): Promise<Outcome> {
         let missing = false;
+        let refused = false;
+        let held = false;
         let retries = options.busyRetries ?? 0;
         for (let i = 0; i < candidates.length; i++) {
             const candidate = candidates[i];
             await this.release();
             if (generation !== this.generation) {
                 return { kind: 'cancelled' };
+            }
+            if (i > 0) {
+                const free = await this.untilFree(generation, FREE_BETWEEN_MS);
+                if (free === 'cancelled') {
+                    return { kind: 'cancelled' };
+                }
+                // Still held after the wait: no other format would open.
+                if (free === 'busy') {
+                    held = true;
+                    break;
+                }
             }
             const attempt = await this.attempt(candidate, options);
             if (generation !== this.generation) {
@@ -204,8 +242,9 @@ export class PlayerEngine {
                 continue;
             }
             if (failure === 'busy') {
-                await this.release();
-                return { kind: 'busy' };
+                // Refused: the account decides below, once it can free up.
+                refused = true;
+                break;
             }
             missing = missing || failure === 'missing';
         }
@@ -213,14 +252,41 @@ export class PlayerEngine {
         if (generation !== this.generation) {
             return { kind: 'cancelled' };
         }
-        const busy = await this.deps.isBusy().then(
-            (value) => value,
-            () => false
-        );
-        if (generation !== this.generation) {
+        const free = held ? 'busy' : await this.untilFree(generation, FREE_FINAL_MS);
+        if (free === 'cancelled') {
             return { kind: 'cancelled' };
         }
-        return { kind: busy ? 'busy' : missing ? 'missing' : 'failed' };
+        if (again && (free === 'freed' || (free === 'free' && refused))) {
+            return this.run(candidates, options, generation, false);
+        }
+        return { kind: refused || free === 'busy' ? 'busy' : missing ? 'missing' : 'failed' };
+    }
+
+    /**
+     * Waits up to `maxMs` for the account to have a free connection:
+     * 'free' at once, 'freed' after waiting, 'busy' when it never did.
+     */
+    private async untilFree(generation: number, maxMs: number): Promise<Freed> {
+        const end = this.deps.now() + maxMs;
+        for (let waited = false; ; waited = true) {
+            const busy = await this.deps.isBusy().then(
+                (value) => value,
+                () => false
+            );
+            if (generation !== this.generation) {
+                return 'cancelled';
+            }
+            if (!busy) {
+                return waited ? 'freed' : 'free';
+            }
+            if (this.deps.now() >= end) {
+                return 'busy';
+            }
+            await this.deps.delay(FREE_POLL_MS);
+            if (generation !== this.generation) {
+                return 'cancelled';
+            }
+        }
     }
 
     private async release(): Promise<void> {

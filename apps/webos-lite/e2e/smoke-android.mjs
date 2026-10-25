@@ -179,7 +179,7 @@ async function liveSuite(h) {
     await page.evaluate(() => window.__fakeNative.fail(458));
     await press('PageUp');
     await page.waitForFunction(
-        () => /en uso en otro dispositivo/.test(document.body.innerText),
+        () => /figura en uso/.test(document.body.innerText),
         null,
         { timeout: 25000 }
     );
