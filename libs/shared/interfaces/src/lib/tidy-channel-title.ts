@@ -10,6 +10,9 @@
 const BRANDS: Record<string, string> = {
     BEIN: 'beIN',
     DEPORTV: 'DeporTV',
+    DIRECTV: 'DIRECTV',
+    DSPORTS: 'DSports',
+    'DSPORTS+': 'DSports+',
     LALIGA: 'LaLiga',
     'LALIGA+': 'LaLiga+',
     METV: 'MeTV',

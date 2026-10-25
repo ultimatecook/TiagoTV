@@ -124,6 +124,12 @@
     }
 }
 
+// Under a playing title the episodes start a section of their own: the
+// header sat flush against the player's controls.
+.shell__player--active ~ .shell__episodes {
+    padding-top: 48px;
+}
+
 .shell__about {
     display: block;
     // Air between the last episode row and the section divider.
@@ -184,6 +190,10 @@
 @media (max-width: 800px) {
     .shell__player--active {
         padding: 8px 12px 0;
+    }
+
+    .shell__player--active ~ .shell__episodes {
+        padding-top: 32px;
     }
 
     .shell__extras {

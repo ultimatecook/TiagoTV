@@ -1,5 +1,6 @@
 import {
     categoryLanguageCode,
+    isOtherLatamCountryChannel,
     isSpanishOrEnglishCategory,
 } from '@iptvnator/shared/interfaces';
 import {
@@ -48,6 +49,7 @@ export interface TvCountry {
 interface FilingCategory {
     readonly country: CountryDefinition;
     readonly irish: boolean;
+    readonly regional?: boolean;
     readonly label: string | null;
     readonly inputs: CountryChannelInput[];
 }
@@ -81,6 +83,7 @@ export function buildCountriesTv(
             !category ||
             !Number.isFinite(streamId) ||
             Number(stream.is_adult) === 1 ||
+            (category.regional && isOtherLatamCountryChannel(stream.name)) ||
             isEmptySlot(stream.name, category.label, now, stream.added)
         ) {
             continue;

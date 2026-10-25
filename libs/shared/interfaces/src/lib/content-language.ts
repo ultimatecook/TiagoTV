@@ -15,8 +15,34 @@ const KEPT_CODES: Record<ContentKind, ReadonlySet<string>> = {
     series: new Set(['ES', 'EN']),
 };
 
-/** From Latin America, only Argentina's live channels. */
+/**
+ * From Latin America, Argentina's live channels, and the region's sports
+ * groups named after no country ("|LAT| ✪ DEPORTES", "|LAT| ✪ ESPN": the
+ * ESPN, DSports and FOX Sports feeds Argentina watches).
+ */
 const ARGENTINA = /\bargentin/i;
+const LATAM_SPORTS =
+    /\b(deport\w*|sports?|espn\w*|direct ?tv|dsports?|futbol|f[uú]tbol|soccer|tyc|tnt)\b/i;
+const OTHER_LATAM_COUNTRY =
+    /\b(m[eé]xic\w*|colombia\w*|chile\w*|per[uú]\w*|uruguay\w*|paraguay\w*|bolivia\w*|ecuador\w*|venezuel\w*|brasil\w*|brazil\w*|centro ?am[eé]rica\w*|caribe\w*|dominican\w*|puerto rico|costa rica|guatemala|honduras|panam[aá]|cuba|salvador|nicaragua|mx|mex|co|col|cl|chl|pe|uy|py|bo|ec|ve|br|cr|gt|hn|pa|pr)\b/i;
+/** A channel's leading tag naming another country: "|MX| ESPN", "CHI FOX SPORTS". */
+const OTHER_COUNTRY_TAG =
+    /^\W*(mx|mex|co|col|cl|chl|chi|pe|per|uy|uru|py|par|bo|bol|ec|ecu|ve|ven|br|bra|cr|gt|hn|pa|do|pr|us|usa)\b/i;
+
+/** A |LAT| sports group named after no country: Argentina keeps it. */
+export function isLatamSportsCategory(name: string): boolean {
+    return (
+        categoryLanguageCode(name) === 'LAT' &&
+        !ARGENTINA.test(name) &&
+        LATAM_SPORTS.test(name) &&
+        !OTHER_LATAM_COUNTRY.test(name)
+    );
+}
+
+/** In a regional sports group, a channel of another country's ("|MX| ESPN"). */
+export function isOtherLatamCountryChannel(name: string): boolean {
+    return OTHER_COUNTRY_TAG.test(name) || OTHER_LATAM_COUNTRY.test(name);
+}
 
 /**
  * Groups in another language inside otherwise kept codes: Portuguese,
@@ -37,7 +63,10 @@ export function isSpanishOrEnglishCategory(
 ): boolean {
     const code = categoryLanguageCode(name);
     if (code === 'LAT') {
-        return kind === 'live' && ARGENTINA.test(name);
+        return (
+            kind === 'live' &&
+            (ARGENTINA.test(name) || isLatamSportsCategory(name))
+        );
     }
     return (
         code !== null &&
