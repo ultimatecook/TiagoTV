@@ -1,3 +1,5 @@
+import { isLatamSportsCategory } from '@iptvnator/shared/interfaces';
+
 /**
  * TiagoTV's "En vivo": the countries whose live channels the language
  * filter keeps (`isSpanishOrEnglishCategory`), in the page's order:
@@ -96,12 +98,15 @@ export function normalizeName(name: string): string {
 export interface CategoryCountry {
     readonly country: CountryDefinition;
     readonly irish: boolean;
+    /** A |LAT| sports group: its channels of other countries stay out. */
+    readonly regional?: boolean;
 }
 
 /**
  * The country a kept live category belongs to, by its code, and for |LAT|
- * by the country its name holds. Null for a category filed nowhere (|EN|,
- * the rest of Latin America).
+ * by the country its name holds (its sports groups named after no country
+ * go to Argentina). Null for a category filed nowhere (|EN|, the rest of
+ * Latin America).
  */
 export function countryOfCategory(
     code: string | null,
@@ -110,8 +115,12 @@ export function countryOfCategory(
     const normalized = normalizeName(name);
     switch (code) {
         case 'LAT':
-            return /\bARGENTIN/.test(normalized)
-                ? { country: byId('ar'), irish: false }
+            if (/\bARGENTIN/.test(normalized)) {
+                return { country: byId('ar'), irish: false };
+            }
+            // The region's sports groups named after no country.
+            return isLatamSportsCategory(name)
+                ? { country: byId('ar'), irish: false, regional: true }
                 : null;
         case 'ES':
             return { country: byId('es'), irish: false };

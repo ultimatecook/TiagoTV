@@ -133,6 +133,32 @@ describe('buildCountriesTv', () => {
     });
 });
 
+describe("Argentina's regional sports", () => {
+    it('adds the |LAT| sports group, without other countries’ channels', () => {
+        const [argentina] = buildCountriesTv(
+            [
+                { category_id: 1, category_name: '|LAT|  ✪ ARGENTINA' },
+                { category_id: 2, category_name: '|LAT| ✪ DEPORTES' },
+                { category_id: 3, category_name: '|LAT| ✪ MEXICO DEPORTES' },
+            ],
+            [
+                { stream_id: 10, category_id: 1, name: '|ARG| TELEFE' },
+                { stream_id: 11, category_id: 2, name: 'ESPN 3' },
+                { stream_id: 12, category_id: 2, name: 'DSPORTS 2' },
+                { stream_id: 13, category_id: 2, name: '|MX| ESPN' },
+                { stream_id: 14, category_id: 3, name: 'TUDN' },
+            ]
+        );
+        const titles = argentina.rows.flatMap((row) =>
+            row.channels.map((channel) => channel.title)
+        );
+
+        expect(argentina.definition.id).toBe('ar');
+        expect(titles).toEqual(expect.arrayContaining(['ESPN 3', 'DSports 2']));
+        expect(titles.join(' ')).not.toMatch(/MX|TUDN/);
+    });
+});
+
 describe('buildCountriesTv on a real panel', () => {
     const countries = buildCountriesTv(
         SNAPSHOT_CATEGORIES.map(([category_id, category_name]) => ({

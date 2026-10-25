@@ -3,6 +3,8 @@ import {
     categoryDisplayLabels,
     categoryLanguageCode,
     cleanCategoryName,
+    isLatamSportsCategory,
+    isOtherLatamCountryChannel,
     isSpanishOrEnglishCategory,
 } from './content-language';
 
@@ -12,6 +14,9 @@ describe('isSpanishOrEnglishCategory', () => {
             '|ES| ✪ DAZN LA LIGA',
             '|LAT|  ✪ ARGENTINA',
             '|LAT|  ✪ ARGENTINA LIGA PROFESIONAL FOT',
+            // The region's sports, named after no country (ESPN, DSports).
+            '|LAT| ✪ DEPORTES',
+            '|LAT|  ✪ ESPN',
             '|UK| ✪ SPORTS',
             '|US| ✪ LATINO NETWORK',
         ]) {
@@ -26,12 +31,33 @@ describe('isSpanishOrEnglishCategory', () => {
             '|LAT| ✪ MEXICO',
             '|LAT|  ✪ GENERAL',
             '|LAT|  ✪ BR SPORTS',
+            '|LAT| ✪ MEXICO DEPORTES',
+            '|LAT| ✪ CHILE ESPN',
+            '|LAT| ✪ NOVELAS',
             '|CA| ✪ ENGLISH CH',
             '|UK| ✪ ARABIC TV',
             '|UK| ✪ ASIA EU',
             '✪ NORDIC MULTI',
         ]) {
             expect(isSpanishOrEnglishCategory(name, 'live')).toBe(false);
+        }
+    });
+
+    it("keeps the region's sports for live only", () => {
+        expect(isLatamSportsCategory('|LAT| ✪ DEPORTES')).toBe(true);
+        expect(isLatamSportsCategory('|LAT|  ✪ ARGENTINA')).toBe(false);
+        expect(isLatamSportsCategory('|ES| ✪ DEPORTES')).toBe(false);
+        expect(isSpanishOrEnglishCategory('|LAT| ✪ DEPORTES', 'vod')).toBe(
+            false
+        );
+    });
+
+    it("tells another country's channel in a regional group", () => {
+        for (const name of ['|MX| ESPN', 'MEX FOX SPORTS', 'ESPN Chile']) {
+            expect(isOtherLatamCountryChannel(name)).toBe(true);
+        }
+        for (const name of ['ESPN 3', 'DSPORTS 2', 'FOX SPORTS 2 ᴴᴰ']) {
+            expect(isOtherLatamCountryChannel(name)).toBe(false);
         }
     });
 
