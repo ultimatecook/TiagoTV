@@ -1,0 +1,353 @@
+/*
+ * TiagoTV liviano, drawn for 1920x1080 on Chrome 53 (LG webOS 4), after
+ * the desktop app's "ultra clean" design (apps/web/src/_tv-tokens.scss):
+ * the same colours, a warm "room" behind everything, dark glass for the
+ * bar and the pills, Bebas Neue for titles, DM Sans for the rest.
+ *
+ * Ten-foot scale, after LG's own webOS kits at 1920x1080 (Moonstone, and
+ * Sandstone halved from 4K) for a 49" set seen from the sofa: nothing
+ * under 24px (22px only for bold capitals: badges, tags, table labels),
+ * meta and captions 24, body 26-28, buttons 28, section headings 34,
+ * page titles 52, hero titles in Bebas 108-118. Everything sits 80px in
+ * from the sides and 28px from the top (LG's overscan margin is 20px).
+ * Focus: a 4px white ring and a 1.05 lift (1.02-1.03 on wide cards).
+ *
+ * The TV gates (tools/gates.mjs) reject what that engine lacks: flex gap
+ * (margins instead), CSS Grid, inset, :has/:is/:where, color-mix, hex
+ * colours with alpha, blur (backdrop-filter: the glass is a gradient),
+ * min()/max()/clamp(), and any transition but transform/opacity.
+ */
+:root {
+    --text: #f4f1ea;
+    --text-img: #fbf8f2;
+    --text-img-2: #e6e2d8;
+    --text-img-3: #d6d2c6;
+    --text-2: #bdb9ad;
+    --text-3: #aeaa9d;
+    --meta: #a39f93;
+    --red: #e8262b;
+    --live-red: #ff5a5f;
+    --green: #46d369;
+    --amber: #febc2e;
+    --danger: #ff7b7f;
+    --card: rgba(255, 255, 255, 0.06);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --list: rgba(255, 255, 255, 0.045);
+    --separator: rgba(255, 255, 255, 0.08);
+    --ground: #12100e;
+    --ring: #ffffff;
+    --gutter: 80px;
+    --ui: 'DM Sans', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    --display: 'Bebas Neue', 'DM Sans', Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--ui);
+    font-size: 26px;
+    -webkit-font-smoothing: antialiased;
+    cursor: default;
+}
+
+.app {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: var(--ground);
+    -webkit-transform-origin: 0 0;
+    transform-origin: 0 0;
+}
+
+/* The room the desktop's glass window floats in, as the Mac shows it:
+   slate blue above, mauve across, a warm lamp-lit floor. One static
+   gradient: no image to decode, never repainted. */
+.room {
+    background: linear-gradient(112deg, #3a4f61 0%, #4f5168 30%, #635369 52%, #7c5c5f 74%, #9a6b50 100%);
+}
+
+.screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+p {
+    margin: 0;
+    font-weight: inherit;
+}
+
+img {
+    border: 0;
+}
+
+/* The TiagoTV wordmark: Bebas Neue in the brand red. */
+.brand {
+    font-family: var(--display);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--red);
+    white-space: nowrap;
+}
+
+.display {
+    font-family: var(--display);
+    font-weight: 400;
+    text-transform: uppercase;
+    line-height: 0.9;
+    letter-spacing: 0.005em;
+}
+
+/* Focus: a white ring and a small lift, the same everywhere. A spread
+   shadow without blur: cheap for the TV's GPU. */
+.f {
+    outline: none;
+    -webkit-transition: -webkit-transform 0.16s ease-out;
+    transition: transform 0.16s ease-out;
+}
+
+.f.focused {
+    box-shadow: 0 0 0 4px var(--ring);
+    -webkit-transform: scale(1.05);
+    transform: scale(1.05);
+    z-index: 2;
+}
+
+/* Pills: white primary, dark glass secondary. */
+.button {
+    display: inline-block;
+    position: relative;
+    padding: 0 40px;
+    height: 76px;
+    line-height: 76px;
+    border-radius: 38px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-right: 18px;
+    vertical-align: middle;
+}
+
+.button--primary {
+    background: #ffffff;
+    box-shadow: none;
+    color: #0b0b09;
+}
+
+.button--small {
+    height: 60px;
+    line-height: 60px;
+    font-size: 26px;
+    padding: 0 28px;
+}
+
+.button--round {
+    width: 76px;
+    padding: 0;
+    text-align: center;
+}
+
+.button .icon {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    margin-right: 14px;
+    vertical-align: -4px;
+}
+
+.button--round .icon {
+    margin: 0;
+    width: 32px;
+    height: 32px;
+    vertical-align: -5px;
+}
+
+.button--option.is-selected {
+    background: #ffffff;
+    color: #0b0b09;
+    box-shadow: none;
+}
+
+.button.focused {
+    box-shadow: 0 0 0 4px var(--ring);
+    -webkit-transform: scale(1.04);
+    transform: scale(1.04);
+}
+
+.button--primary.focused {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.45);
+}
+
+.icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0 14px;
+    height: 36px;
+    line-height: 36px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--text);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.badge--live {
+    background: var(--red);
+    color: #ffffff;
+}
+
+.dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+    background: var(--green);
+    margin-right: 10px;
+    vertical-align: 2px;
+}
+
+.dot--red {
+    background: var(--live-red);
+}
+
+/* A section's heading: 20px/600 on the Mac. */
+.heading {
+    height: 64px;
+    padding: 0 var(--gutter);
+    white-space: nowrap;
+}
+
+.heading__title {
+    display: inline-block;
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 64px;
+}
+
+.heading__note {
+    display: inline-block;
+    margin-left: 18px;
+    color: var(--meta);
+    font-size: 24px;
+    font-weight: 500;
+}
+
+/* An image with its fallback text (dom.ts picture()). */
+.pic {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.pic__img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    -webkit-transition: opacity 0.2s ease-out;
+    transition: opacity 0.2s ease-out;
+}
+
+.pic.is-loaded .pic__img {
+    opacity: 1;
+}
+
+.pic__fallback {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+    text-align: center;
+    color: var(--text-2);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    max-height: 3.6em;
+    opacity: 0;
+}
+
+.pic.is-broken .pic__fallback {
+    opacity: 1;
+}
+
+.status {
+    padding: 0 var(--gutter);
+    color: var(--text-2);
+    font-size: 28px;
+    line-height: 1.45;
+}
+
+.dialog {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    background: rgba(0, 0, 0, 0.72);
+    z-index: 50;
+}
+
+.dialog__panel {
+    position: absolute;
+    left: 510px;
+    top: 330px;
+    width: 900px;
+    padding: 56px 64px 40px;
+    border-radius: 32px;
+    background: linear-gradient(180deg, #2f2d33 0%, #1f1d21 100%);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+
+.dialog__title {
+    font-size: 44px;
+    font-weight: 600;
+    line-height: 1.15;
+    margin-bottom: 18px;
+}
+
+.dialog__text {
+    color: var(--text-2);
+    font-size: 28px;
+    line-height: 1.4;
+    margin-bottom: 36px;
+}
+
+.dialog__actions {
+    margin-top: 24px;
+}

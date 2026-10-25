@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "lib": ["es2022", "dom"],
+        "types": []
+    },
+    "files": ["../../global.d.ts"],
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/*.spec.ts"]
+}

@@ -1,0 +1,483 @@
+/* Heroes: the backdrop under the bar, veiled, fading into the room. */
+.hero {
+    position: relative;
+    width: 1920px;
+    height: 800px;
+    margin-bottom: 10px;
+}
+
+.hero__stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 800px;
+    overflow: hidden;
+    background: #0b0b0a;
+    -webkit-mask-image: linear-gradient(180deg, #000000 0%, #000000 58%, rgba(0, 0, 0, 0) 100%);
+}
+
+.hero__image {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 800px;
+    object-fit: cover;
+    object-position: 50% 25%;
+    opacity: 0;
+    -webkit-transition: opacity 0.5s ease-out;
+    transition: opacity 0.5s ease-out;
+}
+
+.hero__image.is-loaded {
+    opacity: 1;
+}
+
+.hero__keyart {
+    position: absolute;
+    left: 1240px;
+    top: 140px;
+}
+
+.hero__poster {
+    width: 360px;
+    height: 540px;
+    border-radius: 24px;
+}
+
+.hero__poster .pic__img {
+    object-fit: cover;
+}
+
+.hero__veil {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+}
+
+.hero__veil--left {
+    height: 800px;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0) 70%);
+}
+
+.hero__veil--top {
+    height: 220px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.hero__content {
+    position: absolute;
+    left: var(--gutter);
+    bottom: 96px;
+    width: 1180px;
+}
+
+.hero__eyebrow {
+    color: var(--text-img-3);
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hero__platform {
+    display: block;
+    height: 36px;
+    max-width: 220px;
+    margin-top: 16px;
+    object-fit: contain;
+    object-position: 0 50%;
+}
+
+.hero__title {
+    margin-top: 14px;
+    color: var(--text-img);
+    font-size: 118px;
+    line-height: 0.86;
+    max-height: 1.75em;
+    overflow: hidden;
+}
+
+.hero__title.is-long {
+    font-size: 92px;
+}
+
+.hero__meta {
+    margin-top: 20px;
+    color: var(--text-img-3);
+    font-size: 28px;
+    font-weight: 500;
+}
+
+.hero__progress {
+    display: inline-block;
+    width: 260px;
+    height: 6px;
+    margin-right: 20px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.22);
+    overflow: hidden;
+    vertical-align: middle;
+}
+
+.hero__progress i {
+    display: block;
+    height: 6px;
+    background: var(--red);
+}
+
+.hero__plot {
+    margin-top: 16px;
+    max-width: 1000px;
+    color: var(--text-img-2);
+    font-size: 28px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.hero__actions {
+    margin-top: 32px;
+    white-space: nowrap;
+}
+
+/* Scrolled away, a hero's text and dots leave the band under the bar. */
+.hero__content,
+.hero__dots {
+    -webkit-transition: opacity 0.3s ease-out;
+    transition: opacity 0.3s ease-out;
+}
+
+.is-scrolled .hero__content,
+.is-scrolled .hero__dots {
+    opacity: 0;
+}
+
+.hero__dots {
+    position: absolute;
+    right: var(--gutter);
+    bottom: 120px;
+}
+
+.hero__dot {
+    display: inline-block;
+    width: 10px;
+    height: 8px;
+    margin-left: 10px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.hero__dot.is-active {
+    width: 44px;
+    background: #ffffff;
+}
+
+/* "Eventos de hoy": one card of rows. */
+.events {
+    margin: 10px var(--gutter) 0;
+    border-radius: 28px;
+    background: var(--list);
+    box-shadow: inset 0 0 0 2px var(--card-border);
+    overflow: hidden;
+}
+
+.event {
+    position: relative;
+    height: 84px;
+    line-height: 84px;
+    padding: 0 26px;
+    border-top: 2px solid var(--separator);
+    white-space: nowrap;
+    font-size: 26px;
+}
+
+.event:first-child {
+    border-top: 0;
+}
+
+.event.focused {
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
+    -webkit-transform: none;
+    transform: none;
+}
+
+.event > span {
+    display: inline-block;
+    vertical-align: top;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event__status {
+    width: 150px;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.event__status.is-live {
+    color: var(--live-red);
+    font-weight: 700;
+    font-size: 24px;
+}
+
+.event__competition {
+    width: 340px;
+    color: var(--text-3);
+    font-size: 24px;
+}
+
+.event__badge {
+    display: inline-block;
+    width: 44px;
+    height: 44px;
+    margin-right: 16px;
+    border-radius: 10px;
+    vertical-align: middle;
+    overflow: hidden;
+}
+
+.event__badge img {
+    display: block;
+    width: 30px;
+    height: 30px;
+    margin: 7px;
+    object-fit: contain;
+}
+
+.event__sides {
+    width: 880px;
+    text-align: center;
+}
+
+.event__home,
+.event__away {
+    display: inline-block;
+    width: 380px;
+    color: var(--text-2);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: top;
+}
+
+.event__home {
+    text-align: right;
+}
+
+.event__away {
+    text-align: left;
+}
+
+.event__vs {
+    display: inline-block;
+    width: 80px;
+    color: var(--meta);
+    font-size: 24px;
+    vertical-align: top;
+}
+
+.event .is-mine {
+    color: var(--text);
+    font-weight: 700;
+}
+
+.event__title {
+    color: var(--text);
+}
+
+.event__channel {
+    width: 250px;
+    color: var(--meta);
+    font-size: 24px;
+}
+
+.event__play {
+    position: absolute;
+    right: 24px;
+    top: 18px;
+    width: 48px;
+    height: 48px;
+    line-height: 48px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.event__play .icon {
+    display: block;
+    width: 22px;
+    height: 22px;
+    margin: 13px 0 0 14px;
+}
+
+.event.focused .event__play {
+    background: #ffffff;
+    color: #0b0b09;
+}
+
+/* "Series para ti": a large card, two stacked beside it. */
+.sfy {
+    position: relative;
+    height: 760px;
+    margin: 10px var(--gutter) 0;
+}
+
+.sfy__featured {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1100px;
+    height: 760px;
+    border-radius: 36px;
+    overflow: hidden;
+}
+
+.sfy__side {
+    position: absolute;
+    left: 1124px;
+    top: 0;
+    width: 636px;
+}
+
+.sfy__card {
+    position: relative;
+    width: 636px;
+    height: 368px;
+    margin-bottom: 24px;
+    border-radius: 32px;
+    overflow: hidden;
+}
+
+.sfy__card.focused {
+    -webkit-transform: scale(1.03);
+    transform: scale(1.03);
+}
+
+.sfy__art {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.sfy__pic {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+}
+
+.sfy__pic .pic__img {
+    object-fit: cover;
+}
+
+.sfy__pic.is-poster .pic__img {
+    object-position: 50% 20%;
+}
+
+.sfy__veil {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0.85) 100%);
+}
+
+.sfy__content {
+    position: absolute;
+    left: 56px;
+    right: 56px;
+    bottom: 50px;
+}
+
+.sfy__card .sfy__content {
+    left: 34px;
+    right: 34px;
+    bottom: 30px;
+}
+
+.sfy__brand {
+    height: 34px;
+    margin-bottom: 10px;
+    white-space: nowrap;
+}
+
+.sfy__mark {
+    display: inline-block;
+    height: 30px;
+    max-width: 160px;
+    object-fit: contain;
+    object-position: 0 50%;
+    vertical-align: middle;
+}
+
+.sfy__badge {
+    display: inline-block;
+    height: 36px;
+    line-height: 36px;
+    padding: 0 16px;
+    margin-left: 14px;
+    border-radius: 18px;
+    background: var(--red);
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+.sfy__badge--season {
+    background: rgba(255, 255, 255, 0.9);
+    color: #0b0b09;
+}
+
+.sfy__badge--premiere {
+    background: var(--amber);
+    color: #0b0b09;
+}
+
+.sfy__title {
+    color: var(--text-img);
+    font-size: 112px;
+    line-height: 0.88;
+}
+
+.sfy__card .sfy__title {
+    font-size: 64px;
+}
+
+.sfy__meta {
+    margin-top: 14px;
+    color: var(--text-img-3);
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.sfy__plot {
+    margin-top: 14px;
+    color: var(--text-img-2);
+    font-size: 27px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.sfy__card .sfy__plot {
+    font-size: 24px;
+    margin-top: 8px;
+}
+
+.sfy__actions {
+    margin-top: 28px;
+    white-space: nowrap;
+}

@@ -1,0 +1,21 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "strict": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "target": "es2017",
+        "useDefineForClassFields": false,
+        "module": "preserve",
+        "moduleResolution": "bundler",
+        "isolatedModules": true,
+        "noEmit": true,
+        "ignoreDeprecations": "6.0"
+    },
+    "files": [],
+    "include": [],
+    "references": [
+        { "path": "./tsconfig.app.json" },
+        { "path": "./tsconfig.spec.json" }
+    ]
+}

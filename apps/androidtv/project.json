@@ -1,0 +1,44 @@
+{
+    "name": "androidtv",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "projectType": "application",
+    "sourceRoot": "apps/androidtv/app/src",
+    "tags": ["scope:tiagotv", "domain:androidtv", "type:app"],
+    "implicitDependencies": ["webos-lite"],
+    "targets": {
+        "sync-assets": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node apps/androidtv/tools/sync-assets.mjs",
+                "cwd": "{workspaceRoot}"
+            }
+        },
+        "build": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node apps/androidtv/tools/build.mjs",
+                "cwd": "{workspaceRoot}"
+            },
+            "configurations": {
+                "debug": {
+                    "command": "node apps/androidtv/tools/build.mjs --debug"
+                }
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node apps/androidtv/tools/gradle.mjs testReleaseUnitTest",
+                "cwd": "{workspaceRoot}"
+            }
+        },
+        "smoke": {
+            "executor": "nx:run-commands",
+            "dependsOn": [{ "projects": ["webos-lite"], "target": "build" }],
+            "options": {
+                "command": "node apps/webos-lite/e2e/smoke-android.mjs",
+                "cwd": "{workspaceRoot}"
+            }
+        }
+    }
+}

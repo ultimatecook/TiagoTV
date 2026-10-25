@@ -1,0 +1,143 @@
+/* The top bar: the wordmark, the glass capsule of tabs, the circles.
+   Transparent, over the page (heroes run under it), like the desktop's. */
+.topbar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 120px;
+    padding: 0 var(--gutter);
+    z-index: 20;
+}
+
+.topbar__logo {
+    position: absolute;
+    left: var(--gutter);
+    top: 36px;
+    font-size: 54px;
+}
+
+.topbar__middle {
+    position: absolute;
+    left: 0;
+    top: 28px;
+    width: 1920px;
+    text-align: center;
+    pointer-events: none;
+}
+
+/* Dark glass without backdrop-filter: a dark, slightly lit gradient, a
+   hairline edge and a top highlight (inset shadows, no blur). */
+.capsule {
+    display: inline-block;
+    padding: 6px;
+    border-radius: 33px;
+    background: linear-gradient(180deg, rgba(58, 56, 62, 0.88) 0%, rgba(34, 33, 37, 0.92) 100%);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12), inset 0 2px 0 rgba(255, 255, 255, 0.1);
+    white-space: nowrap;
+    pointer-events: auto;
+}
+
+.tab {
+    display: inline-block;
+    height: 54px;
+    line-height: 54px;
+    padding: 0 26px;
+    margin: 0 2px;
+    border-radius: 27px;
+    color: var(--text-2);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    vertical-align: top;
+}
+
+.tab.is-active {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.tab.focused {
+    background: #ffffff;
+    color: #0b0b09;
+    box-shadow: none;
+    -webkit-transform: none;
+    transform: none;
+}
+
+.topbar__right {
+    position: absolute;
+    right: var(--gutter);
+    top: 28px;
+    white-space: nowrap;
+}
+
+.circle {
+    display: inline-block;
+    width: 66px;
+    height: 66px;
+    margin-left: 16px;
+    border-radius: 33px;
+    background: linear-gradient(180deg, rgba(58, 56, 62, 0.88) 0%, rgba(34, 33, 37, 0.92) 100%);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    vertical-align: top;
+}
+
+.circle .icon {
+    display: block;
+    width: 28px;
+    height: 28px;
+    margin: 19px auto 0;
+}
+
+.circle.is-active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.circle.focused {
+    background: #ffffff;
+    color: #0b0b09;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+/* The top scrim: under the bar, over a page once it scrolls (the
+   desktop's), so what passes under the capsule never fights with it.
+   It fades in and out with opacity only. */
+.shell__veil {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 170px;
+    z-index: 10;
+    background: linear-gradient(180deg, rgba(16, 14, 18, 0.97) 0%, rgba(16, 14, 18, 0.9) 52%, rgba(16, 14, 18, 0.45) 76%, rgba(16, 14, 18, 0) 100%);
+    pointer-events: none;
+    opacity: 0;
+}
+
+.is-scrolled > .shell__veil {
+    opacity: 1;
+}
+
+.shell__veil,
+.topbar {
+    -webkit-transition: opacity 0.3s ease-out;
+    transition: opacity 0.3s ease-out;
+}
+
+.pages {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+}
+
+.page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+}

@@ -1,0 +1,1387 @@
+/*
+ * The platforms' looks, after the desktop's platform-design.ts and its
+ * stylesheets (_platform-themes.scss, the platform page's components):
+ * a platform's page and its titles' pages take that platform's ground,
+ * face, buttons, tiles, badges and rings, keyed on `.look--<look>` on the
+ * screen (platform-screen.ts, detail.ts; platform-looks.ts). What Chrome
+ * 53 lacks is written out: colour-mix() as rgba(), the blurred washes as
+ * the platform's own gradient, the pointer's lift as the focus ring.
+ */
+
+/* ── Grounds: each platform's colour under its rows ─────────────── */
+.look--netflix .platform__ground {
+    background: #141414;
+}
+
+.look--prime .platform__ground {
+    background: linear-gradient(180deg, #1a242f 0px, #0f171e 710px);
+}
+
+.look--hbo .platform__ground {
+    background: radial-gradient(110% 60% at 50% 100%, rgba(0, 43, 231, 0.3) 0%, rgba(0, 43, 231, 0) 72%), #05050f;
+}
+
+.look--apple .platform__ground {
+    background: #000000;
+}
+
+.look--disney .platform__ground {
+    background: radial-gradient(90% 60% at 50% 0%, rgba(25, 76, 196, 0.3) 0%, rgba(25, 76, 196, 0) 70%),
+        linear-gradient(180deg, #1a1d29 0%, #0e1122 50%, #040714 100%);
+}
+
+.look--paramount .platform__ground {
+    background: linear-gradient(180deg, #070b18 860px, #03050c 100%);
+}
+
+.look--hulu .platform__ground {
+    background: #0b0c0f;
+}
+
+.look--movistar .platform__ground {
+    background: linear-gradient(180deg, #06142a 860px, #030914 100%);
+}
+
+.look--atres .platform__ground {
+    background: #0f0f0f;
+}
+
+.look--mitele .platform__ground {
+    background: radial-gradient(60% 40% at 0% 0%, rgba(194, 24, 122, 0.3) 0%, rgba(194, 24, 122, 0) 70%),
+        radial-gradient(55% 40% at 100% 4%, rgba(107, 43, 255, 0.28) 0%, rgba(107, 43, 255, 0) 70%), #0f0a18;
+}
+
+.look--crave .platform__ground {
+    background: radial-gradient(80% 50% at 85% 0%, rgba(31, 111, 255, 0.22) 0%, rgba(31, 111, 255, 0) 70%),
+        linear-gradient(180deg, #04070f 860px, #02040a 100%);
+}
+
+/* ── Faces: DM Sans bold for every platform's titles but Netflix's ── */
+.font--ui .hero__title.display,
+.font--ui .detail__title.display {
+    font-family: var(--ui);
+    font-weight: 700;
+    text-transform: none;
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+}
+
+.font--ui .hero__title {
+    font-size: 84px;
+    max-height: 2.1em;
+}
+
+.font--ui .hero__title.is-long {
+    font-size: 68px;
+}
+
+.font--ui .detail__title {
+    font-size: 84px;
+}
+
+.look--apple .hero__title,
+.look--apple .detail__title,
+.look--hulu .hero__title,
+.look--hulu .detail__title {
+    letter-spacing: -0.035em;
+}
+
+/* ── The billboard: the platform's mark before the kind, one line ── */
+.platform-page .hero__eyebrow {
+    height: 44px;
+    line-height: 44px;
+    color: rgba(255, 255, 255, 0.78);
+    letter-spacing: 0.2em;
+    white-space: nowrap;
+}
+
+.hero__brand {
+    display: inline-block;
+    height: 32px;
+    max-width: 170px;
+    margin-right: 18px;
+    object-fit: contain;
+    object-position: 0 50%;
+    vertical-align: middle;
+}
+
+.hero__brand.mark--name {
+    height: auto;
+    font-size: 30px;
+}
+
+/* Netflix's red N, in Bebas. */
+.mark--n {
+    color: #e50914;
+    font-family: var(--display);
+    font-weight: 400;
+    line-height: 1;
+}
+
+.hero__brand.mark--n {
+    height: auto;
+    margin-right: 14px;
+    font-size: 56px;
+    vertical-align: -6px;
+}
+
+.look--netflix .hero__eyebrow {
+    color: #e5e5e5;
+    letter-spacing: 0.34em;
+}
+
+.look--apple .hero__eyebrow {
+    color: #a1a1a6;
+    letter-spacing: 0.08em;
+}
+
+.look--paramount .hero__eyebrow {
+    color: #c6d4ff;
+}
+
+.look--hulu .hero__eyebrow {
+    color: #1ce783;
+}
+
+.look--movistar .hero__eyebrow {
+    color: #a9c1dc;
+}
+
+.look--atres .hero__eyebrow {
+    color: #ff6a00;
+}
+
+.look--crave .hero__eyebrow {
+    color: #9db8ff;
+}
+
+.look--hbo .hero__brand,
+.look--apple .hero__brand,
+.look--movistar .hero__brand {
+    height: 30px;
+}
+
+.look--paramount .hero__brand {
+    height: 48px;
+}
+
+.look--atres .hero__brand {
+    height: 44px;
+}
+
+.look--hulu .hero__brand {
+    height: 26px;
+}
+
+.look--crave .hero__brand {
+    height: 22px;
+}
+
+/* The meta line: Netflix's match in green, the languages in badges. */
+.platform-page .hero__meta {
+    color: rgba(255, 255, 255, 0.82);
+    font-weight: 500;
+}
+
+.hero__match {
+    margin-right: 18px;
+    color: var(--green);
+    font-weight: 700;
+}
+
+.hero__badge {
+    display: inline-block;
+    height: 34px;
+    line-height: 32px;
+    margin-left: 14px;
+    padding: 0 10px;
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    vertical-align: middle;
+}
+
+.look--netflix .hero__meta {
+    color: #fff;
+}
+
+.look--netflix .hero__plot {
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+.look--hbo .hero__plot {
+    color: #d4d4e2;
+}
+
+/* Prime Video's "Incluido con Prime" with the blue check. */
+.hero__included {
+    margin-top: 16px;
+    color: #fff;
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 32px;
+}
+
+.hero__check {
+    display: inline-block;
+    position: relative;
+    width: 30px;
+    height: 30px;
+    margin-right: 12px;
+    border-radius: 15px;
+    background: #00a8e1;
+    vertical-align: -6px;
+}
+
+.hero__check::after,
+.tile__check::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 5px;
+    width: 8px;
+    height: 14px;
+    border: solid #fff;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+/* Netflix's maturity band at the billboard's right, level with the buttons. */
+.hero__band {
+    position: absolute;
+    right: 0;
+    bottom: 200px;
+    z-index: 1;
+    height: 54px;
+    line-height: 54px;
+    padding: 0 110px 0 18px;
+    border-left: 4px solid #dcdcdc;
+    background: rgba(51, 51, 51, 0.6);
+    color: #fff;
+    font-size: 26px;
+    font-weight: 500;
+    -webkit-transition: opacity 0.3s ease-out;
+    transition: opacity 0.3s ease-out;
+}
+
+.is-scrolled .hero__band {
+    opacity: 0;
+}
+
+/* The dots: bars centred at the billboard's foot; Netflix's at the
+   right above its band; Apple TV's and the carousels' round. */
+.platform-page .hero__dots {
+    left: 0;
+    right: 0;
+    bottom: 176px;
+    text-align: center;
+}
+
+.platform-page .hero__dot {
+    width: 24px;
+    height: 4px;
+    margin: 0 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.32);
+}
+
+.platform-page .hero__dot.is-active {
+    width: 24px;
+    background: #fff;
+}
+
+.look--netflix .hero__dots {
+    left: auto;
+    right: var(--gutter);
+    bottom: 330px;
+    text-align: right;
+}
+
+.look--apple .hero__dot,
+.platform-page .hero--carousel .hero__dot {
+    width: 12px;
+    height: 12px;
+    margin: 0 6px;
+    border-radius: 6px;
+}
+
+.look--apple .hero__dot.is-active,
+.platform-page .hero--carousel .hero__dot.is-active {
+    width: 12px;
+}
+
+.look--prime .hero__dot {
+    background: #425265;
+}
+
+.look--disney .hero__dot {
+    background: #5b5f71;
+}
+
+.look--disney .hero__dot.is-active {
+    background: #f9f9f9;
+}
+
+.look--mitele .hero__dot {
+    background: #3d2f57;
+}
+
+.look--mitele .hero__dot.is-active {
+    width: 26px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #c2187a 0%, #6b2bff 100%);
+}
+
+.look--paramount .hero__dot.is-active {
+    background: #0064ff;
+}
+
+.look--hulu .hero__dot.is-active {
+    background: #1ce783;
+}
+
+.look--movistar .hero__dot.is-active {
+    background: #019df4;
+}
+
+.look--atres .hero__dot.is-active {
+    background: #ff6a00;
+}
+
+.look--crave .hero__dot.is-active {
+    background: #1f6fff;
+}
+
+/* The platform's glow on the billboard: Paramount+'s blue, Movistar's,
+   Crave's, rising from the lower left under the text's shade. */
+.look--paramount .hero--billboard .hero__veil--left {
+    background: radial-gradient(70% 80% at 0% 88%, rgba(0, 100, 255, 0.5) 0%, rgba(0, 100, 255, 0) 70%),
+        linear-gradient(90deg, rgba(7, 11, 24, 0.92) 0%, rgba(7, 11, 24, 0.55) 36%, rgba(7, 11, 24, 0) 66%);
+}
+
+.look--movistar .hero--billboard .hero__veil--left {
+    background: radial-gradient(70% 80% at 0% 88%, rgba(1, 157, 244, 0.32) 0%, rgba(1, 157, 244, 0) 70%),
+        linear-gradient(90deg, rgba(6, 20, 42, 0.92) 0%, rgba(6, 20, 42, 0.55) 36%, rgba(6, 20, 42, 0) 66%);
+}
+
+.look--crave .hero--billboard .hero__veil--left {
+    background: radial-gradient(70% 80% at 0% 88%, rgba(31, 111, 255, 0.45) 0%, rgba(31, 111, 255, 0) 70%),
+        linear-gradient(90deg, rgba(4, 7, 15, 0.92) 0%, rgba(4, 7, 15, 0.55) 36%, rgba(4, 7, 15, 0) 66%);
+}
+
+.look--hbo .hero--billboard .hero__veil--left {
+    background: linear-gradient(90deg, rgba(5, 5, 15, 0.92) 0%, rgba(5, 5, 15, 0.6) 34%, rgba(5, 5, 15, 0) 66%);
+}
+
+/* ── A rounded carousel (Prime Video, Disney+, mitele): the frame under
+   the bar, the artwork on its right, the text on its left, dots under ── */
+.platform-page .hero--carousel {
+    height: 760px;
+    margin-bottom: 0;
+}
+
+.platform-page .hero--carousel .hero__stage {
+    left: 80px;
+    top: 130px;
+    width: 1760px;
+    height: 560px;
+    border-radius: 12px;
+    box-shadow: 0 24px 50px -30px rgba(0, 0, 0, 0.9);
+    -webkit-mask-image: none;
+}
+
+.platform-page .hero--carousel .hero__image {
+    width: 1760px;
+    height: 560px;
+    object-position: 50% 22%;
+}
+
+.look--prime .hero--carousel .hero__image {
+    left: 493px;
+    width: 1267px;
+}
+
+.platform-page .hero--carousel .hero__keyart {
+    left: 1160px;
+    top: 10px;
+}
+
+.platform-page .hero--carousel .hero__veil--left {
+    width: 1760px;
+    height: 560px;
+}
+
+.platform-page .hero--carousel .hero__veil--top {
+    display: none;
+}
+
+.platform-page .hero--carousel .hero__content {
+    left: 144px;
+    top: 410px;
+    bottom: auto;
+    width: 820px;
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.platform-page .hero--carousel .hero__title {
+    margin-top: 0;
+    font-size: 72px;
+}
+
+.platform-page .hero--carousel .hero__title.is-long {
+    font-size: 60px;
+}
+
+.platform-page .hero--carousel .hero__dots {
+    bottom: 36px;
+}
+
+.look--prime .hero--carousel .hero__veil--left {
+    background: linear-gradient(90deg, #1a242f 0%, #1a242f 28%, rgba(26, 36, 47, 0.7) 44%, rgba(26, 36, 47, 0) 70%),
+        linear-gradient(180deg, rgba(15, 23, 30, 0) 60%, rgba(15, 23, 30, 0.6) 100%);
+}
+
+.look--prime .hero__meta {
+    color: #8197a4;
+    font-weight: 600;
+}
+
+.look--prime .hero__badge {
+    box-shadow: inset 0 0 0 2px #8197a4;
+}
+
+.look--prime .hero__plot {
+    color: #d6dee4;
+}
+
+.look--disney .hero--carousel .hero__stage {
+    border-radius: 14px;
+    box-shadow: 0 0 0 4px rgba(249, 249, 249, 0.1), 0 26px 30px -10px rgba(0, 0, 0, 0.69);
+}
+
+.look--disney .hero--carousel .hero__veil--left {
+    background: linear-gradient(90deg, rgba(4, 7, 20, 0.92) 0%, rgba(4, 7, 20, 0.62) 36%, rgba(4, 7, 20, 0) 66%),
+        linear-gradient(180deg, rgba(4, 7, 20, 0) 55%, rgba(4, 7, 20, 0.7) 100%);
+}
+
+.look--disney .hero__meta {
+    color: #cacaca;
+}
+
+.look--disney .hero__plot {
+    color: #f9f9f9;
+}
+
+.look--mitele .hero--carousel .hero__stage {
+    border-radius: 24px;
+    box-shadow: 0 30px 60px -30px rgba(107, 43, 255, 0.75);
+}
+
+.look--mitele .hero--carousel .hero__veil--left {
+    background: linear-gradient(90deg, rgba(20, 13, 34, 0.94) 0%, rgba(20, 13, 34, 0.6) 36%, rgba(20, 13, 34, 0) 66%),
+        linear-gradient(180deg, rgba(20, 13, 34, 0) 55%, rgba(20, 13, 34, 0.7) 100%);
+}
+
+.look--mitele .hero__meta {
+    color: #c0b5d6;
+}
+
+.look--mitele .hero__plot {
+    color: #ece6f7;
+}
+
+/* ── Buttons, the hero's and the title page's, in the platform's shape ── */
+/* Netflix: the white "Ver ahora" and the grey "Más información", 4px corners. */
+.look--netflix .button {
+    border-radius: 8px;
+    background: rgba(109, 109, 109, 0.7);
+    box-shadow: none;
+}
+
+.look--netflix .button--primary {
+    background: #fff;
+    color: #000;
+}
+
+/* Prime Video: the round blue disc with the label beside it. */
+.look--prime .button {
+    background: rgba(66, 82, 101, 0.85);
+    box-shadow: none;
+}
+
+.look--prime .button--primary {
+    padding: 0 24px 0 0;
+    background: transparent;
+    color: #fff;
+    font-size: 30px;
+}
+
+.look--prime .button--primary .icon {
+    width: 76px;
+    height: 76px;
+    margin-right: 20px;
+    padding: 22px;
+    border-radius: 38px;
+    background: #00a8e1;
+    color: #fff;
+    vertical-align: top;
+}
+
+.look--prime .button--primary.focused .icon {
+    background: #33bbe9;
+}
+
+/* HBO Max and Apple TV: the white pill, a frosted secondary. */
+.look--hbo .button,
+.look--paramount .button,
+.look--hulu .button,
+.look--atres .button,
+.look--mitele .button,
+.look--crave .button {
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
+}
+
+.look--apple .button {
+    background: rgba(255, 255, 255, 0.16);
+    box-shadow: none;
+}
+
+.look--hbo .button--primary,
+.look--apple .button--primary,
+.look--hulu .button--primary {
+    background: #fff;
+    color: #000;
+}
+
+/* Disney+: capitals, 4px corners, the outlined "MÁS INFORMACIÓN". */
+.look--disney .button {
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 0 2px #f9f9f9;
+    font-size: 26px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.look--disney .button--primary {
+    background: #f9f9f9;
+    box-shadow: none;
+    color: #040714;
+}
+
+/* Paramount+: the bright blue pill with its glow. */
+.look--paramount .button--primary {
+    background: #0064ff;
+    box-shadow: 0 10px 28px -10px rgba(0, 100, 255, 0.95);
+    color: #fff;
+}
+
+/* Hulu: "REPRODUCIR" in capitals with 4px corners. */
+.look--hulu .button,
+.look--atres .button {
+    border-radius: 8px;
+}
+
+.look--hulu .button {
+    font-size: 26px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* Movistar Plus+: the white pill that turns blue in focus. */
+.look--movistar .button {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+}
+
+.look--movistar .button--primary {
+    background: #fff;
+    color: #06142a;
+}
+
+.look--movistar .button--primary.focused {
+    background: #019df4;
+    color: #fff;
+}
+
+/* atresplayer's orange, mitele's gradient, Crave's glowing blue. */
+.look--atres .button--primary {
+    background: #ff6a00;
+    color: #fff;
+}
+
+.look--mitele .button--primary {
+    background: linear-gradient(90deg, #c2187a 0%, #6b2bff 100%);
+    color: #fff;
+}
+
+.look--crave .button--primary {
+    background: #1f6fff;
+    box-shadow: 0 8px 30px -6px rgba(31, 111, 255, 0.85);
+    color: #fff;
+}
+
+/* The round ⓘ and the heart: outlined on HBO Max, Paramount+, Movistar
+   Plus+ and Disney+, frosted on the rest. */
+.look--hbo .button--round,
+.look--paramount .button--round,
+.look--movistar .button--round {
+    background: rgba(0, 0, 0, 0.25);
+    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.72);
+}
+
+.look--disney .button--round {
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: inset 0 0 0 3px #f9f9f9;
+}
+
+/* "T1:E1" under a coloured play button. */
+.look--prime .play__label small,
+.look--paramount .play__label small,
+.look--atres .play__label small,
+.look--mitele .play__label small,
+.look--crave .play__label small {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+/* The focus ring stays white on every platform's buttons. */
+.platform-page .button.focused,
+.detail .button.focused {
+    box-shadow: 0 0 0 4px var(--ring);
+}
+
+.platform-page .button--primary.focused,
+.detail .button--primary.focused {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.45);
+}
+
+/* ── Row headings ───────────────────────────────────────────────── */
+.platform-page .heading__title,
+.detail.font--ui .heading__title {
+    font-weight: 700;
+}
+
+.look--netflix .heading__title {
+    color: #e5e5e5;
+}
+
+.look--prime .heading__title,
+.look--hbo .heading__title {
+    color: #fff;
+}
+
+.look--apple .heading__title {
+    color: #f5f5f7;
+    font-size: 36px;
+}
+
+.look--disney .heading__title {
+    color: #f9f9f9;
+    font-weight: 600;
+}
+
+.look--hulu .heading__title,
+.look--crave .heading__title {
+    font-weight: 600;
+}
+
+.look--movistar .heading__title::before {
+    content: '+';
+    margin-right: 12px;
+    color: #019df4;
+    font-size: 1.25em;
+}
+
+.look--mitele .heading__title {
+    font-size: 38px;
+    letter-spacing: -0.02em;
+}
+
+.look--mitele .heading__title::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 36px;
+    margin-right: 14px;
+    border-radius: 4px;
+    background: linear-gradient(180deg, #c2187a 0%, #6b2bff 100%);
+    vertical-align: -5px;
+}
+
+/* ── Tiles (platform-cards.ts): the card is the artwork, the name hangs under ── */
+.card--tile {
+    width: 400px;
+    height: 225px;
+    border-radius: 12px;
+}
+
+.card--tile.is-large {
+    width: 560px;
+    height: 315px;
+}
+
+.tile--poster {
+    width: 220px;
+    height: 330px;
+}
+
+.tile--poster.is-large {
+    width: 300px;
+    height: 450px;
+}
+
+.tile__art {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.tile__pic {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.tile__pic .pic__img {
+    object-fit: cover;
+}
+
+/* A poster in a 16:9 frame shows its upper middle: faces and the title. */
+.is-poster-art .pic__img {
+    object-position: 50% 22%;
+}
+
+.tile__lang {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    height: 32px;
+    line-height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.62);
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.tile__n {
+    position: absolute;
+    left: 12px;
+    top: 6px;
+    color: #e50914;
+    font-family: var(--display);
+    font-size: 44px;
+    line-height: 1;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.tile__check {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    background: #00a8e1;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* The name on the artwork (Netflix's tiles, Hulu's large row). */
+.tile__caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 60px 16px 12px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.82) 100%);
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.tile__caption-name {
+    display: block;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.is-large .tile__caption {
+    padding: 100px 24px 22px;
+}
+
+.is-large .tile__caption-name {
+    font-size: 40px;
+}
+
+.tile__name {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    margin-top: 12px;
+    color: var(--text);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.is-large .tile__name {
+    font-size: 28px;
+}
+
+.tile__sub {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    margin-top: 48px;
+    color: #8e8e93;
+    font-size: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tile__caption .tile__sub {
+    position: static;
+    display: block;
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+/* The rows' heights, per tile (rows.css for the others). */
+.row--tiles-landscape .row__viewport {
+    height: 350px;
+}
+
+.row--tiles-landscape-cap .row__viewport {
+    height: 274px;
+}
+
+.row--tiles-landscape-large .row__viewport {
+    height: 440px;
+}
+
+.row--tiles-landscape-large-cap .row__viewport {
+    height: 365px;
+}
+
+.row--tiles-poster .row__viewport {
+    height: 460px;
+}
+
+.row--tiles-poster-large .row__viewport {
+    height: 580px;
+}
+
+.row--brands .row__viewport {
+    height: 236px;
+}
+
+/* The Top 10's poster keeps its place beside the number. */
+.top10__poster.tile__art {
+    left: 170px;
+    width: 300px;
+    height: 450px;
+}
+
+/* Each platform's tiles: corners, ground, the name's colour. */
+.look--netflix .card--tile,
+.look--netflix .tile__art,
+.look--netflix .top10__poster {
+    border-radius: 6px;
+}
+
+.look--netflix .tile__art {
+    background: #2f2f2f;
+}
+
+.look--netflix .tile__lang {
+    left: auto;
+    right: 10px;
+    top: 10px;
+    border-radius: 4px;
+    background: rgba(20, 20, 20, 0.6);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+.look--netflix .top10__rank {
+    color: #141414;
+    -webkit-text-stroke: 4px #595959;
+}
+
+.look--prime .card--tile,
+.look--prime .tile__art {
+    border-radius: 10px;
+}
+
+.look--prime .tile__art {
+    background: #1a242f;
+}
+
+.look--prime .tile__lang {
+    left: auto;
+    right: 12px;
+    background: rgba(15, 23, 30, 0.75);
+}
+
+.look--hbo .card--tile,
+.look--hbo .tile__art {
+    border-radius: 8px;
+}
+
+.look--hbo .tile__name {
+    color: #c9c9d6;
+    font-weight: 500;
+}
+
+.look--apple .card--tile,
+.look--apple .tile__art {
+    border-radius: 20px;
+}
+
+.look--apple .tile__art {
+    background: #1c1c1e;
+    box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.7);
+}
+
+.look--apple .tile__lang {
+    border-radius: 8px;
+    background: rgba(28, 28, 30, 0.7);
+}
+
+.look--apple .tile__name {
+    color: #f5f5f7;
+}
+
+.look--disney .card--tile,
+.look--disney .tile__art {
+    border-radius: 10px;
+}
+
+.look--disney .tile__art {
+    background: linear-gradient(180deg, #30323e 0%, #1e1f2a 100%);
+    box-shadow: 0 0 0 3px rgba(249, 249, 249, 0.1), 0 26px 30px -10px rgba(0, 0, 0, 0.69);
+}
+
+.look--disney .tile__name {
+    color: #cacaca;
+    font-weight: 500;
+}
+
+.look--paramount .card--tile,
+.look--paramount .tile__art {
+    border-radius: 8px;
+}
+
+.look--paramount .tile__art {
+    background: #121a33;
+}
+
+.look--paramount .tile__name {
+    color: #c6cbd9;
+}
+
+.look--hulu .card--tile,
+.look--hulu .tile__art {
+    border-radius: 10px;
+}
+
+.look--hulu .tile__art {
+    background: #1a1c21;
+}
+
+.look--hulu .tile__sub {
+    color: #a3a6ac;
+}
+
+.look--movistar .card--tile,
+.look--movistar .tile__art {
+    border-radius: 10px;
+}
+
+.look--movistar .tile__art {
+    background: #0f2240;
+}
+
+.look--movistar .tile__name {
+    color: #d6e4f2;
+}
+
+.look--atres .card--tile,
+.look--atres .tile__art {
+    border-radius: 6px;
+}
+
+.look--atres .tile__art {
+    background: #1f1f1f;
+}
+
+.look--atres .tile__name {
+    color: #e6e6e6;
+}
+
+/* atresplayer's orange bar under the tile in focus. */
+.look--atres .tile__art::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    height: 6px;
+    background: #ff6a00;
+    -webkit-transform: scaleX(0);
+    transform: scaleX(0);
+    -webkit-transform-origin: 0 50%;
+    transform-origin: 0 50%;
+    -webkit-transition: -webkit-transform 0.22s ease;
+    transition: transform 0.22s ease;
+}
+
+.look--atres .card.focused .tile__art::after {
+    -webkit-transform: none;
+    transform: none;
+}
+
+.look--mitele .card--tile,
+.look--mitele .tile__art {
+    border-radius: 18px;
+}
+
+.look--mitele .tile__art {
+    background: #1e1530;
+}
+
+.look--mitele .tile__name {
+    color: #e8e1f5;
+}
+
+.look--crave .card--tile,
+.look--crave .tile__art {
+    border-radius: 10px;
+}
+
+.look--crave .tile__art {
+    background: #101829;
+}
+
+.look--crave .tile__name {
+    color: #dfe6f5;
+}
+
+/* The ring on a tile: white, with the platform's glow; Movistar's,
+   mitele's and Crave's in their own colour. */
+.look--netflix .card--tile.focused {
+    box-shadow: 0 0 0 4px var(--ring), 0 14px 28px rgba(0, 0, 0, 0.75);
+    -webkit-transform: scale(1.08);
+    transform: scale(1.08);
+}
+
+.look--prime .card--tile.focused {
+    box-shadow: 0 0 0 4px var(--ring), 0 18px 30px -12px rgba(0, 0, 0, 0.8);
+}
+
+.look--hbo .card--tile.focused {
+    box-shadow: 0 0 0 4px var(--ring), 0 20px 32px -16px rgba(0, 43, 231, 0.55);
+}
+
+.look--apple .card--tile.focused {
+    box-shadow: 0 0 0 4px var(--ring), 0 24px 44px -14px rgba(0, 0, 0, 0.85);
+}
+
+.look--disney .card--tile.focused {
+    box-shadow: 0 0 0 4px rgba(249, 249, 249, 0.85), 0 40px 58px -16px rgba(0, 0, 0, 0.8);
+}
+
+.look--paramount .card--tile.focused {
+    box-shadow: 0 0 0 4px var(--ring), 0 18px 36px -12px rgba(0, 100, 255, 0.8);
+}
+
+.look--hulu .card--tile.focused,
+.look--atres .card--tile.focused {
+    box-shadow: 0 0 0 4px var(--ring), 0 20px 34px -18px rgba(0, 0, 0, 0.9);
+}
+
+.look--movistar .card--tile.focused {
+    box-shadow: 0 0 0 4px #019df4, 0 18px 34px -12px rgba(1, 157, 244, 0.6);
+}
+
+.look--mitele .card--tile.focused {
+    box-shadow: 0 0 0 4px #c2187a, 0 20px 36px -12px rgba(107, 43, 255, 0.75);
+}
+
+.look--crave .card--tile.focused {
+    box-shadow: 0 0 0 4px #1f6fff, 0 14px 40px -10px rgba(31, 111, 255, 0.75);
+}
+
+/* ── Disney+'s brand tiles: dark raised tiles, each brand's mark ── */
+.card--brand {
+    width: 330px;
+    height: 186px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #30323e 0%, #1e1f2a 100%);
+    box-shadow: inset 0 0 0 3px rgba(249, 249, 249, 0.1), 0 26px 30px -10px rgba(0, 0, 0, 0.69);
+    color: #f9f9f9;
+    text-align: center;
+}
+
+.card--brand.focused {
+    box-shadow: inset 0 0 0 3px rgba(249, 249, 249, 0.8), 0 0 0 4px var(--ring), 0 40px 58px -16px rgba(0, 0, 0, 0.8);
+}
+
+.brand__disney {
+    position: absolute;
+    left: 13%;
+    top: 15%;
+    width: 74%;
+    height: 70%;
+    object-fit: contain;
+    -webkit-filter: brightness(0) invert(1);
+    filter: brightness(0) invert(1);
+}
+
+.brand__pixar {
+    display: block;
+    line-height: 186px;
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.brand__marvel {
+    display: inline-block;
+    margin-top: 58px;
+    padding: 6px 10px 0;
+    background: #ec1d24;
+    color: #fff;
+    font-size: 60px;
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+}
+
+.brand__star-wars {
+    display: block;
+    padding-top: 56px;
+    color: transparent;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 0.92;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    -webkit-text-stroke: 2px #f9f9f9;
+}
+
+.brand__natgeo {
+    display: block;
+    padding-top: 62px;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.brand__frame {
+    display: inline-block;
+    width: 34px;
+    height: 50px;
+    margin-right: 16px;
+    border: 8px solid #ffce00;
+    vertical-align: middle;
+}
+
+.brand__natgeo span {
+    display: inline-block;
+    text-align: left;
+    vertical-align: middle;
+}
+
+/* ── A title's page in its platform's look (detail.ts) ──────────── */
+.detail__mark.mark--n {
+    height: auto;
+    margin-right: 18px;
+    font-size: 60px;
+    line-height: 40px;
+    vertical-align: -4px;
+}
+
+.look--netflix .detail__eyebrow {
+    color: #e5e5e5;
+    letter-spacing: 0.3em;
+}
+
+.look--netflix .detail__meta {
+    color: #bcbcbc;
+}
+
+.look--netflix .detail__plot {
+    color: #fff;
+}
+
+.font--ui .detail__rating {
+    color: inherit;
+}
+
+.look--prime .detail__eyebrow,
+.look--prime .detail__meta {
+    color: #8197a4;
+}
+
+.look--prime .detail__meta {
+    font-weight: 600;
+}
+
+.look--prime .detail__plot {
+    color: #fff;
+}
+
+.look--hbo .detail__eyebrow,
+.look--hbo .detail__meta {
+    color: #a9a9bc;
+}
+
+.look--hbo .detail__plot {
+    color: #d4d4e2;
+}
+
+.look--apple .detail__eyebrow,
+.look--apple .detail__meta {
+    color: #a1a1a6;
+}
+
+.look--disney .detail__eyebrow {
+    letter-spacing: 0.16em;
+}
+
+.look--disney .detail__meta {
+    color: #cacaca;
+}
+
+.look--disney .detail__plot {
+    color: #f9f9f9;
+}
+
+.look--paramount .detail__eyebrow,
+.look--paramount .detail__meta {
+    color: #b5bfd9;
+}
+
+.look--hulu .detail__eyebrow {
+    color: #1ce783;
+    letter-spacing: 0.16em;
+}
+
+.look--hulu .detail__meta {
+    color: #a3a6ac;
+}
+
+.look--hulu .detail__rating,
+.look--hulu .episode__number {
+    color: #1ce783;
+}
+
+.look--movistar .detail__eyebrow,
+.look--movistar .detail__meta {
+    color: #a9c1dc;
+}
+
+.look--atres .detail__eyebrow {
+    color: #ff6a00;
+    letter-spacing: 0.14em;
+}
+
+.look--atres .detail__meta {
+    color: #b3b3b3;
+}
+
+.look--mitele .detail__meta {
+    color: #c0b5d6;
+}
+
+.look--crave .detail__eyebrow,
+.look--crave .detail__meta {
+    color: #aab6cf;
+}
+
+/* The seasons' chips in the platform's colour; its stills' corners. */
+.look--netflix .chip,
+.look--disney .chip,
+.look--hulu .chip,
+.look--atres .chip {
+    border-radius: 8px;
+}
+
+.look--prime .chip.is-selected {
+    background: #33424f;
+    color: #fff;
+}
+
+.look--paramount .chip.is-selected {
+    background: #0064ff;
+    color: #fff;
+}
+
+.look--hulu .chip.is-selected {
+    background: #1ce783;
+    color: #0b0c0f;
+}
+
+.look--movistar .chip.is-selected {
+    background: #019df4;
+    color: #fff;
+}
+
+.look--atres .chip.is-selected {
+    background: #ff6a00;
+    color: #fff;
+}
+
+.look--mitele .chip.is-selected {
+    background: linear-gradient(90deg, #c2187a 0%, #6b2bff 100%);
+    color: #fff;
+}
+
+.look--crave .chip.is-selected {
+    background: #1f6fff;
+    color: #fff;
+}
+
+.look--netflix .episode__still,
+.look--hbo .episode__still,
+.look--atres .episode__still {
+    border-radius: 6px;
+}
+
+.look--apple .episode__still,
+.look--mitele .episode__still {
+    border-radius: 16px;
+}
+
+.look--netflix .episode__number {
+    color: #d2d2d2;
+}

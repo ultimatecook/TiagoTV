@@ -1,0 +1,112 @@
+/* Series / Películas: a cinematic hero, "Novedades" over its foot, then
+   a row of posters per genre. */
+.catalog__hero {
+    position: relative;
+    height: 690px;
+}
+
+.catalog__label {
+    position: absolute;
+    left: var(--gutter);
+    top: 146px;
+    z-index: 2;
+    color: var(--text-img);
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.hero--catalog,
+.hero--catalog .hero__stage {
+    height: 1020px;
+}
+
+.hero--catalog .hero__image,
+.hero--catalog .hero__veil--left {
+    height: 1020px;
+}
+
+.hero--catalog .hero__stage {
+    -webkit-mask-image: linear-gradient(180deg, #000000 0%, #000000 62%, rgba(0, 0, 0, 0) 100%);
+}
+
+/* Anchored at its foot: a two-line title grows upward, and the buttons
+   keep their distance from "Novedades" below (the hero is 1020px tall,
+   "Novedades" starts at 690px). */
+.hero--catalog .hero__content {
+    top: auto;
+    bottom: 400px;
+}
+
+.hero--catalog .hero__platform {
+    margin-top: 0;
+}
+
+.hero--catalog .hero__title {
+    font-size: 108px;
+}
+
+.hero--catalog .hero__title.is-long,
+.platform-page .hero__title.is-long {
+    font-size: 84px;
+}
+
+.hero--catalog .hero__keyart {
+    top: 170px;
+}
+
+.page--catalog .row--landscape {
+    z-index: 1;
+}
+
+/* A platform's page: its own ground, a billboard, its rows. */
+.platform-page .hero__stage {
+    background: transparent;
+}
+
+.platform-page .hero--platform,
+.platform-page .hero--platform .hero__stage,
+.platform-page .hero--platform .hero__image,
+.platform-page .hero--platform .hero__veil--left {
+    height: 860px;
+}
+
+.platform-page .hero--platform .hero__content {
+    bottom: 190px;
+}
+
+.platform-page .hero__title {
+    font-size: 108px;
+}
+
+.hero__kind {
+    display: inline-block;
+    margin-left: 16px;
+    color: var(--text-img-2);
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    vertical-align: middle;
+}
+
+/* The first row comes up over the billboard's foot, as on the desktop. */
+.platform-page .hero--platform {
+    margin-bottom: -150px;
+}
+
+.platform-page .row {
+    z-index: 1;
+}
+
+.platform-page {
+    background: #0d0d10;
+}
+
+.platform__ground,
+.platform__page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+}

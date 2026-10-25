@@ -1,0 +1,129 @@
+name: TiagoTV Android TV
+
+# Builds the sideloadable Android TV APK on demand (Actions → "TiagoTV
+# Android TV" → Run workflow) or for a `tiagotv-androidtv-v*` tag: the web
+# app from apps/webos-lite inside the Android shell (apps/androidtv), signed
+# with the release keystore from the repository secrets, and publishes it as
+# a GitHub pre-release of this repository. Without the four secrets
+# (apps/androidtv/README.md → Signing) the APK is signed with the debug key:
+# it installs, but the next build would not install over it, and the
+# release notes say so.
+
+on:
+    workflow_dispatch:
+    push:
+        tags:
+            - 'tiagotv-androidtv-v*'
+
+permissions:
+    contents: write
+
+concurrency:
+    group: tiagotv-androidtv-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    apk:
+        name: Android TV APK
+        runs-on: ubuntu-latest
+        timeout-minutes: 45
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v7
+
+            - name: Install pnpm
+              uses: pnpm/action-setup@v6.1.0
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version-file: '.nvmrc'
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Setup Java
+              uses: actions/setup-java@v5
+              with:
+                  distribution: temurin
+                  java-version: '17'
+
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4
+              with:
+                  gradle-version: '8.14.3'
+
+            # The web app, built with its Chrome 53 gates, into the APK's assets.
+            - name: Build the web bundle into the assets
+              run: node apps/androidtv/tools/sync-assets.mjs
+
+            - name: Unit tests
+              run: node apps/androidtv/tools/gradle.mjs testReleaseUnitTest
+
+            - name: Prepare the release keystore
+              id: keystore
+              env:
+                  KEYSTORE_BASE64: ${{ secrets.ANDROIDTV_KEYSTORE_BASE64 }}
+              run: |
+                  set -euo pipefail
+                  if [ -z "${KEYSTORE_BASE64}" ]; then
+                      echo "::warning::ANDROIDTV_KEYSTORE_BASE64 is not set: the APK is signed with the debug key (apps/androidtv/README.md → Signing)."
+                      echo "signing=debug" >> "${GITHUB_OUTPUT}"
+                  else
+                      printf '%s' "${KEYSTORE_BASE64}" | base64 -d > "${RUNNER_TEMP}/release.jks"
+                      echo "TIAGOTV_KEYSTORE_FILE=${RUNNER_TEMP}/release.jks" >> "${GITHUB_ENV}"
+                      echo "signing=release" >> "${GITHUB_OUTPUT}"
+                  fi
+
+            - name: Build the release APK
+              env:
+                  TIAGOTV_KEYSTORE_PASSWORD: ${{ secrets.ANDROIDTV_KEYSTORE_PASSWORD }}
+                  TIAGOTV_KEY_ALIAS: ${{ secrets.ANDROIDTV_KEY_ALIAS }}
+                  TIAGOTV_KEY_PASSWORD: ${{ secrets.ANDROIDTV_KEY_PASSWORD }}
+              run: node apps/androidtv/tools/build.mjs --skip-sync
+
+            - name: Name and check the APK
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  VERSION="$(node apps/androidtv/tools/version.mjs)"
+                  APK="TiagoTV-androidtv-${VERSION}.apk"
+                  cp apps/androidtv/app/build/outputs/apk/release/app-release.apk "${APK}"
+                  APKSIGNER="$(ls -d "${ANDROID_HOME}"/build-tools/*/apksigner | sort -V | tail -1)"
+                  "${APKSIGNER}" verify --print-certs "${APK}" | sed -n '1,6p'
+                  ls -la "${APK}"
+                  echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
+                  echo "APK=${APK}" >> "${GITHUB_ENV}"
+
+            - name: Upload the APK
+              uses: actions/upload-artifact@v7
+              with:
+                  name: TiagoTV-androidtv
+                  path: ${{ env.APK }}
+                  if-no-files-found: error
+                  retention-days: 30
+
+            - name: Publish a pre-release
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  SIGNING: ${{ steps.keystore.outputs.signing }}
+              run: |
+                  set -euo pipefail
+                  if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+                      TAG="${GITHUB_REF_NAME}"
+                  else
+                      TAG="tiagotv-androidtv-v${VERSION}-build.${GITHUB_RUN_NUMBER}"
+                  fi
+                  NOTES="App para Android TV (proyector Hisense y similares). Instalación y actualización: docs/tiagotv-androidtv-instalar.md."
+                  if [ "${SIGNING}" = "debug" ]; then
+                      NOTES="${NOTES}
+
+                  ⚠️ **APK firmado con la clave de depuración** (faltan los secretos ANDROIDTV_* del repositorio). Se instala, pero la próxima versión firmada con la clave real no se instalará encima: habrá que desinstalar esta primero (se pierden los datos guardados en la app)."
+                  fi
+                  gh release create "${TAG}" "${APK}" \
+                      --target "${GITHUB_SHA}" \
+                      --title "TiagoTV Android TV ${VERSION} (build ${GITHUB_RUN_NUMBER})" \
+                      --notes "${NOTES}" \
+                      --prerelease

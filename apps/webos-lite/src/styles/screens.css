@@ -1,0 +1,374 @@
+/* Setup (first run, "Cambiar de cuenta"), on the room. */
+.setup__panel {
+    position: absolute;
+    left: 460px;
+    top: 90px;
+    width: 1000px;
+}
+
+.setup__logo {
+    margin-bottom: 26px;
+    font-size: 96px;
+}
+
+.setup__title {
+    font-size: 54px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.setup__lead {
+    margin: 12px 0 30px;
+    color: var(--text-2);
+    font-size: 28px;
+}
+
+.setup__field {
+    display: block;
+    margin-bottom: 22px;
+}
+
+.setup__label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.setup__input {
+    display: block;
+    width: 1000px;
+    height: 84px;
+    padding: 0 30px;
+    border: 0;
+    border-radius: 22px;
+    background: rgba(20, 18, 22, 0.55);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16);
+    color: var(--text);
+    font-family: var(--ui);
+    font-size: 32px;
+    outline: none;
+}
+
+.setup__input.focused {
+    box-shadow: inset 0 0 0 3px #ffffff;
+    -webkit-transform: none;
+    transform: none;
+}
+
+.setup__hint {
+    display: block;
+    margin-top: 6px;
+    color: var(--text-3);
+    font-size: 24px;
+}
+
+.setup__actions {
+    margin-top: 30px;
+}
+
+.setup__status {
+    margin-top: 12px;
+    min-height: 40px;
+    font-size: 28px;
+    line-height: 1.4;
+    color: var(--text-2);
+}
+
+.setup__status.is-error {
+    color: var(--danger);
+}
+
+.setup__status.is-ok {
+    color: var(--green);
+}
+
+/* Ajustes: the sections on the left, the focused one's cards. */
+.settings__rail {
+    position: absolute;
+    left: var(--gutter);
+    top: 140px;
+    width: 340px;
+}
+
+.rail__group {
+    margin: 30px 0 8px 18px;
+    color: var(--meta);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.rail__item {
+    height: 64px;
+    line-height: 64px;
+    padding: 0 20px;
+    border-radius: 16px;
+    color: var(--text-2);
+    font-size: 26px;
+}
+
+.rail__item.is-active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text);
+    font-weight: 600;
+}
+
+.rail__item.focused {
+    background: #ffffff;
+    color: #0b0b09;
+    box-shadow: none;
+    -webkit-transform: none;
+    transform: none;
+}
+
+.rail__rule {
+    height: 2px;
+    margin: 28px 0 14px;
+    background: var(--separator);
+}
+
+.settings__panel {
+    position: absolute;
+    left: 500px;
+    top: 140px;
+    width: 1240px;
+}
+
+.settings__title {
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.settings__subtitle {
+    margin: 8px 0 30px;
+    color: var(--meta);
+    font-size: 24px;
+}
+
+.settings__card {
+    border-radius: 30px;
+    background: var(--list);
+    box-shadow: inset 0 0 0 2px var(--card-border);
+    overflow: hidden;
+}
+
+.setting {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 100px;
+    padding: 24px 34px;
+    border-top: 2px solid var(--separator);
+}
+
+.setting:first-child {
+    border-top: 0;
+}
+
+.setting__text {
+    width: 740px;
+}
+
+.setting__title {
+    font-size: 27px;
+    font-weight: 500;
+}
+
+.setting__description {
+    margin-top: 6px;
+    color: var(--meta);
+    font-size: 24px;
+    line-height: 1.45;
+}
+
+.setting__control {
+    margin-left: auto;
+    padding-left: 30px;
+    white-space: nowrap;
+}
+
+.setting__value {
+    color: var(--text-2);
+    font-size: 25px;
+}
+
+.settings__actions {
+    padding: 24px 34px 8px;
+    border-top: 2px solid var(--separator);
+}
+
+.button--danger {
+    background: rgba(255, 107, 111, 0.14);
+    box-shadow: none;
+    color: var(--danger);
+}
+
+.segmented {
+    padding: 6px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.08);
+    white-space: nowrap;
+}
+
+.segmented__option {
+    display: inline-block;
+    height: 56px;
+    line-height: 56px;
+    padding: 0 26px;
+    border-radius: 15px;
+    color: var(--text-2);
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.segmented__option.is-selected {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text);
+}
+
+.segmented__option.focused {
+    background: #ffffff;
+    color: #0b0b09;
+    box-shadow: none;
+    -webkit-transform: none;
+    transform: none;
+}
+
+/* Mi lista when it is empty: the desktop's heart and words. */
+.empty {
+    padding-top: 60px;
+    text-align: center;
+}
+
+.empty__icon {
+    display: block;
+    width: 110px;
+    height: 110px;
+    margin: 0 auto 24px;
+    color: var(--text-img-2);
+}
+
+.empty__title {
+    font-size: 40px;
+    font-weight: 600;
+}
+
+.empty__text {
+    width: 760px;
+    margin: 14px auto 36px;
+    color: var(--text-2);
+    font-size: 26px;
+    line-height: 1.45;
+}
+
+/* Ajustes → Diagnóstico: a photo of what the TV loads (no URLs, no account). */
+.diag {
+    position: relative;
+    height: 900px;
+    overflow: hidden;
+}
+
+.diag__actions {
+    margin-bottom: 26px;
+}
+
+.diag__actions .button {
+    margin-right: 18px;
+}
+
+.diag__card {
+    margin-bottom: 30px;
+}
+
+.diag__row {
+    display: flex;
+    padding: 11px 30px;
+    border-top: 2px solid var(--separator);
+    font-size: 22px;
+    line-height: 1.35;
+}
+
+.diag__row:first-child {
+    border-top: 0;
+}
+
+.diag__key {
+    flex: none;
+    width: 290px;
+    color: var(--meta);
+}
+
+.diag__value {
+    flex: 1;
+    color: var(--text);
+}
+
+.diag__heading {
+    margin: 0 0 10px;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.diag__entry {
+    display: flex;
+    height: 40px;
+    line-height: 40px;
+    padding: 0 18px;
+    border-radius: 12px;
+    color: var(--text-2);
+    font-size: 21px;
+    white-space: nowrap;
+}
+
+.diag__entry.focused {
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: none;
+    color: var(--text);
+    -webkit-transform: none;
+    transform: none;
+}
+
+.diag__entry.is-error .diag__result {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.diag__at {
+    flex: none;
+    width: 130px;
+    color: var(--meta);
+}
+
+.diag__what {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.diag__ms,
+.diag__size {
+    flex: none;
+    width: 120px;
+    text-align: right;
+}
+
+.diag__result {
+    flex: none;
+    width: 140px;
+    padding-left: 24px;
+}
+
+.diag__empty {
+    color: var(--meta);
+    font-size: 22px;
+}
+
+/* "Reintentar" after a row's or a block's failure. */
+.status__retry {
+    margin-left: 24px;
+    vertical-align: middle;
+}

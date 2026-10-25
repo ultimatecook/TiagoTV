@@ -1,0 +1,427 @@
+/* Card sizes match ui/cards.ts (CARD) and the row heights in rows.css. */
+.card {
+    border-radius: 18px;
+}
+
+/* "Plataformas": the brand's colours and its logo. */
+.card--platform {
+    width: 300px;
+    height: 169px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.platform__logo {
+    position: absolute;
+    left: 50px;
+    top: 34px;
+    width: 200px;
+    height: 101px;
+    object-fit: contain;
+}
+
+/* A logo drawn white on any ground (the desktop's logoTone 'white'). */
+.mark--white {
+    -webkit-filter: brightness(0) invert(1);
+    filter: brightness(0) invert(1);
+}
+
+.mark--name {
+    font-family: var(--display);
+    font-size: 40px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.platform__logo.mark--name {
+    height: auto;
+    top: 62px;
+    text-align: center;
+    font-size: 48px;
+}
+
+/* League cards: the cut-out stands on the card, its head over the top. */
+.card--league {
+    width: 300px;
+    height: 430px;
+    border-radius: 22px;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.league__figure {
+    position: absolute;
+    left: 0;
+    top: -60px;
+    width: 300px;
+    height: 490px;
+    overflow: hidden;
+    border-radius: 0 0 22px 22px;
+}
+
+.league__art {
+    position: absolute;
+    width: auto;
+    max-width: none;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
+}
+
+.league__shade {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 300px;
+    height: 200px;
+    border-radius: 0 0 22px 22px;
+    background: linear-gradient(180deg, rgba(5, 6, 10, 0) 0%, rgba(5, 6, 10, 0.86) 100%);
+}
+
+.league__logo {
+    position: absolute;
+    left: 30px;
+    bottom: 26px;
+    width: 240px;
+    object-fit: contain;
+}
+
+.league__label {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 30px;
+    text-align: center;
+    font-size: 48px;
+    color: #ffffff;
+}
+
+.league__live {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    height: 40px;
+    line-height: 40px;
+    padding: 0 16px;
+    border-radius: 20px;
+    background: rgba(20, 20, 22, 0.7);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* Titles: the artwork with the platform's logo and the name in Bebas. */
+.card--poster {
+    width: 220px;
+    height: 330px;
+}
+
+.poster__art,
+.top10__poster {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 220px;
+    height: 330px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.poster__pic,
+.landscape__pic {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.poster__pic .pic__img,
+.landscape__pic .pic__img {
+    object-fit: cover;
+}
+
+.card--landscape.is-poster .pic__img {
+    object-position: 50% 22%;
+}
+
+.art__veil {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 60%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.82) 100%);
+}
+
+.art__text {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 16px;
+}
+
+.art__brand {
+    display: block;
+    height: 24px;
+    max-width: 120px;
+    margin-bottom: 6px;
+    object-fit: contain;
+    object-position: 0 50%;
+}
+
+.art__brand.mark--name {
+    font-size: 26px;
+    height: auto;
+}
+
+.art__title {
+    color: var(--text-img);
+    font-size: 40px;
+    line-height: 0.95;
+    overflow: hidden;
+    max-height: 1.9em;
+}
+
+.art__meta {
+    margin-top: 6px;
+    color: var(--text-2);
+    font-size: 24px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card__meta {
+    position: absolute;
+    left: 0;
+    top: 342px;
+    width: 220px;
+    color: var(--meta);
+    font-size: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card--poster.focused .card__meta {
+    color: var(--text);
+}
+
+.card__progress {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 10px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.25);
+    overflow: hidden;
+}
+
+.card__progress-bar {
+    height: 6px;
+    background: var(--red);
+}
+
+.card--landscape {
+    width: 400px;
+    height: 225px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.card--landscape .art__title {
+    font-size: 38px;
+}
+
+/* "Top 10": the number outlined in Bebas, the poster on its right. */
+.card--top10 {
+    width: 470px;
+    height: 450px;
+}
+
+.card--top10.focused {
+    box-shadow: none;
+}
+
+.top10__rank {
+    position: absolute;
+    left: 0;
+    bottom: -30px;
+    font-size: 330px;
+    line-height: 0.74;
+    color: rgba(255, 255, 255, 0.04);
+    -webkit-text-stroke: 3px rgba(255, 255, 255, 0.55);
+}
+
+.top10__poster {
+    left: 170px;
+    width: 300px;
+    height: 450px;
+    border-radius: 22px;
+}
+
+.card--top10.focused .top10__poster {
+    box-shadow: 0 0 0 4px var(--ring);
+}
+
+.top10__poster .art__title {
+    font-size: 48px;
+}
+
+/* Channels: a thumbnail (logo, or the name in Bebas on its colour). */
+.channel__thumb,
+.recent__thumb {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+}
+
+.thumb__name {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 40px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.thumb__logo {
+    position: absolute;
+    left: 15%;
+    top: 14%;
+    width: 70%;
+    height: 72%;
+    background: transparent;
+}
+
+.thumb__logo .pic__img {
+    object-fit: contain;
+}
+
+.has-logo .thumb__name {
+    opacity: 0;
+}
+
+.has-logo .thumb__logo.is-broken + .thumb__name,
+.has-logo.is-broken .thumb__name {
+    opacity: 1;
+}
+
+.card--channel {
+    width: 280px;
+    height: 240px;
+    padding: 12px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(60, 58, 64, 0.82) 0%, rgba(30, 29, 33, 0.9) 100%);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+
+.channel__thumb {
+    width: 256px;
+    height: 132px;
+}
+
+.channel__name {
+    margin-top: 14px;
+    font-size: 26px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.channel__caption {
+    margin-top: 4px;
+    color: var(--text-3);
+    font-size: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card--channel.is-playing {
+    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.85);
+}
+
+.card--channel.is-playing .channel__playing {
+    display: block;
+}
+
+.card--channel.is-playing.focused {
+    box-shadow: 0 0 0 4px var(--ring);
+}
+
+.channel__playing {
+    display: none;
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    width: 256px;
+    height: 132px;
+    line-height: 132px;
+    border-radius: 14px;
+    background: rgba(12, 12, 14, 0.88);
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+/* "Últimos canales vistos". */
+.card--recent {
+    width: 384px;
+    height: 216px;
+}
+
+.recent__thumb {
+    width: 384px;
+    height: 216px;
+    border-radius: 18px;
+}
+
+.card--recent.focused {
+    box-shadow: 0 0 0 4px var(--ring);
+}
+
+.recent__flag {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    width: 36px;
+    height: 24px;
+    border-radius: 3px;
+}
+
+.recent__name {
+    position: absolute;
+    left: 0;
+    top: 228px;
+    width: 384px;
+    font-size: 26px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recent__sub {
+    position: absolute;
+    left: 0;
+    top: 264px;
+    width: 384px;
+    color: var(--meta);
+    font-size: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

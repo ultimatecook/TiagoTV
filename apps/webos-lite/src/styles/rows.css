@@ -1,0 +1,128 @@
+/*
+ * Pages scroll with a transform (vpage.ts); rows lay their cards out at
+ * computed positions (row.ts): the card sizes here match ui/cards.ts.
+ * The row's viewport spans the whole width, so the card before the first
+ * fully visible one peeks in the left margin; its top and bottom leave
+ * room for a focused card's ring and lift.
+ */
+.vpage {
+    overflow: hidden;
+}
+
+.vpage__content {
+    position: relative;
+    padding: 0 0 200px;
+    -webkit-transition: -webkit-transform 0.24s ease-out;
+    transition: transform 0.24s ease-out;
+}
+
+.page__top {
+    height: 140px;
+}
+
+.row,
+.block {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.row__logo {
+    height: 34px;
+    max-width: 180px;
+    margin-right: 18px;
+    vertical-align: middle;
+}
+
+.row__viewport {
+    position: relative;
+    width: 1920px;
+    overflow: hidden;
+}
+
+.row__track {
+    position: absolute;
+    left: var(--gutter);
+    top: 24px;
+    height: 100%;
+    -webkit-transition: -webkit-transform 0.22s ease-out;
+    transition: transform 0.22s ease-out;
+}
+
+.row .card {
+    position: absolute;
+    top: 0;
+}
+
+.row--platforms .row__viewport { height: 218px; }
+.row--leagues .row__viewport { height: 548px; }
+.row--leagues .row__track { top: 84px; }
+.row--top10 .row__viewport { height: 500px; }
+.row--posters .row__viewport { height: 430px; }
+.row--landscape .row__viewport { height: 274px; }
+.row--recent .row__viewport { height: 340px; }
+.row--channels .row__viewport { height: 300px; }
+.row--status .row__viewport { height: 170px; }
+
+.card--status {
+    width: 900px;
+    height: 110px;
+    padding: 0 34px;
+    border-radius: 22px;
+    background: var(--list);
+    box-shadow: inset 0 0 0 2px var(--card-border);
+    color: var(--text-2);
+    font-size: 27px;
+    line-height: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card--retry {
+    color: var(--text);
+}
+
+/* Chips (En vivo's categories, a series' seasons): a line of pills. */
+.chips {
+    padding: 0 var(--gutter);
+    white-space: nowrap;
+}
+
+.chip {
+    display: inline-block;
+    height: 60px;
+    line-height: 60px;
+    padding: 0 26px;
+    margin: 0 14px 14px 0;
+    border-radius: 30px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.055));
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16);
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 600;
+    vertical-align: top;
+}
+
+.chip__count {
+    margin-left: 10px;
+    color: var(--text-3);
+    font-weight: 500;
+}
+
+.chip.is-selected {
+    background: var(--text);
+    color: #0b0b09;
+    box-shadow: none;
+}
+
+.chip.is-selected .chip__count {
+    color: #5a574f;
+}
+
+.chip__flag {
+    width: 40px;
+    height: 28px;
+    border-radius: 4px;
+    margin-right: 14px;
+    vertical-align: -6px;
+}

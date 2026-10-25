@@ -1,0 +1,299 @@
+/* The player: the video, its OSD, its messages. */
+.player {
+    background: #000;
+}
+
+/* Android: the native player draws behind the page (the WebView is
+   transparent). While it holds a stream, nothing opaque sits between it
+   and the chrome: not the room, not the stage, not the player. */
+html.is-native-video,
+html.is-native-video body,
+html.is-native-video .app,
+html.is-native-video .shell.room,
+html.is-native-video .stage,
+html.is-native-video .player,
+html.is-native-video .player__video {
+    background: transparent;
+}
+
+.player__video {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    background: #000;
+    object-fit: contain;
+}
+
+.osd {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    opacity: 0;
+    pointer-events: none;
+    -webkit-transition: opacity 0.25s ease-out;
+    transition: opacity 0.25s ease-out;
+}
+
+.osd.is-visible {
+    opacity: 1;
+}
+
+.osd__top {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 260px;
+    padding: 56px 80px 0;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+    background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+}
+
+.osd__logo {
+    height: 100px;
+}
+
+/* A logo that does not load leaves no empty box: the name moves left. */
+.osd__logo-pic {
+    width: 180px;
+    height: 100px;
+    margin-right: 32px;
+    border-radius: 12px;
+}
+
+.osd__logo-pic.is-broken {
+    display: none;
+}
+
+.osd__logo-pic .pic__img {
+    object-fit: contain;
+}
+
+.osd__text {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: hidden;
+}
+
+.osd__title {
+    font-family: var(--display);
+    font-size: 72px;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.osd__subtitle {
+    margin-top: 10px;
+    color: var(--text);
+    opacity: 0.8;
+    font-size: 28px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.osd__clock {
+    margin-left: 32px;
+    font-size: 40px;
+    font-weight: 600;
+}
+
+.osd__progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 1920px;
+    height: 200px;
+    padding: 110px 80px 0;
+    background: -webkit-linear-gradient(bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+}
+
+.osd__bar {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(244, 241, 234, 0.25);
+    overflow: hidden;
+}
+
+.osd__bar-fill {
+    height: 8px;
+    background: var(--red);
+    -webkit-transform-origin: 0 0;
+    transform-origin: 0 0;
+    -webkit-transform: scaleX(0);
+    transform: scaleX(0);
+}
+
+.osd__time {
+    margin-top: 14px;
+    font-size: 28px;
+    color: var(--text);
+}
+
+.player__message {
+    position: absolute;
+    left: 460px;
+    top: 400px;
+    width: 1000px;
+    padding: 40px 56px;
+    border-radius: 24px;
+    background: rgba(11, 11, 9, 0.88);
+    text-align: center;
+}
+
+.player__message-title {
+    font-size: 40px;
+    font-weight: 700;
+}
+
+.player__message-hint {
+    margin-top: 14px;
+    color: var(--meta);
+    font-size: 28px;
+    line-height: 1.4;
+}
+
+/* Subtitles, drawn by the app (ui/cue-overlay.ts): readable from the
+   sofa, on a dark band; they move up while the OSD's bar shows. */
+.cues {
+    position: absolute;
+    left: 140px;
+    bottom: 84px;
+    width: 1640px;
+    text-align: center;
+    pointer-events: none;
+    -webkit-transition: -webkit-transform 0.25s ease-out;
+    transition: transform 0.25s ease-out;
+}
+
+.cues.is-raised {
+    -webkit-transform: translateY(-210px);
+    transform: translateY(-210px);
+}
+
+.cues__cue {
+    margin-top: 8px;
+}
+
+.cues__text {
+    display: inline-block;
+    max-width: 1640px;
+    padding: 6px 22px 8px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.72);
+    color: #ffffff;
+    font-size: 50px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: pre-line;
+    text-shadow: 0 2px 3px rgba(0, 0, 0, 0.9);
+}
+
+.cues__text--notice {
+    font-size: 34px;
+    font-weight: 400;
+    color: var(--text-2);
+}
+
+/* Should an engine draw a track itself, it reads the same. */
+.player__video::cue {
+    font-size: 50px;
+    line-height: 1.3;
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+/* The track buttons (ui/track-menu.ts), above the progress bar. */
+.osd__controls {
+    position: absolute;
+    right: 80px;
+    bottom: 108px;
+    pointer-events: auto;
+}
+
+.osd__track {
+    margin-left: 20px;
+    background: rgba(11, 11, 9, 0.72);
+}
+
+.tracks {
+    position: absolute;
+    right: 80px;
+    bottom: 196px;
+    width: 640px;
+    max-height: 660px;
+    overflow: hidden;
+    padding: 28px 0 18px;
+    border-radius: 24px;
+    background: rgba(18, 16, 14, 0.95);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+    pointer-events: auto;
+}
+
+.tracks__title {
+    padding: 0 36px 14px;
+    color: var(--meta);
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.tracks__item {
+    height: 72px;
+    line-height: 72px;
+    padding: 0 36px 0 30px;
+    color: var(--text-2);
+    font-size: 32px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tracks__item.is-current {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.tracks__item.focused {
+    background: #ffffff;
+    color: #0b0b09;
+    box-shadow: none;
+    -webkit-transform: none;
+    transform: none;
+}
+
+.tracks__check {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    margin-right: 18px;
+    vertical-align: -4px;
+    visibility: hidden;
+}
+
+.tracks__item.is-current .tracks__check {
+    visibility: visible;
+}
+
+.tracks__empty {
+    padding: 6px 36px 12px;
+    color: var(--text);
+    font-size: 30px;
+    line-height: 1.4;
+}
+
+/* A track list open on the right: the subtitles keep to its left. */
+.player.is-listing .cues {
+    width: 1040px;
+}
